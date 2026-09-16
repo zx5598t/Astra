@@ -1,18 +1,21 @@
 # ASTRA AI / CODE AGENTS GUIDE
 
-## Current target
-- Maintain ASTRA through GitHub-first updates.
-- Current live version: **0.0.3**.
-- Preserve the authoritative design rule: **TruthEngine decides truth, AI only performs expression.**
+## Current live target
+- Version: 0.0.4 — Social Pressure
+- Repository is the source of truth for development.
+- Godot 4.x / GDScript.
 
-## Project direction
-- Social deduction RPG on a starship.
-- 8-character cast (balanced 4F / 4M).
-- Attractive, stylized, game-like presentation over raw debug UI.
-- Keep the project playable without external AI.
+## Non-negotiable architecture
+1. `TruthEngine` alone owns canonical truth, roles, evidence facts, and outcome truth.
+2. LLM output is performance, not authority.
+3. NPC can reference only allowed fact refs supplied in its AI context.
+4. AI failure must preserve a complete offline rule-based game.
+5. NPC relationships may bias interpretation and votes, but must not reveal hidden role truth.
 
-## Guardrails
-- Do not let LLM output directly alter the true culprit, evidence facts, or vote result logic.
-- Do not silently remove offline fallback.
-- When expanding the cast, keep clear concepts and readable silhouettes.
-- Prefer incremental GitHub commits that preserve runnability.
+## Character consistency
+- Use `docs/CHARACTERS.md` as the character bible.
+- Preserve 8-person core cast (4F / 4M) unless explicitly expanding it.
+- Dialogue should follow each NPC's speech style, social goal, and pressure response.
+
+## Version discipline
+When changing version, update VERSION, README, CHANGELOG, project.godot, and the active runtime version layer.
