@@ -1,18 +1,14 @@
-# START HERE — ASTRA 0.0.3
+# START HERE — ASTRA 0.0.4
 
-## 가장 빠른 실행
-1. Godot 4.x 설치/실행
-2. `Import` 클릭
-3. 이 폴더의 `project.godot` 선택
-4. `Import & Edit`
-5. **F5** 로 실행
+1. Godot 4.x 실행
+2. Import → `project.godot`
+3. Import & Edit
+4. F5
 
-## 추천
-- 가능하면 **Godot 4.7.x stable** 사용
-- 에디터에서 처음 열면 SVG 에셋 import 시간이 잠깐 걸릴 수 있음
+## 0.0.4에서 확인할 것
+- 개인 심문 질문이 NPC 상태와 증거에 따라 달라지는지
+- 공개 회의에서 발언 / 반박 / 끼어들기가 표시되는지
+- 선택 인물 Dossier에 주요 호감/마찰 관계가 나오는지
+- 투표 결과가 여전히 TruthEngine 역할 정보로 판정되는지
 
-## 0.0.3 체감 포인트
-- 8인 로스터
-- 초상화와 캐릭터 콘셉트 강화
-- 수목구역 추가
-- 더 풍부한 심문/회의 체감
+오류가 뜨면 Godot 하단 Debugger의 첫 빨간 오류 줄을 그대로 보내면 됩니다.
