@@ -5,6 +5,10 @@ var id: String = ""
 var display_name: String = ""
 var job: String = ""
 var role: String = "CREW"
+var gender: String = "X"
+var concept: String = ""
+var vibe: String = ""
+var portrait_path: String = ""
 var alive: bool = true
 var accent: Color = Color.WHITE
 var personality: Dictionary = {}
@@ -21,6 +25,10 @@ func _init(data: Dictionary = {}) -> void:
     display_name = str(data.get("name", id))
     job = str(data.get("job", "Crew"))
     role = str(data.get("role", "CREW"))
+    gender = str(data.get("gender", "X"))
+    concept = str(data.get("concept", ""))
+    vibe = str(data.get("vibe", ""))
+    portrait_path = str(data.get("portrait", ""))
     accent = data.get("accent", Color.WHITE)
     personality = data.get("personality", {}).duplicate(true)
     trust_player = float(data.get("trust_player", 0.5))
@@ -29,13 +37,13 @@ func _init(data: Dictionary = {}) -> void:
 
 func remember(text: String) -> void:
     memories.append(text)
-    if memories.size() > 16:
+    if memories.size() > 18:
         memories.pop_front()
 
 func add_commitment(text: String) -> void:
     if text not in commitments:
         commitments.append(text)
-    if commitments.size() > 10:
+    if commitments.size() > 12:
         commitments.pop_front()
 
 func add_note(text: String) -> void:
