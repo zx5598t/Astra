@@ -1,20 +1,12 @@
-# ASTRA AI / CODE AGENTS GUIDE
+# ASTRA AI Development Rules — 0.0.6
 
-## Current live target
-- Version: 0.0.5
-- Main scene: `scenes/main_v005.tscn`
-- Game state: `AstraLoopGameState`
-
-## Non-negotiable architecture
-- TruthEngine owns canonical truth.
-- AI is a performance layer only.
-- Never place provider API keys in Godot/client code.
-- AI relationship_delta is a proposal only; game code decides relationship math.
-- AI responses must pass `AIGateway.validate_action()` before display.
-- Any AI/network failure must preserve a complete offline play path.
-
-## Product direction
-- 8 attractive, distinct crew members (4F / 4M).
-- Persistent memories and relationships across days/loops.
-- Player should infer motives from contradictions, not read hidden roles from UI.
-- Prefer incremental versioned layers over destructive rewrites.
+1. TruthEngine / case state owns canonical truth. Never let an LLM assign roles or create evidence.
+2. Null identities are randomized by deterministic seeded game code.
+3. Character job, visual identity and personality remain stable across hidden-role randomization.
+4. Evidence must carry explicit metadata (`signal`, `target_id`) so suspicion updates are explainable.
+5. Investigator Notebook may show only discovered evidence and spoken claims; never reveal hidden roles.
+6. AI meeting/dialogue output must be validated against allowed facts and targets.
+7. API keys belong only in backend environment variables and must never be committed.
+8. Offline fallback must remain fully playable.
+9. Isolated NPCs may not speak, interrupt, receive new questions, or vote on later days.
+10. Version changes update VERSION, project.godot, README, CHANGELOG and AI contract together.
