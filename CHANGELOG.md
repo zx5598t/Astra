@@ -1,16 +1,16 @@
 # ASTRA CHANGELOG
 
-## 0.0.8 — Observer Hypothesis Pass
-- Added player-authored evidence-to-crew hypothesis links with create/change/delete controls.
-- Added third randomized incident: Echo Ward.
-- Added per-character Private Channel event choices.
-- Upgraded Archive persistence to save personal-event choice counts and hypothesis-edit count.
-- Added lightweight procedural UI/evidence/vote sound effects and flash/shake feedback.
-- Added Echo Ward environment art.
-- Added GitHub Actions Godot 4.7.2 stable headless project validation.
+## 0.0.9 — Case Analysis
+- Added two-suspect CASE THEORY submission before each isolation vote.
+- Added final deduction grading (0–100) and S/A/B/C/Fragmented labels.
+- Added evidence-support / contradiction / confidence calibration to theory review.
+- Added cinematic Incident Stage cards for all three cases.
+- Expanded private character scenes from two choices to three.
+- Added persistent theory statistics to Archive save v3.
+- Added CI smoke test covering state setup, investigation, and theory submission.
 
-## 0.0.7 — Archive & Relationship Pass
-- Visual Investigator Link Board.
-- Persistent Archive progress.
-- Relationship events.
-- Incident-specific backdrops and expression overlays.
+## 0.0.8
+- Player-authored hypothesis links.
+- Echo Ward case.
+- Personal events and feedback FX.
+- Godot 4.7.2 CI.

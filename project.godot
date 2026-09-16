@@ -1,10 +1,10 @@
-; ASTRA 0.0.8 — Player Hypothesis / Echo Ward / Personal Events / FX / CI
+; ASTRA 0.0.9 — Case Theory Review / Incident Stage / Expanded Private Scenes
 config_version=5
 
 [application]
 config/name="ASTRA"
-config/description="AI-native social deduction RPG — hypothesis board prototype v0.0.8"
-run/main_scene="res://scenes/main_v008.tscn"
+config/description="AI-native social deduction RPG — case analysis prototype v0.0.9"
+run/main_scene="res://scenes/main_v009.tscn"
 config/features=PackedStringArray("4.3")
 
 [display]
