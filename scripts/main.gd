@@ -368,7 +368,7 @@ func _show_selected_profile() -> void:
         portrait_rect.texture = load(npc.portrait_path)
     var stress := int(float(npc.emotion.get("stress", 0.2)) * 100.0)
     var known_claims := "없음" if npc.commitments.is_empty() else npc.commitments[-1]
-    detail_box.text = "[font_size=28][color=#%s]%s[/color][/font_size]  [color=#8ea5c5]%s[/color]\n[color=#c7d7ef]%s[/color]\n\n성별 [b]%s[/b]     신뢰도 [b]%d%%[/b]     스트레스 [b]%d%%[/b]\n최근 기억 %d건     공개 주장 %d건\n\n[color=#8ea5c5]최근 고정된 주장[/color]\n%s" % [npc.accent.to_html(false), npc.display_name, npc.job, npc.vibe, npc.gender, int(npc.trust_player * 100.0), stress, npc.memories.size(), npc.commitments.size(), known_claims]
+    detail_box.text = "[font_size=28][color=#%s]%s[/color][/font_size]  [color=#8ea5c5]%s[/color]\n[color=#c7d7ef]%s[/color]\n\n성별 [b]%s[/b]     신뢰도 [b]%d%%[/b]     스트레스 [b]%d%%[/b]\n최근 기억 %d건     공개 주장 %d건\n\n[color=#8ea5c5]말투[/color]  %s\n[color=#8ea5c5]사회적 목표[/color]  %s\n\n[color=#8ea5c5]최근 고정된 주장[/color]\n%s" % [npc.accent.to_html(false), npc.display_name, npc.job, npc.vibe, npc.gender, int(npc.trust_player * 100.0), stress, npc.memories.size(), npc.commitments.size(), npc.speech_style, npc.social_goal, known_claims]
 
 func _add_action(text: String, accent: Color, callable: Callable, hint: String = "") -> void:
     var row := VBoxContainer.new()
