@@ -1,7 +1,7 @@
 class_name AIGateway
 extends RefCounted
 
-# ASTRA 0.0.5 AI contract.
+# ASTRA 0.0.6 AI contract.
 # The model performs expression only. Truth, roles, evidence, votes, score,
 # relationship math and win/loss remain authoritative game code.
 
@@ -9,7 +9,7 @@ var enabled: bool = true
 var provider_name: String = "openai_backend"
 var endpoint: String = "http://127.0.0.1:8787/npc/action"
 
-const CONTRACT_VERSION := "0.0.5"
+const CONTRACT_VERSION := "0.0.6"
 const ALLOWED_ACTS := ["answer", "deflect", "accuse", "reassure", "interrupt", "challenge", "refuse"]
 const ALLOWED_EMOTIONS := ["calm", "uneasy", "angry", "afraid", "guarded", "warm", "cold"]
 const ALLOWED_CLAIM_MODES := ["truth", "lie", "speculation", "mistake"]
