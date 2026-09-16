@@ -4,14 +4,16 @@ extends VBoxContainer
 signal theory_submitted(message: String)
 
 var state
+var model
 var primary := OptionButton.new()
 var secondary := OptionButton.new()
 var confidence := HSlider.new()
 var confidence_label := Label.new()
 var status_label := Label.new()
 
-func configure(game_state) -> void:
+func configure(game_state, theory_model) -> void:
     state = game_state
+    model = theory_model
     custom_minimum_size = Vector2(0, 310)
     add_theme_constant_override("separation", 10)
     _build()
@@ -70,8 +72,8 @@ func _build() -> void:
     status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     status_label.add_theme_color_override("font_color", Color("8ea5c5"))
     add_child(status_label)
-    if state != null and state.theory_ready_for_vote():
-        status_label.text = "현재 제출 · %s" % state.theory_summary()
+    if state != null and model != null and model.theory_ready_for_vote(int(state.day)):
+        status_label.text = "현재 제출 · %s" % model.theory_summary(state)
 
 func _row(label_text: String, option: OptionButton) -> HBoxContainer:
     var row := HBoxContainer.new()
@@ -96,11 +98,11 @@ func _on_confidence_changed(value: float) -> void:
     confidence_label.text = "%d%%" % int(value)
 
 func _submit() -> void:
-    if state == null or primary.selected < 0 or secondary.selected < 0:
+    if state == null or model == null or primary.selected < 0 or secondary.selected < 0:
         return
     var p: String = str(primary.get_item_metadata(primary.selected))
     var s: String = str(secondary.get_item_metadata(secondary.selected))
-    var result: Dictionary = state.submit_theory(p, s, int(confidence.value))
+    var result: Dictionary = model.submit_theory(state, p, s, int(confidence.value))
     status_label.text = str(result.get("message", ""))
     status_label.add_theme_color_override("font_color", Color("5ee3a0") if bool(result.get("ok", false)) else Color("ff6f7f"))
     if bool(result.get("ok", false)):

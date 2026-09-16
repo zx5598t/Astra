@@ -1,10 +1,12 @@
 extends "res://scripts/main_v008.gd"
 
-const DeductionStateScript = preload("res://scripts/deduction_game_state.gd")
+const TheoryModelScript = preload("res://scripts/case_theory_model.gd")
 const TheoryPanelScript = preload("res://scripts/case_theory_panel.gd")
 const IncidentStageScript = preload("res://scripts/incident_stage.gd")
 
+var theory_model
 var _theory_meta_recorded_key: String = ""
+var _theory_score_applied_key: String = ""
 
 func _replace_version_label(node: Node) -> void:
     if node is Label:
@@ -24,11 +26,15 @@ func _launch_case(preferred: String = "") -> void:
     _last_relationship_event_count = 0
     _meta_recorded_key = ""
     _theory_meta_recorded_key = ""
+    _theory_score_applied_key = ""
     _last_personal_result = ""
-    game = DeductionStateScript.new()
-    game.preferred_case_id = preferred
+    game = AstraHypothesisGameState.new()
+    var hypothesis := game as AstraHypothesisGameState
+    hypothesis.preferred_case_id = preferred
+    theory_model = TheoryModelScript.new()
+    theory_model.reset()
     game.state_changed.connect(_refresh)
-    var seed: int = int(Time.get_unix_time_from_system()) % 1000000
+    var seed := int(Time.get_unix_time_from_system()) % 1000000
     game.setup(seed)
     _build_game_ui()
     _install_ai_client_v006()
@@ -37,59 +43,61 @@ func _launch_case(preferred: String = "") -> void:
     if feedback_fx != null:
         feedback_fx.flash(c_cyan, 0.10)
 
-func _deduction_game():
-    return game
-
 func _refresh_actions() -> void:
-    var deduction = _deduction_game()
-    if deduction == null:
+    var hypothesis := _hypothesis_game()
+    if hypothesis == null:
         super._refresh_actions()
         return
+
     if notebook_open:
         super._refresh_actions()
         return
-    if not deduction.pending_personal_event.is_empty():
-        _show_personal_event(deduction)
+
+    if not hypothesis.pending_personal_event.is_empty():
+        _show_personal_event_v009(hypothesis)
         return
-    if deduction.phase_name() == "VOTE":
-        _show_theory_vote_gate(deduction)
+
+    if hypothesis.phase_name() == "VOTE":
+        _show_theory_vote_gate(hypothesis)
         return
 
     super._refresh_actions()
 
-    if deduction.phase_name() == "BRIEFING" and deduction.day == 1:
-        _install_incident_stage(deduction)
+    if hypothesis.phase_name() == "BRIEFING" and hypothesis.day == 1:
+        _install_incident_stage(hypothesis)
 
-    if deduction.phase_name() == "RESULT":
-        var review: String = str(deduction.final_theory_bbcode())
+    if hypothesis.phase_name() == "RESULT":
+        _finalize_theory_if_needed(hypothesis)
+        var review := theory_model.final_theory_bbcode(hypothesis) if theory_model != null else ""
         if review != "":
             detail_box.append_text("\n\n" + review)
-        _record_theory_meta_if_needed(deduction)
+        _record_theory_meta_if_needed(hypothesis)
         _add_info("DEDUCTION ARCHIVE · theories %d · perfect %d · best %d" % [meta_progress.theories_submitted, meta_progress.perfect_theories, meta_progress.best_theory_score])
 
-func _install_incident_stage(deduction) -> void:
-    var stage = IncidentStageScript.new()
-    stage.configure(deduction)
+func _install_incident_stage(hypothesis) -> void:
+    var stage := IncidentStageScript.new()
+    stage.configure(hypothesis)
     action_box.add_child(stage)
     action_box.move_child(stage, 0)
 
-func _show_theory_vote_gate(deduction) -> void:
+func _show_theory_vote_gate(hypothesis) -> void:
     for child in action_box.get_children():
         child.queue_free()
     _show_selected_profile()
-    detail_box.append_text("\n\n[font_size=24][color=#ffd36a]CASE THEORY GATE[/color][/font_size]\n투표 전에 이번 Day의 두 용의자 모델을 제출하세요. 가설의 정답은 사건 종료 전까지 공개되지 않습니다.")
+    detail_box.append_text("\n\n[font_size=24][color=#ffd36a]CASE THEORY GATE[/color][/font_size]\n투표 전에 이번 Day의 두 용의자 모델을 제출하세요. 정답 여부는 사건 종료 전까지 공개되지 않습니다.")
 
-    var panel = TheoryPanelScript.new()
-    panel.configure(deduction)
+    var panel := TheoryPanelScript.new()
+    panel.configure(hypothesis, theory_model)
     panel.theory_submitted.connect(_on_theory_submitted)
     action_box.add_child(panel)
+
     _add_action("Investigator Notebook 열기", c_panel, _open_notebook, "가설 제출 전에 증거 연결을 다시 검토")
 
-    if deduction.theory_ready_for_vote():
-        _add_info("THEORY LOCKED FOR DAY %d · %s" % [deduction.day, deduction.theory_summary()])
-        _add_info("이제 한 명을 격리 투표할 수 있습니다. 이 투표와 두 명 용의자 가설은 별개의 기록으로 남습니다.")
-        for npc_id in deduction.crew_order:
-            var npc = deduction.npcs[npc_id]
+    if theory_model != null and theory_model.theory_ready_for_vote(int(hypothesis.day)):
+        _add_info("THEORY LOCKED FOR DAY %d · %s" % [hypothesis.day, theory_model.theory_summary(hypothesis)])
+        _add_info("이제 한 명을 격리 투표할 수 있습니다. 격리표와 두 명 용의자 가설은 별개의 기록으로 남습니다.")
+        for npc_id in hypothesis.crew_order:
+            var npc = hypothesis.npcs[npc_id]
             if not npc.alive:
                 continue
             _add_action("%s · %s 격리" % [str(npc.display_name), str(npc.job)], c_red, _vote.bind(npc_id), "이번 Day의 격리표")
@@ -98,55 +106,109 @@ func _on_theory_submitted(message: String) -> void:
     if feedback_fx != null:
         feedback_fx.play("evidence")
         feedback_fx.flash(c_gold, 0.12)
-    log_event_to_ui(message)
+    if detail_box != null:
+        detail_box.append_text("\n\n[color=#5ee3a0]%s[/color]" % message)
     _refresh_actions()
 
-func _show_personal_event(hypothesis) -> void:
-    var deduction = _deduction_game()
-    if deduction == null:
-        super._show_personal_event(hypothesis)
-        return
+func _show_personal_event_v009(hypothesis) -> void:
     for child in action_box.get_children():
         child.queue_free()
-    var event: Dictionary = deduction.pending_personal_event
-    var npc_id: String = str(event.get("npc_id", ""))
-    var npc_name: String = npc_id
-    if npc_id in deduction.npcs:
-        npc_name = str(deduction.npcs[npc_id].display_name)
-        deduction.selected_npc_id = npc_id
+    var event: Dictionary = hypothesis.pending_personal_event
+    var npc_id := str(event.get("npc_id", ""))
+    var npc_name := npc_id
+    if npc_id in hypothesis.npcs:
+        npc_name = str(hypothesis.npcs[npc_id].display_name)
+        hypothesis.selected_npc_id = npc_id
         _show_selected_profile()
-    detail_box.append_text("\n\n[font_size=14][color=#8ea5c5]PRIVATE SCENE[/color][/font_size]\n[color=#aebbd0]%s[/color]\n\n[font_size=24][color=#ff9ed1]%s[/color][/font_size]\n%s" % [str(event.get("scene_beat", "")), str(event.get("title", "PRIVATE CHANNEL")), str(event.get("prompt", ""))])
+    detail_box.append_text("\n\n[font_size=14][color=#8ea5c5]PRIVATE SCENE[/color][/font_size]\n[color=#aebbd0]%s[/color]\n\n[font_size=24][color=#ff9ed1]%s[/color][/font_size]\n%s" % [_personal_scene_beat(npc_id), str(event.get("title", "PRIVATE CHANNEL")), str(event.get("prompt", ""))])
     var choices: Array = event.get("choices", [])
     for i in range(choices.size()):
         var choice: Dictionary = choices[i]
-        var accent: Color = c_green if i == 0 else c_gold if i == 2 else c_panel
-        _add_action(str(choice.get("label", "선택")), accent, _resolve_personal_event.bind(i), "%s와의 신뢰·스트레스에 제한적으로 영향" % npc_name)
+        _add_action(str(choice.get("label", "선택")), c_green if i == 0 else c_panel, _resolve_personal_event.bind(i), "%s와의 관계에 제한적으로 영향" % npc_name)
+    _add_action("한 사람을 특정하지 말고 관찰 가능한 사실만 다시 말해달라고 한다", c_gold, _resolve_observation_choice, "관계보다 검증 가능한 정보에 집중")
+
+func _resolve_observation_choice() -> void:
+    var hypothesis := _hypothesis_game()
+    if hypothesis == null or hypothesis.pending_personal_event.is_empty():
+        return
+    var event: Dictionary = hypothesis.pending_personal_event
+    var npc_id := str(event.get("npc_id", ""))
+    var npc_name := npc_id
+    if npc_id in hypothesis.npcs:
+        var npc = hypothesis.npcs[npc_id]
+        npc_name = str(npc.display_name)
+        npc.adjust_trust(0.02)
+        npc.adjust_stress(-0.01)
+    var result_text := "%s은(는) 잠시 감정을 누르고 자신이 직접 본 것과 추측을 구분해서 다시 설명했다." % npc_name
+    hypothesis.personal_event_history.append({
+        "day":hypothesis.day,
+        "case_id":hypothesis.case_id,
+        "npc_id":npc_id,
+        "choice_index":2,
+        "label":"관찰 가능한 사실만 다시 요청",
+        "result":result_text
+    })
+    hypothesis.log_event("PERSONAL CHOICE · %s · observable facts only" % npc_id)
+    hypothesis.pending_personal_event.clear()
+    hypothesis.score += 10
+    _last_personal_result = result_text
+    if npc_id != "":
+        meta_progress.record_personal_choice(npc_id, 2)
+    if feedback_fx != null:
+        feedback_fx.play("click")
+        feedback_fx.flash(c_gold, 0.09)
+    _refresh_actions()
+    _refresh_npcs()
+
+func _personal_scene_beat(npc_id: String) -> String:
+    match npc_id:
+        "mira": return "의료실 비상등이 낮게 깜빡인다. Mira는 장갑을 벗지 않은 채 손끝을 바라본다."
+        "rho": return "엔진 진동이 바닥을 울린다. Rho는 렌치를 작업대에 내려놓고 당신을 정면으로 본다."
+        "eli": return "항법창 너머 별빛이 천천히 흐른다. Eli는 일부러 화면을 끄고 목소리를 낮춘다."
+        "sena": return "보안허브의 감시 화면들이 동시에 당신을 비춘다. Sena는 출입문을 잠근다."
+        "vale": return "통신실 스피커에서 백색소음이 흐른다. Vale은 채널 하나를 수동으로 끈다."
+        "noa": return "기록보관실의 텍스트 로그가 무수히 스크롤된다. Noa는 한 문장을 멈춰 세운다."
+        "lyra": return "수목구역의 습기가 유리벽에 맺힌다. Lyra는 죽은 잎 하나를 조심스럽게 접는다."
+        "dax": return "진단 패널의 그래프가 규칙적으로 뛰고 있다. Dax는 수치 하나를 손가락으로 가리킨다."
+    return "둘만 남은 짧은 순간, 공개 회의와는 다른 표정이 드러난다."
 
 func _vote(npc_id: String) -> void:
-    var deduction = _deduction_game()
-    if deduction != null and not deduction.theory_ready_for_vote():
+    var hypothesis := _hypothesis_game()
+    if hypothesis != null and (theory_model == null or not theory_model.theory_ready_for_vote(int(hypothesis.day))):
         if feedback_fx != null:
             feedback_fx.play("alert")
             feedback_fx.flash(c_gold, 0.10)
-        log_event_to_ui("CASE THEORY를 먼저 제출해야 합니다.")
+        if detail_box != null:
+            detail_box.append_text("\n\n[color=#ffd36a]CASE THEORY를 먼저 제출해야 합니다.[/color]")
         _refresh_actions()
         return
     super._vote(npc_id)
 
-func _record_theory_meta_if_needed(deduction) -> void:
-    if not deduction.game_over or deduction.final_theory_result.is_empty():
+func _finalize_theory_if_needed(hypothesis) -> void:
+    if theory_model == null:
         return
-    var key: String = "%d:%s" % [deduction.seed_value, deduction.case_id]
+    var result: Dictionary = theory_model.finalize(hypothesis)
+    var key := "%d:%s" % [hypothesis.seed_value, hypothesis.case_id]
+    if key == _theory_score_applied_key:
+        return
+    _theory_score_applied_key = key
+    hypothesis.score += int(result.get("bonus", 0))
+
+func _record_theory_meta_if_needed(hypothesis) -> void:
+    if theory_model == null or not hypothesis.game_over or theory_model.final_result.is_empty():
+        return
+    var key := "%d:%s" % [hypothesis.seed_value, hypothesis.case_id]
     if key == _theory_meta_recorded_key:
         return
     _theory_meta_recorded_key = key
-    meta_progress.record_theory_result(deduction.final_theory_result)
+    meta_progress.record_theory_result(theory_model.final_result)
 
 func _refresh() -> void:
     super._refresh()
-    var deduction = _deduction_game()
-    if deduction == null:
+    var hypothesis := _hypothesis_game()
+    if hypothesis == null or phase_label == null:
         return
-    if phase_label != null:
-        var theory_tag: String = "THEORY ✓" if deduction.theory_ready_for_vote() else "THEORY —"
-        phase_label.text = "DAY %d · %s · %s · %s" % [deduction.day, deduction.phase_display_name(), deduction.case_subtitle, theory_tag]
+    var theory_tag := "THEORY —"
+    if theory_model != null and theory_model.theory_ready_for_vote(int(hypothesis.day)):
+        theory_tag = "THEORY ✓"
+    phase_label.text = "DAY %d · %s · %s · %s" % [hypothesis.day, hypothesis.phase_display_name(), hypothesis.case_subtitle, theory_tag]
