@@ -1,17 +1,16 @@
 # ASTRA CHANGELOG
 
-## 0.0.7 — Archive & Relationship Pass
-- Added visual Investigator Link Board with evidence, crew and claim nodes.
-- Added contradiction highlight lines.
-- Added distinct Dead Air / Glass Garden environment backdrops.
-- Added calm/warm/tense portrait overlay slots for all eight crew.
-- Added relationship events derived from affinity/friction.
-- Added persistent meta progress using Godot ConfigFile under `user://astra_meta.cfg`.
-- Added Archive Rank, persistent Insight, case count and correct isolation tracking.
-- Preserved 0.0.6 random cases, random Null roles, AI meeting performance and offline fallback.
+## 0.0.8 — Observer Hypothesis Pass
+- Added player-authored evidence-to-crew hypothesis links with create/change/delete controls.
+- Added third randomized incident: Echo Ward.
+- Added per-character Private Channel event choices.
+- Upgraded Archive persistence to save personal-event choice counts and hypothesis-edit count.
+- Added lightweight procedural UI/evidence/vote sound effects and flash/shake feedback.
+- Added Echo Ward environment art.
+- Added GitHub Actions Godot 4.7.2 stable headless project validation.
 
-## 0.0.6 — Case Shuffle Protocol
-- Randomized two Null identities each run.
-- Added Dead Air / Glass Garden incident templates.
-- Added Investigator Notebook evidence/claim/contradiction registry.
-- Added AI meeting performance queue.
+## 0.0.7 — Archive & Relationship Pass
+- Visual Investigator Link Board.
+- Persistent Archive progress.
+- Relationship events.
+- Incident-specific backdrops and expression overlays.
