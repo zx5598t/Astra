@@ -1,36 +1,68 @@
 class_name AIGateway
 extends RefCounted
 
-# 0.0.2 keeps AI optional so the game is playable offline.
-# Future network implementations must return this restricted schema and must
-# never mutate TruthEngine, roles, votes, evidence ownership, or win results.
+# ASTRA 0.0.4 AI contract.
+# TruthEngine stays authoritative. A model can choose performance only from
+# validated social acts and can cite only fact refs supplied in allowed_fact_refs.
 
 var enabled: bool = false
+var provider_name: String = "offline"
+var endpoint: String = ""
 
-const ALLOWED_ACTS := ["answer", "deflect", "accuse", "reassure", "refuse"]
-const ALLOWED_EMOTIONS := ["calm", "uneasy", "angry", "afraid", "guarded"]
+const CONTRACT_VERSION := "0.0.4"
+const ALLOWED_ACTS := ["answer", "deflect", "accuse", "reassure", "interrupt", "challenge", "refuse"]
+const ALLOWED_EMOTIONS := ["calm", "uneasy", "angry", "afraid", "guarded", "warm", "cold"]
+const MAX_UTTERANCE_CHARS := 360
 
 func is_available() -> bool:
-    return enabled
+    return enabled and endpoint != ""
 
 func request_npc_action(_context: Dictionary) -> Dictionary:
+    return fallback_action("AI backend is not configured. Rule-based performance is active.")
+
+func fallback_action(reason: String) -> Dictionary:
     return {
         "ok": false,
+        "contract_version": CONTRACT_VERSION,
         "social_act": "answer",
         "target_id": "",
         "claim_refs": [],
         "claim_mode": "truth",
         "display_emotion": "calm",
+        "relationship_delta": 0.0,
         "utterance": "",
-        "reason": "AI backend is not configured. Rule-based performance is active."
+        "reason": reason
     }
 
-func validate_action(action: Dictionary, allowed_fact_refs: Array[String]) -> bool:
+func build_request_payload(context: Dictionary) -> Dictionary:
+    return {
+        "contract_version": CONTRACT_VERSION,
+        "provider": provider_name,
+        "npc": context.get("npc", {}),
+        "scene": context.get("scene", {}),
+        "allowed_fact_refs": context.get("allowed_fact_refs", []),
+        "known_evidence": context.get("known_evidence", []),
+        "relationships": context.get("relationships", {}),
+        "instruction": "Return only a valid ASTRA NPC action. Never invent a canonical fact."
+    }
+
+func validate_action(action: Dictionary, allowed_fact_refs: Array[String], allowed_targets: Array[String]) -> bool:
+    if str(action.get("contract_version", CONTRACT_VERSION)) != CONTRACT_VERSION:
+        return false
     if str(action.get("social_act", "")) not in ALLOWED_ACTS:
         return false
     if str(action.get("display_emotion", "")) not in ALLOWED_EMOTIONS:
         return false
+    var target_id := str(action.get("target_id", ""))
+    if target_id != "" and target_id not in allowed_targets:
+        return false
     for ref in action.get("claim_refs", []):
         if str(ref) not in allowed_fact_refs:
             return false
+    var utterance := str(action.get("utterance", ""))
+    if utterance.length() > MAX_UTTERANCE_CHARS:
+        return false
+    var rel_delta := float(action.get("relationship_delta", 0.0))
+    if rel_delta < -0.12 or rel_delta > 0.12:
+        return false
     return true
