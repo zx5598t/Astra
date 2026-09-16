@@ -24,11 +24,15 @@ func _refresh_actions() -> void:
     if game.phase_name() not in ["INTERROGATION", "MEETING"]:
         super._refresh_actions()
         return
+    var social_game := game as AstraSocialGameState
+    if social_game == null:
+        super._refresh_actions()
+        return
     for child in action_box.get_children():
         child.queue_free()
     if game.phase_name() == "INTERROGATION":
         _show_selected_profile()
-        for option in game.question_options(game.selected_npc_id):
+        for option in social_game.question_options(game.selected_npc_id):
             var intent := str(option.get("intent", "ALIBI"))
             var accent := c_cyan
             if intent in ["EVIDENCE", "CONTRADICTION"]:
@@ -42,7 +46,7 @@ func _refresh_actions() -> void:
 
     _show_selected_profile()
     detail_box.append_text("\n\n[font_size=22][color=#55d6ff]공개 회의 · LIVE[/color][/font_size]\n")
-    for event in game.meeting_events:
+    for event in social_game.meeting_events:
         var speaker_id := str(event.get("speaker", ""))
         var speaker_name := speaker_id
         if speaker_id in game.npcs:
@@ -53,7 +57,7 @@ func _refresh_actions() -> void:
         elif kind == "defend": marker = "끼어들기"
         detail_box.append_text("[color=#8ea5c5][%s][/color] [b]%s[/b] · %s\n\n" % [marker, speaker_name, str(event.get("text", ""))])
     _add_info("관계와 성향에 따라 회의 중 반박과 끼어들기가 발생합니다.")
-    var options := game.question_options(game.selected_npc_id)
+    var options := social_game.question_options(game.selected_npc_id)
     var count := mini(3, options.size())
     for i in range(count):
         var option: Dictionary = options[i]
@@ -62,6 +66,9 @@ func _refresh_actions() -> void:
 
 func _show_selected_profile() -> void:
     super._show_selected_profile()
+    var social_game := game as AstraSocialGameState
+    if social_game == null:
+        return
     var npc: NPCState = game.npcs[game.selected_npc_id]
     var stress := float(npc.emotion.get("stress", 0.2))
     var state := "침착"
@@ -69,6 +76,6 @@ func _show_selected_profile() -> void:
     elif stress > 0.46: state = "경계"
     elif npc.trust_player > 0.68: state = "우호적"
     detail_box.append_text("\n\n[color=#8ea5c5]현재 상태[/color]  %s" % state)
-    var social_lines: Array[String] = game.relationship_lines(game.selected_npc_id)
+    var social_lines: Array[String] = social_game.relationship_lines(game.selected_npc_id)
     if not social_lines.is_empty():
         detail_box.append_text("\n[color=#8ea5c5]주요 관계[/color]\n• " + "\n• ".join(social_lines))
