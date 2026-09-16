@@ -1,69 +1,48 @@
-# ASTRA 0.0.2 — INCIDENT ZERO: DEAD AIR
+# ASTRA 0.0.3 — INCIDENT ZERO: DEAD AIR
 
-AI-native social deduction RPG의 첫 번째 **게임다운 플레이 가능 버전**입니다.
+AI-native social deduction RPG의 **첫 번째 확장형 플레이 가능 버전**입니다.
 
-## 가장 쉬운 실행 방법
+## 지금 버전의 핵심
+- **8명 승무원** (4 Female / 4 Male)
+- 각 승무원별 **직무 / 성향 / 콘셉트 / 개성** 분리
+- 각 승무원별 **SVG 초상화** 포함
+- 4개 구역 조사: 의료실 / 엔진실 / 통신실 / 수목구역
+- 조사 행동력 4 / 심문 행동력 4
+- 증거 8종, 핵심 사실 9종
+- 공개 회의 / 격리 투표 / 결과 점수
+- AI API 없이 오프라인으로 플레이 가능
 
-### 방법 A — Godot에서 실행
+## 실행 방법
 1. **Godot 4.x** 실행
-2. Project Manager에서 **Import** 클릭
-3. 이 저장소를 내려받은 폴더 안의 `project.godot` 선택
-4. Import & Edit
-5. 에디터 오른쪽 위 **▶ Run Project** 또는 키보드 **F5** 실행
+2. Project Manager에서 **Import**
+3. 이 저장소의 `project.godot` 선택
+4. `Import & Edit`
+5. 편집기에서 **F5**
 
-### GitHub에서 받은 경우
-1. GitHub 저장소의 **Code → Download ZIP**
-2. 압축 해제
-3. Godot → Import → 압축 푼 폴더의 `project.godot`
-4. **F5**
+## 0.0.3에서 달라진 점
+- 더 게임다운 타이틀 화면
+- Crew Manifest에 초상화와 역할/성향 표시
+- 중앙 Dossier 영역 강화
+- 8명 로스터 대응 회의/투표 흐름
+- 조사 위치 4개로 확장
+- 컨셉형 캐릭터 기획 반영
 
-## 0.0.2에서 달라진 점
-- 타이틀 화면과 플레이 방법 화면
-- 별이 움직이는 우주 배경
-- 카드형 승무원 선택 UI
-- 현장 조사 행동력 3
-- 개인 심문 행동력 3
-- 의료실 / 엔진실 / 통신실 각각 2개 증거
-- 6개 증거 중 발견 순서가 Seed에 따라 변화
-- 알리바이 / 동기 / 증거 제시 / 회유 / 압박
-- 신뢰도·스트레스·기억·공개 주장 표시
-- 공개 회의에서 NPC별 현재 의심 대상 표시
-- 격리 투표와 NPC 투표
-- 점수와 Case Confidence
-- 결과 화면 및 즉시 재도전
-- AI Gateway restricted schema / Claim Validator 골격
-- AI API 없이도 완전 오프라인 플레이 가능
-
-## 현재 사건의 목표
-함장 Ives가 07:36~07:39 사이 사망했다. 승무원은 6명이고 그중 Null은 2명이다. 플레이어는 제한된 조사와 심문을 통해 증거와 증언을 비교하고 한 명을 격리한다.
+## 현재 8명 승무원
+- **Mira** — 의무관, 차분한 이상주의자
+- **Sena** — 보안관, 강단 있는 프로텍터
+- **Noa** — 기록관, 관찰형 분석가
+- **Lyra** — 식물생태학자, 공감형 낙관주의자
+- **Rho** — 기관사, 직선적인 현장파
+- **Eli** — 항법사, 세련된 승부사
+- **Vale** — 통신관, 매혹적인 외교가
+- **Dax** — 시스템 설계사, 냉정한 구조주의자
 
 ## 중요한 설계 원칙
-`TruthEngine`만 실제 사실을 결정합니다. NPC의 대사나 향후 연결할 LLM은 세계의 정답을 변경할 수 없습니다.
+`TruthEngine`만 실제 사건의 진실을 결정합니다. NPC 대사나 향후 연결할 LLM은 세계의 정답을 바꾸지 못합니다.
 
-## 폴더 구조
-```text
-Astra/
-├─ project.godot
-├─ VERSION
-├─ README.md
-├─ CHANGELOG.md
-├─ AGENTS.md
-├─ scenes/
-│  └─ main.tscn
-└─ scripts/
-   ├─ main.gd
-   ├─ game_state.gd
-   ├─ npc_state.gd
-   ├─ truth_engine.gd
-   ├─ ai_gateway.gd
-   └─ starfield.gd
-```
-
-## 다음 목표 — 0.0.3
-- 실제 AI backend 선택 연결
-- NPC별 제한된 자연어 표현 생성
-- Question Lattice
-- NPC 간 자율 발언 / 끼어들기
-- 캐릭터 초상화와 표정 연출
-- 효과음 / UI 사운드
-- 2차 사건 또는 다중 Day 구조
+## 다음 목표 — 0.0.4
+- 실제 자연어 AI 대화 연결
+- NPC 간 끼어들기 / 상호 반박
+- 사건 2개 이상과 다중 Day 구조
+- UI 사운드 / 효과음
+- 더 정교한 초상화와 배경 연출
