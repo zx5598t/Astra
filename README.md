@@ -1,26 +1,33 @@
-# ASTRA 0.0.7 — ARCHIVE & RELATIONSHIP PASS
+# ASTRA 0.0.8 — OBSERVER HYPOTHESIS PASS
 
-0.0.6의 랜덤 사건/AI/3-Day 구조 위에 시각적 추리와 지속 진행도를 추가한 버전입니다.
+0.0.7의 Archive/관계/시각 Notebook 위에 **플레이어 가설 조작 + 3번째 사건 + 개인 이벤트 + 연출 + CI**를 추가한 버전입니다.
 
-## 핵심 변경
-- Investigator Notebook을 **실제 노드/연결선 보드**로 시각화
-- Dead Air / Glass Garden의 **서로 다른 환경 배경** 추가
-- 8명 캐릭터에 `calm / warm / tense` **표정 슬롯 오버레이** 추가
-- 호감/마찰 수치가 높은 두 NPC 사이에 **관계 이벤트** 발생
-- 완료 사건과 Insight를 `user://astra_meta.cfg`에 **영구 저장**
-- 타이틀/점수 영역에 Archive Rank와 누적 Insight 표시
-- 기존 랜덤 Null, 2개 사건, 3-Day, AI 회의 연기, Offline fallback 유지
+## 0.0.8 핵심
+- Investigator Board에서 **증거를 직접 선택하고 Crew와 연결/삭제**
+  - 클릭: 의심 가설
+  - Shift+클릭: 해명 가설
+  - Ctrl/Cmd+클릭: 질문표시
+  - 우클릭: 사용자 연결 삭제
+- 사용자 가설은 TruthEngine/NPC 의심도에 영향을 주지 않는 별도 레이어
+- 3번째 Incident **Echo Ward** 추가
+- 8명 각각의 성격을 반영한 **Private Channel 개인 이벤트 선택지**
+- 사건 완료 기록 외에 개인 이벤트 선택/가설 편집 횟수도 Archive에 저장
+- UI 클릭 / 증거 확보 / 투표용 가벼운 절차음과 화면 flash/shake 연출
+- GitHub Actions에서 **Godot 4.7.2 stable headless import/parse 검사**
+- 기존 랜덤 Null, AI 대화/회의, 3-Day, 관계 이벤트, 영구 Archive 유지
 
-## 플레이
+## 사건
+1. Dead Air — 통신/전력 조작
+2. Glass Garden — 생명유지/오염 조작
+3. Echo Ward — 의료 기록/냉동수면 조작
+
+## 실행
 Godot 4.x에서 `project.godot` Import 후 F5.
-AI 백엔드 없이도 전체 루프를 플레이할 수 있습니다.
+AI 백엔드 없이 전체 핵심 루프 플레이 가능.
 
-## 저장
-완료한 사건 수, 누적 Insight, 정확한 격리 수, 일부 관계 이벤트 기록이 Godot의 `user://` 저장 경로에 남습니다.
-
-## 다음 목표 — 0.0.8
-- 추리 보드에서 플레이어가 직접 연결선 생성/삭제
-- 사건 3번째 템플릿
-- 캐릭터별 개인 이벤트 선택지
-- 사운드/전환/화면 흔들림 등 연출 패스
-- 런타임 오류 자동 검사용 CI 보강
+## 다음 목표 — 0.0.9
+- 클릭형 가설을 실제 추리 제출 시스템으로 발전
+- 각 사건 전용 피해자/장소 일러스트 확대
+- 개인 이벤트를 짧은 분기 씬으로 확장
+- BGM/공간음/캐릭터 보이스 블립
+- CI 통과 이후 자동 웹 빌드/플레이 링크 생성
