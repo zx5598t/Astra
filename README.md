@@ -1,29 +1,43 @@
-# ASTRA 0.0.5 — LOOP MEMORY
+# ASTRA 0.0.6 — CASE SHUFFLE PROTOCOL
 
-AI-native 우주 사회추리 RPG의 다중 Day / 기억 연결 버전입니다.
+AI-native social deduction RPG 프로토타입입니다.
 
-## 0.0.5 핵심
-- 한 번의 투표로 끝나지 않는 **최대 3 Day 조사 루프**
-- 격리된 승무원은 다음 Day에서 제외
-- 전날 발언/투표/관계/스트레스가 다음 날까지 유지
-- Noa 등 NPC가 이전 Day의 발언을 다시 꺼내는 **Memory Echo**
-- 최근 NPC 발언을 연결해서 추궁하는 대화 체인
-- 초상화 tint 기반 표정 상태: calm / warm / uneasy / angry / afraid / guarded / cold
-- 선택형 실제 AI Performance 백엔드
-- AI 실패/미실행 시 기존 규칙 기반 대사 100% 유지
-
-## AI 연결 구조
-`Godot → ASTRA FastAPI backend → OpenAI Responses API`
-
-API 키는 Godot이나 GitHub에 저장하지 않습니다. `backend/README.md` 참고.
+## 0.0.6 핵심
+- **8명 캐릭터 / 남4·여4 유지**
+- 매 Seed마다 **Null 2명의 신분을 무작위 배정**
+- 캐릭터 직업/개성은 유지하고 숨겨진 역할만 바뀜
+- **Dead Air / Glass Garden** 두 사건 템플릿
+- 사건에 맞춰 핵심 증거의 대상과 알리바이 지지 단서가 자동 재배치
+- **Investigator Notebook**: 증거 → 인물 연결, 알리바이, 직접 모순 후보 표시
+- 최대 3 Day 루프와 이전 발언 기억 유지
+- 공개 회의의 일부 발언도 선택적으로 AI가 연기
+- AI 서버가 없으면 기존 규칙 기반 대사로 완전 플레이 가능
 
 ## 실행
-Godot 4.x에서 `project.godot`을 Import한 뒤 F5.
-AI 백엔드를 켜지 않아도 정상 플레이됩니다.
+1. Godot 4.x에서 `project.godot` Import
+2. F5
+3. 기본 씬은 `scenes/main_v006.tscn`
 
-## 다음 목표 — 0.0.6
-- 사건/역할 랜덤화 확대
-- 캐릭터 표정별 별도 일러스트 에셋
-- AI 회의 발언에도 비동기 연기 적용
-- Notebook의 모순 자동 연결선
-- 2번째 Incident와 메타 루프 시작
+## AI 서버는 선택 사항
+```bash
+cd backend
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+copy .env.example .env   # Windows
+# cp .env.example .env   # macOS/Linux
+uvicorn app:app --host 127.0.0.1 --port 8787
+```
+
+`.env`의 `OPENAI_API_KEY`는 서버에만 둡니다. Godot 프로젝트나 GitHub에 API 키를 넣지 않습니다.
+
+## 설계 원칙
+`TruthEngine`과 게임 코드가 실제 역할, 증거, 투표, 승패를 결정합니다. AI는 허용된 사실만 받아 캐릭터다운 표현을 생성하는 연기 계층입니다.
+
+## 다음 목표 — 0.0.7
+- Notebook을 실제 노드/선 그래프로 시각화
+- 표정별 실제 캐릭터 아트 슬롯
+- 사건별 환경 배경과 장면 전환
+- 캐릭터 간 개인 이벤트 / 관계 이벤트
+- 세션 메타 진행 저장
