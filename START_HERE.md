@@ -1,13 +1,14 @@
-# START HERE — ASTRA 0.0.5
+# START HERE — ASTRA 0.0.6
 
 1. Godot 4.x 실행
-2. Astra 폴더의 `project.godot` Import
+2. `project.godot` Import
 3. F5
-4. 기본 상태는 **Offline fallback**이므로 AI 설정 없이도 플레이 가능
 
-## 선택: AI 대사 켜기
-`backend/README.md` 절차대로 백엔드를 실행합니다.
-백엔드가 `127.0.0.1:8787`에서 실행되면 대화 시 규칙 기반 결과 뒤에 검증된 AI 연기가 표시됩니다.
+이번 버전에서 확인할 것:
+- 타이틀에 `0.0.6`
+- 새 게임마다 숨겨진 Null 신분이 달라질 수 있음
+- 사건이 `Dead Air` 또는 `Glass Garden`으로 시작
+- 조사/심문/회의 화면에서 `Investigator Notebook` 사용 가능
+- 결과 화면에서 `다음 사건으로`를 눌러 다른 사건 템플릿으로 이동 가능
 
-## 0.0.5 플레이 변화
-한 명을 격리해도 곧바로 끝나지 않습니다. 최대 3일 동안 이전 발언과 관계를 기억하며 남은 Null을 추적합니다.
+AI 서버는 선택 사항입니다. 서버가 없어도 게임은 규칙 기반 대사로 진행됩니다.
