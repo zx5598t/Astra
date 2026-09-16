@@ -1,12 +1,18 @@
-# ASTRA AI Development Rules
+# ASTRA AI / CODE AGENTS GUIDE
 
-1. Never let an LLM mutate TruthEngine or decide canonical facts.
-2. Game outcomes, evidence, roles, votes, scoring and RNG must be deterministic game code.
-3. Preserve all existing features unless the task explicitly removes them.
-4. Version changes must update `VERSION`, `README.md`, `CHANGELOG.md` and `AstraGameState.VERSION`.
-5. NPC model output must be structured and validated before display.
-6. An NPC may reference only facts it knows or facts intentionally exposed to it.
-7. AI failure must always fall back to a playable rule-based path.
-8. Keep the project directly runnable from `project.godot` with Godot 4.x.
-9. Prefer small, testable version increments over large rewrites.
-10. The player should infer the answer; UI must not reveal hidden role truth before result resolution.
+## Current target
+- Maintain ASTRA through GitHub-first updates.
+- Current live version: **0.0.3**.
+- Preserve the authoritative design rule: **TruthEngine decides truth, AI only performs expression.**
+
+## Project direction
+- Social deduction RPG on a starship.
+- 8-character cast (balanced 4F / 4M).
+- Attractive, stylized, game-like presentation over raw debug UI.
+- Keep the project playable without external AI.
+
+## Guardrails
+- Do not let LLM output directly alter the true culprit, evidence facts, or vote result logic.
+- Do not silently remove offline fallback.
+- When expanding the cast, keep clear concepts and readable silhouettes.
+- Prefer incremental GitHub commits that preserve runnability.
