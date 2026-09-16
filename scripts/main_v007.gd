@@ -90,6 +90,7 @@ func _show_selected_profile() -> void:
         portrait_rect.modulate = Color.WHITE
     var old_overlay := portrait_rect.get_node_or_null("ExpressionOverlay")
     if old_overlay != null:
+        portrait_rect.remove_child(old_overlay)
         old_overlay.queue_free()
     var overlay_path := progression.expression_overlay_path(progression.selected_npc_id)
     if ResourceLoader.exists(overlay_path):
