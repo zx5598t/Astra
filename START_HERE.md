@@ -1,11 +1,15 @@
-# START HERE — ASTRA 0.0.7
+# START HERE — ASTRA 0.0.8
 
-1. Godot 4.x 실행
+1. Godot 4.7.2 stable 권장
 2. `project.godot` Import
 3. F5
+4. AI 서버 없이도 플레이 가능
 
-이번 버전은 사건마다 다른 환경 배경이 표시되고, Notebook을 열면 텍스트 목록 대신 노드와 연결선 기반 추리 보드가 나타납니다.
+## 새 추리 보드 조작
+- 증거 노드 클릭 → Crew 클릭: 의심 연결
+- Shift + Crew 클릭: 해명 연결
+- Ctrl/Cmd + Crew 클릭: 질문 연결
+- 우클릭 Crew: 선택 증거와의 사용자 연결 삭제
 
-사건을 완료하면 Archive Insight가 `user://astra_meta.cfg`에 저장되므로 게임을 다시 실행해도 누적 진행도가 남습니다.
-
-AI는 선택 사항입니다. 백엔드를 실행하지 않아도 규칙 기반 대사로 정상 플레이됩니다.
+## 자동 검사
+GitHub Actions의 `Godot CI`가 main/release 브랜치 push와 PR마다 headless import/parse 검사를 수행합니다.
