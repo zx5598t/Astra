@@ -70,12 +70,12 @@ func record_personal_choice(npc_id: String, choice_index: int) -> void:
 
 func record_theory_result(result: Dictionary) -> void:
     theories_submitted += 1
-    var matched := int(result.get("matched", 0))
-    var grade := int(result.get("grade", 0))
+    var matched: int = int(result.get("matched", 0))
+    var grade: int = int(result.get("grade", 0))
     if matched >= 2:
         perfect_theories += 1
     best_theory_score = maxi(best_theory_score, grade)
-    total_insight += grade / 10
+    total_insight += int(grade / 10.0)
     save_data()
 
 func remember_relationship_event(event_key: String) -> void:

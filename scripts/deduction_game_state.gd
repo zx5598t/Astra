@@ -1,5 +1,5 @@
 class_name AstraDeductionGameState
-extends AstraHypothesisGameState
+extends "res://scripts/hypothesis_game_state.gd"
 
 const DEDUCTION_VERSION := "0.0.9"
 
@@ -23,9 +23,10 @@ func submit_theory(primary_id: String, secondary_id: String, confidence: int) ->
     if primary_id not in npcs or secondary_id not in npcs:
         return {"ok":false, "message":"유효한 승무원 두 명을 선택해야 한다."}
 
-    var support := _theory_support_count([primary_id, secondary_id])
-    var questions := _theory_question_count([primary_id, secondary_id])
-    var contradictions := _theory_contradiction_count([primary_id, secondary_id])
+    var suspects: Array = [primary_id, secondary_id]
+    var support: int = _theory_support_count(suspects)
+    var questions: int = _theory_question_count(suspects)
+    var contradictions: int = _theory_contradiction_count(suspects)
     active_theory = {
         "day":day,
         "primary_id":primary_id,
@@ -39,10 +40,7 @@ func submit_theory(primary_id: String, secondary_id: String, confidence: int) ->
     _theory_days[day] = true
     log_event("THEORY · D%d · %s + %s · confidence %d%%" % [day, npcs[primary_id].display_name, npcs[secondary_id].display_name, int(active_theory["confidence"])])
     emit_signal("state_changed")
-    return {
-        "ok":true,
-        "message":"CASE THEORY 제출 완료 · 증거 연결 %d · 모순 %d · 미해결 질문 %d" % [support, contradictions, questions]
-    }
+    return {"ok":true, "message":"CASE THEORY 제출 완료 · 증거 연결 %d · 모순 %d · 미해결 질문 %d" % [support, contradictions, questions]}
 
 func theory_ready_for_vote() -> bool:
     return not active_theory.is_empty() and int(active_theory.get("day", -1)) == day
@@ -50,28 +48,28 @@ func theory_ready_for_vote() -> bool:
 func theory_summary() -> String:
     if active_theory.is_empty():
         return "아직 제출한 가설이 없다."
-    var p := str(active_theory.get("primary_id", ""))
-    var s := str(active_theory.get("secondary_id", ""))
-    var p_name := p if p not in npcs else npcs[p].display_name
-    var s_name := s if s not in npcs else npcs[s].display_name
+    var p: String = str(active_theory.get("primary_id", ""))
+    var s: String = str(active_theory.get("secondary_id", ""))
+    var p_name: String = p if p not in npcs else str(npcs[p].display_name)
+    var s_name: String = s if s not in npcs else str(npcs[s].display_name)
     return "%s + %s · Confidence %d%% · Support %d · Contradictions %d" % [p_name, s_name, int(active_theory.get("confidence", 0)), int(active_theory.get("support", 0)), int(active_theory.get("contradictions", 0))]
 
 func _theory_support_count(suspects: Array) -> int:
-    var count := 0
+    var count: int = 0
     for link in manual_links:
         if str(link.get("kind", "")) == "suspect" and str(link.get("target_id", "")) in suspects:
             count += 1
     return count
 
 func _theory_question_count(suspects: Array) -> int:
-    var count := 0
+    var count: int = 0
     for link in manual_links:
         if str(link.get("kind", "")) == "question" and str(link.get("target_id", "")) in suspects:
             count += 1
     return count
 
 func _theory_contradiction_count(suspects: Array) -> int:
-    var count := 0
+    var count: int = 0
     for item in contradiction_register:
         if str(item.get("npc_id", "")) in suspects:
             count += 1
@@ -91,25 +89,25 @@ func _grade_final_theory() -> void:
         final_theory_result = {"matched":0, "support":0, "contradictions":0, "grade":0, "label":"NO THEORY"}
         return
     var theory: Dictionary = theory_history[-1]
-    var picks := [str(theory.get("primary_id", "")), str(theory.get("secondary_id", ""))]
-    var matched := 0
+    var picks: Array = [str(theory.get("primary_id", "")), str(theory.get("secondary_id", ""))]
+    var matched: int = 0
     for npc_id in picks:
-        if npc_id in hidden_null_ids:
+        if str(npc_id) in hidden_null_ids:
             matched += 1
-    var support := int(theory.get("support", 0))
-    var contradictions := int(theory.get("contradictions", 0))
-    var confidence := int(theory.get("confidence", 0))
-    var evidence_score := mini(30, support * 6 + contradictions * 8)
-    var identity_score := matched * 30
-    var calibration_bonus := 0
+    var support: int = int(theory.get("support", 0))
+    var contradictions: int = int(theory.get("contradictions", 0))
+    var confidence: int = int(theory.get("confidence", 0))
+    var evidence_score: int = mini(30, support * 6 + contradictions * 8)
+    var identity_score: int = matched * 30
+    var calibration_bonus: int = 0
     if matched == 2 and confidence >= 65:
         calibration_bonus = 10
     elif matched == 0 and confidence >= 80:
         calibration_bonus = -10
     elif matched == 1 and confidence >= 45 and confidence <= 80:
         calibration_bonus = 5
-    var grade := clampi(identity_score + evidence_score + calibration_bonus, 0, 100)
-    var label := "FRAGMENTED"
+    var grade: int = clampi(identity_score + evidence_score + calibration_bonus, 0, 100)
+    var label: String = "FRAGMENTED"
     if grade >= 90:
         label = "S-RANK OBSERVATION"
     elif grade >= 75:
@@ -118,46 +116,30 @@ func _grade_final_theory() -> void:
         label = "B-RANK THEORY"
     elif grade >= 35:
         label = "C-RANK THEORY"
-    final_theory_result = {
-        "matched":matched,
-        "support":support,
-        "contradictions":contradictions,
-        "confidence":confidence,
-        "grade":grade,
-        "label":label,
-        "primary_id":picks[0],
-        "secondary_id":picks[1]
-    }
-    var bonus := grade * 4
-    score += bonus
+    final_theory_result = {"matched":matched, "support":support, "contradictions":contradictions, "confidence":confidence, "grade":grade, "label":label, "primary_id":str(picks[0]), "secondary_id":str(picks[1])}
+    score += grade * 4
     ending_text += "\n\nCASE THEORY · %s · %d/100 · Null identification %d/2" % [label, grade, matched]
     log_event("THEORY RESULT · %s · %d/100 · matched %d/2" % [label, grade, matched])
 
 func final_theory_bbcode() -> String:
     if final_theory_result.is_empty():
         return ""
-    var primary_id := str(final_theory_result.get("primary_id", ""))
-    var secondary_id := str(final_theory_result.get("secondary_id", ""))
-    var primary_name := primary_id if primary_id not in npcs else npcs[primary_id].display_name
-    var secondary_name := secondary_id if secondary_id not in npcs else npcs[secondary_id].display_name
-    var null_names: Array[String] = []
+    var primary_id: String = str(final_theory_result.get("primary_id", ""))
+    var secondary_id: String = str(final_theory_result.get("secondary_id", ""))
+    var primary_name: String = primary_id if primary_id not in npcs else str(npcs[primary_id].display_name)
+    var secondary_name: String = secondary_id if secondary_id not in npcs else str(npcs[secondary_id].display_name)
+    var null_names := PackedStringArray()
     for npc_id in hidden_null_ids:
-        null_names.append(npcs[npc_id].display_name if npc_id in npcs else npc_id)
+        null_names.append(str(npcs[npc_id].display_name) if npc_id in npcs else str(npc_id))
     return "[font_size=24][color=#ffd36a]CASE THEORY REVIEW[/color][/font_size]\n[b]%s[/b] · %d / 100\n제출 용의자 · %s + %s\n실제 Null · %s\n적중 · %d / 2     근거 연결 · %d     모순 활용 · %d     확신도 · %d%%" % [str(final_theory_result.get("label", "")), int(final_theory_result.get("grade", 0)), primary_name, secondary_name, ", ".join(null_names), int(final_theory_result.get("matched", 0)), int(final_theory_result.get("support", 0)), int(final_theory_result.get("contradictions", 0)), int(final_theory_result.get("confidence", 0))]
 
 func _personal_event_template(npc_id: String) -> Dictionary:
-    var event := super._personal_event_template(npc_id)
+    var event: Dictionary = super._personal_event_template(npc_id)
     if event.is_empty():
         return event
-    var npc: NPCState = npcs[npc_id]
+    var npc = npcs[npc_id]
     var choices: Array = event.get("choices", [])
-    choices.append({
-        "label":"한 사람을 특정하지 말고 관찰 가능한 사실만 다시 말해달라고 한다",
-        "trust":0.02,
-        "stress":-0.01,
-        "affinity":0.0,
-        "result":"%s은(는) 잠시 감정을 누르고 자신이 직접 본 것과 추측을 구분해서 다시 설명했다." % npc.display_name
-    })
+    choices.append({"label":"한 사람을 특정하지 말고 관찰 가능한 사실만 다시 말해달라고 한다", "trust":0.02, "stress":-0.01, "affinity":0.0, "result":"%s은(는) 잠시 감정을 누르고 자신이 직접 본 것과 추측을 구분해서 다시 설명했다." % str(npc.display_name)})
     event["choices"] = choices
     event["scene_beat"] = _personal_scene_beat(npc_id)
     return event

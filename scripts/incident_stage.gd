@@ -1,11 +1,11 @@
 class_name AstraIncidentStage
 extends PanelContainer
 
-func configure(state: AstraDeductionGameState) -> void:
+func configure(state) -> void:
     custom_minimum_size = Vector2(0, 225)
     var style := StyleBoxFlat.new()
     style.bg_color = Color(0.03, 0.06, 0.11, 0.92)
-    style.border_color = _case_color(state.case_id)
+    style.border_color = _case_color(str(state.case_id))
     style.set_border_width_all(1)
     style.set_corner_radius_all(10)
     style.content_margin_left = 14
@@ -22,7 +22,7 @@ func configure(state: AstraDeductionGameState) -> void:
     visual.custom_minimum_size = Vector2(300, 195)
     visual.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     visual.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-    var path := state.environment_asset_path()
+    var path: String = str(state.environment_asset_path())
     if ResourceLoader.exists(path):
         visual.texture = load(path)
     root.add_child(visual)
@@ -31,15 +31,17 @@ func configure(state: AstraDeductionGameState) -> void:
     info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     info.add_theme_constant_override("separation", 7)
     root.add_child(info)
-    info.add_child(_label("SCENE // %s" % state.case_subtitle.to_upper(), 15, _case_color(state.case_id)))
-    info.add_child(_label(state.case_title, 28, Color("eef5ff")))
-    var victim := str(state.truth.incident.get("victim", "Unknown"))
-    info.add_child(_label("VICTIM · %s" % victim, 17, Color("ff9aa8")))
-    info.add_child(_label(_scene_status(state.case_id), 15, Color("a8bad5")))
+    info.add_child(_label("SCENE // %s" % str(state.case_subtitle).to_upper(), 15, _case_color(str(state.case_id))))
+    info.add_child(_label(str(state.case_title), 28, Color("eef5ff")))
+    info.add_child(_label("VICTIM · %s" % str(state.truth.incident.get("victim", "Unknown")), 17, Color("ff9aa8")))
+    info.add_child(_label(_scene_status(str(state.case_id)), 15, Color("a8bad5")))
     var objective := _label(str(state.truth.incident.get("objective", "")), 15, Color("d9e6f7"))
     objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     info.add_child(objective)
-    info.add_child(_label("LOCATIONS · %s" % "  /  ".join(state.truth.incident.get("locations", [])), 13, Color("7f96b5")))
+    var location_names := PackedStringArray()
+    for location in state.truth.incident.get("locations", []):
+        location_names.append(str(location))
+    info.add_child(_label("LOCATIONS · %s" % "  /  ".join(location_names), 13, Color("7f96b5")))
 
 func _scene_status(case_id: String) -> String:
     match case_id:

@@ -3,14 +3,14 @@ extends VBoxContainer
 
 signal theory_submitted(message: String)
 
-var state: AstraDeductionGameState
+var state
 var primary := OptionButton.new()
 var secondary := OptionButton.new()
 var confidence := HSlider.new()
 var confidence_label := Label.new()
 var status_label := Label.new()
 
-func configure(game_state: AstraDeductionGameState) -> void:
+func configure(game_state) -> void:
     state = game_state
     custom_minimum_size = Vector2(0, 310)
     add_theme_constant_override("separation", 10)
@@ -35,8 +35,10 @@ func _build() -> void:
     secondary = OptionButton.new()
     _populate(primary)
     _populate(secondary)
-    primary.select(0)
-    secondary.select(1 if secondary.item_count > 1 else 0)
+    if primary.item_count > 0:
+        primary.select(0)
+    if secondary.item_count > 0:
+        secondary.select(1 if secondary.item_count > 1 else 0)
     add_child(_row("PRIMARY SUSPECT", primary))
     add_child(_row("SECONDARY SUSPECT", secondary))
 
@@ -68,8 +70,7 @@ func _build() -> void:
     status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     status_label.add_theme_color_override("font_color", Color("8ea5c5"))
     add_child(status_label)
-
-    if state.theory_ready_for_vote():
+    if state != null and state.theory_ready_for_vote():
         status_label.text = "현재 제출 · %s" % state.theory_summary()
 
 func _row(label_text: String, option: OptionButton) -> HBoxContainer:
@@ -87,8 +88,8 @@ func _populate(option: OptionButton) -> void:
     if state == null:
         return
     for npc_id in state.crew_order:
-        var npc: NPCState = state.npcs[npc_id]
-        option.add_item("%s · %s%s" % [npc.display_name, npc.job, " · ISOLATED" if not npc.alive else ""])
+        var npc = state.npcs[npc_id]
+        option.add_item("%s · %s%s" % [str(npc.display_name), str(npc.job), " · ISOLATED" if not npc.alive else ""])
         option.set_item_metadata(option.item_count - 1, npc_id)
 
 func _on_confidence_changed(value: float) -> void:
@@ -97,9 +98,9 @@ func _on_confidence_changed(value: float) -> void:
 func _submit() -> void:
     if state == null or primary.selected < 0 or secondary.selected < 0:
         return
-    var p := str(primary.get_item_metadata(primary.selected))
-    var s := str(secondary.get_item_metadata(secondary.selected))
-    var result := state.submit_theory(p, s, int(confidence.value))
+    var p: String = str(primary.get_item_metadata(primary.selected))
+    var s: String = str(secondary.get_item_metadata(secondary.selected))
+    var result: Dictionary = state.submit_theory(p, s, int(confidence.value))
     status_label.text = str(result.get("message", ""))
     status_label.add_theme_color_override("font_color", Color("5ee3a0") if bool(result.get("ok", false)) else Color("ff6f7f"))
     if bool(result.get("ok", false)):
