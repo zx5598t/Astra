@@ -50,7 +50,20 @@ func _append_turn(speaker_id: String, target_id: String, kind: String, intent: S
         conversation_history.pop_front()
 
 func _run_meeting_reactions() -> void:
-    super._run_meeting_reactions()
+    meeting_summary.clear()
+    meeting_events.clear()
+    for npc_id in crew_order:
+        var npc: NPCState = npcs[npc_id]
+        if not npc.alive:
+            continue
+        var target_id := _highest_living_suspicion(npc)
+        if target_id == "":
+            continue
+        var target: NPCState = npcs[target_id]
+        meeting_summary.append("%s → %s 의심 (%d%%)" % [npc.display_name, target.display_name, int(npc.get_suspicion(target_id) * 100.0)])
+        meeting_events.append({"speaker":npc.id, "target":target.id, "kind":"claim", "text":_meeting_statement(npc, target)})
+        _try_living_interruption(npc, target)
+
     for event in meeting_events:
         var speaker_id := str(event.get("speaker", ""))
         var target_id := str(event.get("target", ""))
@@ -65,6 +78,53 @@ func _run_meeting_reactions() -> void:
             elif kind == "defend":
                 display_emotions[speaker_id] = "warm"
     _add_memory_echo()
+    log_event("MEETING · 생존자 기준 %d개의 발언/반박 발생" % meeting_events.size())
+
+func _highest_living_suspicion(npc: NPCState) -> String:
+    var best_id := ""
+    var best_score := -1.0
+    for target_id in crew_order:
+        if target_id == npc.id or not npcs[target_id].alive:
+            continue
+        var value := npc.get_suspicion(target_id)
+        if value > best_score:
+            best_score = value
+            best_id = target_id
+    return best_id
+
+func _try_living_interruption(speaker: NPCState, target: NPCState) -> void:
+    var candidates: Array[String] = []
+    for other_id in crew_order:
+        if other_id == speaker.id or other_id == target.id:
+            continue
+        var other: NPCState = npcs[other_id]
+        if not other.alive:
+            continue
+        var social := float(other.personality.get("social", 0.5))
+        var aggressive := float(other.personality.get("aggressive", 0.3))
+        var protect_target := affinity(other_id, target.id) > 0.18
+        var dislike_speaker := affinity(other_id, speaker.id) < -0.12
+        var trigger := social * 0.35 + aggressive * 0.30
+        if protect_target:
+            trigger += 0.24
+        if dislike_speaker:
+            trigger += 0.18
+        if truth.rng.randf() < trigger * 0.38:
+            candidates.append(other_id)
+    if candidates.is_empty():
+        return
+    var interrupter_id := candidates[truth.rng.randi_range(0, candidates.size() - 1)]
+    var interrupter: NPCState = npcs[interrupter_id]
+    var defend := affinity(interrupter_id, target.id) > 0.12
+    var line := "%s, 그 주장에는 근거가 부족해. 네 해석을 사실처럼 말하지 마." % speaker.display_name
+    var kind := "challenge"
+    if defend:
+        line = "잠깐. %s의 말만으로 %s을(를) 몰아가면 안 돼." % [speaker.display_name, target.display_name]
+        kind = "defend"
+        adjust_affinity(interrupter_id, target.id, 0.025)
+    meeting_events.append({"speaker":interrupter.id, "target":speaker.id, "kind":kind, "text":line})
+    adjust_affinity(interrupter.id, speaker.id, -0.035)
+    adjust_affinity(speaker.id, interrupter.id, -0.025)
 
 func _add_memory_echo() -> void:
     if day <= 1 or conversation_history.size() < 4:
@@ -97,6 +157,12 @@ func question_options(npc_id: String) -> Array[Dictionary]:
     if npc_id not in npcs or not npcs[npc_id].alive:
         return []
     var options := super.question_options(npc_id)
+    for i in range(options.size() - 1, -1, -1):
+        if str(options[i].get("intent", "")) == "ASK_SUSPECT":
+            options.remove_at(i)
+    var living_suspect := _highest_living_suspicion(npcs[npc_id])
+    if living_suspect != "":
+        options.append({"intent":"ASK_SUSPECT", "label":"%s을(를) 왜 의심하는지 묻는다" % npcs[living_suspect].display_name, "hint":"생존자 기준 현재 믿음 확인"})
     if day > 1:
         options.push_front({"intent":"YESTERDAY", "label":"어제 발언을 다시 확인한다", "hint":"이전 Day의 기억과 비교"})
     if conversation_history.size() >= 6:
