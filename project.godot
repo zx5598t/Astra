@@ -1,10 +1,10 @@
-; ASTRA 0.0.3 — Incident Zero
+; ASTRA 0.0.4 — Incident Zero / Social Pressure
 config_version=5
 
 [application]
 config/name="ASTRA"
-config/description="AI-native social deduction RPG — Incident Zero v0.0.3"
-run/main_scene="res://scenes/main.tscn"
+config/description="AI-native social deduction RPG — Incident Zero v0.0.4"
+run/main_scene="res://scenes/main_v004.tscn"
 config/features=PackedStringArray("4.3")
 
 [display]
