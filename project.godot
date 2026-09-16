@@ -1,10 +1,10 @@
-; ASTRA 0.0.6 — Random Cases / Investigator Notebook / AI Meeting
+; ASTRA 0.0.7 — Archive / Relationship / Visual Notebook
 config_version=5
 
 [application]
 config/name="ASTRA"
-config/description="AI-native social deduction RPG — randomized incident prototype v0.0.6"
-run/main_scene="res://scenes/main_v006.tscn"
+config/description="AI-native social deduction RPG — archive progression prototype v0.0.7"
+run/main_scene="res://scenes/main_v007.tscn"
 config/features=PackedStringArray("4.3")
 
 [display]
