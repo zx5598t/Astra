@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 load_dotenv()
 
-CONTRACT_VERSION = "0.0.5"
+CONTRACT_VERSION = "0.0.6"
 MODEL = os.getenv("ASTRA_OPENAI_MODEL", "gpt-5.6-luna")
 client = OpenAI()
 app = FastAPI(title="ASTRA AI Gateway", version=CONTRACT_VERSION)
@@ -58,6 +58,8 @@ def npc_action(req: NPCRequest) -> dict[str, Any]:
         "Act only as the supplied NPC. The game engine owns truth. Never invent canonical events, "
         "roles, evidence, locations, vote outcomes, or numeric relationship changes. "
         "You may reference only allowed_facts and recent_turns supplied by the engine. "
+        "If scene.situation is public_meeting, preserve the intent and target of the supplied rule-based event "
+        "while rewriting it in the NPC's own voice. Do not reveal hidden roles. "
         "Keep the utterance natural, character-specific, concise, and normally in Korean. "
         "A lie may be strategic framing or denial, but must not introduce a new canonical fact."
     )
@@ -91,7 +93,6 @@ def npc_action(req: NPCRequest) -> dict[str, Any]:
     action["claim_refs"] = [ref for ref in action["claim_refs"] if ref in req.allowed_fact_refs]
     if action["target_id"] and action["target_id"] not in req.allowed_target_ids:
         action["target_id"] = ""
-    # This is only a model proposal. Godot game code does not directly apply this delta.
     action["relationship_delta"] = max(-0.12, min(0.12, float(action["relationship_delta"])))
 
     return {
