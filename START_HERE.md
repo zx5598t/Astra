@@ -1,14 +1,13 @@
-# START HERE — ASTRA 0.0.4
+# START HERE — ASTRA 0.0.5
 
 1. Godot 4.x 실행
-2. Import → `project.godot`
-3. Import & Edit
-4. F5
+2. Astra 폴더의 `project.godot` Import
+3. F5
+4. 기본 상태는 **Offline fallback**이므로 AI 설정 없이도 플레이 가능
 
-## 0.0.4에서 확인할 것
-- 개인 심문 질문이 NPC 상태와 증거에 따라 달라지는지
-- 공개 회의에서 발언 / 반박 / 끼어들기가 표시되는지
-- 선택 인물 Dossier에 주요 호감/마찰 관계가 나오는지
-- 투표 결과가 여전히 TruthEngine 역할 정보로 판정되는지
+## 선택: AI 대사 켜기
+`backend/README.md` 절차대로 백엔드를 실행합니다.
+백엔드가 `127.0.0.1:8787`에서 실행되면 대화 시 규칙 기반 결과 뒤에 검증된 AI 연기가 표시됩니다.
 
-오류가 뜨면 Godot 하단 Debugger의 첫 빨간 오류 줄을 그대로 보내면 됩니다.
+## 0.0.5 플레이 변화
+한 명을 격리해도 곧바로 끝나지 않습니다. 최대 3일 동안 이전 발언과 관계를 기억하며 남은 Null을 추적합니다.

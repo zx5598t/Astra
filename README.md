@@ -1,32 +1,29 @@
-# ASTRA 0.0.4 — INCIDENT ZERO: DEAD AIR
+# ASTRA 0.0.5 — LOOP MEMORY
 
-**Social Pressure** 업데이트. ASTRA의 핵심인 “사람이 사람을 의심하고, 관계 때문에 판단이 흔들리는 느낌”을 실제 게임 규칙에 넣기 시작한 버전입니다.
+AI-native 우주 사회추리 RPG의 다중 Day / 기억 연결 버전입니다.
 
-## 0.0.4 핵심
-- 8명 승무원 / 4F + 4M
-- 동적 질문 선택지(Question Lattice)
-- NPC 간 호감·마찰 관계
-- 공개 회의의 자율 발언 / 반박 / 끼어들기
-- 관계가 투표 판단에 약하게 영향
-- Dossier에서 주요 관계 확인
-- AI 연결용 Context Builder / Output Validator 강화
-- 외부 AI 없이도 전체 플레이 가능
+## 0.0.5 핵심
+- 한 번의 투표로 끝나지 않는 **최대 3 Day 조사 루프**
+- 격리된 승무원은 다음 Day에서 제외
+- 전날 발언/투표/관계/스트레스가 다음 날까지 유지
+- Noa 등 NPC가 이전 Day의 발언을 다시 꺼내는 **Memory Echo**
+- 최근 NPC 발언을 연결해서 추궁하는 대화 체인
+- 초상화 tint 기반 표정 상태: calm / warm / uneasy / angry / afraid / guarded / cold
+- 선택형 실제 AI Performance 백엔드
+- AI 실패/미실행 시 기존 규칙 기반 대사 100% 유지
 
-## 플레이 흐름
-`브리핑 → 조사 → 개인 심문 → 공개 회의 → 격리 투표 → 결과`
+## AI 연결 구조
+`Godot → ASTRA FastAPI backend → OpenAI Responses API`
 
-개인 심문에서 이제 모든 NPC에게 동일한 버튼만 나오지 않습니다. 확보한 증거, 신뢰도, 스트레스, 이전 고정 발언에 따라 **모순 지적 / 둘만의 판단 요청 / 현재 의심 대상을 추궁** 같은 질문이 나타납니다.
-
-공개 회의에서는 각 NPC가 자신의 의심을 말하고, 다른 승무원이 관계와 성향에 따라 끼어들거나 반박할 수 있습니다.
-
-## AI 설계 원칙
-`TruthEngine`만 사건의 진실을 결정합니다. 향후 연결되는 LLM에는 NPC가 알 수 있는 사실과 공개된 증거만 전달하며, 반환값은 `AIGateway` 계약을 통과해야 화면에 표시할 수 있습니다.
+API 키는 Godot이나 GitHub에 저장하지 않습니다. `backend/README.md` 참고.
 
 ## 실행
-Godot 4.x → Import → `project.godot` → F5.
+Godot 4.x에서 `project.godot`을 Import한 뒤 F5.
+AI 백엔드를 켜지 않아도 정상 플레이됩니다.
 
-## 주요 파일
-- `scripts/social_game_state.gd` — 0.0.4 사회관계/질문/회의 계층
-- `scripts/main_v004.gd` — 0.0.4 UI 확장
-- `docs/AI_CONTRACT.md` — AI 출력 계약
-- `docs/CHARACTERS.md` — 8인 캐릭터 Bible
+## 다음 목표 — 0.0.6
+- 사건/역할 랜덤화 확대
+- 캐릭터 표정별 별도 일러스트 에셋
+- AI 회의 발언에도 비동기 연기 적용
+- Notebook의 모순 자동 연결선
+- 2번째 Incident와 메타 루프 시작
