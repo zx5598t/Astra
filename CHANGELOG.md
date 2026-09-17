@@ -1,5 +1,16 @@
 # ASTRA CHANGELOG
 
+## 0.1.1 — Character Performance
+- Added animated character portrait presentation with fade/scale transitions.
+- Added name, job, and expression-state overlays to the portrait area.
+- Added response cues for interrogation intents.
+- Added meeting Speaker Spotlight that sequences claim/challenge/interjection cards.
+- Added cinematic phase transition banners for the full investigation loop.
+- Expanded procedural audio feedback for selection, dialogue, phase changes, unlocks, and case completion.
+- Added case-specific opening stings and stronger evidence-acquired feedback.
+- Added `main_v011.gd` / `main_v011.tscn` as the 0.1.1 entry point.
+- Added presentation-specific headless smoke coverage to Godot CI.
+
 ## 0.1.0 — First Vertical Slice
 - Added INCIDENT ARCHIVE campaign-style title screen.
 - Added sequential incident unlocks: Dead Air → Glass Garden → Echo Ward.
