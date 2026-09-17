@@ -60,15 +60,15 @@ func _show_selected_profile() -> void:
     if game == null or game.selected_npc_id not in game.npcs:
         return
     var npc: NPCState = game.npcs[game.selected_npc_id]
-    var expression := "calm"
+    var expression: String = "calm"
     if game.has_method("expression_slot"):
         expression = str(game.call("expression_slot", game.selected_npc_id))
-    var changed := game.selected_npc_id != _last_selected_character
+    var changed: bool = game.selected_npc_id != _last_selected_character
     _last_selected_character = game.selected_npc_id
     character_presentation.present(npc.display_name, npc.job, npc.accent, expression, changed)
 
 func _select_npc(npc_id: String) -> void:
-    var changed := npc_id != game.selected_npc_id
+    var changed: bool = npc_id != game.selected_npc_id
     super._select_npc(npc_id)
     if changed and feedback_fx != null and is_instance_valid(feedback_fx):
         feedback_fx.play("select")
@@ -76,7 +76,7 @@ func _select_npc(npc_id: String) -> void:
         character_presentation.cue("FOCUS ACQUIRED", game.npcs[npc_id].accent)
 
 func _talk(intent: String) -> void:
-    var npc_id := game.selected_npc_id
+    var npc_id: String = game.selected_npc_id
     super._talk(intent)
     if feedback_fx != null and is_instance_valid(feedback_fx):
         feedback_fx.play("talk")
@@ -97,7 +97,7 @@ func _intent_tag(intent: String) -> String:
     return intent + " RESPONSE"
 
 func _investigate(location: String) -> void:
-    var before := game.discovered_evidence.size()
+    var before: int = game.discovered_evidence.size()
     super._investigate(location)
     if game.discovered_evidence.size() > before and feedback_fx != null and is_instance_valid(feedback_fx):
         feedback_fx.phase_banner("EVIDENCE ACQUIRED", location, c_gold)
@@ -107,7 +107,7 @@ func _refresh() -> void:
     var hypothesis = _hypothesis_game()
     if hypothesis == null:
         return
-    var signature := "%s:%d:%s" % [hypothesis.phase_name(), hypothesis.day, hypothesis.case_id]
+    var signature: String = "%s:%d:%s" % [hypothesis.phase_name(), hypothesis.day, hypothesis.case_id]
     if signature == _phase_signature:
         return
     _phase_signature = signature
@@ -116,10 +116,10 @@ func _refresh() -> void:
 func _perform_phase_transition(hypothesis) -> void:
     if feedback_fx == null or not is_instance_valid(feedback_fx):
         return
-    var phase := hypothesis.phase_name()
-    var title := hypothesis.phase_display_name().to_upper()
-    var subtitle := hypothesis.case_subtitle
-    var accent := c_cyan
+    var phase: String = str(hypothesis.phase_name())
+    var title: String = str(hypothesis.phase_display_name()).to_upper()
+    var subtitle: String = str(hypothesis.case_subtitle)
+    var accent: Color = c_cyan
 
     match phase:
         "BRIEFING":
