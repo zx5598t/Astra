@@ -114,7 +114,8 @@ func _add_entry(entry: Dictionary, animate: bool) -> void:
     var row := AstraUI.hbox(10)
     card.add_child(row)
     if not is_player:
-        row.add_child(AstraUI.thumb(str(AstraCrewCatalog.info(speaker).get("portrait", "")), Vector2(40, 50)))
+        var mood := "tense" if kind in ["dispute", "defense"] else ("warm" if kind == "calm" else "calm")
+        row.add_child(AstraUI.thumb(AstraCrewCatalog.portrait_path(speaker, mood), Vector2(40, 50)))
     var box := AstraUI.vbox(3)
     box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     row.add_child(box)

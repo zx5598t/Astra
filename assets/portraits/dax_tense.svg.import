@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://3hgxgdfq0reu"
-path="res://.godot/imported/calm_overlay.svg-1d222cd266b53204c8d01316ceecd1ae.ctex"
+uid="uid://84re20rfb7wr"
+path="res://.godot/imported/dax_tense.svg-44cbde397d5000182d1f01266b896fdf.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/expressions/calm_overlay.svg"
-dest_files=["res://.godot/imported/calm_overlay.svg-1d222cd266b53204c8d01316ceecd1ae.ctex"]
+source_file="res://assets/portraits/dax_tense.svg"
+dest_files=["res://.godot/imported/dax_tense.svg-44cbde397d5000182d1f01266b896fdf.ctex"]
 
 [params]
 

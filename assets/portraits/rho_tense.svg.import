@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b483i7toc8gjt"
-path="res://.godot/imported/warm_overlay.svg-c9a56d8de132b71579dc1b18bc2d2a06.ctex"
+uid="uid://bmrklwa35a75b"
+path="res://.godot/imported/rho_tense.svg-9ccc1eadd590db80391490270260562a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/expressions/warm_overlay.svg"
-dest_files=["res://.godot/imported/warm_overlay.svg-c9a56d8de132b71579dc1b18bc2d2a06.ctex"]
+source_file="res://assets/portraits/rho_tense.svg"
+dest_files=["res://.godot/imported/rho_tense.svg-9ccc1eadd590db80391490270260562a.ctex"]
 
 [params]
 

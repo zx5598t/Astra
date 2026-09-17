@@ -191,3 +191,11 @@ static func identifying_pairs(npc_id: String) -> Array:
             if both.size() == 1 and both[0] == npc_id:
                 pairs.append([cat_a, cat_b])
     return pairs
+
+# Portrait for a display expression. uneasy/tense share the tense art.
+static func portrait_path(npc_id: String, expression: String = "calm") -> String:
+    var suffix := ""
+    match expression:
+        "warm": suffix = "_warm"
+        "tense", "uneasy": suffix = "_tense"
+    return "res://assets/portraits/%s%s.svg" % [npc_id, suffix]

@@ -82,6 +82,7 @@ func refresh(session: AstraGameSession, is_selected: bool, intention: String) ->
     _trust.value = member.trust
     _stress.value = member.stress
     var alive := member.is_alive()
+    _thumb.texture = AstraUI.texture(AstraCrewCatalog.portrait_path(npc_id, member.expression if alive else "calm"))
     _thumb.modulate = Color.WHITE if alive else Color(0.45, 0.47, 0.52)
     _name.add_theme_color_override("font_color", accent if alive else AstraUI.DIM)
     if alive:

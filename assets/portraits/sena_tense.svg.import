@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bbmd2ykq1vn43"
-path="res://.godot/imported/tense_overlay.svg-f6f532ca74ac354ccba78047cb5f315d.ctex"
+uid="uid://bnosk77356y7k"
+path="res://.godot/imported/sena_tense.svg-c893127a3537a29334e2c2d8a63f6774.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/expressions/tense_overlay.svg"
-dest_files=["res://.godot/imported/tense_overlay.svg-f6f532ca74ac354ccba78047cb5f315d.ctex"]
+source_file="res://assets/portraits/sena_tense.svg"
+dest_files=["res://.godot/imported/sena_tense.svg-c893127a3537a29334e2c2d8a63f6774.ctex"]
 
 [params]
 

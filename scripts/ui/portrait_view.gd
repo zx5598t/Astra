@@ -1,19 +1,12 @@
 class_name AstraPortraitView
 extends Control
 
-# Character portrait with an accent frame, expression overlay, name plate,
+# Character portrait with an accent frame, expression-specific art (calm / warm / tense), name plate,
 # status veil (isolated / offline) and a slow idle "breathing" motion.
-
-const EXPRESSION_OVERLAYS := {
-    "calm": "res://assets/expressions/calm_overlay.svg",
-    "warm": "res://assets/expressions/warm_overlay.svg",
-    "tense": "res://assets/expressions/tense_overlay.svg",
-    "uneasy": "res://assets/expressions/tense_overlay.svg"
-}
 
 var npc_id: String = ""
 var _art: TextureRect
-var _overlay: TextureRect
+
 var _veil: ColorRect
 var _frame: Panel
 var _name: Label
@@ -32,12 +25,6 @@ func _init() -> void:
     _art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
     _art.mouse_filter = Control.MOUSE_FILTER_IGNORE
     add_child(_art)
-    _overlay = TextureRect.new()
-    _overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    _overlay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-    _overlay.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-    _overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    add_child(_overlay)
     _veil = ColorRect.new()
     _veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     _veil.color = Color(0.02, 0.03, 0.06, 0.62)
@@ -91,8 +78,8 @@ func show_member(member: AstraCrewMember, animate: bool = true) -> void:
         return
     var changed := member.id != npc_id
     npc_id = member.id
-    _art.texture = AstraUI.texture(str(member.info.get("portrait", "")))
-    _overlay.texture = AstraUI.texture(str(EXPRESSION_OVERLAYS.get(member.expression, EXPRESSION_OVERLAYS["calm"])))
+
+    _art.texture = AstraUI.texture(AstraCrewCatalog.portrait_path(member.id, member.expression))
     _frame.add_theme_stylebox_override("panel", _frame_style(member.accent))
     _name.text = member.display_name
     _name.add_theme_color_override("font_color", member.accent)
