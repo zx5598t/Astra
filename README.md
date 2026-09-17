@@ -1,21 +1,19 @@
-# ASTRA 0.1.0 — FIRST VERTICAL SLICE
+# ASTRA 0.1.1 — CHARACTER PERFORMANCE
 
-AI-native social deduction RPG. 0.1.0은 지금까지 만든 추리·관계·노트북·투표 시스템을 하나의 작은 캠페인으로 묶는 첫 Vertical Slice입니다.
+AI-native social deduction RPG. 0.1.1은 0.1.0 Vertical Slice의 구조를 유지하면서 **캐릭터 존재감과 회의 연출, 화면·사운드 피드백**을 강화한 업데이트입니다.
 
-## 0.1.0 핵심
-- **INCIDENT ARCHIVE** 시작 화면 추가
-- Dead Air → Glass Garden → Echo Ward 순차 해금
-- 클리어한 사건은 자유롭게 재조사 가능
-- 사건별 완료 상태와 **최고 CASE THEORY 점수** 표시
-- 3가지 **Investigator Protocol** 추가
-  - ANALYST: 조사 행동력 +1
-  - EMPATH: 심문 행동력 +1, 초기 신뢰 소폭 상승
-  - AUDITOR: 사건 구조용 기본 기록 1개 확보
-- Archive Save v4: 사건별 최고 추리점수/평가 저장
-- 사건 종료 후 다음 해금 사건과 캠페인 진행도 표시
-- Vertical Slice 전용 CI: 해금 규칙 + 3개 사건 초기화 자동 검증
+## 0.1.1 핵심
+- 캐릭터 선택 시 초상화 **fade / scale-in** 연출
+- 초상화 위에 이름·직업·현재 감정 슬롯 표시
+- 심문 선택 후 `ALIBI RESPONSE`, `EVIDENCE REACTION`, `PRESSURE RESPONSE` 등 대화 큐 표시
+- 공개회의 진입 시 최대 4개 핵심 발언을 **Speaker Spotlight**로 순차 재생
+- 발언 / 반박 / 끼어들기를 서로 다른 meeting tag로 표시
+- BRIEFING / INVESTIGATION / INTERROGATION / MEETING / VOTE / RESULT 단계 전환 배너 추가
+- 사건별 시작 사운드와 선택·심문·단계 전환·완료 절차음 추가
+- 증거 발견 시 `EVIDENCE ACQUIRED` 연출 강화
+- 새 연출 전용 headless smoke test 추가
 
-## 현재 플레이 루프
+## Vertical Slice 플레이 루프
 INCIDENT ARCHIVE → Protocol 선택 → 브리핑 → 현장 조사 → 개인 심문 → 공개 회의 → Investigator Notebook → CASE THEORY 제출 → 격리 투표 → 최대 3 Day → 사건 결과/추리 평가 → 다음 Incident 해금
 
 ## 사건
@@ -25,6 +23,11 @@ INCIDENT ARCHIVE → Protocol 선택 → 브리핑 → 현장 조사 → 개인 
 
 각 사건의 Null 2명과 주요 증거 대상은 Seed에 따라 다시 배치됩니다.
 
+## Investigator Protocol
+- **ANALYST** — 조사 행동력 +1
+- **EMPATH** — 심문 행동력 +1, 초기 신뢰 소폭 상승
+- **AUDITOR** — 사건 구조용 기본 기록 1개 확보
+
 ## 실행
 1. Godot 4.7.2 stable 실행
 2. Project Manager에서 `project.godot` Import
@@ -33,4 +36,4 @@ INCIDENT ARCHIVE → Protocol 선택 → 브리핑 → 현장 조사 → 개인 
 
 AI 백엔드는 선택 사항입니다. 서버가 없어도 규칙 기반 fallback으로 전체 플레이 루프가 동작합니다.
 
-상세 설계: `docs/VERTICAL_SLICE_010.md`
+상세 설계: `docs/VERTICAL_SLICE_010.md`, `docs/PRESENTATION_011.md`
