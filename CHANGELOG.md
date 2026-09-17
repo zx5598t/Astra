@@ -1,5 +1,17 @@
 # ASTRA CHANGELOG
 
+## 0.1.0 — First Vertical Slice
+- Added INCIDENT ARCHIVE campaign-style title screen.
+- Added sequential incident unlocks: Dead Air → Glass Garden → Echo Ward.
+- Added replay access for cleared incidents.
+- Added per-case completion status and best CASE THEORY score display.
+- Added three Investigator Protocols: ANALYST, EMPATH, AUDITOR.
+- Upgraded Archive persistence to save v4 with per-case best theory records.
+- Added explicit post-case progression and next-incident guidance.
+- Added `docs/VERTICAL_SLICE_010.md`.
+- Added vertical-slice CI covering campaign unlock rules and initialization of all three incident templates.
+- Added `main_v010.gd` / `main_v010.tscn` as the 0.1.0 entry point.
+
 ## 0.0.9 — Case Analysis
 - Added two-suspect CASE THEORY submission before each isolation vote.
 - Added final deduction grading (0–100) and S/A/B/C/Fragmented labels.
