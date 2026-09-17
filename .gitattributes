@@ -1,0 +1,9 @@
+# Keep Godot sources on LF everywhere; Windows launchers stay CRLF.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.ogg binary
+*.wav binary
+*.ttf binary
+*.otf binary
