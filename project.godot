@@ -1,10 +1,10 @@
-; ASTRA 0.1.0 — First Vertical Slice / Incident Archive / Investigator Protocols
+; ASTRA 0.1.1 — Character Performance / Meeting Spotlight / Presentation Feedback
 config_version=5
 
 [application]
 config/name="ASTRA"
-config/description="AI-native social deduction RPG — first vertical slice v0.1.0"
-run/main_scene="res://scenes/main_v010.tscn"
+config/description="AI-native social deduction RPG — character performance pass v0.1.1"
+run/main_scene="res://scenes/main_v011.tscn"
 config/features=PackedStringArray("4.3")
 
 [display]
