@@ -48,6 +48,8 @@ jobs:
             scripts/interactive_notebook_board.gd \
             scripts/environment_backdrop.gd \
             scripts/feedback_fx.gd \
+            scripts/character_presentation.gd \
+            scripts/meeting_cinematic.gd \
             scripts/case_theory_model.gd \
             scripts/case_theory_panel.gd \
             scripts/incident_stage.gd \
@@ -58,7 +60,8 @@ jobs:
             scripts/main_v007.gd \
             scripts/main_v008.gd \
             scripts/main_v009.gd \
-            scripts/main_v010.gd; do
+            scripts/main_v010.gd \
+            scripts/main_v011.gd; do
             echo "===== CHECK $f ====="
             log="check-$(basename "$f").log"
             set +e
@@ -91,6 +94,15 @@ jobs:
             exit 1
           fi
           grep -q "ASTRA 0.1.0 VERTICAL SLICE CI OK" vertical.log
+
+      - name: Run 0.1.1 presentation smoke test
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://scripts/ci_presentation.gd 2>&1 | tee presentation.log
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" presentation.log; then
+            exit 1
+          fi
+          grep -q "ASTRA 0.1.1 PRESENTATION CI OK" presentation.log
 
       - name: Boot main scene headlessly
         run: |
