@@ -1,22 +1,36 @@
-# ASTRA 0.0.9 — CASE ANALYSIS
+# ASTRA 0.1.0 — FIRST VERTICAL SLICE
 
-AI-native social deduction RPG 프로토타입. 0.0.9는 플레이어의 추리를 실제 제출/평가 시스템으로 전환하는 버전입니다.
+AI-native social deduction RPG. 0.1.0은 지금까지 만든 추리·관계·노트북·투표 시스템을 하나의 작은 캠페인으로 묶는 첫 Vertical Slice입니다.
 
-## 핵심 변경
-- 매 Day 투표 전 **CASE THEORY** 제출
-- 두 명의 용의자 + 확신도 기록
-- 사건 종료 후 **추리 정확도 100점 평가 / 등급**
-- 투표와 추리 가설을 별도 기록해 단순 다수결 게임에서 분리
-- Dead Air / Glass Garden / Echo Ward에 **Incident Stage** 연출 추가
-- 피해자 / 봉쇄 상태 / 조사 구역 / 목표를 시각 카드로 표시
-- 8명 개인 이벤트를 **3지선다 Private Scene**으로 확장
-- Archive 저장 v3: 이론 제출 수 / 완전 적중 수 / 최고 추리점수 보존
-- CI smoke test: 상태 생성 → 조사 → 가설 제출까지 자동 검사
+## 0.1.0 핵심
+- **INCIDENT ARCHIVE** 시작 화면 추가
+- Dead Air → Glass Garden → Echo Ward 순차 해금
+- 클리어한 사건은 자유롭게 재조사 가능
+- 사건별 완료 상태와 **최고 CASE THEORY 점수** 표시
+- 3가지 **Investigator Protocol** 추가
+  - ANALYST: 조사 행동력 +1
+  - EMPATH: 심문 행동력 +1, 초기 신뢰 소폭 상승
+  - AUDITOR: 사건 구조용 기본 기록 1개 확보
+- Archive Save v4: 사건별 최고 추리점수/평가 저장
+- 사건 종료 후 다음 해금 사건과 캠페인 진행도 표시
+- Vertical Slice 전용 CI: 해금 규칙 + 3개 사건 초기화 자동 검증
 
 ## 현재 플레이 루프
-브리핑 → 현장 조사 → 개인 심문 → 공개 회의 → 추리 보드 → CASE THEORY 제출 → 격리 투표 → 최대 3 Day → 사건 결과 + 추리 평가
+INCIDENT ARCHIVE → Protocol 선택 → 브리핑 → 현장 조사 → 개인 심문 → 공개 회의 → Investigator Notebook → CASE THEORY 제출 → 격리 투표 → 최대 3 Day → 사건 결과/추리 평가 → 다음 Incident 해금
+
+## 사건
+1. INCIDENT ZERO · DEAD AIR — 처음부터 플레이 가능
+2. INCIDENT ONE · GLASS GARDEN — Dead Air 완료 후 해금
+3. INCIDENT TWO · ECHO WARD — Glass Garden 완료 후 해금
+
+각 사건의 Null 2명과 주요 증거 대상은 Seed에 따라 다시 배치됩니다.
 
 ## 실행
-Godot 4.7.2 stable 권장. `project.godot` Import 후 F5.
+1. Godot 4.7.2 stable 실행
+2. Project Manager에서 `project.godot` Import
+3. Import & Edit
+4. F5 또는 우측 상단 ▶ Run Project
 
-AI 백엔드 없이도 전체 게임은 규칙 기반 fallback으로 플레이 가능합니다.
+AI 백엔드는 선택 사항입니다. 서버가 없어도 규칙 기반 fallback으로 전체 플레이 루프가 동작합니다.
+
+상세 설계: `docs/VERTICAL_SLICE_010.md`
