@@ -13,6 +13,11 @@ var _npcs: Dictionary = {}
 var _index: int = 0
 
 func _ready() -> void:
+    _ensure_ui()
+
+func _ensure_ui() -> void:
+    if _panel != null and is_instance_valid(_panel):
+        return
     layer = 75
     _root = Control.new()
     _root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -63,6 +68,7 @@ func _ready() -> void:
     add_child(_timer)
 
 func play(events: Array, npcs: Dictionary, max_events: int = 4) -> void:
+    _ensure_ui()
     _events.clear()
     _npcs = npcs
     var count := mini(max_events, events.size())
@@ -75,9 +81,11 @@ func play(events: Array, npcs: Dictionary, max_events: int = 4) -> void:
     _index = 0
     _panel.visible = true
     _show_current()
-    _timer.start()
+    if is_inside_tree():
+        _timer.start()
 
 func stop() -> void:
+    _ensure_ui()
     if _timer != null:
         _timer.stop()
     if _panel != null:
@@ -129,13 +137,20 @@ func _show_current() -> void:
 
     _panel.modulate.a = 0.0
     _panel.position.x = 18.0
-    var tween := _panel.create_tween()
-    tween.set_parallel(true)
-    tween.tween_property(_panel, "modulate:a", 1.0, 0.10)
-    tween.tween_property(_panel, "position:x", 0.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+    if is_inside_tree():
+        var tween := _panel.create_tween()
+        tween.set_parallel(true)
+        tween.tween_property(_panel, "modulate:a", 1.0, 0.10)
+        tween.tween_property(_panel, "position:x", 0.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+    else:
+        _panel.modulate.a = 1.0
+        _panel.position.x = 0.0
 
 func _fade_out() -> void:
     if _panel == null:
+        return
+    if not is_inside_tree():
+        _panel.visible = false
         return
     var tween := _panel.create_tween()
     tween.tween_property(_panel, "modulate:a", 0.0, 0.22)
