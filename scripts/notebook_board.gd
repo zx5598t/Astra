@@ -28,23 +28,40 @@ func _rebuild_nodes() -> void:
     _claim_nodes.clear()
     if state == null:
         return
+
     var ev_index := 0
     for edge in state.notebook_edges:
-        _evidence_nodes.append({"id":str(edge.get("evidence_id", "")), "label":str(edge.get("name", "Evidence")), "pos":Vector2(145, 105 + ev_index * 52), "signal":str(edge.get("signal", "context")), "target_id":str(edge.get("target_id", ""))})
+        _evidence_nodes.append({
+            "id":str(edge.get("evidence_id", "")),
+            "label":str(edge.get("name", "Evidence")),
+            "pos":Vector2(145, 105 + ev_index * 52),
+            "signal":str(edge.get("signal", "context")),
+            "target_id":str(edge.get("target_id", ""))
+        })
         ev_index += 1
+
     var crew_index := 0
     for npc_id in state.crew_order:
         var npc: NPCState = state.npcs[npc_id]
         if not npc.alive:
             continue
-        _crew_nodes.append({"id":npc_id, "label":npc.display_name, "pos":Vector2(710, 88 + crew_index * 50)})
+        _crew_nodes.append({
+            "id":npc_id,
+            "label":npc.display_name,
+            "pos":Vector2(710, 88 + crew_index * 50)
+        })
         crew_index += 1
+
     var start := maxi(0, state.claim_register.size() - 4)
     var claim_index := 0
     for i in range(start, state.claim_register.size()):
         var claim: Dictionary = state.claim_register[i]
         var npc_id := str(claim.get("npc_id", ""))
-        _claim_nodes.append({"npc_id":npc_id, "label":"D%d %s" % [int(claim.get("day", 1)), _name_for(npc_id)], "pos":Vector2(430, 340 + claim_index * 42)})
+        _claim_nodes.append({
+            "npc_id":npc_id,
+            "label":"D%d %s" % [int(claim.get("day", 1)), _name_for(npc_id)],
+            "pos":Vector2(430, 340 + claim_index * 42)
+        })
         claim_index += 1
 
 func _draw() -> void:
@@ -57,10 +74,12 @@ func _draw() -> void:
         if target_id != "":
             var crew_pos := _crew_position(target_id)
             if crew_pos != Vector2.ZERO:
-                var signal := str(ev.get("signal", "context"))
+                var evidence_signal := str(ev.get("signal", "context"))
                 var line_color := gold
-                if signal == "implicates": line_color = red
-                elif signal == "clears": line_color = green
+                if evidence_signal == "implicates":
+                    line_color = red
+                elif evidence_signal == "clears":
+                    line_color = green
                 draw_line(Vector2(ev["pos"]) + Vector2(112, 0), crew_pos - Vector2(48, 0), line_color, 2.0, true)
 
     if state != null:
