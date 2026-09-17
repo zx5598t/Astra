@@ -43,6 +43,7 @@ jobs:
             scripts/random_case_game_state.gd \
             scripts/progression_game_state.gd \
             scripts/hypothesis_game_state.gd \
+            scripts/meta_progress.gd \
             scripts/notebook_board.gd \
             scripts/interactive_notebook_board.gd \
             scripts/environment_backdrop.gd \
@@ -56,7 +57,8 @@ jobs:
             scripts/main_v006.gd \
             scripts/main_v007.gd \
             scripts/main_v008.gd \
-            scripts/main_v009.gd; do
+            scripts/main_v009.gd \
+            scripts/main_v010.gd; do
             echo "===== CHECK $f ====="
             log="check-$(basename "$f").log"
             set +e
@@ -80,6 +82,15 @@ jobs:
             exit 1
           fi
           grep -q "ASTRA CI SMOKE OK" smoke.log
+
+      - name: Run 0.1.0 vertical slice smoke test
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://scripts/ci_vertical_slice.gd 2>&1 | tee vertical.log
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" vertical.log; then
+            exit 1
+          fi
+          grep -q "ASTRA 0.1.0 VERTICAL SLICE CI OK" vertical.log
 
       - name: Boot main scene headlessly
         run: |
