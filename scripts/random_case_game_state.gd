@@ -57,7 +57,7 @@ func _assign_random_roles() -> void:
         npc.alive = true
 
     var pool: Array[String] = crew_order.duplicate()
-    for i in range(2):
+    for _i in range(2):
         var index := truth.rng.randi_range(0, pool.size() - 1)
         var chosen := pool[index]
         pool.remove_at(index)
@@ -71,6 +71,7 @@ func _assign_random_roles() -> void:
         var second_index := truth.rng.randi_range(0, pool.size() - 1)
         var second_decoy := pool[second_index]
         decoy_ids = [first_decoy, second_decoy]
+
     truth.incident["null_ids"] = hidden_null_ids.duplicate()
 
 func _select_case() -> void:
@@ -78,6 +79,7 @@ func _select_case() -> void:
         case_id = preferred_case_id
     else:
         case_id = CASE_IDS[truth.rng.randi_range(0, CASE_IDS.size() - 1)]
+
     if case_id == "GLASS_GARDEN":
         case_title = "INCIDENT ONE"
         case_subtitle = "Glass Garden"
@@ -88,6 +90,9 @@ func _select_case() -> void:
         case_theme = "통신 두절과 전력 우회"
 
 func _configure_case_truth() -> void:
+    if hidden_null_ids.size() < 2 or decoy_ids.size() < 2:
+        return
+
     var n1 := hidden_null_ids[0]
     var n2 := hidden_null_ids[1]
     var d1 := decoy_ids[0]
@@ -119,7 +124,9 @@ func _configure_case_truth() -> void:
             "EV_08": {"name":"보안허브 출입 인증", "fact_ref":"FACT_008", "location":"보안허브", "rarity":"COMMON", "signal":"clears", "target_id":d2}
         }
         truth.incident = {
-            "title":case_title, "subtitle":case_subtitle, "victim":"Researcher Orin",
+            "title":case_title,
+            "subtitle":case_subtitle,
+            "victim":"Researcher Orin",
             "locations":["수목구역","의료실","정수실","보안허브"],
             "null_ids":hidden_null_ids.duplicate(),
             "objective":"오염 사고를 만든 두 개의 조작 경로를 추적해 Null 침투자를 격리하라.",
@@ -147,7 +154,9 @@ func _configure_case_truth() -> void:
             "EV_08": {"name":"수목구역 출입 인증", "fact_ref":"FACT_008", "location":"수목구역", "rarity":"COMMON", "signal":"clears", "target_id":d2}
         }
         truth.incident = {
-            "title":case_title, "subtitle":case_subtitle, "victim":"Captain Ives",
+            "title":case_title,
+            "subtitle":case_subtitle,
+            "victim":"Captain Ives",
             "locations":["의료실","엔진실","통신실","수목구역"],
             "null_ids":hidden_null_ids.duplicate(),
             "objective":"통신과 전력의 두 조작 경로를 연결해 Null 침투자를 격리하라.",
@@ -158,6 +167,7 @@ func _reset_dynamic_knowledge() -> void:
     for npc_id in crew_order:
         var npc: NPCState = npcs[npc_id]
         npc.knowledge.clear()
+
     for fact_id in truth.facts.keys():
         var fact: Dictionary = truth.facts[fact_id]
         for npc_id in fact.get("known_by", []):
@@ -169,8 +179,9 @@ func _propagate_evidence(fact_ref: String) -> void:
     var ev_id := _evidence_id_for_fact(fact_ref)
     if ev_id == "":
         return
+
     var ev: Dictionary = truth.evidence[ev_id]
-    var signal := str(ev.get("signal", "context"))
+    var evidence_signal := str(ev.get("signal", "context"))
     var target_id := str(ev.get("target_id", ""))
     var target_name := ""
     if target_id in npcs:
@@ -184,19 +195,19 @@ func _propagate_evidence(fact_ref: String) -> void:
             observer.adjust_stress(0.025)
         if target_id == "" or target_id == observer.id:
             continue
-        if signal == "implicates":
+        if evidence_signal == "implicates":
             observer.set_suspicion(target_id, observer.get_suspicion(target_id) + 0.15)
-        elif signal == "clears":
+        elif evidence_signal == "clears":
             observer.set_suspicion(target_id, observer.get_suspicion(target_id) - 0.13)
 
     if target_id in npcs:
         var target: NPCState = npcs[target_id]
-        if signal == "implicates":
+        if evidence_signal == "implicates":
             target.adjust_stress(0.07)
-        elif signal == "clears":
+        elif evidence_signal == "clears":
             target.adjust_stress(-0.025)
 
-    _register_notebook_edge(ev_id, signal, target_id, target_name)
+    _register_notebook_edge(ev_id, evidence_signal, target_id, target_name)
     _scan_all_contradictions()
 
 func _evidence_id_for_fact(fact_ref: String) -> String:
@@ -205,13 +216,14 @@ func _evidence_id_for_fact(fact_ref: String) -> String:
             return str(ev_id)
     return ""
 
-func _register_notebook_edge(ev_id: String, signal: String, target_id: String, target_name: String) -> void:
+func _register_notebook_edge(ev_id: String, evidence_signal: String, target_id: String, target_name: String) -> void:
     for edge in notebook_edges:
         if str(edge.get("evidence_id", "")) == ev_id:
             return
+
     notebook_edges.append({
         "evidence_id":ev_id,
-        "signal":signal,
+        "signal":evidence_signal,
         "target_id":target_id,
         "target_name":target_name,
         "name":truth.evidence_name(ev_id),
@@ -231,26 +243,30 @@ func _generate_rule_based_response(npc: NPCState, intent: String) -> String:
     if intent == "EVIDENCE":
         if discovered_evidence.is_empty():
             return "보여줄 증거가 아직 없어. 기록을 먼저 확보해줘."
+
         var ev_id := discovered_evidence[-1]
         var ev: Dictionary = truth.evidence.get(ev_id, {})
         var target_id := str(ev.get("target_id", ""))
-        var signal := str(ev.get("signal", "context"))
+        var evidence_signal := str(ev.get("signal", "context"))
         var fact_ref := str(ev.get("fact_ref", ""))
+
         if target_id == npc.id:
-            if signal == "implicates":
+            if evidence_signal == "implicates":
                 npc.adjust_stress(0.10)
                 npc.adjust_trust(-0.035)
                 if npc.role == "NULL":
                     return "그 기록이 내 계정이나 장비를 가리키는 건 알아. 하지만 사용자가 나였다는 건 아직 증명되지 않았어."
                 return "내 기록이 걸린 건 인정해. 그래도 내가 그 조작을 했다는 결론과는 달라. 시간대를 더 확인해줘."
-            if signal == "clears":
+            if evidence_signal == "clears":
                 npc.adjust_trust(0.035)
                 return "그 기록이면 적어도 그 시간의 내 위치는 확인되는 거네. 다른 단서와 같이 봐줘."
-        if signal == "context":
+
+        if evidence_signal == "context":
             return "그건 사건 구조를 설명하는 기록이야. 누군가를 바로 지목하기보다는 다른 증거와 연결해야 해."
         if npc.knows_fact(fact_ref):
             return "그 기록은 나도 알고 있어. 대상이 누구든 다른 시간대와 같이 확인해야 해."
         return "처음 보는 기록이야. 회의에서 공개하고 반응을 비교하는 게 좋겠어."
+
     return super._generate_rule_based_response(npc, intent)
 
 func _alibi_for(npc_id: String) -> String:
@@ -278,6 +294,7 @@ func _scan_contradictions_for(npc_id: String) -> void:
             has_claim = true
             claim_text = str(claim.get("text", ""))
             break
+
     if not has_claim:
         return
 
@@ -287,12 +304,14 @@ func _scan_contradictions_for(npc_id: String) -> void:
             continue
         if str(ev.get("signal", "")) != "implicates" or not bool(ev.get("contradicts_alibi", false)):
             continue
+
         var key := "%s:%s" % [npc_id, ev_id]
         var exists := false
         for item in contradiction_register:
             if str(item.get("key", "")) == key:
                 exists = true
                 break
+
         if not exists:
             contradiction_register.append({
                 "key":key,
@@ -307,14 +326,17 @@ func notebook_report_bbcode() -> String:
     var out := "[font_size=28][color=#55d6ff]INVESTIGATOR NOTEBOOK[/color][/font_size]\n"
     out += "[color=#8ea5c5]%s · DAY %d · 발견 증거 %d/8[/color]\n\n" % [case_subtitle, day, discovered_evidence.size()]
     out += "[font_size=20][color=#ffd36a]EVIDENCE LINKS[/color][/font_size]\n"
+
     if notebook_edges.is_empty():
         out += "아직 연결된 증거가 없다.\n"
     else:
         for edge in notebook_edges:
-            var signal := str(edge.get("signal", "context"))
+            var evidence_signal := str(edge.get("signal", "context"))
             var arrow := "→ 사건 구조"
-            if signal == "implicates": arrow = "→ 의심 강화 → %s" % str(edge.get("target_name", ""))
-            elif signal == "clears": arrow = "→ 알리바이 지지 → %s" % str(edge.get("target_name", ""))
+            if evidence_signal == "implicates":
+                arrow = "→ 의심 강화 → %s" % str(edge.get("target_name", ""))
+            elif evidence_signal == "clears":
+                arrow = "→ 알리바이 지지 → %s" % str(edge.get("target_name", ""))
             out += "• [b]%s[/b] %s\n" % [str(edge.get("name", "")), arrow]
 
     out += "\n[font_size=20][color=#ff9ed1]CLAIMS[/color][/font_size]\n"
@@ -325,9 +347,10 @@ func notebook_report_bbcode() -> String:
         for i in range(start, claim_register.size()):
             var claim: Dictionary = claim_register[i]
             var npc_id := str(claim.get("npc_id", ""))
-            var name := npc_id
-            if npc_id in npcs: name = npcs[npc_id].display_name
-            out += "• D%d [b]%s[/b] · %s\n" % [int(claim.get("day", 1)), name, _short_quote(str(claim.get("text", "")))]
+            var display_name := npc_id
+            if npc_id in npcs:
+                display_name = npcs[npc_id].display_name
+            out += "• D%d [b]%s[/b] · %s\n" % [int(claim.get("day", 1)), display_name, _short_quote(str(claim.get("text", "")))]
 
     out += "\n[font_size=20][color=#ff6f7f]CONTRADICTION CANDIDATES[/color][/font_size]\n"
     if contradiction_register.is_empty():
@@ -335,9 +358,10 @@ func notebook_report_bbcode() -> String:
     else:
         for item in contradiction_register:
             var npc_id := str(item.get("npc_id", ""))
-            var name := npc_id
-            if npc_id in npcs: name = npcs[npc_id].display_name
-            out += "• [b]%s[/b] 알리바이 ↔ [color=#ffd36a]%s[/color]\n" % [name, str(item.get("evidence", ""))]
+            var display_name := npc_id
+            if npc_id in npcs:
+                display_name = npcs[npc_id].display_name
+            out += "• [b]%s[/b] 알리바이 ↔ [color=#ffd36a]%s[/color]\n" % [display_name, str(item.get("evidence", ""))]
 
     out += "\n[color=#8ea5c5]NOTE · 노트북의 연결은 발견한 증거와 실제 발언만 표시하며, 숨겨진 역할 자체는 공개하지 않는다.[/color]"
     return out
@@ -345,13 +369,16 @@ func notebook_report_bbcode() -> String:
 func apply_meeting_ai(event_index: int, action: Dictionary) -> void:
     if event_index < 0 or event_index >= meeting_events.size():
         return
+
     var event: Dictionary = meeting_events[event_index]
     var speaker_id := str(event.get("speaker", ""))
     if speaker_id == "" or speaker_id not in npcs or not npcs[speaker_id].alive:
         return
+
     var utterance := str(action.get("utterance", ""))
     if utterance == "":
         return
+
     meeting_events[event_index]["text"] = utterance
     meeting_events[event_index]["ai_performed"] = true
     display_emotions[speaker_id] = str(action.get("display_emotion", expression_for(speaker_id)))
