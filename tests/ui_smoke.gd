@@ -31,9 +31,23 @@ func _run() -> void:
     await _wait(5)
     _expect(app._current is AstraTitleScreen, "title screen shown")
 
+    app.start_case("DEAD_AIR", "ANALYST")
+    app.session.advance()
+    app.session.perform_mission()
+    await _wait(3)
+    var saved_seed: int = app.session.seed_value
+    var saved_ap: int = app.session.investigation_ap
+    app.show_title()
+    await _wait(3)
+    app.resume_case()
+    await _wait(3)
+    _expect(app.session.seed_value == saved_seed and app.session.investigation_ap == saved_ap, "resume exact case and AP")
+    _expect(bool(app.session.flags.get("mission_complete", false)), "resume mission result")
     for case_id in AstraCaseCatalog.CAMPAIGN:
         app.meta.case_counts[case_id] = 1
-    var plan := [["DEAD_AIR", "ANALYST"], ["GLASS_GARDEN", "EMPATH"], ["ECHO_WARD", "AUDITOR"]]
+    var plan := []
+    for case_id in AstraCaseCatalog.CAMPAIGN:
+        plan.append([case_id, "ANALYST"])
     for item in plan:
         await _play_case(str(item[0]), str(item[1]))
 
@@ -49,6 +63,7 @@ func _run() -> void:
     await _wait(4)
     _expect(app._current is AstraTitleScreen, "returned to title")
 
+    AstraGameSession.delete_snapshot(app.snapshot_path())
     DirAccess.remove_absolute(ProjectSettings.globalize_path(META_PATH))
     DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
     if failures.is_empty():
@@ -69,6 +84,8 @@ func _play_case(case_id: String, protocol: String) -> void:
         var view = screen._view
         match s.phase:
             "INVESTIGATION":
+                view._perform_mission()
+                await _wait(1)
                 for room_id in s.room_ids():
                     if s.investigation_ap > 0:
                         view._search(str(room_id))

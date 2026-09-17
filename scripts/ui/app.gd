@@ -2,7 +2,7 @@ extends Control
 
 # Application root: background, screen routing, overlays and persistence.
 
-const VERSION_FALLBACK := "0.2.0"
+const VERSION_FALLBACK := "0.3.0"
 
 var meta := AstraMetaProgress.new()
 var settings := AstraSettings.new()
@@ -60,8 +60,6 @@ func _ready() -> void:
     ai_client.action_received.connect(_on_ai_action)
 
     show_title()
-    if meta.total_cases_completed == 0 and not _first_run_seen():
-        _first_run_prompt.call_deferred()
 
 func version_text() -> String:
     var file := FileAccess.open("res://VERSION", FileAccess.READ)
@@ -89,6 +87,7 @@ func _set_screen(node: Control) -> void:
     AstraUI.fade_in(node, 0.25)
 
 func show_title() -> void:
+    _save_session()
     session = null
     var title := AstraTitleScreen.new()
     _set_screen(title)
@@ -102,14 +101,42 @@ func start_case(case_id: String, protocol: String) -> void:
     session = AstraGameSession.new()
     var seed_value := int(Time.get_unix_time_from_system() * 1000.0) % 2147483
     session.setup(case_id, seed_value, protocol)
+    _connect_autosave()
+    var screen := AstraGameScreen.new()
+    _set_screen(screen)
+    screen.setup(self, session, fx)
+
+func snapshot_path() -> String:
+    return meta.save_path + ".session"
+
+func _connect_autosave() -> void:
+    session.changed.connect(_save_session, CONNECT_DEFERRED)
+    _save_session()
+
+func _save_session() -> void:
+    if session != null and session.phase != "RESULT":
+        if not session.save_snapshot(snapshot_path()):
+            fx.toast("진행 저장에 실패했습니다. 저장 폴더의 여유 공간을 확인하세요.", AstraUI.RED)
+
+func resume_case() -> void:
+    var restored := AstraGameSession.new()
+    if not restored.load_snapshot(snapshot_path()):
+        fx.toast("진행 기록을 불러올 수 없습니다. 새 사건을 시작하세요.", AstraUI.RED)
+        return
+    session = restored
+    selected_protocol = session.protocol
+    _connect_autosave()
     var screen := AstraGameScreen.new()
     _set_screen(screen)
     screen.setup(self, session, fx)
 
 func record_result(finished: AstraGameSession) -> Dictionary:
-    return meta.record_case_result(finished.case_id, finished.protocol, finished.final_report, true)
+    var result := meta.record_case_result(finished.case_id, finished.protocol, finished.final_report, true)
+    AstraGameSession.delete_snapshot(snapshot_path())
+    return result
 
 func quit_game() -> void:
+    _save_session()
     get_tree().quit()
 
 # ---------------------------------------------------------------- overlays
@@ -183,6 +210,7 @@ func _confirm_reset() -> void:
     var body := AstraUI.label("해금한 사건, 최고 기록, 통찰이 모두 지워집니다. 되돌릴 수 없습니다.", 16, AstraUI.TEXT, true)
     var handler := func(choice: int) -> void:
         if choice == 1:
+            AstraGameSession.delete_snapshot(snapshot_path())
             meta.reset()
             meta.save_data()
             fx.toast("조사 기록을 초기화했습니다.", AstraUI.RED)
@@ -211,7 +239,7 @@ func show_pause_menu() -> void:
                 action.call()
         )
         box.add_child(button)
-    box.add_child(AstraUI.label("진행 중인 사건은 저장되지 않습니다. 아카이브에는 끝까지 조사한 사건만 기록됩니다.", 12, AstraUI.DIM, true))
+    box.add_child(AstraUI.label("진행 상황은 행동할 때마다 자동 저장됩니다. 타이틀의 ‘계속하기’로 돌아올 수 있습니다.", 12, AstraUI.DIM, true))
     modal_holder.append(AstraModal.open(_overlay_root, "일시 정지", box, [], Callable(), 420.0))
 
 func _slider_row(title: String, value: float, min_value: float, max_value: float, step: float, on_change: Callable) -> Control:
@@ -262,6 +290,14 @@ func _first_run_prompt() -> void:
     AstraModal.open(_overlay_root, "관측자 프로그램에 오신 것을 환영합니다", body, [["바로 시작", AstraUI.MUTED], ["플레이 방법 보기", AstraUI.CYAN]], handler, 600.0)
 
 # ---------------------------------------------------------------- input
+
+func _input(event: InputEvent) -> void:
+    # Space always advances the case, even after a button was clicked.
+    # Enter remains the standard keyboard activation for a focused button.
+    if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE:
+        if _current is AstraGameScreen and not modal_open():
+            _current.handle_hotkey(event)
+            get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
     if not (event is InputEventKey) or not event.pressed or event.echo:

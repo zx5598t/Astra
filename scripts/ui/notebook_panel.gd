@@ -9,6 +9,7 @@ var tabs: TabContainer
 var _clue_list: VBoxContainer
 var _notes: VBoxContainer
 var _log: RichTextLabel
+var _objectives: VBoxContainer
 var _last_clue_count: int = -1
 
 func setup(game_session: AstraGameSession) -> void:
@@ -20,7 +21,11 @@ func setup(game_session: AstraGameSession) -> void:
     tabs.add_theme_color_override("font_selected_color", AstraUI.CYAN)
     tabs.add_theme_color_override("font_unselected_color", AstraUI.MUTED)
     tabs.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-    add_child(tabs)
+    var layout := AstraUI.vbox(10)
+    add_child(layout)
+    _objectives = AstraUI.vbox(5)
+    layout.add_child(_objectives)
+    layout.add_child(tabs)
 
     _clue_list = AstraUI.vbox(8)
     var clue_scroll := AstraUI.scroll(_clue_list)
@@ -42,6 +47,15 @@ func setup(game_session: AstraGameSession) -> void:
 func refresh() -> void:
     if session == null:
         return
+    AstraUI.clear(_objectives)
+    _objectives.add_child(AstraUI.section("조사 목표"))
+    for objective in session.objectives():
+        var complete := bool(objective.get("complete", false))
+        var row := AstraUI.hbox(6)
+        row.add_child(AstraUI.label("✓" if complete else "○", 13, AstraUI.GREEN if complete else AstraUI.DIM))
+        row.add_child(AstraUI.label(str(objective.get("label", "")), 12, AstraUI.MUTED, true))
+        row.add_child(AstraUI.label("%d/%d" % [int(objective.get("current", 0)), int(objective.get("target", 1))], 12, AstraUI.GREEN if complete else AstraUI.GOLD))
+        _objectives.add_child(row)
     var found := session.found_clues()
     tabs.set_tab_title(0, "단서 %d" % found.size())
     tabs.set_tab_title(1, "추리 노트%s" % (" ⚠%d" % session.contradictions.size() if not session.contradictions.is_empty() else ""))
@@ -132,7 +146,7 @@ func _build_trace_grid(op: Dictionary) -> void:
         if str(clue.get("kind", "")) in ["trace", "sighting", "night", "slip", "planted"]:
             columns.append(clue)
     var title := "%s 흔적 교차 · %s %s" % [str(op.get("name", "")), session.room_name(str(op.get("room", ""))), AstraCaseCatalog.format_time(int(op.get("minute", 0)), int(op.get("second", 0)))]
-    _notes.add_child(AstraUI.section(title, AstraUI.GOLD))
+    _notes.add_child(AstraUI.label(title, 13, AstraUI.GOLD, true))
     if columns.is_empty():
         _notes.add_child(AstraUI.label("이 조작과 연결된 흔적이 아직 없습니다.", 12, AstraUI.DIM))
         return

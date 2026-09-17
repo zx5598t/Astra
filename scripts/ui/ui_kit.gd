@@ -4,16 +4,16 @@ extends RefCounted
 # Shared palette and widget factories. Every screen builds its controls here
 # so spacing, colors and button states stay consistent.
 
-const BG := Color("050b16")
-const PANEL := Color("0b1627")
-const PANEL_2 := Color("0f1d33")
-const PANEL_3 := Color("16284a")
-const BORDER := Color("223757")
-const BORDER_HI := Color("35547f")
-const TEXT := Color("e8f1ff")
-const MUTED := Color("93a8c6")
-const DIM := Color("5d7292")
-const CYAN := Color("55d6ff")
+const BG := Color("080d16")
+const PANEL := Color("101b2a")
+const PANEL_2 := Color("162333")
+const PANEL_3 := Color("20334a")
+const BORDER := Color("293d52")
+const BORDER_HI := Color("527087")
+const TEXT := Color("edf3f5")
+const MUTED := Color("a3b5c6")
+const DIM := Color("7e94aa")
+const CYAN := Color("80e4db")
 const GREEN := Color("5ee3a0")
 const RED := Color("ff6f7f")
 const GOLD := Color("ffd36a")
@@ -69,7 +69,7 @@ static func rich(size: int = 16, fit: bool = true) -> RichTextLabel:
 static func button(text: String, accent: Color = CYAN, size: int = 16, min_height: int = 44, filled: bool = false) -> Button:
     var node := Button.new()
     node.text = text
-    node.focus_mode = Control.FOCUS_NONE
+    node.focus_mode = Control.FOCUS_ALL
     node.custom_minimum_size = Vector2(0, min_height)
     node.add_theme_font_size_override("font_size", size)
     node.add_theme_color_override("font_color", TEXT)
@@ -92,7 +92,8 @@ static func button(text: String, accent: Color = CYAN, size: int = 16, min_heigh
     node.add_theme_stylebox_override("hover", hover)
     node.add_theme_stylebox_override("pressed", pressed)
     node.add_theme_stylebox_override("disabled", disabled)
-    node.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+    var focus := style(Color.TRANSPARENT, Color.WHITE, 8, 2, 0)
+    node.add_theme_stylebox_override("focus", focus)
     node.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
     return node
 
@@ -173,6 +174,13 @@ static func section(title: String, color: Color = CYAN) -> Label:
     return node
 
 static func texture(path: String) -> Texture2D:
+    # All legacy callers (roster, discussion, result and portrait) share the
+    # production artwork, while the old vector art remains a safe fallback.
+    if path.begins_with("res://assets/portraits/") and path.ends_with(".svg"):
+        var id := path.get_file().get_basename().replace("_warm", "").replace("_tense", "")
+        var art_path := "res://assets/portraits/" + id + "_portrait.tres"
+        if ResourceLoader.exists(art_path):
+            return load(art_path)
     if path != "" and ResourceLoader.exists(path):
         return load(path)
     return null

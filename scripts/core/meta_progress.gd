@@ -2,11 +2,11 @@ class_name AstraMetaProgress
 extends RefCounted
 
 # Persistent archive: campaign unlocks, per-case records, lifetime stats.
-# Save v5 keeps every v4 key, so older archives load without loss.
+# Save v6 keeps every v4/v5 key, so older archives load without loss.
 
 const DEFAULT_SAVE_PATH := "user://astra_meta.cfg"
-const SAVE_VERSION := 5
-const CAMPAIGN_CASES := ["DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD"]
+const SAVE_VERSION := 6
+const CAMPAIGN_CASES := AstraCaseCatalog.CAMPAIGN
 const RANK_ORDER := ["D", "C", "B", "A", "S"]
 
 var save_path: String = DEFAULT_SAVE_PATH
@@ -27,6 +27,8 @@ var last_case_id: String = ""
 var last_protocol: String = "ANALYST"
 var relationship_events_seen: Array[String] = []
 var personal_event_choices: Dictionary = {}
+var mission_badges: Dictionary = {}
+var chapter_challenges: Dictionary = {}
 
 func _init(path: String = DEFAULT_SAVE_PATH) -> void:
     save_path = path
@@ -51,6 +53,8 @@ func load_data() -> void:
     last_case_id = str(cfg.get_value("progress", "last_case_id", ""))
     last_protocol = str(cfg.get_value("progress", "last_protocol", "ANALYST"))
     personal_event_choices = _dict(cfg.get_value("progress", "personal_event_choices", {}))
+    mission_badges = _dict(cfg.get_value("progress", "mission_badges", {}))
+    chapter_challenges = _dict(cfg.get_value("progress", "chapter_challenges", {}))
     relationship_events_seen.clear()
     for item in cfg.get_value("progress", "relationship_events_seen", []):
         relationship_events_seen.append(str(item))
@@ -75,6 +79,8 @@ func save_data() -> bool:
     cfg.set_value("progress", "last_protocol", last_protocol)
     cfg.set_value("progress", "relationship_events_seen", relationship_events_seen)
     cfg.set_value("progress", "personal_event_choices", personal_event_choices)
+    cfg.set_value("progress", "mission_badges", mission_badges)
+    cfg.set_value("progress", "chapter_challenges", chapter_challenges)
     return cfg.save(save_path) == OK
 
 func reset() -> void:
@@ -94,6 +100,8 @@ func reset() -> void:
     last_case_id = ""
     relationship_events_seen.clear()
     personal_event_choices.clear()
+    mission_badges.clear()
+    chapter_challenges.clear()
 
 # Records a finished case. Returns what changed so the result screen can show it.
 func record_case_result(case_id: String, protocol: String, report: Dictionary, persist: bool = true) -> Dictionary:
@@ -108,6 +116,12 @@ func record_case_result(case_id: String, protocol: String, report: Dictionary, p
     var won := str(report.get("outcome", "")) == "WIN"
     if won:
         case_wins[case_id] = int(case_wins.get(case_id, 0)) + 1
+    var new_badge := bool(report.get("mission_complete", false)) and not bool(mission_badges.get(case_id, false))
+    if bool(report.get("mission_complete", false)):
+        mission_badges[case_id] = true
+    var objectives: Array = report.get("objectives", [])
+    if objectives.size() >= 2 and bool(objectives[1].get("complete", false)):
+        chapter_challenges[case_id] = true
     var total := int(report.get("total", 0))
     var new_best := total > int(case_best_totals.get(case_id, -1))
     if new_best:
@@ -131,17 +145,13 @@ func record_case_result(case_id: String, protocol: String, report: Dictionary, p
             unlocked.append(campaign_case)
     if persist:
         save_data()
-    return {"insight_gain": gain, "new_best": new_best, "unlocked": unlocked}
+    return {"insight_gain": gain, "new_best": new_best, "unlocked": unlocked, "new_badge": new_badge}
 
 func is_case_unlocked(case_id: String) -> bool:
-    match case_id:
-        "DEAD_AIR":
-            return true
-        "GLASS_GARDEN":
-            return int(case_counts.get("DEAD_AIR", 0)) > 0
-        "ECHO_WARD":
-            return int(case_counts.get("GLASS_GARDEN", 0)) > 0
-    return false
+    var index := CAMPAIGN_CASES.find(case_id)
+    if index < 0:
+        return false
+    return index == 0 or int(case_counts.get(CAMPAIGN_CASES[index - 1], 0)) > 0
 
 func case_status(case_id: String) -> String:
     if not is_case_unlocked(case_id):
@@ -175,7 +185,7 @@ func recommended_case_id() -> String:
     for case_id in CAMPAIGN_CASES:
         if is_case_unlocked(case_id) and int(case_wins.get(case_id, 0)) <= 0:
             return case_id
-    return "ECHO_WARD" if is_case_unlocked("ECHO_WARD") else "DEAD_AIR"
+    return str(CAMPAIGN_CASES[CAMPAIGN_CASES.size() - 1])
 
 func case_display_name(case_id: String) -> String:
     var data := AstraCaseCatalog.get_case(case_id)
@@ -187,10 +197,25 @@ func campaign_summary() -> String:
     return "캠페인 %d/%d%s" % [completed_campaign_cases(), CAMPAIGN_CASES.size(), " · 완료" if campaign_complete() else ""]
 
 func unlock_hint(case_id: String) -> String:
-    match case_id:
-        "GLASS_GARDEN": return "DEAD AIR를 한 번 끝까지 조사하면 열립니다"
-        "ECHO_WARD": return "GLASS GARDEN을 한 번 끝까지 조사하면 열립니다"
+    var index := CAMPAIGN_CASES.find(case_id)
+    if index > 0:
+        return "%s 사건을 한 번 끝까지 조사하면 열립니다" % str(AstraCaseCatalog.get_case(str(CAMPAIGN_CASES[index - 1])).get("title", ""))
     return ""
+
+# Read-only archive entries; unresolved chapters keep their ending hidden.
+func story_archive() -> Array:
+    var entries: Array = []
+    for case_id in CAMPAIGN_CASES:
+        var data := AstraCaseCatalog.get_case(case_id)
+        var completed := int(case_counts.get(case_id, 0)) > 0
+        var solved := int(case_wins.get(case_id, 0)) > 0
+        entries.append({
+            "id": case_id, "chapter": str(data.get("chapter", "")), "title": str(data.get("title", "")),
+            "unlocked": is_case_unlocked(case_id), "completed": completed, "solved": solved,
+            "text": str(data.get("story_outro", "")) if solved else ("기록 재구성이 중단됐습니다. 사건을 해결하면 후일담이 복원됩니다." if completed else "아직 복원되지 않은 기록입니다."),
+            "mission_badge": bool(mission_badges.get(case_id, false)), "challenge_badge": bool(chapter_challenges.get(case_id, false))
+        })
+    return entries
 
 func archive_rank() -> String:
     if total_insight >= 180:

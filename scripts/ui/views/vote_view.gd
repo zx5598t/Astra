@@ -47,7 +47,7 @@ func _ballot(session: AstraGameSession) -> void:
         var preview := session.vote_tally(target)
         info.add_child(AstraUI.label("내 표를 더하면 %d표 · 여론 의심도 %d%%" % [int(preview.get(target, 0)), int(session.crowd_suspicion(target) * 100.0)], 14, AstraUI.MUTED))
     else:
-        row.add_child(AstraUI.label("왼쪽 명단에서 격리할 사람을 선택하세요. (숫자키 1~8)", 16, AstraUI.MUTED, true))
+        row.add_child(AstraUI.label("위쪽 승무원 명단에서 격리할 사람을 선택하세요. (숫자키 1~8)", 16, AstraUI.MUTED, true))
 
     _body.add_child(_theory_panel(session))
 

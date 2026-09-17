@@ -22,11 +22,11 @@ func setup(id: String, hotkey: int) -> void:
     npc_id = id
     mouse_filter = Control.MOUSE_FILTER_STOP
     mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-    custom_minimum_size = Vector2(0, 74)
-    var row := AstraUI.hbox(10)
+    custom_minimum_size = Vector2(0, 112)
+    var row := AstraUI.hbox(6)
     row.mouse_filter = Control.MOUSE_FILTER_IGNORE
     add_child(row)
-    _thumb = AstraUI.thumb(str(AstraCrewCatalog.info(id).get("portrait", "")), Vector2(50, 60))
+    _thumb = AstraUI.thumb(str(AstraCrewCatalog.info(id).get("portrait", "")), Vector2(52, 80))
     row.add_child(_thumb)
     var info := AstraUI.vbox(3)
     info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -37,12 +37,12 @@ func setup(id: String, hotkey: int) -> void:
     info.add_child(title)
     _hotkey = AstraUI.label(str(hotkey), 11, AstraUI.DIM)
     title.add_child(_hotkey)
-    _name = AstraUI.label(AstraCrewCatalog.display_name(id), 17, AstraCrewCatalog.accent(id))
+    _name = AstraUI.label(AstraCrewCatalog.display_name(id), 15, AstraCrewCatalog.accent(id))
     title.add_child(_name)
     _sub = AstraUI.label(str(AstraCrewCatalog.info(id).get("job", "")), 12, AstraUI.MUTED)
     _sub.clip_text = true
     _sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    title.add_child(_sub)
+    info.add_child(_sub)
     _meters = AstraUI.vbox(3)
     _meters.mouse_filter = Control.MOUSE_FILTER_IGNORE
     info.add_child(_meters)
@@ -65,10 +65,9 @@ func setup(id: String, hotkey: int) -> void:
     _mark.custom_minimum_size = Vector2(38, 34)
     _mark.tooltip_text = "내 판단 표시: 클릭할 때마다 Null 의심 → 신뢰 → 보류 → 해제"
     _mark.pressed.connect(func(): mark_pressed.emit(npc_id))
-    var mark_box := AstraUI.vbox(0)
-    mark_box.alignment = BoxContainer.ALIGNMENT_CENTER
-    mark_box.add_child(_mark)
-    row.add_child(mark_box)
+    _mark.custom_minimum_size = Vector2(24, 24)
+    _mark.add_theme_font_size_override("font_size", 12)
+    title.add_child(_mark)
 
 func refresh(session: AstraGameSession, is_selected: bool, intention: String) -> void:
     var member := session.npc(npc_id)
@@ -77,7 +76,7 @@ func refresh(session: AstraGameSession, is_selected: bool, intention: String) ->
     var accent := member.accent
     var bg := Color(accent, 0.13) if is_selected else AstraUI.PANEL_2
     var border := accent if is_selected else AstraUI.BORDER
-    var box := AstraUI.style(bg, border, 10, 2 if is_selected else 1, 8)
+    var box := AstraUI.style(bg, border, 8, 2 if is_selected else 1, 5)
     add_theme_stylebox_override("panel", box)
     _trust.value = member.trust
     _stress.value = member.stress

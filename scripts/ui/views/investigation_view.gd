@@ -6,6 +6,7 @@ extends VBoxContainer
 var screen
 var _header: RichTextLabel
 var _grid: GridContainer
+var _mission: VBoxContainer
 var _latest: VBoxContainer
 var _last_clue_id: String = ""
 
@@ -15,19 +16,24 @@ func setup(game_screen) -> void:
     size_flags_vertical = Control.SIZE_EXPAND_FILL
     _header = AstraUI.rich(18)
     add_child(_header)
+    var content := AstraUI.vbox(12)
+    add_child(AstraUI.scroll(content))
+    _mission = AstraUI.vbox(6)
+    content.add_child(_mission)
     _grid = GridContainer.new()
     _grid.columns = 2
     _grid.add_theme_constant_override("h_separation", 10)
     _grid.add_theme_constant_override("v_separation", 10)
-    add_child(_grid)
-    add_child(AstraUI.section("방금 확보한 단서", AstraUI.GOLD))
+    content.add_child(_grid)
+    content.add_child(AstraUI.section("방금 확보한 단서", AstraUI.GOLD))
     _latest = AstraUI.vbox(8)
-    add_child(AstraUI.scroll(_latest))
+    content.add_child(_latest)
     refresh()
 
 func refresh() -> void:
     var session: AstraGameSession = screen.session
     _header.text = "[b]현장 조사[/b]   [color=#%s]행동력[/color] %s" % [AstraUI.hex(AstraUI.MUTED), AstraUI.pips(session.investigation_ap, session.investigation_ap_max(), AstraUI.GOLD)]
+    _refresh_mission(session)
     AstraUI.clear(_grid)
     var op_rooms := {}
     for op in session.case_data.get("ops", []):
@@ -86,3 +92,31 @@ func _search(room_id: String) -> void:
     screen.fx.play("clue")
     screen.fx.toast("단서 확보 · " + str(clue.get("title", "")), AstraUI.GOLD)
     refresh()
+
+func _refresh_mission(session: AstraGameSession) -> void:
+    AstraUI.clear(_mission)
+    var mission := session.mission_status()
+    if mission.is_empty():
+        return
+    var complete := bool(mission.get("complete", false))
+    var panel := AstraUI.panel(Color(AstraUI.CYAN, 0.07), Color(AstraUI.CYAN, 0.35), 10, 12)
+    _mission.add_child(panel)
+    var row := AstraUI.hbox(14)
+    panel.add_child(row)
+    var text := AstraUI.vbox(4)
+    text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    row.add_child(text)
+    text.add_child(AstraUI.label(("✓ 완료  /  " if complete else "선택 임무  /  ") + str(mission.get("title", "")), 16, AstraUI.GREEN if complete else AstraUI.CYAN))
+    text.add_child(AstraUI.label(str(mission.get("result", "")) if complete else str(mission.get("description", "")), 13, AstraUI.MUTED, true))
+    if not complete:
+        text.add_child(AstraUI.label("보상 · " + str(mission.get("reward", "")), 12, AstraUI.GOLD, true))
+    var button := AstraUI.button(str(mission.get("action_label", "")), AstraUI.CYAN, 14, 42)
+    button.disabled = not bool(mission.get("available", false))
+    button.pressed.connect(_perform_mission)
+    row.add_child(button)
+
+func _perform_mission() -> void:
+    var result: Dictionary = screen.session.perform_mission()
+    if bool(result.get("ok", false)):
+        screen.fx.play("clue")
+        screen.fx.toast(str(result.get("text", "")), AstraUI.GREEN, 4.0)

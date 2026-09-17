@@ -43,6 +43,11 @@ func refresh() -> void:
     total_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     rank_box.add_child(total_label)
 
+    var story := str(report.get("story", ""))
+    if story != "":
+        _body.add_child(AstraUI.label(story, 16, AstraUI.TEXT, true))
+    if bool(report.get("mission_complete", false)):
+        _body.add_child(AstraUI.chip("함선 복구 임무 완료 · 항해 기록에 저장됨", AstraUI.GREEN, 13))
     var left := _body
 
     left.add_child(AstraUI.section("Null의 정체", AstraUI.RED))

@@ -64,7 +64,7 @@ func setup(game_screen) -> void:
 
 func refresh() -> void:
     var session: AstraGameSession = screen.session
-    _header.text = "[b]공개 회의 · DAY %d[/b]   [color=#%s]발언권[/color] %s" % [session.day, AstraUI.hex(AstraUI.MUTED), AstraUI.pips(session.meeting_actions_left, AstraGameSession.MEETING_ACTIONS, AstraUI.CYAN)]
+    _header.text = "[b]공개 회의 · DAY %d[/b]   [color=#%s]발언권[/color] %s" % [session.day, AstraUI.hex(AstraUI.MUTED), AstraUI.pips(session.meeting_actions_left, session.meeting_actions_max(), AstraUI.CYAN)]
     var total := session.meeting_feed.size()
     var pending := _shown + _queue.size()
     if total < pending:

@@ -1,7 +1,7 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **0.2.0** (Night Cycle). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- Version **0.3.0** (Last Light). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
 - GitHub-first, CI-validated. Every release branch must pass `Godot CI` before it is promoted to `main`.
 
 ## Architecture rules (why 0.2.0 was a rebuild)
@@ -51,3 +51,4 @@ Commit `.import` and `.uid` files together with the assets/scripts they belong t
 2. Push; wait for `Godot CI` to pass.
 3. Fast-forward `main` to the release branch.
 4. Tag `vX.Y.Z` on `main` → the `Windows build` workflow publishes `ASTRA-X.Y.Z-windows.zip` as a Release.
+5. The Windows job must validate the source and boot the actual exported `ASTRA.exe` before publishing.

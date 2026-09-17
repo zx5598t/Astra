@@ -18,6 +18,14 @@ func setup(game_screen) -> void:
 func refresh() -> void:
     var session: AstraGameSession = screen.session
     AstraUI.clear(_body)
+    var dispatch := session.story_dispatch()
+    if dispatch != "":
+        var transmission := AstraUI.panel(Color(AstraUI.CYAN, 0.05), Color(AstraUI.CYAN, 0.25), 10, 12)
+        var lines := AstraUI.vbox(5)
+        transmission.add_child(lines)
+        lines.add_child(AstraUI.section("항해 기록 / 수신된 메시지"))
+        lines.add_child(AstraUI.label(dispatch, 16, AstraUI.TEXT, true))
+        _body.add_child(transmission)
     if session.day == 1:
         _day_one(session)
     else:
@@ -49,7 +57,7 @@ func _banner() -> Control:
 
 func _day_one(session: AstraGameSession) -> void:
     var data := session.case_data
-    _body.add_child(AstraUI.label(str(data.get("hook", "")), 17, AstraUI.TEXT, true))
+    _body.add_child(AstraUI.label(str(data.get("story_intro", data.get("hook", ""))), 17, AstraUI.TEXT, true))
 
     var facts := GridContainer.new()
     facts.columns = 2

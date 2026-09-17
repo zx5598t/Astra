@@ -16,3 +16,6 @@ backend/.env
 backend/.venv/
 __pycache__/
 *.pyc
+
+# Local launch diagnostics
+.godot-*.log

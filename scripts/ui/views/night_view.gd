@@ -53,7 +53,7 @@ func _protect_card(session: AstraGameSession) -> Control:
         who.add_child(info)
         box.add_child(who)
     else:
-        box.add_child(AstraUI.label("왼쪽 명단에서 보호할 사람을 선택하세요.", 14, AstraUI.GOLD, true))
+        box.add_child(AstraUI.label("위쪽 승무원 명단에서 보호할 사람을 선택하세요.", 14, AstraUI.GOLD, true))
     box.add_child(AstraUI.spacer(false))
     var button := AstraUI.button("%s 보호하기" % (session.name_of(target) if ok else "대상 선택 필요"), AstraUI.GREEN, 16, 48, true)
     button.disabled = not ok

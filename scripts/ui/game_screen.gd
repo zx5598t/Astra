@@ -31,7 +31,7 @@ var _stepper: HBoxContainer
 var _ap_label: RichTextLabel
 var _hint: Label
 var _hint_panel: PanelContainer
-var _roster: VBoxContainer
+var _roster: HBoxContainer
 var _cards: Dictionary = {}
 var _center: PanelContainer
 var _holder: Control
@@ -91,13 +91,8 @@ func _build() -> void:
     hint_row.add_child(_hint)
     hint_row.add_child(AstraUI.chip("사건 시간대 " + session.window_text(), AstraUI.GOLD, 13))
 
-    var body := AstraUI.hbox(12)
-    body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    root.add_child(body)
-
     var roster_panel := AstraUI.panel(AstraUI.PANEL, AstraUI.BORDER, 12, 8)
-    roster_panel.custom_minimum_size = Vector2(286, 0)
-    body.add_child(roster_panel)
+    root.add_child(roster_panel)
     var roster_box := AstraUI.vbox(6)
     roster_panel.add_child(roster_box)
     var roster_head := AstraUI.hbox(6)
@@ -105,17 +100,22 @@ func _build() -> void:
     roster_head.add_child(AstraUI.label("승무원", 14, AstraUI.CYAN))
     roster_head.add_child(AstraUI.spacer())
     roster_head.add_child(AstraUI.label("표시: N 의심 · ✓ 신뢰 · ? 보류", 11, AstraUI.DIM))
-    _roster = AstraUI.vbox(6)
-    roster_box.add_child(AstraUI.scroll(_roster))
+    _roster = AstraUI.hbox(6)
+    roster_box.add_child(_roster)
     var hotkey := 1
     for npc_id in AstraCrewCatalog.ORDER:
         var card := AstraCrewCard.new()
         card.setup(npc_id, hotkey)
         card.selected.connect(select)
         card.mark_pressed.connect(_on_mark)
+        card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         _roster.add_child(card)
         _cards[npc_id] = card
         hotkey += 1
+
+    var body := AstraUI.hbox(14)
+    body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    root.add_child(body)
 
     _center = AstraUI.panel(AstraUI.PANEL, AstraUI.BORDER, 12, 16)
     _center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -126,7 +126,7 @@ func _build() -> void:
     _center.add_child(_holder)
 
     _notebook = AstraNotebookPanel.new()
-    _notebook.custom_minimum_size = Vector2(372, 0)
+    _notebook.custom_minimum_size = Vector2(340, 0)
     body.add_child(_notebook)
     _notebook.setup(session)
 
@@ -137,6 +137,7 @@ func _build() -> void:
     bottom.add_child(_summary)
     _primary = AstraUI.button("", AstraUI.CYAN, 18, 54, true)
     _primary.custom_minimum_size = Vector2(320, 54)
+    _primary.focus_mode = Control.FOCUS_NONE
     _primary.pressed.connect(_on_primary)
     bottom.add_child(_primary)
 
@@ -189,10 +190,10 @@ func _refresh_top() -> void:
         "INTERROGATION":
             _ap_label.text = "[right][color=#%s]심문[/color] %s[/right]" % [AstraUI.hex(AstraUI.MUTED), AstraUI.pips(session.talk_ap, session.talk_ap_max(), AstraUI.GREEN)]
         "MEETING":
-            _ap_label.text = "[right][color=#%s]발언권[/color] %s[/right]" % [AstraUI.hex(AstraUI.MUTED), AstraUI.pips(session.meeting_actions_left, AstraGameSession.MEETING_ACTIONS, AstraUI.CYAN)]
+            _ap_label.text = "[right][color=#%s]발언권[/color] %s[/right]" % [AstraUI.hex(AstraUI.MUTED), AstraUI.pips(session.meeting_actions_left, session.meeting_actions_max(), AstraUI.CYAN)]
         _:
             _ap_label.text = "[right][color=#%s]%s[/color][/right]" % [AstraUI.hex(AstraUI.MUTED), session.protocol_name()]
-    _hint.text = session.phase_hint()
+    _hint.text = "지금 할 일  /  " + session.phase_hint()
     _hint_panel.visible = app.settings.show_hints or session.phase in ["VOTE", "NIGHT"]
 
 func _refresh_roster() -> void:
@@ -369,7 +370,7 @@ func handle_hotkey(event: InputEventKey) -> bool:
         if not _primary.disabled and _primary.visible:
             _on_primary()
         return true
-    if code == KEY_TAB:
+    if code == KEY_N:
         _notebook.cycle_tab()
         return true
     if code == KEY_M:

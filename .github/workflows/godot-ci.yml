@@ -46,6 +46,14 @@ jobs:
           set -o pipefail
           ./godot --headless --path . --script res://tests/run_tests.gd -- --games=40 2>&1 | tee tests.log
           grep -q "ASTRA TESTS OK" tests.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" tests.log; then exit 1; fi
+
+      - name: Campaign missions and save compatibility
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/campaign_tests.gd 2>&1 | tee campaign.log
+          grep -q "ASTRA CAMPAIGN TESTS OK" campaign.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" campaign.log; then exit 1; fi
 
       - name: Headless UI smoke test (title -> full case -> result)
         run: |

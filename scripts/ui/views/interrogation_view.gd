@@ -100,7 +100,7 @@ func _talk_layout(session: AstraGameSession, npc_id: String, animate: bool = tru
     var row := AstraUI.hbox(16)
     row.size_flags_vertical = Control.SIZE_EXPAND_FILL
     if member == null:
-        row.add_child(AstraUI.label("왼쪽 명단에서 심문할 승무원을 고르세요.", 16, AstraUI.MUTED))
+        row.add_child(AstraUI.label("위쪽 승무원 명단에서 심문할 승무원을 고르세요.", 16, AstraUI.MUTED))
         return row
 
     var left := AstraUI.vbox(10)

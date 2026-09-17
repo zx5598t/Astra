@@ -25,6 +25,21 @@ const PLAYER_VOTE_WEIGHT := 2
 const CONFIDE_TRUST := 0.6
 const THEORY_DAY_FACTORS := [1.0, 1.0, 0.92, 0.84, 0.76]
 const VOTE_NOISE := 0.16
+const SNAPSHOT_PATH := "user://astra_session.cfg"
+const SNAPSHOT_VERSION := 1
+const SNAPSHOT_FIELDS := [
+    "case_id", "seed_value", "protocol", "truth", "clues", "day", "phase",
+    "investigation_ap", "talk_ap", "meeting_actions_left", "selected_id", "marks",
+    "known_claims", "public_claims", "manual_contradictions", "contradictions",
+    "public_contradiction_keys", "transcripts", "meeting_feed", "journal", "isolations",
+    "casualties", "morning_report", "pending_event", "events_seen", "theories", "vote_cast",
+    "last_vote", "night_done", "night_plan", "night_result", "outcome", "stats", "flags",
+    "disputes_done", "meeting_pushers", "accused_today", "final_report", "_found_counter"
+]
+const CREW_SNAPSHOT_FIELDS := [
+    "role", "status", "trust", "stress", "suspicion", "affinity", "expression",
+    "secret_revealed", "slipped", "audited", "questions_asked", "memories"
+]
 
 const PROTOCOLS := {
     "ANALYST": {"name": "분석관", "summary": "매일 현장 조사 행동력 +1", "detail": "흔적을 더 많이 모아 교집합으로 범인을 좁히는 플레이."},
@@ -177,6 +192,111 @@ func setup(case_id_in: String, seed_in: int, protocol_in: String = "ANALYST") ->
     _log("조사 방식 · %s — %s" % [protocol_name(), str(PROTOCOLS[protocol]["summary"])])
     changed.emit()
 
+# Snapshots contain only whitelisted scalar/array/dictionary state, never Nodes
+# or serialized objects. RNG state is preserved so resuming cannot reroll a vote.
+func save_snapshot(path: String = SNAPSHOT_PATH) -> bool:
+    if case_id == "" or phase == "RESULT":
+        return false
+    var cfg := ConfigFile.new()
+    cfg.set_value("meta", "version", SNAPSHOT_VERSION)
+    cfg.set_value("meta", "saved_at", Time.get_datetime_string_from_system())
+    cfg.set_value("session", "rng_state", rng.state)
+    for field in SNAPSHOT_FIELDS:
+        cfg.set_value("session", field, get(field))
+    for npc_id in AstraCrewCatalog.ORDER:
+        for field in CREW_SNAPSHOT_FIELDS:
+            cfg.set_value("crew_" + npc_id, field, crew[npc_id].get(field))
+    var temporary := path + ".tmp"
+    if cfg.save(temporary) != OK:
+        return false
+    var absolute := ProjectSettings.globalize_path(path)
+    if FileAccess.file_exists(path):
+        if DirAccess.copy_absolute(absolute, absolute + ".bak") != OK:
+            return false
+        if DirAccess.remove_absolute(absolute) != OK:
+            return false
+    return DirAccess.rename_absolute(ProjectSettings.globalize_path(temporary), absolute) == OK
+
+static func snapshot_info(path: String = SNAPSHOT_PATH) -> Dictionary:
+    for candidate in [path, path + ".bak"]:
+        var cfg := ConfigFile.new()
+        if cfg.load(candidate) != OK or int(cfg.get_value("meta", "version", 0)) != SNAPSHOT_VERSION:
+            continue
+        var saved_case := str(cfg.get_value("session", "case_id", ""))
+        var saved_phase := str(cfg.get_value("session", "phase", ""))
+        if not AstraCaseCatalog.has_case(saved_case) or saved_phase not in PHASES or saved_phase == "RESULT":
+            continue
+        return {"case_id": saved_case, "phase": saved_phase, "day": int(cfg.get_value("session", "day", 1)), "saved_at": str(cfg.get_value("meta", "saved_at", ""))}
+    return {}
+
+static func has_snapshot(path: String = SNAPSHOT_PATH) -> bool:
+    return not snapshot_info(path).is_empty()
+
+static func delete_snapshot(path: String = SNAPSHOT_PATH) -> void:
+    for suffix in ["", ".bak", ".tmp"]:
+        if FileAccess.file_exists(path + suffix):
+            DirAccess.remove_absolute(ProjectSettings.globalize_path(path + suffix))
+
+func load_snapshot(path: String = SNAPSHOT_PATH) -> bool:
+    for candidate in [path, path + ".bak"]:
+        var cfg := ConfigFile.new()
+        if cfg.load(candidate) != OK or not _valid_snapshot(cfg):
+            continue
+        for field in SNAPSHOT_FIELDS:
+            set(field, cfg.get_value("session", field))
+        case_data = AstraCaseCatalog.get_case(case_id)
+        truth["clues"] = clues
+        crew.clear()
+        for npc_id in AstraCrewCatalog.ORDER:
+            var member := AstraCrewMember.new(npc_id)
+            for field in CREW_SNAPSHOT_FIELDS:
+                if field == "memories":
+                    member.memories.assign(cfg.get_value("crew_" + npc_id, field))
+                else:
+                    member.set(field, cfg.get_value("crew_" + npc_id, field))
+            crew[npc_id] = member
+        rng.seed = seed_value * 7919 + 17
+        rng.state = int(cfg.get_value("session", "rng_state"))
+        phase_changed.emit(phase)
+        changed.emit()
+        return true
+    return false
+
+func _valid_snapshot(cfg: ConfigFile) -> bool:
+    if int(cfg.get_value("meta", "version", 0)) != SNAPSHOT_VERSION:
+        return false
+    for field in SNAPSHOT_FIELDS:
+        if not cfg.has_section_key("session", field) or typeof(cfg.get_value("session", field)) != typeof(get(field)):
+            return false
+    var saved_case := str(cfg.get_value("session", "case_id"))
+    var saved_phase := str(cfg.get_value("session", "phase"))
+    if not AstraCaseCatalog.has_case(saved_case) or saved_phase not in PHASES or saved_phase == "RESULT":
+        return false
+    if str(cfg.get_value("session", "protocol")) not in PROTOCOLS or int(cfg.get_value("session", "day")) not in range(1, MAX_DAYS + 1):
+        return false
+    if not cfg.has_section_key("session", "rng_state") or typeof(cfg.get_value("session", "rng_state")) != TYPE_INT:
+        return false
+    var saved_truth: Dictionary = cfg.get_value("session", "truth")
+    for required in ["nulls", "claims", "positions", "null_ops", "trace_pairs"]:
+        if not saved_truth.has(required):
+            return false
+    if not saved_truth["nulls"] is Array or saved_truth["nulls"].size() != 2:
+        return false
+    for required in ["claims", "positions", "null_ops", "trace_pairs"]:
+        if not saved_truth[required] is Dictionary:
+            return false
+    for npc_id in AstraCrewCatalog.ORDER:
+        if not saved_truth["claims"].get(npc_id, null) is Dictionary or not saved_truth["positions"].has(npc_id):
+            return false
+        var member := AstraCrewMember.new(npc_id)
+        for field in CREW_SNAPSHOT_FIELDS:
+            if not cfg.has_section_key("crew_" + npc_id, field) or typeof(cfg.get_value("crew_" + npc_id, field)) != typeof(member.get(field)):
+                return false
+    for clue in cfg.get_value("session", "clues"):
+        if not clue is Dictionary or not clue.has("id") or not clue.has("kind"):
+            return false
+    return true
+
 # ---------------------------------------------------------------- lookups
 
 func protocol_name() -> String:
@@ -241,10 +361,89 @@ func living_crew_ids() -> Array:
     return result
 
 func investigation_ap_max() -> int:
-    return BASE_INVESTIGATION_AP + (1 if protocol == "ANALYST" else 0)
+    var mission_bonus := 1 if bool(flags.get("mission_investigation", false)) and day > int(flags.get("mission_day", 0)) else 0
+    return BASE_INVESTIGATION_AP + (1 if protocol == "ANALYST" else 0) + mission_bonus
 
 func talk_ap_max() -> int:
-    return BASE_TALK_AP + (1 if protocol == "EMPATH" else 0)
+    return BASE_TALK_AP + (1 if protocol == "EMPATH" else 0) + (1 if bool(flags.get("mission_talk", false)) else 0)
+
+func meeting_actions_max() -> int:
+    return MEETING_ACTIONS + (1 if bool(flags.get("mission_meeting", false)) else 0)
+
+func story_dispatch() -> String:
+    var dispatches: Array = case_data.get("dispatches", [])
+    return str(dispatches[mini(day - 1, dispatches.size() - 1)]) if not dispatches.is_empty() else ""
+
+# Only visible facts contribute to the live checklist. Hidden roles are never
+# counted here, including when an unaudited suspect has been isolated.
+func objectives() -> Array:
+    var challenge: Dictionary = case_data.get("challenge", {})
+    var challenge_id := str(challenge.get("id", "records"))
+    var progress := 0
+    match challenge_id:
+        "records", "traces":
+            var kind := "op_record" if challenge_id == "records" else "trace"
+            for clue in found_clues():
+                if str(clue.get("kind", "")) == kind:
+                    progress += 1
+        "claims": progress = known_claims.size()
+        "presented": progress = int(stats.get("presented", 0))
+        "contradictions": progress = int(stats.get("public_contradictions", 0))
+    var target := int(challenge.get("target", 2))
+    return [
+        {"id": "evidence", "label": "조사의 실마리 · 단서 5개 확보", "current": mini(found_clues().size(), 5), "target": 5, "complete": found_clues().size() >= 5},
+        {"id": challenge_id, "label": str(challenge.get("label", "두 조작의 실행 로그 확보")), "current": mini(progress, target), "target": target, "complete": progress >= target},
+        {"id": "mission", "label": str(case_data.get("mission", {}).get("title", "함선 복구 임무")), "current": 1 if bool(flags.get("mission_complete", false)) else 0, "target": 1, "complete": bool(flags.get("mission_complete", false))}
+    ]
+
+func mission_status() -> Dictionary:
+    var mission: Dictionary = case_data.get("mission", {})
+    if mission.is_empty():
+        return {}
+    var complete := bool(flags.get("mission_complete", false))
+    var available := phase == "INVESTIGATION" and investigation_ap > 0 and outcome == "" and not complete
+    if str(mission.get("effect", "")) == "recover" and _recoverable_clues().is_empty():
+        available = false
+    return {
+        "title": str(mission.get("title", "")), "description": str(mission.get("description", "")),
+        "room": str(mission.get("room", "")), "room_name": room_name(str(mission.get("room", ""))),
+        "complete": complete, "available": available, "cost": 1,
+        "action_label": "복구 완료" if complete else "임무 수행 · 조사 행동력 1",
+        "reward": str(mission.get("reward", "")), "result": str(flags.get("mission_result", ""))
+    }
+
+func _recoverable_clues() -> Array:
+    var destroyed: Array = []
+    var available: Array = []
+    for clue in clues:
+        if not _is_searchable(clue) or bool(clue.get("found", false)):
+            continue
+        if bool(clue.get("destroyed", false)):
+            destroyed.append(clue)
+        else:
+            available.append(clue)
+    return destroyed + available
+
+func perform_mission() -> Dictionary:
+    if not bool(mission_status().get("available", false)):
+        return {"ok": false, "reason": "현장 조사 중 행동력이 남아 있을 때 한 번 수행할 수 있습니다."}
+    var mission: Dictionary = case_data.get("mission", {})
+    investigation_ap -= 1
+    flags["mission_complete"] = true
+    flags["mission_day"] = day
+    var effect := str(mission.get("effect", ""))
+    flags["mission_" + effect] = true
+    var result := str(mission.get("reward", ""))
+    if effect == "recover":
+        var recoverable := _recoverable_clues()
+        var clue: Dictionary = recoverable[0]
+        clue["destroyed"] = false
+        result = "복원·확보한 단서: %s" % str(clue.get("title", ""))
+        _discover(clue, true)
+    flags["mission_result"] = result
+    _log("함선 복구 · %s — %s" % [str(mission.get("title", "")), result])
+    changed.emit()
+    return {"ok": true, "title": str(mission.get("title", "")), "text": result}
 
 func clue_by_id(clue_id: String) -> Dictionary:
     for clue in clues:
@@ -412,7 +611,7 @@ func _enter(next_phase: String) -> void:
             talk_ap = talk_ap_max()
             _maybe_private_event()
         "MEETING":
-            meeting_actions_left = MEETING_ACTIONS
+            meeting_actions_left = meeting_actions_max()
             accused_today.clear()
             _open_meeting()
         "VOTE":
@@ -1702,7 +1901,10 @@ func _resolve_night() -> void:
 
     var victim := _choose_kill_target()
     if victim != "":
-        var guarded := (kind == "protect" and target == victim) or patrol_guard == victim
+        var shelter := bool(flags.get("mission_shelter", false))
+        var guarded := (kind == "protect" and target == victim) or patrol_guard == victim or shelter
+        if shelter:
+            flags.erase("mission_shelter")
         if guarded:
             var attackers := living_null_ids()
             var attacker := str(attackers[rng.randi_range(0, attackers.size() - 1)])
@@ -1711,7 +1913,9 @@ func _resolve_night() -> void:
             result["victim"] = victim
             var clue := _night_clue(attacker, "보호 기록 · 침입 흔적", "밤사이 누군가 %s의 선실 문을 강제로 열려다 달아났다. 문 패널에 %s 흔적이 남았다. 해당: %s.", victim)
             result["clues"].append(clue)
-            if patrol_guard == victim and not (kind == "protect" and target == victim):
+            if shelter and not (kind == "protect" and target == victim):
+                report.append("비상 여과 장치가 습격을 감지해 선실을 봉쇄했다. 복구 임무 덕분에 생명을 지켰다.")
+            elif patrol_guard == victim and not (kind == "protect" and target == victim):
                 report.append(_josa_inline("순찰 중이던 %s|i %s의 선실 앞에서 침입자를 쫓아냈다." % [name_of(str(flags.get("patrol", ""))), name_of(victim)]))
             else:
                 report.append(_josa_inline("누군가 %s의 선실 문을 강제로 열려다 달아났다. 보호가 통했다." % name_of(victim)))
@@ -1740,7 +1944,10 @@ func _resolve_night() -> void:
     if not candidates.is_empty() and rng.randf() < tamper_chance:
         var clue: Dictionary = candidates[rng.randi_range(0, candidates.size() - 1)]
         var clue_room := str(clue.get("room", ""))
-        if kind == "secure" and target == clue_room:
+        if bool(flags.get("mission_backup", false)):
+            result["blocked_tamper"] = true
+            report.append("독립 배터리의 증거 백업이 작동했다. %s의 흔적 인멸을 막았다." % room_name(clue_room))
+        elif kind == "secure" and target == clue_room:
             result["blocked_tamper"] = true
             var night_clue := _night_clue(str(clue.get("culprit", "")), "감시 기록 · 접근 시도", "감시 드론이 밤사이 %s에 접근하던 인물을 포착했다. 흐릿한 영상에 %s 표식이 보인다. 해당: %s.", "", clue_room)
             result["clues"].append(night_clue)
@@ -1752,6 +1959,7 @@ func _resolve_night() -> void:
             report.append("%s의 흔적 하나가 밤사이 지워졌다." % room_name(clue_room))
     elif kind == "secure":
         report.append("%s|eun 조용했다. 아무도 접근하지 않았다." % room_name(target))
+    flags.erase("mission_backup")
 
     morning_report = []
     for line in report:
@@ -1838,6 +2046,11 @@ func _finalize() -> void:
         rows.append(["숨긴 사정 밝혀냄 ×%d" % int(stats.get("secrets", 0)), int(stats.get("secrets", 0)) * 80])
     if int(stats.get("protects", 0)) > 0:
         rows.append(["습격 저지 ×%d" % int(stats.get("protects", 0)), int(stats.get("protects", 0)) * 120])
+    if bool(flags.get("mission_complete", false)):
+        rows.append(["함선 복구 임무 완료", 180])
+    var objective_rows := objectives()
+    if bool(objective_rows[1].get("complete", false)):
+        rows.append(["챕터 도전 목표 달성", 120])
     var theory := grade_theory()
     rows.append(["추리 보고서 %d점" % int(theory.get("grade", 0)), int(theory.get("grade", 0)) * 5])
     if outcome == "WIN":
@@ -1882,7 +2095,10 @@ func _finalize() -> void:
         "outcome": outcome, "title": title, "subtitle": subtitle, "rows": rows, "total": total, "rank": rank,
         "nulls": nulls.duplicate(), "herring": str(truth.get("herring", "")), "truth": truth_rows,
         "theory": theory, "day": day, "null_isolated": null_isolated, "innocent_isolated": innocent_isolated,
-        "survivors": survivors, "stats": stats.duplicate()
+        "survivors": survivors, "stats": stats.duplicate(),
+        "mission_complete": bool(flags.get("mission_complete", false)), "mission": mission_status(),
+        "objectives": objective_rows, "chapter": str(case_data.get("chapter", "")),
+        "story": str(case_data.get("story_outro", "")) if outcome == "WIN" else "재구성이 중단됐다. 확보한 기록과 복구 임무는 아카이브에 남는다. 새로운 시드로 다시 조사하거나 다음 사건에서 여정을 이어갈 수 있다."
     }
 
 func grade_theory() -> Dictionary:
