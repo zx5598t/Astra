@@ -1,8 +1,17 @@
+# Godot
 .godot/
 .export/
+build/
 *.tmp
+
+# Local launcher config
+godot_path.txt
+
+# OS
 .DS_Store
 Thumbs.db
+
+# Backend
 backend/.env
 backend/.venv/
 __pycache__/

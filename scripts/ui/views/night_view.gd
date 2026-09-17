@@ -1,0 +1,115 @@
+extends VBoxContainer
+
+# Night: protect one person or put a drone on one room. Afterwards the view
+# shows what the night brought.
+
+var screen
+var _body: VBoxContainer
+
+func setup(game_screen) -> void:
+    screen = game_screen
+    add_theme_constant_override("separation", 10)
+    size_flags_vertical = Control.SIZE_EXPAND_FILL
+    _body = AstraUI.vbox(12)
+    add_child(AstraUI.scroll(_body))
+    refresh()
+
+func refresh() -> void:
+    var session: AstraGameSession = screen.session
+    AstraUI.clear(_body)
+    var head := AstraUI.rich(20)
+    head.text = "[b][color=#%s]밤 · DAY %d[/color][/b]" % [AstraUI.hex(AstraUI.NIGHT), session.day]
+    _body.add_child(head)
+    if session.night_done:
+        _report(session)
+        return
+    _body.add_child(AstraUI.label("선내 조명이 절반으로 떨어졌다. Null은 오늘 밤 한 명을 노리고, 자신을 가리키는 흔적을 지우려 한다. 한 가지만 할 수 있다.", 16, AstraUI.TEXT, true))
+    var row := AstraUI.hbox(12)
+    row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    _body.add_child(row)
+    row.add_child(_protect_card(session))
+    row.add_child(_secure_card(session))
+    if session.protocol == "AUDITOR":
+        _body.add_child(AstraUI.label("감사관 · 오늘 격리된 사람이 있다면 밤사이 생체 기록을 자동으로 감사합니다.", 13, AstraUI.GOLD, true))
+    if session.flags.has("patrol"):
+        _body.add_child(AstraUI.label(AstraJosa.i(session.name_of(str(session.flags["patrol"]))) + " 오늘 밤 따로 순찰을 돕니다.", 13, AstraUI.MUTED, true))
+
+func _protect_card(session: AstraGameSession) -> Control:
+    var card := AstraUI.panel(Color(AstraUI.GREEN, 0.06), Color(AstraUI.GREEN, 0.45), 12, 14)
+    card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    var box := AstraUI.vbox(8)
+    card.add_child(box)
+    box.add_child(AstraUI.label("보호", 22, AstraUI.GREEN))
+    box.add_child(AstraUI.label("명단에서 고른 사람을 밤새 곁에서 지킵니다. 습격을 막으면 침입자의 흔적이 새 단서로 남습니다.", 14, AstraUI.MUTED, true))
+    var target: String = screen.selected_id()
+    var ok := session.is_alive(target)
+    if ok:
+        var member := session.npc(target)
+        var who := AstraUI.hbox(10)
+        who.add_child(AstraUI.thumb(str(member.info.get("portrait", "")), Vector2(56, 70)))
+        var info := AstraUI.vbox(2)
+        info.add_child(AstraUI.label(member.display_name, 18, member.accent))
+        info.add_child(AstraUI.label("신뢰 %d%% · 여론 의심도 %d%%" % [int(member.trust * 100.0), int(session.crowd_suspicion(target) * 100.0)], 12, AstraUI.MUTED))
+        who.add_child(info)
+        box.add_child(who)
+    else:
+        box.add_child(AstraUI.label("왼쪽 명단에서 보호할 사람을 선택하세요.", 14, AstraUI.GOLD, true))
+    box.add_child(AstraUI.spacer(false))
+    var button := AstraUI.button("%s 보호하기" % (session.name_of(target) if ok else "대상 선택 필요"), AstraUI.GREEN, 16, 48, true)
+    button.disabled = not ok
+    button.pressed.connect(_choose.bind("protect", target))
+    box.add_child(button)
+    box.add_child(AstraUI.label("팁: Null은 자기를 강하게 의심하는 사람이나 조사관이 신뢰하는 사람을 노리는 경향이 있습니다.", 12, AstraUI.DIM, true))
+    return card
+
+func _secure_card(session: AstraGameSession) -> Control:
+    var card := AstraUI.panel(Color(AstraUI.NIGHT, 0.06), Color(AstraUI.NIGHT, 0.45), 12, 14)
+    card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    var box := AstraUI.vbox(8)
+    card.add_child(box)
+    box.add_child(AstraUI.label("감시", 22, AstraUI.NIGHT))
+    box.add_child(AstraUI.label("한 구역에 감시 드론을 둡니다. 그 구역의 흔적 삭제를 막고, 접근한 사람의 특징을 기록합니다.", 14, AstraUI.MUTED, true))
+    var options: Array = session.night_options().get("secure", [])
+    if options.is_empty():
+        box.add_child(AstraUI.label("지킬 흔적이 남은 구역이 없습니다.", 14, AstraUI.DIM))
+    for room_id in options:
+        var remaining := int(session.room_status(str(room_id)).get("remaining", 0))
+        var button := AstraUI.button("%s 감시 · 남은 흔적 %d" % [session.room_name(str(room_id)), remaining], AstraUI.NIGHT, 15, 42)
+        button.pressed.connect(_choose.bind("secure", str(room_id)))
+        box.add_child(button)
+    return card
+
+func _choose(kind: String, target: String) -> void:
+    var session: AstraGameSession = screen.session
+    var result := session.choose_night_action(kind, target)
+    if not bool(result.get("ok", false)):
+        return
+    var night: Dictionary = result.get("result", {})
+    screen.fx.play("night")
+    if bool(night.get("protected", false)):
+        screen.fx.play("save")
+        screen.fx.banner("습격 저지", "누군가 %s의 선실에 침입하려다 달아났다." % session.name_of(str(night.get("victim", ""))), AstraUI.GREEN, 1.3)
+    elif str(night.get("victim", "")) != "":
+        screen.fx.play("kill")
+        screen.fx.flash(AstraUI.RED, 0.22, 0.6)
+        screen.fx.banner("신호 두절", "%s의 생체 신호가 끊겼다." % session.name_of(str(night.get("victim", ""))), AstraUI.RED, 1.4)
+    if bool(night.get("blocked_tamper", false)):
+        screen.fx.toast("감시 드론이 흔적 삭제를 막고 접근자를 기록했습니다.", AstraUI.NIGHT)
+
+func _report(session: AstraGameSession) -> void:
+    var panel := AstraUI.panel(Color(AstraUI.NIGHT, 0.07), Color(AstraUI.NIGHT, 0.5), 12, 16)
+    _body.add_child(panel)
+    var box := AstraUI.vbox(8)
+    panel.add_child(box)
+    box.add_child(AstraUI.label("밤사이 일어난 일", 16, AstraUI.NIGHT))
+    for line in session.morning_report:
+        box.add_child(AstraUI.label("▸ " + str(line), 17, AstraUI.TEXT, true))
+    var clues: Array = session.night_result.get("clues", [])
+    for clue in clues:
+        var card := AstraClueCard.new()
+        card.setup(session, clue, false)
+        _body.add_child(card)
+    if session.outcome != "":
+        _body.add_child(AstraUI.label("사건의 결말이 정해졌습니다. 아래 버튼으로 결과를 확인하세요.", 16, AstraUI.GOLD, true))
+    else:
+        _body.add_child(AstraUI.label("아래 버튼을 눌러 다음 날 아침으로 넘어가세요.", 15, AstraUI.MUTED))

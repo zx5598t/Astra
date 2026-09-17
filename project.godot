@@ -1,20 +1,29 @@
-; ASTRA 0.1.1 — Character Performance / Meeting Spotlight / Presentation Feedback
+; ASTRA 0.2.0 — Night Cycle rebuild
 config_version=5
 
 [application]
+
 config/name="ASTRA"
-config/description="AI-native social deduction RPG — character performance pass v0.1.1"
-run/main_scene="res://scenes/main_v011.tscn"
-config/features=PackedStringArray("4.3")
+config/description="Single-player social deduction RPG aboard a failing starship."
+config/version="0.2.0"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+boot_splash/bg_color=Color(0.0196, 0.0431, 0.0863, 1)
+boot_splash/show_image=false
 
 [display]
+
 window/size/viewport_width=1440
 window/size/viewport_height=900
 window/size/window_width_override=1440
 window/size/window_height_override=900
+window/size/resizable=true
 window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
 
 [rendering]
+
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-environment/defaults/default_clear_color=Color(0.015, 0.025, 0.055, 1)
+environment/defaults/default_clear_color=Color(0.0196, 0.0431, 0.0863, 1)

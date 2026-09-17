@@ -24,8 +24,16 @@ static func _last_char(word: String) -> String:
         return ch
     return ""
 
+static func _last_token(word: String) -> String:
+    var clean := word.strip_edges()
+    for separator in [" ", ",", "·", "("]:
+        var at := clean.rfind(separator)
+        if at >= 0:
+            clean = clean.substr(at + 1)
+    return clean.strip_edges().trim_suffix(")").trim_suffix(".")
+
 static func has_final(word: String) -> bool:
-    var key := word.strip_edges()
+    var key := _last_token(word)
     if LATIN_FINAL.has(key):
         return bool(LATIN_FINAL[key])
     var ch := _last_char(word)
@@ -39,9 +47,11 @@ static func has_final(word: String) -> bool:
     return not (ch.to_lower() in ["a", "e", "i", "o", "u", "y"])
 
 static func _is_rieul(word: String) -> bool:
-    var key := word.strip_edges()
+    var key := _last_token(word)
     if LATIN_RIEUL.has(key):
         return true
+    if LATIN_FINAL.has(key):
+        return false
     var ch := _last_char(word)
     if ch == "":
         return false

@@ -24,6 +24,7 @@ const MEETING_ACTIONS := 2
 const PLAYER_VOTE_WEIGHT := 2
 const CONFIDE_TRUST := 0.6
 const THEORY_DAY_FACTORS := [1.0, 1.0, 0.92, 0.84, 0.76]
+const VOTE_NOISE := 0.16
 
 const PROTOCOLS := {
     "ANALYST": {"name": "분석관", "summary": "매일 현장 조사 행동력 +1", "detail": "흔적을 더 많이 모아 교집합으로 범인을 좁히는 플레이."},
@@ -374,6 +375,9 @@ func advance() -> void:
                 _start_next_day()
 
 func phase_hint() -> String:
+    return _josa_inline(_phase_hint_raw())
+
+func _phase_hint_raw() -> String:
     match phase:
         "BRIEFING":
             if day == 1:
@@ -481,13 +485,13 @@ func question_options(npc_id: String) -> Array:
     var can_ask := phase == "INTERROGATION" and talk_ap > 0 and pending_event.is_empty() and outcome == ""
     var has_clues := not found_clues().is_empty()
     var options: Array = [
-        {"intent": "ALIBI", "label": "사건 시각의 위치와 동행을 묻는다", "hint": "진술이 추리 노트에 기록된다", "enabled": can_ask},
-        {"intent": "EVIDENCE", "label": "단서를 보여 주고 반응을 본다", "hint": "확보한 단서 중 하나를 고른다" if has_clues else "먼저 단서를 확보하세요", "enabled": can_ask and has_clues, "needs_clue": true},
-        {"intent": "CONTRADICTION", "label": "진술의 모순을 짚는다", "hint": "숨긴 사정이나 실언을 끌어낼 수 있다" if has_contradiction_on(npc_id) else "이 사람과 관련된 모순을 아직 찾지 못했다", "enabled": can_ask and has_contradiction_on(npc_id)},
-        {"intent": "SUSPECT", "label": "누구를 의심하는지 묻는다", "hint": "이 사람이 보는 사건 구도", "enabled": can_ask},
-        {"intent": "REASSURE", "label": "긴장을 풀어 준다", "hint": "신뢰 ↑ · 스트레스 ↓", "enabled": can_ask},
-        {"intent": "PRESSURE", "label": "강하게 몰아붙인다", "hint": "스트레스 ↑ · 신뢰 ↓ · 실언을 끌어낼 수도 있다", "enabled": can_ask},
-        {"intent": "CONFIDE", "label": "둘만의 판단을 부탁한다", "hint": "속마음을 듣는다" if member.trust >= CONFIDE_TRUST else "신뢰 %d%% 이상 필요" % int(CONFIDE_TRUST * 100.0), "enabled": can_ask and member.trust >= CONFIDE_TRUST}
+        {"intent": "ALIBI", "label": "알리바이를 묻는다", "hint": "사건 시각의 위치·동행 · 노트에 기록", "enabled": can_ask},
+        {"intent": "EVIDENCE", "label": "단서를 보여 준다", "hint": "확보한 단서 중 하나를 고른다" if has_clues else "먼저 단서를 확보하세요", "enabled": can_ask and has_clues, "needs_clue": true},
+        {"intent": "CONTRADICTION", "label": "모순을 추궁한다", "hint": "숨긴 사정이나 실언을 끌어낼 수 있다" if has_contradiction_on(npc_id) else "관련 모순을 아직 찾지 못했다", "enabled": can_ask and has_contradiction_on(npc_id)},
+        {"intent": "SUSPECT", "label": "의심하는 사람을 묻는다", "hint": "이 사람이 보는 사건 구도", "enabled": can_ask},
+        {"intent": "REASSURE", "label": "긴장을 풀어 준다", "hint": "신뢰 ↑ · 긴장 ↓", "enabled": can_ask},
+        {"intent": "PRESSURE", "label": "강하게 압박한다", "hint": "긴장 ↑ · 신뢰 ↓ · 실언 유도", "enabled": can_ask},
+        {"intent": "CONFIDE", "label": "속마음을 묻는다", "hint": "둘만 아는 판단을 듣는다" if member.trust >= CONFIDE_TRUST else "신뢰 %d%% 이상 필요" % int(CONFIDE_TRUST * 100.0), "enabled": can_ask and member.trust >= CONFIDE_TRUST}
     ]
     return options
 
@@ -624,7 +628,7 @@ func _ask_evidence(member: AstraCrewMember, clue: Dictionary, result: Dictionary
 func _ask_contradiction(member: AstraCrewMember, result: Dictionary) -> void:
     var is_herring := str(truth.get("herring", "")) == member.id
     if is_herring and not member.secret_revealed:
-        if member.trust >= 0.55 or member.stress >= 0.8:
+        if member.trust >= 0.5 or member.stress >= 0.65:
             _say(member, "contra_confess", {}, result)
             var secret := str(member.info.get("secret", ""))
             _transcript(member.id, member.id, secret)
@@ -898,6 +902,7 @@ func resolve_private_event(choice_index: int) -> Dictionary:
 
     member.refresh_expression()
     member.remember("DAY %d · 개인 면담 선택 %s" % [day, effect])
+    result["text"] = _josa_inline(str(result.get("text", "")))
     _transcript(npc_id, "narration", str(result.get("text", "")))
     _log("개인 면담 · %s · %s" % [member.display_name, str(choice.get("label", ""))])
     pending_event.clear()
@@ -1554,7 +1559,7 @@ func vote_intentions() -> Dictionary:
         for other in living:
             if other == npc_id:
                 continue
-            var value := member.get_suspicion(other) - member.get_affinity(other) * 0.12 + _stable_noise(npc_id + other) * 0.01
+            var value := member.get_suspicion(other) - member.get_affinity(other) * 0.12 + (_stable_noise(npc_id + other) - 0.5) * VOTE_NOISE
             if value > best:
                 best = value
                 target = other
@@ -1921,6 +1926,21 @@ func grade_theory() -> Dictionary:
     return {"grade": grade, "label": label, "matched": matched, "suspects": suspects.duplicate(), "confidence": confidence, "day": int(theory.get("day", 1))}
 
 # ---------------------------------------------------------------- optional AI performance
+
+# Replaces a rule-based line in the transcript with a validated AI performance.
+# Only wording changes; no state, clue or relationship value is touched.
+func apply_ai_line(npc_id: String, rule_line: String, utterance: String) -> void:
+    var clean := utterance.strip_edges()
+    if clean == "" or not transcripts.has(npc_id):
+        return
+    var history: Array = transcripts[npc_id]
+    for index in range(history.size() - 1, -1, -1):
+        var entry: Dictionary = history[index]
+        if str(entry.get("speaker", "")) == npc_id and str(entry.get("text", "")) == _josa_inline(rule_line):
+            entry["text"] = clean
+            entry["ai"] = true
+            changed.emit()
+            return
 
 func build_ai_context(npc_id: String, intent: String, rule_line: String) -> Dictionary:
     var member := npc(npc_id)

@@ -1,7 +1,7 @@
-# ASTRA AI Backend — 0.0.6
+# ASTRA AI Backend (선택 사항)
 
-Godot 클라이언트에 API 키를 넣지 않기 위한 선택형 로컬/서버 백엔드입니다.
-백엔드를 실행하지 않아도 게임은 규칙 기반 fallback으로 계속 플레이됩니다.
+Godot 클라이언트에 API 키를 넣지 않기 위한 로컬 서버입니다. **켜지 않아도 게임의 모든 기능이 동작합니다.**
+켜면 심문 대사를 모델이 캐릭터 말투로 다시 연기합니다. 계약은 `docs/AI_CONTRACT.md`를 보세요.
 
 ## 실행
 ```bash
@@ -12,20 +12,14 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-`.env.example`을 참고해 환경변수 `OPENAI_API_KEY`를 설정한 뒤:
+`.env.example`을 참고해 `OPENAI_API_KEY`(필요하면 `ASTRA_OPENAI_MODEL`)를 설정한 뒤:
 ```bash
 uvicorn app:app --host 127.0.0.1 --port 8787
 ```
 
-Godot은 기본적으로 `http://127.0.0.1:8787/npc/action`을 호출합니다.
-
-## 0.0.6
-- 개인 심문 AI 연기
-- 공개 회의 일부 발언 AI 연기
-- 최근 대화와 허용된 canonical fact만 전달
-- 공개 회의에서는 기존 규칙 기반 발언의 의도/대상은 유지
+## 게임에서 켜기
+설정 → **AI 연기 사용** 켜기 → 주소가 `http://127.0.0.1:8787/npc/action`인지 확인 → **연결 확인**.
 
 ## 보안 원칙
 - API 키를 Godot 프로젝트나 GitHub에 커밋하지 않습니다.
-- 백엔드는 허용된 fact ref와 target만 통과시킵니다.
-- 모델 출력은 표현 계층이며 TruthEngine/역할/증거/투표/승패를 수정하지 않습니다.
+- 백엔드는 허용된 단서 id와 대상만 통과시키고, 게임은 문구만 반영합니다.

@@ -1,11 +1,17 @@
 class_name AstraFeedbackFX
 extends CanvasLayer
 
+# Screen-level feedback: phase banners, toasts, flashes and short procedural
+# tones. No audio files are needed; every sound is synthesized on the fly.
+
 var _flash: ColorRect
-var _tone_player: AudioStreamPlayer
 var _banner: PanelContainer
 var _banner_title: Label
 var _banner_subtitle: Label
+var _banner_tween: Tween
+var _toast_box: VBoxContainer
+var _players: Array[AudioStreamPlayer] = []
+var _next_player: int = 0
 
 func _ready() -> void:
     layer = 90
@@ -15,117 +21,172 @@ func _ready() -> void:
     _flash.color = Color(1, 1, 1, 0)
     add_child(_flash)
 
-    _tone_player = AudioStreamPlayer.new()
-    _tone_player.volume_db = -13.0
-    add_child(_tone_player)
-
     _banner = PanelContainer.new()
     _banner.anchor_left = 0.5
     _banner.anchor_right = 0.5
-    _banner.offset_left = -310.0
-    _banner.offset_right = 310.0
-    _banner.offset_top = 170.0
-    _banner.offset_bottom = 265.0
+    _banner.anchor_top = 0.0
+    _banner.anchor_bottom = 0.0
+    _banner.offset_left = -330.0
+    _banner.offset_right = 330.0
+    _banner.offset_top = 150.0
+    _banner.offset_bottom = 246.0
     _banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _banner.visible = false
     add_child(_banner)
-
     var box := VBoxContainer.new()
     box.alignment = BoxContainer.ALIGNMENT_CENTER
     box.add_theme_constant_override("separation", 2)
+    box.mouse_filter = Control.MOUSE_FILTER_IGNORE
     _banner.add_child(box)
-
     _banner_title = Label.new()
     _banner_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    _banner_title.add_theme_font_size_override("font_size", 27)
+    _banner_title.add_theme_font_size_override("font_size", 30)
     box.add_child(_banner_title)
-
     _banner_subtitle = Label.new()
     _banner_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    _banner_subtitle.add_theme_font_size_override("font_size", 13)
+    _banner_subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    _banner_subtitle.add_theme_font_size_override("font_size", 15)
     _banner_subtitle.add_theme_color_override("font_color", Color("c5d5ea"))
     box.add_child(_banner_subtitle)
 
-func play(key: String) -> void:
-    match key:
-        "evidence": _play_tone(660.0, 0.11, 0.20, 440.0)
-        "alert": _play_tone(170.0, 0.16, 0.22, 110.0)
-        "select": _play_tone(520.0, 0.045, 0.12, 780.0)
-        "talk": _play_tone(360.0, 0.055, 0.10, 540.0)
-        "phase": _play_tone(300.0, 0.11, 0.14, 450.0)
-        "unlock": _play_tone(740.0, 0.18, 0.16, 980.0)
-        "complete": _play_tone(440.0, 0.22, 0.18, 660.0)
-        _: _play_tone(820.0, 0.05, 0.16, 1200.0)
+    _toast_box = VBoxContainer.new()
+    _toast_box.anchor_left = 1.0
+    _toast_box.anchor_right = 1.0
+    _toast_box.anchor_top = 1.0
+    _toast_box.anchor_bottom = 1.0
+    _toast_box.offset_left = -420.0
+    _toast_box.offset_right = -24.0
+    _toast_box.offset_top = -260.0
+    _toast_box.offset_bottom = -92.0
+    _toast_box.alignment = BoxContainer.ALIGNMENT_END
+    _toast_box.add_theme_constant_override("separation", 8)
+    _toast_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    add_child(_toast_box)
 
-func play_case_sting(case_id: String) -> void:
-    match case_id:
-        "GLASS_GARDEN": _play_tone(260.0, 0.19, 0.13, 390.0)
-        "ECHO_WARD": _play_tone(210.0, 0.21, 0.14, 315.0)
-        _: _play_tone(180.0, 0.20, 0.13, 270.0)
+    for index in range(4):
+        var player := AudioStreamPlayer.new()
+        player.volume_db = -14.0
+        add_child(player)
+        _players.append(player)
 
-func _play_tone(freq_a: float, duration: float, amplitude: float, freq_b: float = 0.0) -> void:
-    if _tone_player == null:
+func banner(title: String, subtitle: String, accent: Color, hold: float = 0.9) -> void:
+    if _banner == null:
         return
-    var generator := AudioStreamGenerator.new()
-    generator.mix_rate = 22050.0
-    generator.buffer_length = 0.30
-    _tone_player.stream = generator
-    _tone_player.play()
-    var playback := _tone_player.get_stream_playback() as AudioStreamGeneratorPlayback
-    if playback == null:
-        return
-    var frames := int(generator.mix_rate * duration)
-    for i in range(frames):
-        var t := float(i) / generator.mix_rate
-        var envelope := pow(1.0 - float(i) / maxf(1.0, float(frames)), 1.6)
-        var sample := sin(TAU * freq_a * t)
-        if freq_b > 0.0:
-            sample += sin(TAU * freq_b * t) * 0.28
-        sample *= amplitude * envelope
-        playback.push_frame(Vector2(sample, sample))
+    var box := AstraUI.style(Color(0.02, 0.045, 0.09, 0.96), Color(accent, 0.85), 12, 1, 18)
+    box.shadow_color = Color(accent, 0.18)
+    box.shadow_size = 18
+    _banner.add_theme_stylebox_override("panel", box)
+    _banner_title.text = title
+    _banner_title.add_theme_color_override("font_color", accent)
+    _banner_subtitle.text = subtitle
+    _banner_subtitle.visible = subtitle != ""
+    _banner.visible = true
+    _banner.modulate.a = 0.0
+    if _banner_tween != null and _banner_tween.is_valid():
+        _banner_tween.kill()
+    _banner_tween = create_tween()
+    _banner_tween.tween_property(_banner, "modulate:a", 1.0, 0.14)
+    _banner_tween.tween_interval(hold)
+    _banner_tween.tween_property(_banner, "modulate:a", 0.0, 0.3)
+    _banner_tween.tween_callback(func(): _banner.visible = false)
 
-func flash(color: Color, peak_alpha: float = 0.18) -> void:
+func toast(text: String, accent: Color, seconds: float = 3.2) -> void:
+    if _toast_box == null:
+        return
+    var card := PanelContainer.new()
+    card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    card.add_theme_stylebox_override("panel", AstraUI.style(Color(0.03, 0.06, 0.12, 0.95), Color(accent, 0.8), 8, 1, 12))
+    var line := Label.new()
+    line.text = text
+    line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    line.add_theme_font_size_override("font_size", 14)
+    line.add_theme_color_override("font_color", AstraUI.TEXT)
+    card.add_child(line)
+    _toast_box.add_child(card)
+    while _toast_box.get_child_count() > 3:
+        var old := _toast_box.get_child(0)
+        _toast_box.remove_child(old)
+        old.queue_free()
+    card.modulate.a = 0.0
+    var tween := card.create_tween()
+    tween.tween_property(card, "modulate:a", 1.0, 0.15)
+    tween.tween_interval(seconds)
+    tween.tween_property(card, "modulate:a", 0.0, 0.35)
+    tween.tween_callback(card.queue_free)
+
+func flash(color: Color, peak_alpha: float = 0.16, duration: float = 0.3) -> void:
     if _flash == null:
         return
     _flash.color = Color(color.r, color.g, color.b, 0.0)
     var tween := create_tween()
-    tween.tween_property(_flash, "color:a", peak_alpha, 0.06)
-    tween.tween_property(_flash, "color:a", 0.0, 0.24)
-
-func phase_banner(title: String, subtitle: String, accent: Color) -> void:
-    if _banner == null:
-        return
-    var style := StyleBoxFlat.new()
-    style.bg_color = Color(0.025, 0.055, 0.10, 0.96)
-    style.border_color = Color(accent.r, accent.g, accent.b, 0.82)
-    style.set_border_width_all(1)
-    style.set_corner_radius_all(10)
-    style.content_margin_left = 20
-    style.content_margin_right = 20
-    style.content_margin_top = 11
-    style.content_margin_bottom = 11
-    _banner.add_theme_stylebox_override("panel", style)
-    _banner_title.text = title
-    _banner_title.add_theme_color_override("font_color", accent)
-    _banner_subtitle.text = subtitle
-    _banner.visible = true
-    _banner.modulate.a = 0.0
-    _banner.position.y = -10.0
-    var tween := _banner.create_tween()
-    tween.set_parallel(true)
-    tween.tween_property(_banner, "modulate:a", 1.0, 0.10)
-    tween.tween_property(_banner, "position:y", 0.0, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-    tween.set_parallel(false)
-    tween.tween_interval(0.72)
-    tween.tween_property(_banner, "modulate:a", 0.0, 0.22)
-    tween.tween_callback(func(): _banner.visible = false)
+    tween.tween_property(_flash, "color:a", peak_alpha, duration * 0.25)
+    tween.tween_property(_flash, "color:a", 0.0, duration * 0.75)
 
 func shake(target: Control, intensity: float = 6.0) -> void:
-    if target == null:
+    if target == null or not target.is_inside_tree():
         return
     var origin := target.position
     var tween := create_tween()
     tween.tween_property(target, "position", origin + Vector2(intensity, 0), 0.035)
     tween.tween_property(target, "position", origin + Vector2(-intensity, 2), 0.035)
-    tween.tween_property(target, "position", origin + Vector2(intensity * 0.55, -2), 0.035)
+    tween.tween_property(target, "position", origin + Vector2(intensity * 0.5, -2), 0.035)
     tween.tween_property(target, "position", origin, 0.05)
+
+func play(key: String) -> void:
+    match key:
+        "select": _tone(540.0, 0.05, 0.10, 810.0)
+        "click": _tone(760.0, 0.035, 0.08, 0.0)
+        "talk": _tone(380.0, 0.06, 0.09, 570.0)
+        "clue": _chord([660.0, 880.0], 0.16, 0.12)
+        "phase": _tone(300.0, 0.14, 0.12, 450.0)
+        "alert": _tone(170.0, 0.2, 0.18, 113.0)
+        "slip": _chord([440.0, 554.0, 659.0], 0.22, 0.12)
+        "secret": _chord([392.0, 523.0], 0.2, 0.1)
+        "vote": _tone(140.0, 0.28, 0.2, 93.0)
+        "night": _tone(110.0, 0.5, 0.12, 165.0)
+        "kill": _tone(90.0, 0.45, 0.22, 60.0)
+        "save": _chord([523.0, 659.0, 784.0], 0.3, 0.1)
+        "win": _chord([523.0, 659.0, 784.0, 1046.0], 0.6, 0.1)
+        "lose": _chord([220.0, 207.0, 196.0], 0.7, 0.12)
+        _: _tone(700.0, 0.04, 0.08, 0.0)
+
+func _player() -> AudioStreamPlayer:
+    var player := _players[_next_player % _players.size()]
+    _next_player += 1
+    return player
+
+func _tone(freq_a: float, duration: float, amplitude: float, freq_b: float = 0.0) -> void:
+    _synth([freq_a], duration, amplitude, freq_b)
+
+func _chord(freqs: Array, duration: float, amplitude: float) -> void:
+    _synth(freqs, duration, amplitude, 0.0)
+
+func _synth(freqs: Array, duration: float, amplitude: float, glide_to: float) -> void:
+    if _players.is_empty() or DisplayServer.get_name() == "headless":
+        return
+    var player := _player()
+    var generator := AudioStreamGenerator.new()
+    generator.mix_rate = 22050.0
+    generator.buffer_length = maxf(0.2, duration + 0.1)
+    player.stream = generator
+    player.play()
+    var playback := player.get_stream_playback() as AudioStreamGeneratorPlayback
+    if playback == null:
+        return
+    var frames := int(generator.mix_rate * duration)
+    var phases: Array[float] = []
+    for _f in freqs:
+        phases.append(0.0)
+    for i in range(frames):
+        var progress := float(i) / maxf(1.0, float(frames))
+        var attack := minf(1.0, float(i) / 220.0)
+        var envelope := attack * pow(1.0 - progress, 1.8)
+        var sample := 0.0
+        for index in range(freqs.size()):
+            var freq := float(freqs[index])
+            if glide_to > 0.0 and index == 0:
+                freq = lerpf(freq, glide_to, progress)
+            phases[index] += TAU * freq / generator.mix_rate
+            sample += sin(phases[index]) + sin(phases[index] * 2.0) * 0.12
+        sample = sample / maxf(1.0, float(freqs.size())) * amplitude * envelope
+        playback.push_frame(Vector2(sample, sample))

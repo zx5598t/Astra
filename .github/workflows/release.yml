@@ -1,0 +1,58 @@
+name: Windows build
+
+# Builds a ready-to-run ASTRA.exe.
+#  - Manual run (Actions tab -> Windows build -> Run workflow): zip is attached as an artifact.
+#  - Pushing a tag like v0.2.0: the zip is also published as a GitHub Release.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot 4.7.2 and the Windows export template
+        run: |
+          curl -fsSL -o godot.zip "https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip"
+          unzip -q godot.zip
+          mv Godot_v4.7.2-stable_linux.x86_64 godot
+          chmod +x godot
+          curl -fsSL -o templates.tpz "https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_export_templates.tpz"
+          target="$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          mkdir -p "$target"
+          unzip -q -j templates.tpz "templates/windows_release_x86_64.exe" "templates/version.txt" -d "$target"
+          rm templates.tpz
+
+      - name: Import project
+        run: ./godot --headless --path . --import
+
+      - name: Export ASTRA.exe
+        run: |
+          mkdir -p build/ASTRA
+          ./godot --headless --path . --export-release "Windows Desktop" build/ASTRA/ASTRA.exe
+          test -f build/ASTRA/ASTRA.exe
+          cp START_HERE.md build/ASTRA/START_HERE.md
+          version="$(tr -d '[:space:]' < VERSION)"
+          echo "ASTRA_VERSION=$version" >> "$GITHUB_ENV"
+          (cd build && zip -qr "ASTRA-$version-windows.zip" ASTRA)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ASTRA-${{ env.ASTRA_VERSION }}-windows
+          path: build/*.zip
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ASTRA ${{ env.ASTRA_VERSION }}
+          body_path: docs/RELEASE_NOTES.md
+          files: build/*.zip

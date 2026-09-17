@@ -4,17 +4,18 @@ on:
   push:
     branches: [main, "release/**"]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Godot 4.7.2 stable
         run: |
-          curl -L -o godot.zip "https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip"
+          curl -fsSL -o godot.zip "https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip"
           unzip -q godot.zip
           chmod +x Godot_v4.7.2-stable_linux.x86_64
           mv Godot_v4.7.2-stable_linux.x86_64 godot
@@ -22,92 +23,43 @@ jobs:
       - name: Import project and reject script errors
         run: |
           set -o pipefail
-          ./godot --headless --path . --editor --quit 2>&1 | tee import.log
+          ./godot --headless --path . --import 2>&1 | tee import.log
           if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" import.log; then
             echo "Godot import reported script errors."
             exit 1
           fi
 
-      - name: Validate GDScript chain
+      - name: Parse-check every script
         run: |
-          set -u
           failed=0
-          for f in \
-            scripts/npc_state.gd \
-            scripts/truth_engine.gd \
-            scripts/ai_gateway.gd \
-            scripts/remote_ai_client.gd \
-            scripts/game_state.gd \
-            scripts/social_game_state.gd \
-            scripts/loop_game_state.gd \
-            scripts/random_case_game_state.gd \
-            scripts/progression_game_state.gd \
-            scripts/hypothesis_game_state.gd \
-            scripts/meta_progress.gd \
-            scripts/notebook_board.gd \
-            scripts/interactive_notebook_board.gd \
-            scripts/environment_backdrop.gd \
-            scripts/feedback_fx.gd \
-            scripts/character_presentation.gd \
-            scripts/meeting_cinematic.gd \
-            scripts/case_theory_model.gd \
-            scripts/case_theory_panel.gd \
-            scripts/incident_stage.gd \
-            scripts/main.gd \
-            scripts/main_v004.gd \
-            scripts/main_v005.gd \
-            scripts/main_v006.gd \
-            scripts/main_v007.gd \
-            scripts/main_v008.gd \
-            scripts/main_v009.gd \
-            scripts/main_v010.gd \
-            scripts/main_v011.gd; do
-            echo "===== CHECK $f ====="
-            log="check-$(basename "$f").log"
-            set +e
-            ./godot --headless --path . --check-only --script "res://$f" 2>&1 | tee "$log"
-            code=${PIPESTATUS[0]}
-            set -e
-            if [ "$code" -ne 0 ]; then
+          while IFS= read -r f; do
+            out=$(./godot --headless --path . --check-only --script "res://$f" 2>&1 || true)
+            if echo "$out" | grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script"; then
+              echo "::error file=$f::GDScript error"
               failed=1
             fi
-            if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$log"; then
-              failed=1
-            fi
-          done
+          done < <(find scripts tests -name '*.gd' | sort)
           exit "$failed"
 
-      - name: Run CASE THEORY smoke test
+      - name: Rules, case generator, save and balance tests
         run: |
           set -o pipefail
-          ./godot --headless --path . --script res://scripts/ci_smoke.gd 2>&1 | tee smoke.log
-          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" smoke.log; then
-            exit 1
-          fi
-          grep -q "ASTRA CI SMOKE OK" smoke.log
+          ./godot --headless --path . --script res://tests/run_tests.gd -- --games=40 2>&1 | tee tests.log
+          grep -q "ASTRA TESTS OK" tests.log
 
-      - name: Run 0.1.0 vertical slice smoke test
+      - name: Headless UI smoke test (title -> full case -> result)
         run: |
           set -o pipefail
-          ./godot --headless --path . --script res://scripts/ci_vertical_slice.gd 2>&1 | tee vertical.log
-          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" vertical.log; then
+          ./godot --headless --path . --script res://tests/ui_smoke.gd 2>&1 | tee ui.log
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" ui.log; then
             exit 1
           fi
-          grep -q "ASTRA 0.1.0 VERTICAL SLICE CI OK" vertical.log
-
-      - name: Run 0.1.1 presentation smoke test
-        run: |
-          set -o pipefail
-          ./godot --headless --path . --script res://scripts/ci_presentation.gd 2>&1 | tee presentation.log
-          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" presentation.log; then
-            exit 1
-          fi
-          grep -q "ASTRA 0.1.1 PRESENTATION CI OK" presentation.log
+          grep -q "ASTRA UI SMOKE OK" ui.log
 
       - name: Boot main scene headlessly
         run: |
           set +e
-          timeout 12s ./godot --headless --path . --quit-after 2 2>&1 | tee boot.log
+          timeout 20s ./godot --headless --path . --quit-after 120 2>&1 | tee boot.log
           code=${PIPESTATUS[0]}
           set -e
           if [ "$code" -ne 0 ] && [ "$code" -ne 124 ]; then
