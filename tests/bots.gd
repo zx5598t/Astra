@@ -7,8 +7,10 @@ extends RefCounted
 const INFO_EFFECTS := ["witness", "open_records", "noa_private", "noa_public", "dax_hint", "top_suspect", "patrol", "vale_record", "flow", "crowd_target"]
 
 static func deduce(s: AstraGameSession) -> Dictionary:
+    # 0.4.0: a case may run with fewer than the eight identity models, so the
+    # bot scores the roster it was actually given.
     var scores := {}
-    for npc_id in AstraCrewCatalog.ORDER:
+    for npc_id in s.active_roster():
         scores[npc_id] = 0.0
     var window_start := int(s.case_data.get("window_start", 0))
     var window_end := int(s.case_data.get("window_end", 0))
@@ -31,7 +33,7 @@ static func deduce(s: AstraGameSession) -> Dictionary:
             sets.append(clue.get("members", []))
         for members in sets:
             for member_id in members:
-                scores[str(member_id)] = float(scores[str(member_id)]) + 1.0 / maxf(1.0, float(members.size()))
+                scores[str(member_id)] = float(scores.get(str(member_id), 0.0)) + 1.0 / maxf(1.0, float(members.size()))
         for a_index in range(sets.size()):
             for b_index in range(a_index + 1, sets.size()):
                 var both: Array = []
@@ -39,18 +41,20 @@ static func deduce(s: AstraGameSession) -> Dictionary:
                     if member_id in sets[b_index]:
                         both.append(member_id)
                 if both.size() == 1:
-                    scores[str(both[0])] = float(scores[str(both[0])]) + 3.0
+                    scores[str(both[0])] = float(scores.get(str(both[0]), 0.0)) + 3.0
     for item in s.contradictions:
         var kind := str(item.get("kind", ""))
         for target in item.get("targets", []):
             if kind in ["log", "log_presence"]:
-                scores[str(target)] = float(scores[str(target)]) + 1.8
+                scores[str(target)] = float(scores.get(str(target), 0.0)) + 1.8
             elif kind == "terminal":
-                scores[str(target)] = float(scores[str(target)]) + 0.9
+                scores[str(target)] = float(scores.get(str(target), 0.0)) + 0.9
             else:
-                scores[str(target)] = float(scores[str(target)]) + 0.5
-    for npc_id in AstraCrewCatalog.ORDER:
+                scores[str(target)] = float(scores.get(str(target), 0.0)) + 0.5
+    for npc_id in s.active_roster():
         var member := s.npc(npc_id)
+        if member == null:
+            continue
         if member.secret_revealed:
             scores[npc_id] = float(scores[npc_id]) - 3.0
         if member.audited:
@@ -61,17 +65,17 @@ static func deduce(s: AstraGameSession) -> Dictionary:
         if str(clue.get("kind", "")) == "access_log":
             for person in clue.get("log_people", []):
                 if s.known_claims.has(str(person)) and str(s.known_claims[str(person)].get("position", "")) == str(clue.get("log_room", "")):
-                    scores[str(person)] = float(scores[str(person)]) - 1.0
+                    scores[str(person)] = float(scores.get(str(person), 0.0)) - 1.0
     return scores
 
 static func ranked(s: AstraGameSession, only_alive: bool) -> Array:
     var scores := deduce(s)
     var ids: Array = []
-    for npc_id in AstraCrewCatalog.ORDER:
+    for npc_id in s.active_roster():
         if only_alive and not s.is_alive(npc_id):
             continue
         ids.append(npc_id)
-    ids.sort_custom(func(a, b): return float(scores[a]) > float(scores[b]))
+    ids.sort_custom(func(a, b): return float(scores.get(a, 0.0)) > float(scores.get(b, 0.0)))
     return ids
 
 static func play_smart(case_id: String, seed_value: int, protocol: String) -> Dictionary:

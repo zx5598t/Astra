@@ -1,122 +1,147 @@
 extends VBoxContainer
-
-# Four room cards (what is left, what was destroyed) and a large card for the
-# clue that was just found.
-
 var screen
-var _header: RichTextLabel
-var _grid: GridContainer
-var _mission: VBoxContainer
+var _rooms: HBoxContainer
+var _stage: Control
 var _latest: VBoxContainer
-var _last_clue_id: String = ""
-
+var _room_id := ""
+var _last_clue_id := ""
 func setup(game_screen) -> void:
     screen = game_screen
-    add_theme_constant_override("separation", 12)
-    size_flags_vertical = Control.SIZE_EXPAND_FILL
-    _header = AstraUI.rich(18)
-    add_child(_header)
-    var content := AstraUI.vbox(12)
-    add_child(AstraUI.scroll(content))
-    _mission = AstraUI.vbox(6)
-    content.add_child(_mission)
-    _grid = GridContainer.new()
-    _grid.columns = 2
-    _grid.add_theme_constant_override("h_separation", 10)
-    _grid.add_theme_constant_override("v_separation", 10)
-    content.add_child(_grid)
-    content.add_child(AstraUI.section("방금 확보한 단서", AstraUI.GOLD))
-    _latest = AstraUI.vbox(8)
-    content.add_child(_latest)
+    add_theme_constant_override("separation",10)
+    var session: AstraGameSession = screen.session
+    _room_id = str(session.case_data["ops"][0]["room"])
+    _rooms = AstraUI.hbox(8)
+    add_child(_rooms)
+    _stage = Control.new()
+    _stage.custom_minimum_size.y = 255
+    _stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    _stage.clip_contents = true
+    add_child(_stage)
+    _latest = AstraUI.vbox(5)
+    add_child(_latest)
     refresh()
-
 func refresh() -> void:
     var session: AstraGameSession = screen.session
-    _header.text = "[b]현장 조사[/b]   [color=#%s]행동력[/color] %s" % [AstraUI.hex(AstraUI.MUTED), AstraUI.pips(session.investigation_ap, session.investigation_ap_max(), AstraUI.GOLD)]
-    _refresh_mission(session)
-    AstraUI.clear(_grid)
-    var op_rooms := {}
-    for op in session.case_data.get("ops", []):
-        op_rooms[str(op.get("room", ""))] = str(op.get("name", ""))
-    for room in session.case_data.get("rooms", []):
-        _grid.add_child(_room_card(session, room, str(op_rooms.get(str(room.get("id", "")), ""))))
+    AstraUI.clear(_rooms)
+    var recommended: Array = session.recommended_rooms()
+    for room in session.case_data["rooms"]:
+        var id := str(room["id"])
+        var status := session.room_status(id)
+        var left := int(status.get("remaining", 0))
+        # Rooms say how much is still there. 0.3.1 gave no way to tell a room you
+        # had finished from one you had never opened, so people re-walked rooms
+        # and ran out of time.
+        var suffix := ""
+        if left > 0:
+            suffix = "   ●%d" % left
+        elif int(status.get("found", 0)) > 0:
+            suffix = "   ✓"
+        var wanted: bool = id in recommended and left > 0
+        var accent: Color = AstraUI.CYAN if id == _room_id else (AstraUI.GOLD if wanted else AstraUI.MUTED)
+        var button := AstraUI.button(str(room["name"]) + suffix, accent, AstraUI.T_UI, 46, id == _room_id)
+        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        button.tooltip_text = str(room.get("desc", ""))
+        button.pressed.connect(func():
+            _room_id = id
+            screen.fx.play("select")
+            refresh()
+        )
+        _rooms.add_child(button)
+        # During calibration the recommended room is ringed, so a first-time
+        # player does not spend the first minute hunting for where to click.
+        if wanted and id != _room_id and session.tutorial_active():
+            AstraUI.mark_as_target(button, AstraUI.GOLD, "")
+    AstraUI.clear(_stage)
+    var art := AstraUI.thumb(AstraArt.room(_room_id),Vector2.ZERO)
+    art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    _stage.add_child(art)
+    _stage.add_child(AstraArt.shade())
+    # Room name over its own dark plate, not straight onto the art: a bright
+    # console behind white text made the caption unreadable in 0.3.1.
+    var caption_card := AstraUI.panel(Color(0.016, 0.031, 0.062, 0.86), Color(AstraUI.CYAN, 0.35), 10, 12)
+    caption_card.position = Vector2(18, 14)
+    caption_card.custom_minimum_size.x = 300
+    _stage.add_child(caption_card)
+    var caption := AstraUI.vbox(2)
+    caption_card.add_child(caption)
+    caption.add_child(AstraUI.label(session.room_name(_room_id), AstraUI.T_TITLE, AstraUI.TEXT))
+    caption.add_child(AstraUI.label("이동은 무료 · 조사 지점 1곳당 30분", AstraUI.T_META, AstraUI.MUTED))
+
+    var points := session.investigation_points(_room_id)
+    var positions := [Vector2(0.20, 0.52), Vector2(0.51, 0.66), Vector2(0.80, 0.40)]
+    for i in range(points.size()):
+        var point: Dictionary = points[i]
+        var pos: Vector2 = positions[i]
+        var searched: bool = bool(point["searched"])
+        var available: bool = bool(point["available"])
+        var box := AstraUI.vbox(2)
+        box.anchor_left = pos.x
+        box.anchor_top = pos.y
+        box.offset_left = -95
+        box.offset_top = -62
+        box.offset_right = 95
+        _stage.add_child(box)
+        # A ring behind the icon so the hotspot reads as a hotspot rather than
+        # as scenery. Unsearched points glow; finished ones go quiet.
+        var badge := AstraUI.panel(
+            Color(AstraUI.GOLD, 0.22) if available else Color(0.02, 0.04, 0.07, 0.7),
+            AstraUI.GOLD if available else Color(AstraUI.DIM, 0.5), 999, 6)
+        badge.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+        box.add_child(badge)
+        var icon := AstraArt.icon(str(point["icon"]), Vector2(52, 52))
+        icon.modulate = Color.WHITE if available else Color(0.6, 0.64, 0.7)
+        badge.add_child(icon)
+        var label_text := str(point["label"])
+        if searched:
+            label_text = "✓  " + label_text
+        elif available:
+            label_text = "◉  " + label_text
+        var button := AstraUI.button(label_text, AstraUI.GOLD if available else AstraUI.MUTED, AstraUI.T_UI, 44, available)
+        button.tooltip_text = str(point["detail"])
+        button.disabled = not available
+        button.pressed.connect(_inspect.bind(str(point["id"])))
+        box.add_child(button)
+        if available and session.tutorial_active():
+            AstraUI.mark_as_target(button, AstraUI.GOLD, "")
     AstraUI.clear(_latest)
     var clue := session.clue_by_id(_last_clue_id)
-    if clue.is_empty():
-        _latest.add_child(AstraUI.label("구역을 골라 조사하세요. 조작 현장에는 실행자의 흔적이, 다른 구역에는 달아난 동선과 출입 기록이 남아 있습니다.", 14, AstraUI.MUTED, true))
-    else:
+    if not clue.is_empty():
         var card := AstraClueCard.new()
-        card.setup(session, clue, false)
+        card.setup(session,clue,true)
         _latest.add_child(card)
-
-func _room_card(session: AstraGameSession, room: Dictionary, op_name: String) -> Control:
-    var room_id := str(room.get("id", ""))
-    var status := session.room_status(room_id)
-    var remaining := int(status.get("remaining", 0))
-    var accent := AstraUI.RED if op_name != "" else AstraUI.CYAN
-    var card := AstraUI.panel(AstraUI.PANEL_2, Color(accent, 0.45), 12, 12)
-    card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    var box := AstraUI.vbox(6)
-    card.add_child(box)
-    var head := AstraUI.hbox(8)
-    box.add_child(head)
-    head.add_child(AstraUI.label(str(room.get("name", room_id)), 20, AstraUI.TEXT))
-    if op_name != "":
-        head.add_child(AstraUI.chip("조작 현장 · " + op_name, AstraUI.RED, 11))
-    box.add_child(AstraUI.label(str(room.get("desc", "")), 13, AstraUI.MUTED, true))
-    var chips := AstraUI.hbox(6)
-    box.add_child(chips)
-    chips.add_child(AstraUI.chip("남은 흔적 %d" % remaining, AstraUI.GOLD if remaining > 0 else AstraUI.DIM, 12))
-    if int(status.get("found", 0)) > 0:
-        chips.add_child(AstraUI.chip("확보 %d" % int(status.get("found", 0)), AstraUI.GREEN, 12))
-    if int(status.get("destroyed", 0)) > 0:
-        chips.add_child(AstraUI.chip("훼손 %d" % int(status.get("destroyed", 0)), AstraUI.RED, 12))
-    var can_search := session.investigation_ap > 0 and remaining > 0
-    var label := "조사하기 · 행동력 1"
-    if remaining <= 0:
-        label = "더 찾을 흔적 없음"
-    elif session.investigation_ap <= 0:
-        label = "행동력 없음"
-    var button := AstraUI.button(label, accent, 15, 42, can_search)
-    button.disabled = not can_search
-    button.pressed.connect(_search.bind(room_id))
-    box.add_child(button)
-    return card
-
-func _search(room_id: String) -> void:
-    var session: AstraGameSession = screen.session
-    var clue := session.search_room(room_id)
+    else:
+        var intro := AstraUI.panel(Color(0.016, 0.031, 0.062, 0.9), Color(AstraUI.CYAN, 0.28), 10, 12)
+        _latest.add_child(intro)
+        var intro_box := AstraUI.vbox(4)
+        intro.add_child(intro_box)
+        intro_box.add_child(AstraUI.label("조사 지점", AstraUI.T_META, AstraUI.CYAN))
+        var intro_text := AstraUI.rich_prose(AstraUI.T_BODY)
+        intro_text.text = "[color=#ffd36a]◉[/color] 표시가 있는 곳이 아직 살펴보지 않은 지점입니다. 눌러서 기록을 확보하세요."
+        intro_box.add_child(intro_text)
+    var mission := session.mission_status()
+    if str(mission.get("room","")) == _room_id and session.has_feature("night_tactics"):
+        var row := AstraUI.hbox(10)
+        _latest.add_child(row)
+        row.add_child(AstraArt.icon("tools_02",Vector2(36,36)))
+        row.add_child(AstraUI.label("선택 · " + str(mission.get("title","")),14,AstraUI.MUTED,true))
+        var action := AstraUI.button("복구 완료" if bool(mission.get("complete",false)) else "설비 복구 · 30분",AstraUI.CYAN,14,36)
+        action.disabled = not bool(mission.get("available",false))
+        action.pressed.connect(_perform_mission)
+        row.add_child(action)
+func _inspect(point: String) -> void:
+    var clue: Dictionary = screen.session.inspect_point(_room_id,point)
+    _show_clue(clue)
+func _show_clue(clue: Dictionary) -> void:
     if clue.is_empty():
         return
-    _last_clue_id = str(clue.get("id", ""))
+    _last_clue_id = str(clue["id"])
     screen.fx.play("clue")
-    screen.fx.toast("단서 확보 · " + str(clue.get("title", "")), AstraUI.GOLD)
     refresh()
-
-func _refresh_mission(session: AstraGameSession) -> void:
-    AstraUI.clear(_mission)
-    var mission := session.mission_status()
-    if mission.is_empty():
-        return
-    var complete := bool(mission.get("complete", false))
-    var panel := AstraUI.panel(Color(AstraUI.CYAN, 0.07), Color(AstraUI.CYAN, 0.35), 10, 12)
-    _mission.add_child(panel)
-    var row := AstraUI.hbox(14)
-    panel.add_child(row)
-    var text := AstraUI.vbox(4)
-    text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    row.add_child(text)
-    text.add_child(AstraUI.label(("✓ 완료  /  " if complete else "선택 임무  /  ") + str(mission.get("title", "")), 16, AstraUI.GREEN if complete else AstraUI.CYAN))
-    text.add_child(AstraUI.label(str(mission.get("result", "")) if complete else str(mission.get("description", "")), 13, AstraUI.MUTED, true))
-    if not complete:
-        text.add_child(AstraUI.label("보상 · " + str(mission.get("reward", "")), 12, AstraUI.GOLD, true))
-    var button := AstraUI.button(str(mission.get("action_label", "")), AstraUI.CYAN, 14, 42)
-    button.disabled = not bool(mission.get("available", false))
-    button.pressed.connect(_perform_mission)
-    row.add_child(button)
-
+func _search(room_id: String) -> void:
+    _room_id = room_id
+    _show_clue(screen.session.search_room(room_id))
 func _perform_mission() -> void:
     var result: Dictionary = screen.session.perform_mission()
-    if bool(result.get("ok", false)):
+    if bool(result.get("ok",false)):
         screen.fx.play("clue")
-        screen.fx.toast(str(result.get("text", "")), AstraUI.GREEN, 4.0)
+        screen.fx.toast("설비가 다시 작동하기 시작했다.",AstraUI.GREEN)

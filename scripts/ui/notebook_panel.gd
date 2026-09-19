@@ -1,217 +1,252 @@
 class_name AstraNotebookPanel
 extends PanelContainer
 
-# Right-hand notebook: 단서 (clue cards), 추리 노트 (alibi table + per-operation
-# trace grid + contradictions) and 기록 (case log).
-
 var session: AstraGameSession
 var tabs: TabContainer
 var _clue_list: VBoxContainer
+var _people: VBoxContainer
+var _claims: VBoxContainer
+var _search_field: LineEdit
+var _search_results: VBoxContainer
 var _notes: VBoxContainer
 var _log: RichTextLabel
-var _objectives: VBoxContainer
-var _last_clue_count: int = -1
+var _clue_pick: OptionButton
+var _npc_pick: OptionButton
+var _op_pick: OptionButton
+var _relation_pick: OptionButton
 
 func setup(game_session: AstraGameSession) -> void:
     session = game_session
-    add_theme_stylebox_override("panel", AstraUI.style(AstraUI.PANEL, AstraUI.BORDER, 12, 1, 8))
+    add_theme_stylebox_override("panel", AstraUI.style(AstraUI.PANEL,AstraUI.BORDER,10,1,10))
     tabs = TabContainer.new()
     tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    tabs.add_theme_font_size_override("font_size", 14)
-    tabs.add_theme_color_override("font_selected_color", AstraUI.CYAN)
-    tabs.add_theme_color_override("font_unselected_color", AstraUI.MUTED)
-    tabs.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-    var layout := AstraUI.vbox(10)
-    add_child(layout)
-    _objectives = AstraUI.vbox(5)
-    layout.add_child(_objectives)
-    layout.add_child(tabs)
+    tabs.add_theme_font_size_override("font_size",16)
+    add_child(tabs)
+    # The notebook starts as three plain lists. The hypothesis board — the part
+    # that made 0.3.1's notebook look like a spreadsheet on first open — only
+    # appears once the player has finished a couple of cases (§27).
+    _clue_list = AstraUI.vbox(10)
+    var clues := AstraUI.scroll(_clue_list)
+    clues.name = "단서"
+    tabs.add_child(clues)
 
-    _clue_list = AstraUI.vbox(8)
-    var clue_scroll := AstraUI.scroll(_clue_list)
-    clue_scroll.name = "단서"
-    tabs.add_child(clue_scroll)
+    _people = AstraUI.vbox(10)
+    var people := AstraUI.scroll(_people)
+    people.name = "인물"
+    tabs.add_child(people)
 
-    _notes = AstraUI.vbox(12)
-    var note_scroll := AstraUI.scroll(_notes, true)
-    note_scroll.name = "추리 노트"
-    tabs.add_child(note_scroll)
+    _claims = AstraUI.vbox(10)
+    var claims := AstraUI.scroll(_claims)
+    claims.name = "발언"
+    tabs.add_child(claims)
 
-    _log = AstraUI.rich(13, false)
-    _log.scroll_following = true
+    if session.has_feature("hypothesis"):
+        _notes = AstraUI.vbox(12)
+        var notes := AstraUI.scroll(_notes)
+        notes.name = "가설"
+        tabs.add_child(notes)
+
+    _log = AstraUI.rich(AstraUI.T_UI, false)
+    _log.name = "사건 기록"
     _log.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    _log.name = "기록"
     tabs.add_child(_log)
     refresh()
 
-func refresh() -> void:
-    if session == null:
-        return
-    AstraUI.clear(_objectives)
-    _objectives.add_child(AstraUI.section("조사 목표"))
-    for objective in session.objectives():
-        var complete := bool(objective.get("complete", false))
-        var row := AstraUI.hbox(6)
-        row.add_child(AstraUI.label("✓" if complete else "○", 13, AstraUI.GREEN if complete else AstraUI.DIM))
-        row.add_child(AstraUI.label(str(objective.get("label", "")), 12, AstraUI.MUTED, true))
-        row.add_child(AstraUI.label("%d/%d" % [int(objective.get("current", 0)), int(objective.get("target", 1))], 12, AstraUI.GREEN if complete else AstraUI.GOLD))
-        _objectives.add_child(row)
-    var found := session.found_clues()
-    tabs.set_tab_title(0, "단서 %d" % found.size())
-    tabs.set_tab_title(1, "추리 노트%s" % (" ⚠%d" % session.contradictions.size() if not session.contradictions.is_empty() else ""))
-    tabs.set_tab_title(2, "기록")
-    _refresh_clues(found)
-    _refresh_notes()
-    _refresh_log()
-
 func focus_tab(index: int) -> void:
-    if tabs != null:
-        tabs.current_tab = clampi(index, 0, tabs.get_tab_count() - 1)
+    tabs.current_tab = clampi(index, 0, tabs.get_tab_count() - 1)
 
 func cycle_tab() -> void:
-    if tabs != null:
-        tabs.current_tab = (tabs.current_tab + 1) % tabs.get_tab_count()
+    tabs.current_tab = (tabs.current_tab + 1) % tabs.get_tab_count()
 
-func _refresh_clues(found: Array) -> void:
+func refresh() -> void:
     AstraUI.clear(_clue_list)
+    var found := session.found_clues()
     if found.is_empty():
-        _clue_list.add_child(AstraUI.label("아직 확보한 단서가 없습니다.\n현장 조사에서 구역을 골라 흔적을 찾으세요.", 14, AstraUI.MUTED, true))
-        return
-    var destroyed := 0
-    for clue in session.clues:
-        if bool(clue.get("destroyed", false)) and not bool(clue.get("found", false)):
-            destroyed += 1
-    if destroyed > 0:
-        _clue_list.add_child(AstraUI.label("밤사이 지워진 흔적 %d개" % destroyed, 12, AstraUI.RED))
-    for index in range(found.size() - 1, -1, -1):
+        _clue_list.add_child(AstraUI.label("아직 확보한 단서가 없습니다. 현장의 단말과 흔적을 살펴보세요.",16,AstraUI.MUTED,true))
+    for i in range(found.size()-1,-1,-1):
         var card := AstraClueCard.new()
-        card.setup(session, found[index], true)
+        card.setup(session,found[i],true)
         _clue_list.add_child(card)
-    if found.size() != _last_clue_count:
-        _last_clue_count = found.size()
+    _refresh_people()
+    _refresh_claims()
+    if _notes != null:
+        _refresh_notes(found)
+    var lines: Array[String] = []
+    for entry in session.journal:
+        lines.append("[color=#8fbee5]%d일째[/color]  %s" % [int(entry.get("day",1)),AstraUI.escape(str(entry.get("text","")))])
+    _log.text = "\n\n".join(lines)
 
-func _refresh_notes() -> void:
+func _option() -> OptionButton:
+    var b := OptionButton.new()
+    b.custom_minimum_size.y = 42
+    b.add_theme_font_size_override("font_size",15)
+    b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    b.fit_to_longest_item = false
+    return b
+
+func _refresh_notes(found: Array) -> void:
     AstraUI.clear(_notes)
-    _notes.add_child(AstraUI.label("사건 시간대 %s" % session.window_text(), 13, AstraUI.GOLD))
-    _build_alibi_table()
-    for op in session.case_data.get("ops", []):
-        _build_trace_grid(op)
-    _build_contradictions()
+    _notes.add_child(AstraUI.label("사건 시각 · " + session.window_text(),16,AstraUI.GOLD))
+    _notes.add_child(AstraUI.label("단서와 인물을 연결해 자신의 해석을 남기세요. 장소·시각은 단서 원문과 대조하세요. 가설을 기록하는 것만으로 정답이 확인되지는 않습니다.",15,AstraUI.MUTED,true))
+    _clue_pick = _option()
+    for clue in found:
+        _clue_pick.add_item(str(clue.get("title","")))
+        _clue_pick.set_item_metadata(_clue_pick.item_count-1,str(clue.get("id","")))
+    _notes.add_child(_clue_pick)
+    var row := AstraUI.hbox(10)
+    _notes.add_child(row)
+    _npc_pick = _option()
+    for id in session.active_roster():
+        _npc_pick.add_item(session.name_of(id))
+        _npc_pick.set_item_metadata(_npc_pick.item_count-1,id)
+    row.add_child(_npc_pick)
+    _op_pick = _option()
+    for op in session.case_data.get("ops",[]):
+        _op_pick.add_item(str(op.get("name","")))
+        _op_pick.set_item_metadata(_op_pick.item_count-1,str(op.get("id","")))
+    row.add_child(_op_pick)
+    _relation_pick = _option()
+    for name in ["관련","모순","무관"]:
+        _relation_pick.add_item(name)
+    row.add_child(_relation_pick)
+    var save := AstraUI.button("가설 연결",AstraUI.CYAN,15,42)
+    save.disabled = found.is_empty() or session.outcome != "" or session.hypotheses().size() >= 24
+    save.pressed.connect(_save_link)
+    row.add_child(save)
+    _notes.add_child(AstraUI.section("나의 연결"))
+    var links := session.hypotheses()
+    if links.is_empty():
+        _notes.add_child(AstraUI.label("아직 연결하지 않았습니다. 기록한 가설은 저녁 회의에서 제시할 수 있습니다.",15,AstraUI.DIM,true))
+    for i in range(links.size()):
+        var link: Dictionary = links[i]
+        var clue := session.clue_by_id(str(link["clue"]))
+        var line := AstraUI.hbox(8)
+        line.add_child(AstraArt.icon(AstraArt.clue(clue),Vector2(48,48)))
+        line.add_child(AstraUI.label("%s → %s / %s · %s" % [str(clue.get("title","")),session.name_of(str(link["npc"])),session.op_name(str(link["op"])),str(link["relation"])],15,AstraUI.TEXT,true))
+        var remove := AstraUI.button("지우기",AstraUI.MUTED,13,36)
+        remove.pressed.connect(session.remove_hypothesis.bind(i))
+        line.add_child(remove)
+        _notes.add_child(line)
+    _notes.add_child(AstraUI.section("직접 들은 알리바이"))
+    for id in session.active_roster():
+        var claim: Dictionary = session.known_claims.get(id,{})
+        var detail := "아직 듣지 못함"
+        if not claim.is_empty():
+            var mates: Array = claim.get("companions",[])
+            detail = session.room_name(str(claim.get("position",""))) + " · " + ("혼자" if mates.is_empty() else AstraJosa.wa(session.names_of(mates)) + " 함께")
+        _notes.add_child(AstraUI.label(session.name_of(id) + "  —  " + detail,15,AstraUI.MUTED,true))
 
-func _build_alibi_table() -> void:
-    _notes.add_child(AstraUI.section("알리바이 대조"))
-    var grid := GridContainer.new()
-    grid.columns = 3
-    grid.add_theme_constant_override("h_separation", 10)
-    grid.add_theme_constant_override("v_separation", 4)
-    _notes.add_child(grid)
-    for header in ["이름", "진술", "판정"]:
-        grid.add_child(AstraUI.label(header, 11, AstraUI.DIM))
-    for npc_id in AstraCrewCatalog.ORDER:
+func _save_link() -> void:
+    if _clue_pick.item_count == 0:
+        return
+    session.link_hypothesis(str(_clue_pick.get_selected_metadata()),str(_npc_pick.get_selected_metadata()),str(_op_pick.get_selected_metadata()),_relation_pick.get_item_text(_relation_pick.selected))
+
+# ---- 인물 -------------------------------------------------------------------
+#
+# One row per person: what they said, and whether anything they said conflicts.
+# Deliberately not a trust meter — showing "Rho 0.42" would replace the reading
+# of a person with the reading of a number (§100).
+func _refresh_people() -> void:
+    AstraUI.clear(_people)
+    for npc_id in session.active_roster():
         var member := session.npc(npc_id)
-        grid.add_child(AstraUI.label(member.display_name, 13, member.accent if member.is_alive() else AstraUI.DIM))
+        if member == null:
+            continue
+        var card := AstraUI.panel(AstraUI.PANEL_2, Color(member.accent, 0.3), 10, 12)
+        _people.add_child(card)
+        var row := AstraUI.hbox(12)
+        card.add_child(row)
+        var art := AstraUI.thumb(AstraCrewCatalog.portrait_path(npc_id, member.expression), Vector2(56, 56))
+        art.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+        row.add_child(art)
+        var box := AstraUI.vbox(3)
+        box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        row.add_child(box)
+        var head := AstraUI.hbox(8)
+        box.add_child(head)
+        head.add_child(AstraUI.label(member.display_name, AstraUI.T_HEAD, member.accent))
+        head.add_child(AstraUI.label(member.job, AstraUI.T_META, AstraUI.DIM))
+        if not member.is_alive():
+            head.add_child(AstraUI.chip("격리 또는 두절", AstraUI.RED, AstraUI.T_META - 2))
         var claim: Dictionary = session.known_claims.get(npc_id, {})
         if claim.is_empty():
-            grid.add_child(AstraUI.label("미확보", 12, AstraUI.DIM))
+            box.add_child(AstraUI.label("진술 · 아직 듣지 못함", AstraUI.T_META, AstraUI.DIM))
         else:
             var mates: Array = claim.get("companions", [])
-            var text := session.room_name(str(claim.get("position", "")))
-            text += " · " + ("혼자" if mates.is_empty() else session.names_of(mates))
-            var claim_label := AstraUI.label(text, 12, AstraUI.TEXT)
-            claim_label.custom_minimum_size = Vector2(170, 0)
-            claim_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-            grid.add_child(claim_label)
-        grid.add_child(_verdict(npc_id))
+            box.add_child(AstraUI.label("진술 · %s / %s" % [
+                session.room_name(str(claim.get("position", ""))),
+                "혼자" if mates.is_empty() else AstraJosa.wa(session.names_of(mates)) + " 함께"
+            ], AstraUI.T_META, AstraUI.TEXT))
+        for issue in session.contradictions_on(npc_id):
+            box.add_child(AstraUI.prose("· " + str(issue.get("detail", "")), AstraUI.T_META, AstraUI.GOLD))
+        # Who this person is watching, and who is watching them.
+        if member.is_alive():
+            var relations: Dictionary = session.relations_of(npc_id)
+            for entry in relations.get("watching", []):
+                box.add_child(AstraUI.prose("→ %s · %s (%s)" % [
+                    AstraCrewCatalog.display_name(str(entry["id"])),
+                    str(entry["strength"]), str(entry["reason"])
+                ], AstraUI.T_META, AstraUI.RED))
+            var eyes := session.opinions_about(npc_id)
+            if not eyes.is_empty():
+                var names: Array = []
+                for entry in eyes:
+                    names.append(AstraCrewCatalog.display_name(str(entry["id"])))
+                box.add_child(AstraUI.prose("← 이 사람을 보고 있는 사람: %s" % ", ".join(PackedStringArray(names)), AstraUI.T_META, AstraUI.GOLD))
 
-func _verdict(npc_id: String) -> Label:
-    var member := session.npc(npc_id)
-    if member.secret_revealed:
-        return AstraUI.label("사정 해명", 12, AstraUI.GOLD)
-    var issues := session.contradictions_on(npc_id).size()
-    if issues > 0:
-        return AstraUI.label("⚠ 모순 %d" % issues, 12, AstraUI.RED)
-    var claim: Dictionary = session.known_claims.get(npc_id, {})
-    if not claim.is_empty():
-        for clue in session.found_clues():
-            if str(clue.get("kind", "")) == "access_log" and npc_id in clue.get("log_people", []) and str(clue.get("log_room", "")) == str(claim.get("position", "")):
-                return AstraUI.label("✓ 기록 일치", 12, AstraUI.GREEN)
-    return AstraUI.label("—", 12, AstraUI.DIM)
-
-func _build_trace_grid(op: Dictionary) -> void:
-    var op_id := str(op.get("id", ""))
-    var columns: Array = []
-    for clue in session.found_clues():
-        if str(clue.get("op", "")) != op_id:
-            continue
-        if str(clue.get("kind", "")) in ["trace", "sighting", "night", "slip", "planted"]:
-            columns.append(clue)
-    var title := "%s 흔적 교차 · %s %s" % [str(op.get("name", "")), session.room_name(str(op.get("room", ""))), AstraCaseCatalog.format_time(int(op.get("minute", 0)), int(op.get("second", 0)))]
-    _notes.add_child(AstraUI.label(title, 13, AstraUI.GOLD, true))
-    if columns.is_empty():
-        _notes.add_child(AstraUI.label("이 조작과 연결된 흔적이 아직 없습니다.", 12, AstraUI.DIM))
+# ---- 발언 -------------------------------------------------------------------
+#
+# "Who said this?" — the memory aid §28 asks for. It finds sentences; it does
+# not rule on them. Two matching lines being contradictory is the player's call.
+func _refresh_claims() -> void:
+    AstraUI.clear(_claims)
+    if not session.has_feature("claim_search"):
+        _claims.add_child(AstraUI.prose("공개된 발언이 여기에 쌓입니다.", AstraUI.T_META, AstraUI.DIM))
+        _list_recent_claims(_claims, session.claim_ledger)
         return
-    var grid := GridContainer.new()
-    grid.columns = columns.size() + 2
-    grid.add_theme_constant_override("h_separation", 6)
-    grid.add_theme_constant_override("v_separation", 3)
-    _notes.add_child(grid)
-    grid.add_child(AstraUI.label("", 11, AstraUI.DIM))
-    for clue in columns:
-        var head := AstraUI.label(_column_title(clue), 10, AstraUI.MUTED)
-        head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        head.custom_minimum_size = Vector2(48, 0)
-        head.tooltip_text = str(clue.get("text", ""))
-        head.mouse_filter = Control.MOUSE_FILTER_PASS
-        grid.add_child(head)
-    grid.add_child(AstraUI.label("합", 10, AstraUI.MUTED))
-    for npc_id in AstraCrewCatalog.ORDER:
-        var member := session.npc(npc_id)
-        var hits := 0
-        for clue in columns:
-            if npc_id in clue.get("members", []):
-                hits += 1
-        var full := hits == columns.size() and columns.size() >= 2
-        grid.add_child(AstraUI.label(member.display_name, 12, AstraUI.GOLD if full else (member.accent if member.is_alive() else AstraUI.DIM)))
-        for clue in columns:
-            var inside: bool = npc_id in clue.get("members", [])
-            var cell := AstraUI.label("●" if inside else "·", 13, (AstraUI.GOLD if full else member.accent) if inside else AstraUI.DIM)
-            cell.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-            grid.add_child(cell)
-        grid.add_child(AstraUI.label(str(hits), 12, AstraUI.GOLD if full else AstraUI.MUTED))
+    _claims.add_child(AstraUI.prose("누가 이 말을 했는지 찾아볼 수 있습니다. 게임은 어느 쪽이 거짓인지 판정하지 않습니다.", AstraUI.T_META, AstraUI.MUTED))
+    var row := AstraUI.hbox(8)
+    _claims.add_child(row)
+    _search_field = LineEdit.new()
+    _search_field.placeholder_text = "예: 엔진실, 07:38, 혼자"
+    _search_field.add_theme_font_size_override("font_size", AstraUI.font_size(AstraUI.T_UI))
+    _search_field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    row.add_child(_search_field)
+    var find := AstraUI.button("찾기", AstraUI.CYAN, AstraUI.T_UI, 40)
+    row.add_child(find)
+    _search_results = AstraUI.vbox(6)
+    _claims.add_child(_search_results)
+    var run_search := func() -> void:
+        AstraUI.clear(_search_results)
+        var needle := _search_field.text.strip_edges()
+        if needle == "":
+            _list_recent_claims(_search_results, session.claim_ledger)
+            return
+        var hits := session.search_claims(needle)
+        if hits.is_empty():
+            _search_results.add_child(AstraUI.label("일치하는 발언이 없습니다.", AstraUI.T_META, AstraUI.DIM))
+        else:
+            _list_recent_claims(_search_results, hits)
+    find.pressed.connect(run_search)
+    _search_field.text_submitted.connect(func(_text: String): run_search.call())
+    _list_recent_claims(_search_results, session.claim_ledger)
 
-func _column_title(clue: Dictionary) -> String:
-    var kind := str(clue.get("kind", ""))
-    var head := ""
-    match kind:
-        "trace": head = AstraCrewCatalog.category_label(str(clue.get("category", "")))
-        "sighting": head = "목격"
-        "night": head = "밤"
-        "slip": head = "실언"
-        "planted": head = "제보"
-    var time_text := str(clue.get("time", ""))
-    if kind == "trace" and time_text != "":
-        return "%s\n%s" % [head, time_text]
-    return head
-
-func _build_contradictions() -> void:
-    _notes.add_child(AstraUI.section("발견한 모순", AstraUI.RED))
-    if session.contradictions.is_empty():
-        _notes.add_child(AstraUI.label("아직 없습니다. 알리바이를 모으고 출입 기록과 대조해 보세요.", 12, AstraUI.DIM, true))
+func _list_recent_claims(target: VBoxContainer, entries: Array) -> void:
+    if entries.is_empty():
+        target.add_child(AstraUI.label("아직 기록된 발언이 없습니다.", AstraUI.T_META, AstraUI.DIM))
         return
-    for item in session.contradictions:
-        var row := AstraUI.hbox(6)
-        _notes.add_child(row)
-        if bool(item.get("public", false)):
-            row.add_child(AstraUI.chip("공개", AstraUI.CYAN, 10))
-        row.add_child(AstraUI.label(str(item.get("detail", "")), 12, AstraUI.TEXT, true))
-
-func _refresh_log() -> void:
-    var lines: Array = []
-    var last_day := -1
-    for entry in session.journal:
-        var entry_day := int(entry.get("day", 1))
-        if entry_day != last_day:
-            last_day = entry_day
-            lines.append("[color=#%s][b]DAY %d[/b][/color]" % [AstraUI.hex(AstraUI.CYAN), entry_day])
-        lines.append("[color=#%s]·[/color] %s" % [AstraUI.hex(AstraUI.DIM), AstraUI.escape(str(entry.get("text", "")))])
-    _log.text = "\n".join(PackedStringArray(lines))
+    var start := maxi(0, entries.size() - 30)
+    for index in range(entries.size() - 1, start - 1, -1):
+        var entry: Dictionary = entries[index]
+        var speaker := str(entry.get("speaker", ""))
+        var accent: Color = AstraUI.CYAN if speaker == "player" else AstraCrewCatalog.accent(speaker)
+        var line := AstraUI.hbox(8)
+        var who := AstraUI.label("조사관" if speaker == "player" else session.name_of(speaker), AstraUI.T_META, accent)
+        who.custom_minimum_size.x = 84
+        line.add_child(who)
+        var day_tag := AstraUI.label("DAY %d" % int(entry.get("day", 1)), AstraUI.T_META, AstraUI.DIM)
+        day_tag.custom_minimum_size.x = 64
+        line.add_child(day_tag)
+        var text := AstraUI.prose(str(entry.get("text", "")), AstraUI.T_META, AstraUI.MUTED if bool(entry.get("retracted", false)) else AstraUI.TEXT)
+        line.add_child(text)
+        target.add_child(line)

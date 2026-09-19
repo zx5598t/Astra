@@ -1,0 +1,25 @@
+extends SceneTree
+# Run against the untouched 0.3.0 tree to produce a genuine legacy snapshot.
+func _initialize() -> void:
+    var s := AstraGameSession.new()
+    s.setup("DEAD_AIR",83102,"ANALYST")
+    s.advance()
+    for room in s.room_ids():s.search_room(room)
+    s.advance()
+    if not s.pending_event.is_empty():s.resolve_private_event(1)
+    for id in s.living_ids():
+        if s.talk_ap>0:s.ask(id,"ALIBI")
+    s.advance()
+    s.present_clue(str(s.found_clues()[0]["id"]))
+    s.advance()
+    s.save_snapshot("user://astra_030_compat.cfg")
+    s.cast_vote(str(s.living_ids()[0]))
+    s.advance()
+    if s.phase=="NIGHT":s.choose_night_action("protect",str(s.living_ids()[0]))
+    var cfg := ConfigFile.new()
+    cfg.set_value("expected","vote",s.last_vote)
+    cfg.set_value("expected","night",s.night_result)
+    cfg.set_value("expected","rng",s.rng.state)
+    cfg.save("user://astra_030_expected.cfg")
+    print("ASTRA LEGACY FIXTURE OK")
+    quit()

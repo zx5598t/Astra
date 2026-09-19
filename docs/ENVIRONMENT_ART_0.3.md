@@ -1,3 +1,5 @@
+> 역사적 기록: 0.3.0 아트 문서입니다. 현재 배치는 [ASSET_MAP_0.3.1.md](ASSET_MAP_0.3.1.md)를 참조하세요. 구형 에셋은 0.3.1에서 교체됐습니다.
+
 # ASTRA 0.3 — Chapter environments
 
 Generated once with the built-in OpenAI image-generation tool for ASTRA 0.3.0. These are original environment backgrounds; no reference image was supplied. The prompt is recorded below. The PNG was copied without image modification into the repository, retaining provenance metadata.

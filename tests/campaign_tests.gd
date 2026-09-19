@@ -11,6 +11,11 @@ func check(ok: bool, label: String) -> void:
 
 func _initialize() -> void:
     var meta := AstraMetaProgress.new(PATH)
+    # 0.4.0 puts the calibration case in front of the campaign, so the chain
+    # starts one step earlier. Everything after that is the same sequence.
+    check(meta.is_case_unlocked(AstraCaseCatalog.CALIBRATION), "calibration is open from the start")
+    check(not meta.is_case_unlocked("DEAD_AIR"), "campaign waits for calibration")
+    meta.calibration_completed = true
     for id in AstraCaseCatalog.CAMPAIGN:
         var s := AstraGameSession.new()
         s.setup(id, 4242)

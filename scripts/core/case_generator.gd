@@ -26,32 +26,39 @@ const TRACE_ON_ROUTE := {
     "terminal": ["중계 접속 기록", "{time}, {room} 중계기에 {group} 접속이 남았다. {op} 명령 직후의 접속이다. 이 단말을 쓰는 사람: {members}."]
 }
 
-static func generate(case_id: String, seed_value: int) -> Dictionary:
-    var data := AstraCaseCatalog.get_case(case_id)
+static func generate(case_id: String, seed_value: int, null_history: Array = [], difficulty: String = "STANDARD") -> Dictionary:
+    var data := AstraCaseCatalog.resolve(case_id, seed_value)
     if data.is_empty():
         return {}
     var rng := RandomNumberGenerator.new()
     rng.seed = seed_value
 
-    var crew: Array = AstraCrewCatalog.ORDER.duplicate()
-    var ops: Array = data.get("ops", [])
+    var crew: Array = AstraCaseCatalog.roster(data)
+    var wanted_nulls := AstraCaseCatalog.null_count(data)
+    var ops: Array = data.get("ops", []).slice(0, wanted_nulls)
     var room_ids: Array = []
     for room in data.get("rooms", []):
         room_ids.append(str(room.get("id", "")))
     var common_ids: Array = []
     for common in data.get("commons", []):
         common_ids.append(str(common.get("id", "")))
-    var op_rooms: Array = [str(ops[0].get("room", "")), str(ops[1].get("room", ""))]
+    var op_rooms: Array = []
+    for op in ops:
+        op_rooms.append(str(op.get("room", "")))
     var logged_rooms: Array = []
     for room_id in room_ids:
         if room_id not in op_rooms:
             logged_rooms.append(room_id)
     var open_positions: Array = logged_rooms + common_ids
 
-    # 1. Hidden roles
-    var pool := crew.duplicate()
-    _shuffle(pool, rng)
-    var nulls: Array = [str(pool[0]), str(pool[1])]
+    # 1. Hidden roles.
+    # A flat shuffle lets the same face draw Null three cases running, which
+    # reads as "the game has decided Rho is the villain" and kills the point of
+    # re-rolling roles. `null_history` is the archive's record of recent picks:
+    # a face that came up lately is weighted down, never excluded. The residual
+    # randomness stays large enough that the player cannot count whose turn it
+    # is (§67).
+    var nulls: Array = _draw_nulls(crew, wanted_nulls, null_history, rng)
     var innocents: Array = []
     for npc_id in crew:
         if npc_id not in nulls:
@@ -61,8 +68,8 @@ static func generate(case_id: String, seed_value: int) -> Dictionary:
 
     # 2. True positions during the incident window
     var positions := {}
-    positions[nulls[0]] = op_rooms[0]
-    positions[nulls[1]] = op_rooms[1]
+    for index in range(nulls.size()):
+        positions[str(nulls[index])] = op_rooms[index]
     var herring_pos := str(open_positions[rng.randi_range(0, open_positions.size() - 1)])
     positions[herring] = herring_pos
     var others_positions: Array = []
@@ -136,7 +143,10 @@ static func generate(case_id: String, seed_value: int) -> Dictionary:
             crowded_commons.append(pos)
     _shuffle(quiet, rng)
     _shuffle(crowded_commons, rng)
-    var mutual := rng.randf() < float(data.get("mutual_alibi_chance", 0.3))
+    # Two Nulls vouching for each other is the hardest alibi to break, so how
+    # often it happens is a difficulty knob rather than a fixed case constant.
+    var mutual_chance := float(data.get("mutual_alibi_chance", 0.3)) * AstraDifficulty.number(difficulty, "mutual_alibi_scale", 1.0)
+    var mutual := nulls.size() >= 2 and rng.randf() < clampf(mutual_chance, 0.0, 0.95)
     if mutual:
         var shared := ""
         if not quiet.is_empty():
@@ -205,10 +215,12 @@ static func generate(case_id: String, seed_value: int) -> Dictionary:
         })
 
     var used_pairs := {}
-    for index in range(2):
+    for index in range(nulls.size()):
         var null_id := str(nulls[index])
         var op: Dictionary = ops[index]
-        var pairs := AstraCrewCatalog.identifying_pairs(null_id)
+        var pairs := AstraCrewCatalog.identifying_pairs(null_id, crew)
+        if pairs.is_empty():
+            pairs = AstraCrewCatalog.identifying_pairs(null_id)
         var pair: Array = pairs[rng.randi_range(0, pairs.size() - 1)]
         if rng.randf() < 0.5:
             pair = [pair[1], pair[0]]
@@ -216,15 +228,19 @@ static func generate(case_id: String, seed_value: int) -> Dictionary:
         var route_room := str(logged_rooms[index % logged_rooms.size()])
         if rng.randf() < 0.5:
             route_room = str(logged_rooms[(index + 1) % logged_rooms.size()])
-        for step in range(2):
+        for step in range(AstraCaseCatalog.trace_steps(data)):
             var category := str(pair[step])
             var group := AstraCrewCatalog.group_of(null_id, category)
             var minute := int(op.get("minute", 0)) + (0 if step == 0 else rng.randi_range(1, 2))
             var room_id := str(op.get("room", "")) if step == 0 else route_room
-            _add_clue(clues, _trace_clue(data, op, room_id, category, group, minute, step == 0, null_id, false))
+            _add_clue(clues, _trace_clue(data, op, room_id, category, group, minute, step == 0, null_id, false, crew))
 
-    for _decoy_index in range(int(data.get("decoy_traces", 0))):
-        var op_index := rng.randi_range(0, 1)
+    # Decoys are traces from outside the incident window. 0.4.0 does not scale
+    # difficulty by adding more of them: reading past more noise is not the same
+    # as being outsmarted (§25). STORY halves them; STANDARD and EXPERT match 0.3.1.
+    var decoy_total := int(round(float(data.get("decoy_traces", 0)) * AstraDifficulty.number(difficulty, "decoy_scale", 1.0)))
+    for _decoy_index in range(decoy_total):
+        var op_index := rng.randi_range(0, ops.size() - 1)
         var op: Dictionary = ops[op_index]
         var culprit := str(nulls[op_index])
         var categories: Array = AstraCrewCatalog.TRAIT_CATEGORIES.keys()
@@ -235,8 +251,10 @@ static func generate(case_id: String, seed_value: int) -> Dictionary:
             var groups: Array = AstraCrewCatalog.TRAIT_CATEGORIES[category]["groups"].keys()
             _shuffle(groups, rng)
             for group in groups:
-                var members: Array = AstraCrewCatalog.group_members(str(category), str(group))
-                if culprit in members:
+                var members: Array = AstraCrewCatalog.group_members_in(str(category), str(group), crew)
+                # A decoy has to point at somebody who is actually in this case,
+                # or it reads as a bug rather than as a red herring.
+                if culprit in members or members.is_empty():
                     continue
                 picked_category = str(category)
                 picked_group = str(group)
@@ -245,7 +263,7 @@ static func generate(case_id: String, seed_value: int) -> Dictionary:
                 break
         var decoy_minute := int(data.get("window_start", 0)) - rng.randi_range(38, 140)
         var decoy_room := str(room_ids[rng.randi_range(0, room_ids.size() - 1)])
-        _add_clue(clues, _trace_clue(data, op, decoy_room, picked_category, picked_group, decoy_minute, decoy_room == str(op.get("room", "")), culprit, true))
+        _add_clue(clues, _trace_clue(data, op, decoy_room, picked_category, picked_group, decoy_minute, decoy_room == str(op.get("room", "")), culprit, true, crew))
 
     # 5. Sightings a crew member can recall when asked who they saw.
     var sightings: Array = []
@@ -253,7 +271,7 @@ static func generate(case_id: String, seed_value: int) -> Dictionary:
     _shuffle(witness_pool, rng)
     for sighting_index in range(mini(int(data.get("sightings", 1)), witness_pool.size())):
         var witness := str(witness_pool[sighting_index])
-        var target_index := rng.randi_range(0, 1)
+        var target_index := rng.randi_range(0, nulls.size() - 1)
         var target_null := str(nulls[target_index])
         var op: Dictionary = ops[target_index]
         var pair: Array = used_pairs.get(target_null, [])
@@ -271,7 +289,7 @@ static func generate(case_id: String, seed_value: int) -> Dictionary:
         sightings.append({
             "witness": witness, "culprit": target_null, "op": str(op.get("id", "")),
             "room": str(op.get("room", "")), "category": category, "group": group,
-            "members": AstraCrewCatalog.group_members(category, group).duplicate(),
+            "members": AstraCrewCatalog.group_members_in(category, group, crew),
             "time": AstraCaseCatalog.format_time(int(op.get("minute", 0)) - 1)
         })
 
@@ -279,20 +297,64 @@ static func generate(case_id: String, seed_value: int) -> Dictionary:
         "case_id": case_id,
         "seed": seed_value,
         "nulls": nulls,
-        "null_ops": {nulls[0]: str(ops[0].get("id", "")), nulls[1]: str(ops[1].get("id", ""))},
+        "null_ops": _null_ops(nulls, ops),
         "positions": positions,
         "claims": claims,
         "herring": herring,
         "mutual_alibi": mutual,
         "sightings": sightings,
         "clues": clues,
+        "roster": crew.duplicate(),
+        "difficulty": difficulty,
         "logged_rooms": logged_rooms,
         "open_positions": open_positions,
         "trace_pairs": used_pairs
     }
 
-static func _trace_clue(data: Dictionary, op: Dictionary, room_id: String, category: String, group: String, minute: int, at_site: bool, culprit: String, decoy: bool) -> Dictionary:
-    var members: Array = AstraCrewCatalog.group_members(category, group).duplicate()
+const HISTORY_WINDOW := 6
+const HISTORY_DAMPING := 0.55
+
+# Weighted draw without replacement. `history` is a list of crew ids that were
+# Null in recent cases, most recent last. Each appearance inside the window
+# multiplies that face's weight by HISTORY_DAMPING, so three recent turns leave
+# it at ~17% of a fresh face rather than excluding it. Nobody is ever locked
+# out, and nobody is ever due, so "whose turn is it" stays unanswerable.
+static func _draw_nulls(crew: Array, wanted: int, history: Array, rng: RandomNumberGenerator) -> Array:
+    var recent: Array = history.slice(maxi(0, history.size() - HISTORY_WINDOW))
+    var pool: Array = crew.duplicate()
+    var chosen: Array = []
+    for _pick in range(mini(wanted, pool.size())):
+        var weights: Array = []
+        var total := 0.0
+        for npc_id in pool:
+            var weight := 1.0
+            for entry in recent:
+                if str(entry) == str(npc_id):
+                    weight *= HISTORY_DAMPING
+            # Jitter keeps the ordering of two similarly-weighted faces from
+            # being a function of history alone.
+            weight *= rng.randf_range(0.85, 1.15)
+            weights.append(weight)
+            total += weight
+        var roll := rng.randf() * total
+        var index := pool.size() - 1
+        for position in range(weights.size()):
+            roll -= float(weights[position])
+            if roll <= 0.0:
+                index = position
+                break
+        chosen.append(str(pool[index]))
+        pool.remove_at(index)
+    return chosen
+
+static func _null_ops(nulls: Array, ops: Array) -> Dictionary:
+    var mapping := {}
+    for index in range(nulls.size()):
+        mapping[str(nulls[index])] = str(ops[index].get("id", ""))
+    return mapping
+
+static func _trace_clue(data: Dictionary, op: Dictionary, room_id: String, category: String, group: String, minute: int, at_site: bool, culprit: String, decoy: bool, roster: Array = []) -> Dictionary:
+    var members: Array = AstraCrewCatalog.group_members_in(category, group, roster)
     var names: Array = []
     for npc_id in members:
         names.append(AstraCrewCatalog.display_name(str(npc_id)))

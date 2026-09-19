@@ -2,7 +2,7 @@ extends Control
 
 # Application root: background, screen routing, overlays and persistence.
 
-const VERSION_FALLBACK := "0.3.0"
+const VERSION_FALLBACK := "0.4.0"
 
 var meta := AstraMetaProgress.new()
 var settings := AstraSettings.new()
@@ -12,6 +12,7 @@ var ai_client: AstraRemoteAIClient
 var selected_protocol: String = "ANALYST"
 var session: AstraGameSession
 var ai_status: String = ""
+var active_slot: int = 0
 
 var _screen_root: Control
 var _overlay_layer: CanvasLayer
@@ -24,6 +25,8 @@ func _ready() -> void:
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     meta.load_data()
     settings.load_data()
+    AstraUI.reading_scale = 1.1 if settings.large_text else 1.0
+    AstraUI.reduce_motion = settings.reduced_motion
     settings.apply_audio()
     settings.apply_display()
     settings.fit_window_to_screen()
@@ -59,7 +62,36 @@ func _ready() -> void:
     add_child(ai_client)
     ai_client.action_received.connect(_on_ai_action)
 
+    # A brand new install goes straight into the cold open. Everything else —
+    # difficulty, protocol, case choice — is asked later or not at all, because
+    # none of it means anything to someone who has not seen the ship yet (§8).
+    if not settings.intro_seen:
+        show_opening()
+    else:
+        show_title()
+
+func show_opening() -> void:
+    var opening := AstraOpeningView.new()
+    _set_screen(opening)
+    opening.setup(self)
+    opening.finished.connect(func():
+        settings.intro_seen = true
+        settings.save_data()
+        _ask_experience()
+    , CONNECT_ONE_SHOT)
+
+# The only question asked before play, and it has two answers. 0.3.1 opened on a
+# screen with difficulty, protocol and six cases on it; none of those are
+# answerable by someone who has not played yet (§24).
+func _ask_experience() -> void:
     show_title()
+    var body := AstraUI.vbox(8)
+    body.add_child(AstraUI.prose("재구성 속도를 정합니다. 나중에 설정에서 언제든 바꿀 수 있습니다.", AstraUI.T_BODY, AstraUI.TEXT))
+    var handler := func(choice: int) -> void:
+        meta.difficulty_mode = "STANDARD" if choice == 1 else "STORY"
+        meta.save_data()
+    AstraModal.open(_overlay_root, "사회추리 게임은 처음이신가요?", body,
+        [["처음입니다", AstraUI.CYAN], ["익숙합니다", AstraUI.MUTED]], handler, 560.0)
 
 func version_text() -> String:
     var file := FileAccess.open("res://VERSION", FileAccess.READ)
@@ -93,21 +125,117 @@ func show_title() -> void:
     _set_screen(title)
     title.setup(self)
 
-func start_case(case_id: String, protocol: String) -> void:
+func show_archive() -> void:
+    var archive := AstraArchiveScreen.new()
+    _set_screen(archive)
+    archive.setup(self)
+
+func start_case(case_id: String, protocol: String, slot: int = -1) -> void:
     if not meta.is_case_unlocked(case_id):
         fx.toast("아직 잠긴 사건입니다. " + meta.unlock_hint(case_id), AstraUI.GOLD)
         return
+    # A new case takes the slot it was asked for, the first free one, or — when
+    # all three are full — whichever the caller already had open.
+    if slot >= 0:
+        active_slot = clampi(slot, 0, SLOT_COUNT - 1)
+    else:
+        var free_slot := first_free_slot()
+        if free_slot >= 0:
+            active_slot = free_slot
     selected_protocol = protocol
     session = AstraGameSession.new()
     var seed_value := int(Time.get_unix_time_from_system() * 1000.0) % 2147483
-    session.setup(case_id, seed_value, protocol)
+    # The archive's memory of recent Null assignments goes in, so the role does
+    # not settle on one face over a run of cases (§67).
+    session.setup(case_id, seed_value, protocol, meta.difficulty_mode, meta.recent_null_history())
+    session.features = meta.unlocked_features()
+    session.set_tutorial(AstraCaseCatalog.is_calibration(case_id))
     _connect_autosave()
     var screen := AstraGameScreen.new()
     _set_screen(screen)
     screen.setup(self, session, fx)
+    _introduce_new_faces(session)
+
+# Anyone the player has not seen before gets one card before the case starts,
+# one at a time. Eight dossiers at once is the thing that made 0.3.1's opening
+# unreadable (§21, §64).
+func _introduce_new_faces(game: AstraGameSession) -> void:
+    var fresh := meta.unseen_people(game.roster)
+    if fresh.is_empty():
+        return
+    _queue_intro_cards(fresh, game)
+
+func _queue_intro_cards(queue: Array, game: AstraGameSession) -> void:
+    if queue.is_empty():
+        meta.save_data()
+        return
+    var npc_id := str(queue[0])
+    var rest: Array = queue.slice(1)
+    meta.meet_person(npc_id)
+    var info := AstraCrewCatalog.info(npc_id)
+    var card := AstraUI.intro_card(
+        npc_id,
+        AstraCrewCatalog.display_name(npc_id),
+        str(info.get("job", "")),
+        AstraStory.first_line(npc_id),
+        AstraCrewCatalog.accent(npc_id)
+    )
+    var label := "다음 사람" if not rest.is_empty() else "시작"
+    AstraModal.open(_overlay_root, "", card, [[label, AstraUI.CYAN]], func(_choice: int):
+        _queue_intro_cards(rest, game)
+    , 760.0)
+
+# ---------------------------------------------------------------- save slots
+#
+# 0.3.1 had exactly one in-progress save, silently overwritten whenever a new
+# case started — which is why the title screen had to warn about it. Three slots
+# remove the warning and the fear: a player can leave a case half-finished and
+# still try something else.
+
+const SLOT_COUNT := 3
+const LEGACY_SLOT_SUFFIX := ".session"
+
+func slot_path(slot: int) -> String:
+    return meta.save_path + ".session%d" % clampi(slot, 0, SLOT_COUNT - 1)
 
 func snapshot_path() -> String:
-    return meta.save_path + ".session"
+    return slot_path(active_slot)
+
+# One row per slot for the title screen, empty slots included so the player can
+# see there are three of them.
+func slot_infos() -> Array:
+    _migrate_legacy_slot()
+    var rows: Array = []
+    for slot in range(SLOT_COUNT):
+        var info := AstraGameSession.snapshot_info(slot_path(slot))
+        rows.append({"slot": slot, "info": info, "empty": info.is_empty()})
+    return rows
+
+func first_free_slot() -> int:
+    for row in slot_infos():
+        if bool(row["empty"]):
+            return int(row["slot"])
+    return -1
+
+func has_any_save() -> bool:
+    for row in slot_infos():
+        if not bool(row["empty"]):
+            return true
+    return false
+
+# A 0.3.1 archive keeps its in-progress case at the old single-file path. It is
+# moved into slot 1 the first time the title screen is drawn, so the player does
+# not lose a case they were in the middle of.
+func _migrate_legacy_slot() -> void:
+    var legacy := meta.save_path + LEGACY_SLOT_SUFFIX
+    if not FileAccess.file_exists(legacy):
+        return
+    var target := slot_path(0)
+    if AstraGameSession.snapshot_info(legacy).is_empty() or not AstraGameSession.snapshot_info(target).is_empty():
+        AstraGameSession.delete_snapshot(legacy)
+        return
+    DirAccess.copy_absolute(ProjectSettings.globalize_path(legacy), ProjectSettings.globalize_path(target))
+    AstraGameSession.delete_snapshot(legacy)
 
 func _connect_autosave() -> void:
     session.changed.connect(_save_session, CONNECT_DEFERRED)
@@ -118,12 +246,15 @@ func _save_session() -> void:
         if not session.save_snapshot(snapshot_path()):
             fx.toast("진행 저장에 실패했습니다. 저장 폴더의 여유 공간을 확인하세요.", AstraUI.RED)
 
-func resume_case() -> void:
+func resume_case(slot: int = -1) -> void:
+    if slot >= 0:
+        active_slot = clampi(slot, 0, SLOT_COUNT - 1)
     var restored := AstraGameSession.new()
     if not restored.load_snapshot(snapshot_path()):
         fx.toast("진행 기록을 불러올 수 없습니다. 새 사건을 시작하세요.", AstraUI.RED)
         return
     session = restored
+    session.features = meta.unlocked_features()
     selected_protocol = session.protocol
     _connect_autosave()
     var screen := AstraGameScreen.new()
@@ -131,9 +262,30 @@ func resume_case() -> void:
     screen.setup(self, session, fx)
 
 func record_result(finished: AstraGameSession) -> Dictionary:
+    var before := meta.unlocked_features()
     var result := meta.record_case_result(finished.case_id, finished.protocol, finished.final_report, true)
     AstraGameSession.delete_snapshot(snapshot_path())
+    result["new_features"] = AstraUnlocks.newly_unlocked(before, meta.unlocked_features())
     return result
+
+# Shown after the result screen, one card each. A feature that appears with no
+# explanation is a new button the player will not press; a feature that appears
+# with only a rule is a chore. Both lines, every time (§35).
+func show_unlock_cards(features: Array) -> void:
+    if features.is_empty():
+        return
+    var feature := str(features[0])
+    var rest: Array = features.slice(1)
+    meta.mark_unlock_announced(feature)
+    meta.save_data()
+    var body := AstraUI.unlock_card(
+        AstraUnlocks.title_of(feature),
+        AstraUnlocks.blurb_of(feature),
+        AstraUnlocks.flavor_of(feature)
+    )
+    AstraModal.open(_overlay_root, "새로 열렸습니다", body, [["확인", AstraUI.GOLD]], func(_choice: int):
+        show_unlock_cards(rest)
+    , 600.0)
 
 func quit_game() -> void:
     _save_session()
@@ -142,10 +294,15 @@ func quit_game() -> void:
 # ---------------------------------------------------------------- overlays
 
 func show_help() -> void:
-    var body := AstraUI.rich(16, false)
-    body.text = AstraHelp.text()
-    body.custom_minimum_size = Vector2(0, 560)
-    AstraModal.open(_overlay_root, "플레이 방법", body, [["닫기", AstraUI.CYAN]], Callable(), 900.0)
+    var box := AstraUI.vbox(18)
+    box.add_child(AstraHelpPanel.codex(meta.unlocked_features()))
+    box.add_child(AstraHelpPanel.shortcuts())
+    AstraModal.open(_overlay_root, "기록 보관소 · 도움말", box, [["닫기", AstraUI.CYAN]], Callable(), 860.0)
+
+# The [?] in the corner of a game screen: this screen only.
+func show_screen_help(phase: String, objective: String) -> void:
+    AstraModal.open(_overlay_root, AstraGameSession.PHASE_LABELS.get(phase, phase),
+        AstraHelpPanel.screen_help(phase, objective), [["닫기", AstraUI.CYAN]], Callable(), 660.0)
 
 func show_settings() -> void:
     var box := AstraUI.vbox(14)
@@ -163,6 +320,53 @@ func show_settings() -> void:
     box.add_child(_toggle_row("단계별 안내 문구 표시", settings.show_hints, func(on: bool):
         settings.show_hints = on
     ))
+
+    # ---- dialogue pacing -------------------------------------------------
+    var pace := AstraUI.panel(AstraUI.PANEL_2, AstraUI.BORDER, 10, 12)
+    var pace_box := AstraUI.vbox(8)
+    pace.add_child(pace_box)
+    pace_box.add_child(AstraUI.label("대사", AstraUI.T_HEAD, AstraUI.CYAN))
+    pace_box.add_child(AstraUI.prose("기본은 직접 넘기기입니다. 자동을 켜도 중요한 대사에서는 멈춥니다.", AstraUI.T_META, AstraUI.MUTED))
+    pace_box.add_child(_toggle_row("자동 진행", settings.auto_advance, func(on: bool):
+        settings.auto_advance = on
+    ))
+    pace_box.add_child(_slider_row("자동 대기 시간", settings.auto_delay, 0.5, 3.0, 0.25, func(value: float):
+        settings.auto_delay = value
+    ))
+    pace_box.add_child(_toggle_row("중요한 대사에서 멈추기", settings.pause_on_important, func(on: bool):
+        settings.pause_on_important = on
+    ))
+    pace_box.add_child(_toggle_row("이미 읽은 대사 빠르게 넘기기", settings.skip_read_text, func(on: bool):
+        settings.skip_read_text = on
+    ))
+    box.add_child(pace)
+
+    # ---- difficulty ------------------------------------------------------
+    if meta.has_feature("difficulty_select"):
+        var mode_panel := AstraUI.panel(AstraUI.PANEL_2, AstraUI.BORDER, 10, 12)
+        var mode_box := AstraUI.vbox(8)
+        mode_panel.add_child(mode_box)
+        mode_box.add_child(AstraUI.label("재구성 속도", AstraUI.T_HEAD, AstraUI.CYAN))
+        var detail := AstraUI.prose(AstraDifficulty.value(meta.difficulty_mode, "detail", ""), AstraUI.T_META, AstraUI.MUTED)
+        var row := AstraUI.hbox(8)
+        mode_box.add_child(row)
+        for mode in AstraDifficulty.ORDER:
+            var chosen: bool = meta.difficulty_mode == mode
+            var pick := AstraUI.button(AstraDifficulty.mode_name(mode), AstraUI.GOLD if chosen else AstraUI.MUTED, AstraUI.T_UI, 40, chosen)
+            pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+            pick.tooltip_text = str(AstraDifficulty.value(mode, "summary", ""))
+            pick.pressed.connect(func():
+                meta.difficulty_mode = mode
+                meta.save_data()
+                detail.text = str(AstraDifficulty.value(mode, "detail", ""))
+                for other in row.get_children():
+                    (other as Button).add_theme_stylebox_override("normal", AstraUI.style(Color(AstraUI.MUTED, 0.12), Color(AstraUI.MUTED, 0.75), 8, 1, 10))
+                pick.add_theme_stylebox_override("normal", AstraUI.style(Color(AstraUI.GOLD, 0.34), Color(AstraUI.GOLD, 0.75), 8, 1, 10))
+            )
+            row.add_child(pick)
+        mode_box.add_child(detail)
+        mode_box.add_child(AstraUI.prose("바뀐 속도는 다음 사건부터 적용됩니다.", AstraUI.T_META, AstraUI.DIM))
+        box.add_child(mode_panel)
 
     var ai_panel := AstraUI.panel(AstraUI.PANEL_2, AstraUI.BORDER, 10, 12)
     var ai_box := AstraUI.vbox(8)
@@ -204,7 +408,13 @@ func show_settings() -> void:
     box.add_child(reset)
     var on_close := func(_choice: int) -> void:
         settings.save_data()
-    AstraModal.open(_overlay_root, "설정", box, [["저장하고 닫기", AstraUI.CYAN]], on_close, 640.0)
+        AstraUI.reading_scale = 1.1 if settings.large_text else 1.0
+        AstraUI.reduce_motion = settings.reduced_motion
+    box.add_child(_toggle_row("큰 글자 (다음 화면부터)", settings.large_text, func(on: bool): settings.large_text = on))
+    box.add_child(_toggle_row("흔들림·번쩍임 줄이기", settings.reduced_motion, func(on: bool): settings.reduced_motion = on))
+    var scroll := AstraUI.scroll(box)
+    scroll.custom_minimum_size.y = 490
+    AstraModal.open(_overlay_root, "설정", scroll, [["저장하고 닫기", AstraUI.CYAN]], on_close, 680.0)
 
 func _confirm_reset() -> void:
     var body := AstraUI.label("해금한 사건, 최고 기록, 통찰이 모두 지워집니다. 되돌릴 수 없습니다.", 16, AstraUI.TEXT, true)

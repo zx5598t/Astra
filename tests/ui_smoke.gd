@@ -29,7 +29,22 @@ func _run() -> void:
     app.settings = AstraSettings.new(SETTINGS_PATH)
     root.add_child(app)
     await _wait(5)
+    # 0.4.0: a first run opens on the cold open instead of the title. That path
+    # gets its own check below; the rest of this run starts past it, the way a
+    # returning player does.
+    _expect(app._current is AstraOpeningView, "first run opens on the cold open")
+    app._current._finish()
+    await _wait(4)
+    for child in app.overlay_root().get_children():
+        if child.has_method("close"):
+            child.close(-1)
+    await _wait(3)
     _expect(app._current is AstraTitleScreen, "title screen shown")
+    _expect(app.settings.intro_seen, "cold open is not shown twice")
+
+    # The tutorial case has to be playable end to end before the campaign opens.
+    await _play_case(AstraCaseCatalog.CALIBRATION, "ANALYST")
+    app.meta.calibration_completed = true
 
     app.start_case("DEAD_AIR", "ANALYST")
     app.session.advance()
@@ -66,6 +81,16 @@ func _run() -> void:
     AstraGameSession.delete_snapshot(app.snapshot_path())
     DirAccess.remove_absolute(ProjectSettings.globalize_path(META_PATH))
     DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+
+    # Tear the screen down before quitting. 0.4.0 builds far more nodes per
+    # screen (relation cards, crew tags, sprite icons), and quitting with a full
+    # tree plus a queue of pending queue_free()s makes Godot report leaked RIDs
+    # at exit — which the release build treats as a failure.
+    root.remove_child(app)
+    app.free()
+    app = null
+    await _wait(4)
+
     if failures.is_empty():
         print("ASTRA UI SMOKE OK")
         quit(0)
@@ -75,6 +100,17 @@ func _run() -> void:
 func _play_case(case_id: String, protocol: String) -> void:
     app.start_case(case_id, protocol)
     await _wait(4)
+    # First-appearance cards stack up in front of a new roster; dismiss them the
+    # way a player would before driving the case.
+    for _pass in range(12):
+        var open_modal := false
+        for child in app.overlay_root().get_children():
+            if child.has_method("close"):
+                child.close(0)
+                open_modal = true
+        if not open_modal:
+            break
+        await _wait(2)
     var screen = app._current
     _expect(screen is AstraGameScreen, "%s game screen" % case_id)
     var s: AstraGameSession = app.session

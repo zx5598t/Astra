@@ -1,0 +1,3186 @@
+[
+  {
+    "file": "backgrounds/bridge.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_48_39 (1).png",
+    "crop": [
+      0,
+      0,
+      1672,
+      941
+    ],
+    "size": [
+      1672,
+      941
+    ],
+    "bytes": 340256
+  },
+  {
+    "file": "backgrounds/security.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_48_40 (2).png",
+    "crop": [
+      0,
+      0,
+      1672,
+      941
+    ],
+    "size": [
+      1672,
+      941
+    ],
+    "bytes": 300556
+  },
+  {
+    "file": "backgrounds/archive.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_48_40 (3).png",
+    "crop": [
+      0,
+      0,
+      1672,
+      941
+    ],
+    "size": [
+      1672,
+      941
+    ],
+    "bytes": 366210
+  },
+  {
+    "file": "backgrounds/garden.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_48_41 (4).png",
+    "crop": [
+      0,
+      0,
+      1672,
+      941
+    ],
+    "size": [
+      1672,
+      941
+    ],
+    "bytes": 387326
+  },
+  {
+    "file": "backgrounds/engine.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_48_41 (5).png",
+    "crop": [
+      0,
+      0,
+      1672,
+      941
+    ],
+    "size": [
+      1672,
+      941
+    ],
+    "bytes": 418090
+  },
+  {
+    "file": "backgrounds/lounge.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_48_42 (6).png",
+    "crop": [
+      0,
+      0,
+      1672,
+      941
+    ],
+    "size": [
+      1672,
+      941
+    ],
+    "bytes": 348210
+  },
+  {
+    "file": "backgrounds/medical.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_48_42 (7).png",
+    "crop": [
+      0,
+      0,
+      1672,
+      941
+    ],
+    "size": [
+      1672,
+      941
+    ],
+    "bytes": 252488
+  },
+  {
+    "file": "backgrounds/breach.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_48_44 (8).png",
+    "crop": [
+      0,
+      0,
+      1672,
+      941
+    ],
+    "size": [
+      1672,
+      941
+    ],
+    "bytes": 311654
+  },
+  {
+    "file": "items/medical_01.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 23958
+  },
+  {
+    "file": "items/medical_02.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 17722
+  },
+  {
+    "file": "items/medical_03.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      627,
+      0,
+      940,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 19804
+  },
+  {
+    "file": "items/medical_04.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      940,
+      0,
+      1254,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 17266
+  },
+  {
+    "file": "items/medical_05.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      0,
+      313,
+      313,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20566
+  },
+  {
+    "file": "items/medical_06.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      313,
+      313,
+      627,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20828
+  },
+  {
+    "file": "items/medical_07.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      627,
+      313,
+      940,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 26450
+  },
+  {
+    "file": "items/medical_08.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      940,
+      313,
+      1254,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 17314
+  },
+  {
+    "file": "items/medical_09.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      0,
+      627,
+      313,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18094
+  },
+  {
+    "file": "items/medical_10.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      313,
+      627,
+      627,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 17676
+  },
+  {
+    "file": "items/medical_11.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 17194
+  },
+  {
+    "file": "items/medical_12.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 27926
+  },
+  {
+    "file": "items/medical_13.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      0,
+      940,
+      313,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18446
+  },
+  {
+    "file": "items/medical_14.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      313,
+      940,
+      627,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 25764
+  },
+  {
+    "file": "items/medical_15.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      627,
+      940,
+      940,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 19836
+  },
+  {
+    "file": "items/medical_16.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_51 (1).png",
+    "crop": [
+      940,
+      940,
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 23600
+  },
+  {
+    "file": "items/tools_01.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20212
+  },
+  {
+    "file": "items/tools_02.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 23976
+  },
+  {
+    "file": "items/tools_03.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      627,
+      0,
+      940,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18278
+  },
+  {
+    "file": "items/tools_04.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      940,
+      0,
+      1254,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18564
+  },
+  {
+    "file": "items/tools_05.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      0,
+      313,
+      313,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 25542
+  },
+  {
+    "file": "items/tools_06.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      313,
+      313,
+      627,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 27236
+  },
+  {
+    "file": "items/tools_07.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      627,
+      313,
+      940,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18386
+  },
+  {
+    "file": "items/tools_08.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      940,
+      313,
+      1254,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 29040
+  },
+  {
+    "file": "items/tools_09.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      0,
+      627,
+      313,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 24836
+  },
+  {
+    "file": "items/tools_10.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      313,
+      627,
+      627,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22268
+  },
+  {
+    "file": "items/tools_11.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 26806
+  },
+  {
+    "file": "items/tools_12.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 25682
+  },
+  {
+    "file": "items/tools_13.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      0,
+      940,
+      313,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 19388
+  },
+  {
+    "file": "items/tools_14.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      313,
+      940,
+      627,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 21484
+  },
+  {
+    "file": "items/tools_15.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      627,
+      940,
+      940,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 24424
+  },
+  {
+    "file": "items/tools_16.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (2).png",
+    "crop": [
+      940,
+      940,
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18400
+  },
+  {
+    "file": "items/evidence_01.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22124
+  },
+  {
+    "file": "items/evidence_02.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 23864
+  },
+  {
+    "file": "items/evidence_03.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      627,
+      0,
+      940,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 29486
+  },
+  {
+    "file": "items/evidence_04.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      940,
+      0,
+      1254,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22832
+  },
+  {
+    "file": "items/evidence_05.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      0,
+      313,
+      313,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22998
+  },
+  {
+    "file": "items/evidence_06.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      313,
+      313,
+      627,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 17092
+  },
+  {
+    "file": "items/evidence_07.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      627,
+      313,
+      940,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 27474
+  },
+  {
+    "file": "items/evidence_08.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      940,
+      313,
+      1254,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 25290
+  },
+  {
+    "file": "items/evidence_09.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      0,
+      627,
+      313,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20948
+  },
+  {
+    "file": "items/evidence_10.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      313,
+      627,
+      627,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 23232
+  },
+  {
+    "file": "items/evidence_11.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 24404
+  },
+  {
+    "file": "items/evidence_12.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 30346
+  },
+  {
+    "file": "items/evidence_13.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      0,
+      940,
+      313,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18408
+  },
+  {
+    "file": "items/evidence_14.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      313,
+      940,
+      627,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 14804
+  },
+  {
+    "file": "items/evidence_15.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      627,
+      940,
+      940,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 19932
+  },
+  {
+    "file": "items/evidence_16.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (3).png",
+    "crop": [
+      940,
+      940,
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22474
+  },
+  {
+    "file": "items/comms_01.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 23850
+  },
+  {
+    "file": "items/comms_02.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 26732
+  },
+  {
+    "file": "items/comms_03.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      627,
+      0,
+      940,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20608
+  },
+  {
+    "file": "items/comms_04.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      940,
+      0,
+      1254,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 16924
+  },
+  {
+    "file": "items/comms_05.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      0,
+      313,
+      313,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 13158
+  },
+  {
+    "file": "items/comms_06.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      313,
+      313,
+      627,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22162
+  },
+  {
+    "file": "items/comms_07.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      627,
+      313,
+      940,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20382
+  },
+  {
+    "file": "items/comms_08.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      940,
+      313,
+      1254,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20108
+  },
+  {
+    "file": "items/comms_09.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      0,
+      627,
+      313,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 19988
+  },
+  {
+    "file": "items/comms_10.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      313,
+      627,
+      627,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20654
+  },
+  {
+    "file": "items/comms_11.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 21026
+  },
+  {
+    "file": "items/comms_12.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 26246
+  },
+  {
+    "file": "items/comms_13.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      0,
+      940,
+      313,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18002
+  },
+  {
+    "file": "items/comms_14.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      313,
+      940,
+      627,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 19700
+  },
+  {
+    "file": "items/comms_15.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      627,
+      940,
+      940,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18578
+  },
+  {
+    "file": "items/comms_16.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_52 (4).png",
+    "crop": [
+      940,
+      940,
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 19708
+  },
+  {
+    "file": "items/security_01.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 14926
+  },
+  {
+    "file": "items/security_02.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18524
+  },
+  {
+    "file": "items/security_03.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      627,
+      0,
+      940,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 14630
+  },
+  {
+    "file": "items/security_04.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      940,
+      0,
+      1254,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20852
+  },
+  {
+    "file": "items/security_05.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      0,
+      313,
+      313,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 14636
+  },
+  {
+    "file": "items/security_06.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      313,
+      313,
+      627,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22532
+  },
+  {
+    "file": "items/security_07.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      627,
+      313,
+      940,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 15642
+  },
+  {
+    "file": "items/security_08.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      940,
+      313,
+      1254,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 21704
+  },
+  {
+    "file": "items/security_09.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      0,
+      627,
+      313,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 16034
+  },
+  {
+    "file": "items/security_10.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      313,
+      627,
+      627,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 29906
+  },
+  {
+    "file": "items/security_11.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18194
+  },
+  {
+    "file": "items/security_12.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 15860
+  },
+  {
+    "file": "items/security_13.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      0,
+      940,
+      313,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 19794
+  },
+  {
+    "file": "items/security_14.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      313,
+      940,
+      627,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 21736
+  },
+  {
+    "file": "items/security_15.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      627,
+      940,
+      940,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 14472
+  },
+  {
+    "file": "items/security_16.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (5).png",
+    "crop": [
+      940,
+      940,
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 13554
+  },
+  {
+    "file": "items/archive_01.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 28612
+  },
+  {
+    "file": "items/archive_02.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 23662
+  },
+  {
+    "file": "items/archive_03.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      627,
+      0,
+      940,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 24672
+  },
+  {
+    "file": "items/archive_04.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      940,
+      0,
+      1254,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22028
+  },
+  {
+    "file": "items/archive_05.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      0,
+      313,
+      313,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 34508
+  },
+  {
+    "file": "items/archive_06.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      313,
+      313,
+      627,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 27446
+  },
+  {
+    "file": "items/archive_07.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      627,
+      313,
+      940,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22762
+  },
+  {
+    "file": "items/archive_08.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      940,
+      313,
+      1254,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 25556
+  },
+  {
+    "file": "items/archive_09.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      0,
+      627,
+      313,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 25432
+  },
+  {
+    "file": "items/archive_10.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      313,
+      627,
+      627,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22688
+  },
+  {
+    "file": "items/archive_11.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 23768
+  },
+  {
+    "file": "items/archive_12.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 15126
+  },
+  {
+    "file": "items/archive_13.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      0,
+      940,
+      313,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 23914
+  },
+  {
+    "file": "items/archive_14.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      313,
+      940,
+      627,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 27138
+  },
+  {
+    "file": "items/archive_15.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      627,
+      940,
+      940,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 26940
+  },
+  {
+    "file": "items/archive_16.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (6).png",
+    "crop": [
+      940,
+      940,
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 28280
+  },
+  {
+    "file": "items/botanical_01.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 23500
+  },
+  {
+    "file": "items/botanical_02.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 28764
+  },
+  {
+    "file": "items/botanical_03.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      627,
+      0,
+      940,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 21718
+  },
+  {
+    "file": "items/botanical_04.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      940,
+      0,
+      1254,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18662
+  },
+  {
+    "file": "items/botanical_05.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      0,
+      313,
+      313,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 25868
+  },
+  {
+    "file": "items/botanical_06.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      313,
+      313,
+      627,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 28082
+  },
+  {
+    "file": "items/botanical_07.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      627,
+      313,
+      940,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 30096
+  },
+  {
+    "file": "items/botanical_08.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      940,
+      313,
+      1254,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20262
+  },
+  {
+    "file": "items/botanical_09.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      0,
+      627,
+      313,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 23382
+  },
+  {
+    "file": "items/botanical_10.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      313,
+      627,
+      627,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 19164
+  },
+  {
+    "file": "items/botanical_11.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 31594
+  },
+  {
+    "file": "items/botanical_12.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 24394
+  },
+  {
+    "file": "items/botanical_13.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      0,
+      940,
+      313,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 31934
+  },
+  {
+    "file": "items/botanical_14.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      313,
+      940,
+      627,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22776
+  },
+  {
+    "file": "items/botanical_15.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      627,
+      940,
+      940,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 16168
+  },
+  {
+    "file": "items/botanical_16.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_53 (7).png",
+    "crop": [
+      940,
+      940,
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 26272
+  },
+  {
+    "file": "items/gifts_01.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      0,
+      0,
+      313,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 21826
+  },
+  {
+    "file": "items/gifts_02.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      313,
+      0,
+      627,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 27226
+  },
+  {
+    "file": "items/gifts_03.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      627,
+      0,
+      940,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 24256
+  },
+  {
+    "file": "items/gifts_04.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      940,
+      0,
+      1254,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 32492
+  },
+  {
+    "file": "items/gifts_05.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      0,
+      313,
+      313,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 31270
+  },
+  {
+    "file": "items/gifts_06.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      313,
+      313,
+      627,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 26394
+  },
+  {
+    "file": "items/gifts_07.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      627,
+      313,
+      940,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22802
+  },
+  {
+    "file": "items/gifts_08.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      940,
+      313,
+      1254,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22038
+  },
+  {
+    "file": "items/gifts_09.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      0,
+      627,
+      313,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 27082
+  },
+  {
+    "file": "items/gifts_10.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      313,
+      627,
+      627,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 30496
+  },
+  {
+    "file": "items/gifts_11.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      627,
+      627,
+      940,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 23202
+  },
+  {
+    "file": "items/gifts_12.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      940,
+      627,
+      1254,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 28952
+  },
+  {
+    "file": "items/gifts_13.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      0,
+      940,
+      313,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 21002
+  },
+  {
+    "file": "items/gifts_14.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      313,
+      940,
+      627,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 27672
+  },
+  {
+    "file": "items/gifts_15.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      627,
+      940,
+      940,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 26372
+  },
+  {
+    "file": "items/gifts_16.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (8).png",
+    "crop": [
+      940,
+      940,
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 28236
+  },
+  {
+    "file": "items/icons_01.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      0,
+      0,
+      250,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 25442
+  },
+  {
+    "file": "items/icons_02.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      250,
+      0,
+      501,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 25716
+  },
+  {
+    "file": "items/icons_03.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      501,
+      0,
+      752,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20776
+  },
+  {
+    "file": "items/icons_04.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      752,
+      0,
+      1003,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20648
+  },
+  {
+    "file": "items/icons_05.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      1003,
+      0,
+      1254,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 21810
+  },
+  {
+    "file": "items/icons_06.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      0,
+      313,
+      250,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18038
+  },
+  {
+    "file": "items/icons_07.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      250,
+      313,
+      501,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 15678
+  },
+  {
+    "file": "items/icons_08.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      501,
+      313,
+      752,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 17726
+  },
+  {
+    "file": "items/icons_09.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      752,
+      313,
+      1003,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18936
+  },
+  {
+    "file": "items/icons_10.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      1003,
+      313,
+      1254,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 19916
+  },
+  {
+    "file": "items/icons_11.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      0,
+      627,
+      250,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18896
+  },
+  {
+    "file": "items/icons_12.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      250,
+      627,
+      501,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 19416
+  },
+  {
+    "file": "items/icons_13.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      501,
+      627,
+      752,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 21152
+  },
+  {
+    "file": "items/icons_14.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      752,
+      627,
+      1003,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22454
+  },
+  {
+    "file": "items/icons_15.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      1003,
+      627,
+      1254,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 21648
+  },
+  {
+    "file": "items/icons_16.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      0,
+      940,
+      250,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 17944
+  },
+  {
+    "file": "items/icons_17.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      250,
+      940,
+      501,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20636
+  },
+  {
+    "file": "items/icons_18.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      501,
+      940,
+      752,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 20654
+  },
+  {
+    "file": "items/icons_19.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      752,
+      940,
+      1003,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 18400
+  },
+  {
+    "file": "items/icons_20.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (9).png",
+    "crop": [
+      1003,
+      940,
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 27002
+  },
+  {
+    "file": "items/fx_01.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      0,
+      0,
+      250,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 25236
+  },
+  {
+    "file": "items/fx_02.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      250,
+      0,
+      501,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 27096
+  },
+  {
+    "file": "items/fx_03.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      501,
+      0,
+      752,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 28962
+  },
+  {
+    "file": "items/fx_04.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      752,
+      0,
+      1003,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 23790
+  },
+  {
+    "file": "items/fx_05.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      1003,
+      0,
+      1254,
+      313
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 30622
+  },
+  {
+    "file": "items/fx_06.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      0,
+      313,
+      250,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 27634
+  },
+  {
+    "file": "items/fx_07.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      250,
+      313,
+      501,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 26700
+  },
+  {
+    "file": "items/fx_08.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      501,
+      313,
+      752,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 31738
+  },
+  {
+    "file": "items/fx_09.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      752,
+      313,
+      1003,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 27668
+  },
+  {
+    "file": "items/fx_10.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      1003,
+      313,
+      1254,
+      627
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 24856
+  },
+  {
+    "file": "items/fx_11.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      0,
+      627,
+      250,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22040
+  },
+  {
+    "file": "items/fx_12.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      250,
+      627,
+      501,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 31396
+  },
+  {
+    "file": "items/fx_13.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      501,
+      627,
+      752,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 28610
+  },
+  {
+    "file": "items/fx_14.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      752,
+      627,
+      1003,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 27366
+  },
+  {
+    "file": "items/fx_15.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      1003,
+      627,
+      1254,
+      940
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 24198
+  },
+  {
+    "file": "items/fx_16.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      0,
+      940,
+      250,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 22884
+  },
+  {
+    "file": "items/fx_17.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      250,
+      940,
+      501,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 26968
+  },
+  {
+    "file": "items/fx_18.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      501,
+      940,
+      752,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 28392
+  },
+  {
+    "file": "items/fx_19.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      752,
+      940,
+      1003,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 21270
+  },
+  {
+    "file": "items/fx_20.webp",
+    "source": "ChatGPT Image 2026년 9월 18일 오전 11_49_54 (10).png",
+    "crop": [
+      1003,
+      940,
+      1254,
+      1254
+    ],
+    "size": [
+      256,
+      256
+    ],
+    "bytes": 25148
+  },
+  {
+    "file": "portraits/mira_calm.webp",
+    "source": "exec-46188f99-64ed-464b-996b-bfc7f2f4d4ef.png",
+    "crop": [
+      2,
+      2,
+      625,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 99168,
+    "pose": 1,
+    "alpha": true
+  },
+  {
+    "file": "portraits/mira_warm.webp",
+    "source": "exec-46188f99-64ed-464b-996b-bfc7f2f4d4ef.png",
+    "crop": [
+      629,
+      2,
+      1252,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 98980,
+    "pose": 2,
+    "alpha": true
+  },
+  {
+    "file": "portraits/mira_uneasy.webp",
+    "source": "exec-46188f99-64ed-464b-996b-bfc7f2f4d4ef.png",
+    "crop": [
+      2,
+      629,
+      625,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 99224,
+    "pose": 3,
+    "alpha": true
+  },
+  {
+    "file": "portraits/mira_tense.webp",
+    "source": "exec-46188f99-64ed-464b-996b-bfc7f2f4d4ef.png",
+    "crop": [
+      629,
+      629,
+      1252,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 102340,
+    "pose": 4,
+    "alpha": true
+  },
+  {
+    "file": "portraits/sena_calm.webp",
+    "source": "exec-4b481f3d-ca56-4c88-950e-c0e7db38a930.png",
+    "crop": [
+      2,
+      2,
+      625,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 121436,
+    "pose": 1,
+    "alpha": true
+  },
+  {
+    "file": "portraits/sena_warm.webp",
+    "source": "exec-4b481f3d-ca56-4c88-950e-c0e7db38a930.png",
+    "crop": [
+      629,
+      2,
+      1252,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 139960,
+    "pose": 2,
+    "alpha": true
+  },
+  {
+    "file": "portraits/sena_uneasy.webp",
+    "source": "exec-4b481f3d-ca56-4c88-950e-c0e7db38a930.png",
+    "crop": [
+      629,
+      629,
+      1252,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 147246,
+    "pose": 4,
+    "alpha": true
+  },
+  {
+    "file": "portraits/sena_tense.webp",
+    "source": "exec-4b481f3d-ca56-4c88-950e-c0e7db38a930.png",
+    "crop": [
+      2,
+      629,
+      625,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 137926,
+    "pose": 3,
+    "alpha": true
+  },
+  {
+    "file": "portraits/noa_calm.webp",
+    "source": "exec-1a690b11-ee19-4c4e-9403-2871b184ccfd.png",
+    "crop": [
+      2,
+      2,
+      625,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 85892,
+    "pose": 1,
+    "alpha": true
+  },
+  {
+    "file": "portraits/noa_warm.webp",
+    "source": "exec-1a690b11-ee19-4c4e-9403-2871b184ccfd.png",
+    "crop": [
+      629,
+      2,
+      1252,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 88300,
+    "pose": 2,
+    "alpha": true
+  },
+  {
+    "file": "portraits/noa_uneasy.webp",
+    "source": "exec-1a690b11-ee19-4c4e-9403-2871b184ccfd.png",
+    "crop": [
+      2,
+      629,
+      625,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 90532,
+    "pose": 3,
+    "alpha": true
+  },
+  {
+    "file": "portraits/noa_tense.webp",
+    "source": "exec-1a690b11-ee19-4c4e-9403-2871b184ccfd.png",
+    "crop": [
+      629,
+      629,
+      1252,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 91390,
+    "pose": 4,
+    "alpha": true
+  },
+  {
+    "file": "portraits/lyra_calm.webp",
+    "source": "exec-35ec3bbb-cac2-4016-9ea9-3dac95435e85.png",
+    "crop": [
+      629,
+      2,
+      1252,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 106316,
+    "pose": 2,
+    "alpha": true
+  },
+  {
+    "file": "portraits/lyra_warm.webp",
+    "source": "exec-35ec3bbb-cac2-4016-9ea9-3dac95435e85.png",
+    "crop": [
+      2,
+      2,
+      625,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 117126,
+    "pose": 1,
+    "alpha": true
+  },
+  {
+    "file": "portraits/lyra_uneasy.webp",
+    "source": "exec-35ec3bbb-cac2-4016-9ea9-3dac95435e85.png",
+    "crop": [
+      2,
+      629,
+      625,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 121052,
+    "pose": 3,
+    "alpha": true
+  },
+  {
+    "file": "portraits/lyra_tense.webp",
+    "source": "exec-35ec3bbb-cac2-4016-9ea9-3dac95435e85.png",
+    "crop": [
+      2,
+      629,
+      625,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 121052,
+    "pose": 3,
+    "alpha": true
+  },
+  {
+    "file": "portraits/rho_calm.webp",
+    "source": "exec-0775192e-99aa-4bad-b66a-71cb67f3b67e.png",
+    "crop": [
+      2,
+      2,
+      625,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 92390,
+    "pose": 1,
+    "alpha": true
+  },
+  {
+    "file": "portraits/rho_warm.webp",
+    "source": "exec-0775192e-99aa-4bad-b66a-71cb67f3b67e.png",
+    "crop": [
+      629,
+      2,
+      1252,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 95600,
+    "pose": 2,
+    "alpha": true
+  },
+  {
+    "file": "portraits/rho_uneasy.webp",
+    "source": "exec-0775192e-99aa-4bad-b66a-71cb67f3b67e.png",
+    "crop": [
+      629,
+      629,
+      1252,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 97318,
+    "pose": 4,
+    "alpha": true
+  },
+  {
+    "file": "portraits/rho_tense.webp",
+    "source": "exec-0775192e-99aa-4bad-b66a-71cb67f3b67e.png",
+    "crop": [
+      2,
+      629,
+      625,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 89746,
+    "pose": 3,
+    "alpha": true
+  },
+  {
+    "file": "portraits/eli_calm.webp",
+    "source": "exec-4c798bdf-2cf6-4208-a2ef-a87b7be33636.png",
+    "crop": [
+      629,
+      2,
+      1252,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 99112,
+    "pose": 2,
+    "alpha": true
+  },
+  {
+    "file": "portraits/eli_warm.webp",
+    "source": "exec-4c798bdf-2cf6-4208-a2ef-a87b7be33636.png",
+    "crop": [
+      2,
+      2,
+      625,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 111748,
+    "pose": 1,
+    "alpha": true
+  },
+  {
+    "file": "portraits/eli_uneasy.webp",
+    "source": "exec-4c798bdf-2cf6-4208-a2ef-a87b7be33636.png",
+    "crop": [
+      629,
+      629,
+      1252,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 110446,
+    "pose": 4,
+    "alpha": true
+  },
+  {
+    "file": "portraits/eli_tense.webp",
+    "source": "exec-4c798bdf-2cf6-4208-a2ef-a87b7be33636.png",
+    "crop": [
+      2,
+      629,
+      625,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 105432,
+    "pose": 3,
+    "alpha": true
+  },
+  {
+    "file": "portraits/vale_calm.webp",
+    "source": "exec-a150131b-4def-420d-ad61-aa74ad3864ea.png",
+    "crop": [
+      629,
+      2,
+      1252,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 105894,
+    "pose": 2,
+    "alpha": true
+  },
+  {
+    "file": "portraits/vale_warm.webp",
+    "source": "exec-a150131b-4def-420d-ad61-aa74ad3864ea.png",
+    "crop": [
+      2,
+      2,
+      625,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 112426,
+    "pose": 1,
+    "alpha": true
+  },
+  {
+    "file": "portraits/vale_uneasy.webp",
+    "source": "exec-a150131b-4def-420d-ad61-aa74ad3864ea.png",
+    "crop": [
+      629,
+      2,
+      1252,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 105894,
+    "pose": 2,
+    "alpha": true
+  },
+  {
+    "file": "portraits/vale_tense.webp",
+    "source": "exec-a150131b-4def-420d-ad61-aa74ad3864ea.png",
+    "crop": [
+      629,
+      629,
+      1252,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 111012,
+    "pose": 4,
+    "alpha": true
+  },
+  {
+    "file": "portraits/dax_calm.webp",
+    "source": "exec-8584fe65-6956-44b4-ba48-cfb8a8b4a1be.png",
+    "crop": [
+      2,
+      2,
+      625,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 94802,
+    "pose": 1,
+    "alpha": true
+  },
+  {
+    "file": "portraits/dax_warm.webp",
+    "source": "exec-8584fe65-6956-44b4-ba48-cfb8a8b4a1be.png",
+    "crop": [
+      629,
+      2,
+      1252,
+      625
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 94820,
+    "pose": 2,
+    "alpha": true
+  },
+  {
+    "file": "portraits/dax_uneasy.webp",
+    "source": "exec-8584fe65-6956-44b4-ba48-cfb8a8b4a1be.png",
+    "crop": [
+      629,
+      629,
+      1252,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 100460,
+    "pose": 4,
+    "alpha": true
+  },
+  {
+    "file": "portraits/dax_tense.webp",
+    "source": "exec-8584fe65-6956-44b4-ba48-cfb8a8b4a1be.png",
+    "crop": [
+      2,
+      629,
+      625,
+      1252
+    ],
+    "size": [
+      600,
+      600
+    ],
+    "bytes": 107086,
+    "pose": 3,
+    "alpha": true
+  }
+]

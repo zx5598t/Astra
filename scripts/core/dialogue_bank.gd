@@ -363,17 +363,35 @@ const LINES := {
 }
 
 static func has_line(npc_id: String, key: String) -> bool:
-    return LINES.has(npc_id) and LINES[npc_id].has(key)
+    return not pool(npc_id, key).is_empty()
+
+# Every phrasing available for one character saying one thing: the 0.3.1 line
+# plus whatever docs/dialogue_variants adds. Order is stable, so a seed replays.
+static func pool(npc_id: String, key: String) -> Array:
+    var options: Array = LINES.get(npc_id, {}).get(key, []).duplicate()
+    options.append_array(AstraDialogueVariants.extra(npc_id, key))
+    return options
+
+static func variant_count(npc_id: String, key: String) -> int:
+    return pool(npc_id, key).size()
 
 static func line(npc_id: String, key: String, params: Dictionary = {}, variant: int = -1) -> String:
-    var table: Dictionary = LINES.get(npc_id, {})
-    var options: Array = table.get(key, [])
+    var options: Array = pool(npc_id, key)
     if options.is_empty():
         return ""
     var index := variant
     if index < 0:
         index = randi() % options.size()
     return AstraJosa.fill(str(options[index % options.size()]), params)
+
+# Preferred entry point from 0.4.0 on: the same line, but steered away from what
+# this character has said in the last few exchanges.
+static func line_fresh(npc_id: String, key: String, params: Dictionary, recent: Array, roll: float) -> String:
+    var options: Array = pool(npc_id, key)
+    if options.is_empty():
+        return ""
+    var index := AstraDialogueMemory.pick(recent, npc_id, key, options.size(), roll)
+    return AstraJosa.fill(str(options[index]), params)
 
 static func reason_text(reason_key: String) -> String:
     return str(REASONS.get(reason_key, REASONS["gut"]))

@@ -64,6 +64,27 @@ jobs:
           fi
           grep -q "ASTRA UI SMOKE OK" ui.log
 
+      - name: Manual hypotheses, new night actions and alpha assets
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/redesign_tests.gd 2>&1 | tee redesign.log
+          grep -q "ASTRA REDESIGN TESTS OK" redesign.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error" redesign.log; then exit 1; fi
+
+      - name: Onboarding, unlocks, claim ledger and save compatibility
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/social_tests.gd 2>&1 | tee social.log
+          grep -q "ASTRA SOCIAL TESTS OK" social.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error" social.log; then exit 1; fi
+
+      - name: Replay variety and role distribution
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/replay_variety.gd -- --seeds=200 2>&1 | tee replay.log
+          grep -q "ASTRA REPLAY VARIETY OK" replay.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error" replay.log; then exit 1; fi
+
       - name: Boot main scene headlessly
         run: |
           set +e

@@ -115,6 +115,8 @@ func toast(text: String, accent: Color, seconds: float = 3.2) -> void:
     tween.tween_callback(card.queue_free)
 
 func flash(color: Color, peak_alpha: float = 0.16, duration: float = 0.3) -> void:
+    if AstraUI.reduce_motion:
+        return
     if _flash == null:
         return
     _flash.color = Color(color.r, color.g, color.b, 0.0)
@@ -122,15 +124,10 @@ func flash(color: Color, peak_alpha: float = 0.16, duration: float = 0.3) -> voi
     tween.tween_property(_flash, "color:a", peak_alpha, duration * 0.25)
     tween.tween_property(_flash, "color:a", 0.0, duration * 0.75)
 
-func shake(target: Control, intensity: float = 6.0) -> void:
-    if target == null or not target.is_inside_tree():
-        return
-    var origin := target.position
-    var tween := create_tween()
-    tween.tween_property(target, "position", origin + Vector2(intensity, 0), 0.035)
-    tween.tween_property(target, "position", origin + Vector2(-intensity, 2), 0.035)
-    tween.tween_property(target, "position", origin + Vector2(intensity * 0.5, -2), 0.035)
-    tween.tween_property(target, "position", origin, 0.05)
+func shake(_target: Control, _intensity: float = 6.0) -> void:
+    # 0.4.0: screen shake removed. It moved every panel the player was reading
+    # and added nothing the banner and flash do not already say.
+    pass
 
 func play(key: String) -> void:
     match key:

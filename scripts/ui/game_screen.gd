@@ -27,7 +27,6 @@ var fx: AstraFeedbackFX
 var archive_change: Dictionary = {}
 
 var _day_label: Label
-var _stepper: HBoxContainer
 var _ap_label: RichTextLabel
 var _hint: Label
 var _hint_panel: PanelContainer
@@ -42,6 +41,22 @@ var _summary: RichTextLabel
 var _primary: Button
 var _selected: String = ""
 var _recorded: bool = false
+var _background: TextureRect
+var _roster_buttons: Dictionary = {}
+var _note_button: Button
+var _help_button: Button
+var _objective_panel: PanelContainer
+var _objective_tag: Label
+var _objective_label: Label
+var _objective_text: String = ""
+var _stepper: HBoxContainer
+var _budget_panel: PanelContainer
+var _budget_row: HBoxContainer
+var _budget_name: Label
+var _budget_pips: RichTextLabel
+var _budget_count: Label
+var _step_labels: Dictionary = {}
+var _ready_pulse: bool = false
 
 func setup(app_node, game_session: AstraGameSession, feedback: AstraFeedbackFX) -> void:
     app = app_node
@@ -57,91 +72,124 @@ func setup(app_node, game_session: AstraGameSession, feedback: AstraFeedbackFX) 
     _announce_phase(session.phase)
 
 func _build() -> void:
-    var margin := AstraUI.margin(AstraUI.vbox(10), 16, 12, 16, 12)
+    _background = AstraUI.thumb(AstraArt.chapter(session.case_id), Vector2.ZERO)
+    _background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    _background.modulate = Color(0.55, 0.60, 0.70)
+    add_child(_background)
+    add_child(AstraArt.shade())
+    var root := AstraUI.vbox(12)
+    var margin := AstraUI.margin(root,24,18,24,18)
     margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     add_child(margin)
-    var root: VBoxContainer = margin.get_child(0)
-
-    var top := AstraUI.hbox(14)
+    var top := AstraUI.hbox(16)
     root.add_child(top)
-    var brand := AstraUI.vbox(0)
-    top.add_child(brand)
-    brand.add_child(AstraUI.label("ASTRA", 22, AstraUI.CYAN))
-    brand.add_child(AstraUI.label("%s · %s" % [str(session.case_data.get("code", "")), str(session.case_data.get("title", ""))], 12, AstraUI.MUTED))
-    _day_label = AstraUI.label("", 20, AstraUI.TEXT)
+    top.add_child(AstraUI.label("A S T R A", 22, AstraUI.TEXT))
+    _day_label = AstraUI.label("", AstraUI.T_UI, AstraUI.TEXT)
     top.add_child(_day_label)
+    # Where we are in the day, as a row of steps rather than a word. 0.3.1 named
+    # the phase but never said what came before or after it, so "저녁 회의" gave
+    # no sense of how much of the day was left.
     _stepper = AstraUI.hbox(4)
-    _stepper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    _stepper.alignment = BoxContainer.ALIGNMENT_CENTER
     top.add_child(_stepper)
-    _ap_label = AstraUI.rich(15)
-    _ap_label.custom_minimum_size = Vector2(230, 0)
-    _ap_label.size_flags_horizontal = Control.SIZE_SHRINK_END
-    _ap_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+    for index in range(STEPS.size()):
+        var step := str(STEPS[index])
+        var cell := AstraUI.label(str(STEP_LABELS.get(step, step)), AstraUI.T_META, AstraUI.DIM)
+        cell.tooltip_text = str(AstraCodex.screen(step).get("purpose", ""))
+        _stepper.add_child(cell)
+        _step_labels[step] = cell
+        if index < STEPS.size() - 1:
+            _stepper.add_child(AstraUI.label("›", AstraUI.T_META, AstraUI.DIM))
+    top.add_child(AstraUI.spacer())
+    # Action points were drawn as a right-aligned grey caption and were the
+    # single most missed piece of information in playtesting: people asked
+    # questions until they ran out and only then noticed there was a budget.
+    _budget_panel = AstraUI.panel(Color(0.04, 0.07, 0.11, 0.95), Color(AstraUI.GOLD, 0.45), 8, 10)
+    top.add_child(_budget_panel)
+    _budget_row = AstraUI.hbox(10)
+    _budget_panel.add_child(_budget_row)
+    _budget_name = AstraUI.label("", AstraUI.T_META, AstraUI.MUTED)
+    _budget_row.add_child(_budget_name)
+    _budget_pips = AstraUI.rich(AstraUI.T_UI)
+    _budget_pips.custom_minimum_size.x = 90
+    _budget_row.add_child(_budget_pips)
+    _budget_count = AstraUI.label("", AstraUI.T_META, AstraUI.GOLD)
+    _budget_row.add_child(_budget_count)
+    _ap_label = AstraUI.rich(AstraUI.T_META)
+    _ap_label.custom_minimum_size.x = 230
     top.add_child(_ap_label)
-    var menu := AstraUI.button("메뉴 · Esc", AstraUI.MUTED, 14, 38)
+    _note_button = AstraUI.button("조사 노트 · N", AstraUI.CYAN, AstraUI.T_META, 40)
+    _note_button.tooltip_text = AstraCodex.tooltip("notebook")
+    _note_button.pressed.connect(open_notebook)
+    top.add_child(_note_button)
+    # The help button sits beside the objective it explains, in the same spot on
+    # every screen, so "where do I look this up" has one answer (§10).
+    _help_button = AstraUI.help_button()
+    _help_button.pressed.connect(_open_screen_help)
+    top.add_child(_help_button)
+    var menu := AstraUI.button("메뉴 · Esc", AstraUI.MUTED, AstraUI.T_META, 40)
     menu.pressed.connect(func(): app.show_pause_menu())
     top.add_child(menu)
 
-    _hint_panel = AstraUI.panel(Color(AstraUI.CYAN, 0.06), Color(AstraUI.CYAN, 0.3), 8, 8)
+    # PRIMARY: one line saying what to do next, always in the same place.
+    # Built once and updated in place. Rebuilding it into an anchored holder on
+    # every refresh made it render empty on the first frame of a screen, before
+    # the container had a size to anchor against.
+    _objective_panel = AstraUI.panel(Color(AstraUI.CYAN, 0.09), Color(AstraUI.CYAN, 0.42), 8, 10)
+    root.add_child(_objective_panel)
+    var objective_row := AstraUI.hbox(10)
+    _objective_panel.add_child(objective_row)
+    _objective_tag = AstraUI.label("지금 할 일", AstraUI.T_META, AstraUI.CYAN)
+    objective_row.add_child(_objective_tag)
+    _objective_label = AstraUI.prose("", AstraUI.T_BODY, AstraUI.TEXT)
+    objective_row.add_child(_objective_label)
+
+    # SECONDARY: the phase hint, which the player can switch off.
+    _hint_panel = AstraUI.panel(Color(0.03, 0.055, 0.09, 0.93), Color(AstraUI.CYAN, 0.3), 8, 10)
     root.add_child(_hint_panel)
-    var hint_row := AstraUI.hbox(10)
-    _hint_panel.add_child(hint_row)
-    _hint = AstraUI.label("", 15, AstraUI.TEXT, true)
-    hint_row.add_child(_hint)
-    hint_row.add_child(AstraUI.chip("사건 시간대 " + session.window_text(), AstraUI.GOLD, 13))
+    _hint = AstraUI.prose("", AstraUI.T_META, AstraUI.MUTED)
+    _hint_panel.add_child(_hint)
 
-    var roster_panel := AstraUI.panel(AstraUI.PANEL, AstraUI.BORDER, 12, 8)
-    root.add_child(roster_panel)
-    var roster_box := AstraUI.vbox(6)
-    roster_panel.add_child(roster_box)
-    var roster_head := AstraUI.hbox(6)
-    roster_box.add_child(roster_head)
-    roster_head.add_child(AstraUI.label("승무원", 14, AstraUI.CYAN))
-    roster_head.add_child(AstraUI.spacer())
-    roster_head.add_child(AstraUI.label("표시: N 의심 · ✓ 신뢰 · ? 보류", 11, AstraUI.DIM))
-    _roster = AstraUI.hbox(6)
-    roster_box.add_child(_roster)
-    var hotkey := 1
-    for npc_id in AstraCrewCatalog.ORDER:
-        var card := AstraCrewCard.new()
-        card.setup(npc_id, hotkey)
-        card.selected.connect(select)
-        card.mark_pressed.connect(_on_mark)
-        card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        _roster.add_child(card)
-        _cards[npc_id] = card
-        hotkey += 1
-
-    var body := AstraUI.hbox(14)
-    body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    root.add_child(body)
-
-    _center = AstraUI.panel(AstraUI.PANEL, AstraUI.BORDER, 12, 16)
-    _center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    body.add_child(_center)
+    _roster = AstraUI.hbox(7)
+    root.add_child(_roster)
+    # Only the people in this case. The calibration roster is four, and showing
+    # eight slots with four of them empty would undo the point of it.
+    var roster: Array = session.active_roster()
+    for index in range(roster.size()):
+        var id := str(roster[index])
+        # Sprite + Korean name + job on every roster button. The 0.3.1 button was
+        # a number and a Latin name, which is the least memorable pair possible.
+        var button := AstraUI.button("%d  %s  (%s)" % [index + 1, session.name_of(id), AstraCrewCatalog.role_short(id)], AstraUI.MUTED, AstraUI.T_UI, 56)
+        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        button.icon = AstraUI.texture(AstraCrewCatalog.dot_path(id))
+        button.expand_icon = true
+        button.add_theme_constant_override("icon_max_width", 40)
+        button.clip_text = true
+        button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+        button.pressed.connect(select.bind(id))
+        _roster.add_child(button)
+        _roster_buttons[id] = button
+    _center = AstraUI.panel(Color(0.03,0.05,0.08,0.91),AstraUI.BORDER,12,16)
+    _center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    root.add_child(_center)
     _holder = Control.new()
     _holder.clip_contents = true
     _holder.mouse_filter = Control.MOUSE_FILTER_PASS
     _center.add_child(_holder)
-
-    _notebook = AstraNotebookPanel.new()
-    _notebook.custom_minimum_size = Vector2(340, 0)
-    body.add_child(_notebook)
-    _notebook.setup(session)
-
     var bottom := AstraUI.hbox(12)
     root.add_child(bottom)
-    _summary = AstraUI.rich(14)
-    _summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    _summary = AstraUI.rich(AstraUI.T_META)
     bottom.add_child(_summary)
-    _primary = AstraUI.button("", AstraUI.CYAN, 18, 54, true)
-    _primary.custom_minimum_size = Vector2(320, 54)
-    _primary.focus_mode = Control.FOCUS_NONE
+    # Marking is a 0.4.0 unlock: during calibration the player has four people
+    # and one meeting, and a third annotation layer on top of that is noise.
+    if session.has_feature("marks"):
+        var mark := AstraUI.button("내 판단 표시 · M", AstraUI.MUTED, AstraUI.T_META, 42)
+        mark.tooltip_text = AstraCodex.tooltip("mark")
+        mark.pressed.connect(func(): _on_mark(_selected))
+        bottom.add_child(mark)
+    _primary = AstraUI.primary_button("")
+    _primary.custom_minimum_size.x = 320
     _primary.pressed.connect(_on_primary)
     bottom.add_child(_primary)
-
-# ---------------------------------------------------------------- state sync
 
 func _on_changed() -> void:
     if session == null:
@@ -152,7 +200,8 @@ func _on_changed() -> void:
         _selected = str(session.pending_event.get("npc_id", _selected))
     _refresh_top()
     _refresh_roster()
-    _notebook.refresh()
+    if is_instance_valid(_notebook):
+        _notebook.refresh()
     _refresh_bottom()
     if session.phase != _view_phase or _view == null:
         _swap_view()
@@ -163,64 +212,142 @@ func _on_changed() -> void:
         archive_change = app.record_result(session)
         if _view != null:
             _view.refresh()
+        # Feature cards come after the result is on screen, so the player reads
+        # what happened first and what they gained second (§35).
+        var opened: Array = archive_change.get("new_features", [])
+        if not opened.is_empty():
+            app.show_unlock_cards.call_deferred(opened)
 
 func _refresh_top() -> void:
-    _day_label.text = "DAY %d / %d" % [session.day, AstraGameSession.MAX_DAYS] if session.phase != "RESULT" else "사건 종료"
-    AstraUI.clear(_stepper)
+    var day_text := "%d일째" % session.day
+    if session.max_days > 1:
+        day_text += " / %d" % session.max_days
+    _day_label.text = "%s  ·  %s" % [str(session.case_data.get("title_ko", "")), day_text]
+    _ap_label.text = "[right]" + session.time_caption() + "[/right]"
+    _refresh_stepper()
+    _refresh_budget()
+    _refresh_objective_bar()
+
+# Six labels for the six stages of a day, the current one highlighted. It
+# answers "where am I and how much is left" without a sentence.
+#
+# Built once, recoloured on refresh. These used to be rebuilt on every `changed`
+# signal — several times per action — which churned a RichTextLabel and a dozen
+# Controls per refresh and left orphaned nodes behind.
+func _refresh_stepper() -> void:
     var current := STEPS.find(session.phase)
     for index in range(STEPS.size()):
-        var phase_id := str(STEPS[index])
-        var color: Color = PHASE_COLORS.get(phase_id, AstraUI.CYAN)
-        var active := index == current
-        var done := current >= 0 and index < current or session.phase == "RESULT"
-        var bg := Color(color, 0.25) if active else Color(AstraUI.PANEL_2, 0.8)
-        var border := color if active else (Color(color, 0.35) if done else AstraUI.BORDER)
-        var pill := PanelContainer.new()
-        var box := AstraUI.style(bg, border, 14, 1, 10)
-        box.content_margin_top = 4
-        box.content_margin_bottom = 4
-        pill.add_theme_stylebox_override("panel", box)
-        pill.add_child(AstraUI.label(str(STEP_LABELS[phase_id]), 14, AstraUI.TEXT if active else (AstraUI.MUTED if done else AstraUI.DIM)))
-        _stepper.add_child(pill)
-        if index < STEPS.size() - 1:
-            _stepper.add_child(AstraUI.label("›", 14, AstraUI.DIM))
-    match session.phase:
-        "INVESTIGATION":
-            _ap_label.text = "[right][color=#%s]조사[/color] %s[/right]" % [AstraUI.hex(AstraUI.MUTED), AstraUI.pips(session.investigation_ap, session.investigation_ap_max(), AstraUI.GOLD)]
-        "INTERROGATION":
-            _ap_label.text = "[right][color=#%s]심문[/color] %s[/right]" % [AstraUI.hex(AstraUI.MUTED), AstraUI.pips(session.talk_ap, session.talk_ap_max(), AstraUI.GREEN)]
-        "MEETING":
-            _ap_label.text = "[right][color=#%s]발언권[/color] %s[/right]" % [AstraUI.hex(AstraUI.MUTED), AstraUI.pips(session.meeting_actions_left, session.meeting_actions_max(), AstraUI.CYAN)]
-        _:
-            _ap_label.text = "[right][color=#%s]%s[/color][/right]" % [AstraUI.hex(AstraUI.MUTED), session.protocol_name()]
-    _hint.text = "지금 할 일  /  " + session.phase_hint()
-    _hint_panel.visible = app.settings.show_hints or session.phase in ["VOTE", "NIGHT"]
+        var step := str(STEPS[index])
+        var here := index == current
+        var done := current >= 0 and index < current
+        var accent: Color = PHASE_COLORS.get(step, AstraUI.CYAN)
+        var cell: Label = _step_labels.get(step, null)
+        if cell == null:
+            continue
+        cell.add_theme_color_override("font_color", accent if here else (AstraUI.MUTED if done else AstraUI.DIM))
+        cell.add_theme_font_size_override("font_size", AstraUI.font_size(AstraUI.T_UI if here else AstraUI.T_META))
+
+# How many actions are left, as pips, in a bordered box. Empty pips are what
+# tell the player the budget existed in the first place.
+func _refresh_budget() -> void:
+    var spec := session.action_budget()
+    if spec.is_empty():
+        _budget_panel.visible = false
+        return
+    _budget_panel.visible = true
+    var left := int(spec.get("left", 0))
+    var maximum := int(spec.get("max", 0))
+    var accent: Color = AstraUI.DIM if left <= 0 else AstraUI.GOLD
+    _budget_panel.add_theme_stylebox_override("panel",
+        AstraUI.style(Color(0.04, 0.07, 0.11, 0.95), Color(accent, 0.5), 8, 1, 10))
+    _budget_name.text = str(spec.get("label", ""))
+    _budget_pips.text = AstraUI.pips(left, maximum, accent)
+    _budget_count.text = "%d / %d" % [left, maximum]
+    _budget_count.add_theme_color_override("font_color", accent)
+
+# The one line saying what to do next, plus the hint line under it.
+func _refresh_objective_bar() -> void:
+    _objective_text = str(session.current_objective().get("text", ""))
+    # While the room is still speaking, the only thing to do is listen. The
+    # session cannot know how much of the meeting the player has read, so the
+    # view reports it.
+    var waiting := 0
+    if _view != null and _view.has_method("pending_lines"):
+        waiting = int(_view.pending_lines())
+        if waiting > 0:
+            _objective_text = "발언을 끝까지 들으세요. %d건 남았습니다." % waiting
+    var accent: Color = PHASE_COLORS.get(session.phase, AstraUI.CYAN)
+    var hint := session.phase_hint()
+    # During the tutorial the crew's own line says the same thing as the generic
+    # objective, in a voice. Two bars saying one thing is two bars the player
+    # stops reading, so the tutorial line becomes the objective and the second
+    # bar goes away entirely.
+    # "listen to the room" outranks the tutorial line: while people are still
+    # speaking there is genuinely nothing else to do, and saying otherwise sends
+    # the player looking for a button that is not there yet.
+    var listening := waiting > 0
+    var merged := not listening and session.tutorial_active() and hint != "" and session.phase not in ["VOTE", "NIGHT"]
+    _objective_label.text = hint if merged else _objective_text
+    _objective_tag.text = "안내" if merged else "지금 할 일"
+    _objective_tag.add_theme_color_override("font_color", accent)
+    _objective_panel.add_theme_stylebox_override("panel", AstraUI.style(Color(accent, 0.09), Color(accent, 0.42), 8, 1, 10))
+    _objective_panel.visible = _objective_label.text != "" and session.phase != "RESULT"
+    _hint.text = hint
+    _hint_panel.visible = (not merged) and app.settings.show_hints and hint != "" and hint != _objective_text
+    _note_button.text = "조사 노트 · N" + ("  •" if not session.found_clues().is_empty() else "")
+
+# The meeting view calls this after revealing a line so the objective strip
+# tracks "still listening" vs "your turn" without waiting for a session change.
+func refresh_objective() -> void:
+    if session != null:
+        _refresh_top()
+        _refresh_bottom()
+
+func _open_screen_help() -> void:
+    app.show_screen_help(session.phase, _objective_text)
 
 func _refresh_roster() -> void:
-    var intentions := {}
-    if session.phase in ["MEETING", "VOTE"] and not session.vote_cast:
-        intentions = session.vote_intentions()
-    for npc_id in _cards.keys():
-        _cards[npc_id].refresh(session, npc_id == _selected, str(intentions.get(npc_id, "")))
+    _roster.visible = session.phase in ["INTERROGATION", "MEETING", "VOTE", "NIGHT"]
+    for id in _roster_buttons:
+        var button: Button = _roster_buttons[id]
+        var member := session.npc(id)
+        var selected: bool = id == _selected
+        button.add_theme_stylebox_override("normal",AstraUI.style(Color(0.09,0.16,0.24,0.94) if selected else Color(0.03,0.05,0.08,0.91),AstraUI.CYAN if selected else AstraUI.BORDER,8,1,8))
+        button.modulate = Color.WHITE if member.is_alive() else Color(0.55,0.57,0.62)
+        button.tooltip_text = member.job + " · " + (member.mood_label() if member.is_alive() else "격리 또는 신호 두절")
 
 func _refresh_bottom() -> void:
+    # The bottom strip is now the "where and when am I" line rather than a fixed
+    # sentence that never changed.
+    var line := "[color=#%s]%s[/color]" % [AstraUI.hex(AstraUI.MUTED), session.situation_line()]
     var member := session.npc(_selected)
-    if member != null:
-        var claim: Dictionary = session.known_claims.get(_selected, {})
-        var claim_text := "진술 미확보"
-        if not claim.is_empty():
-            var mates: Array = claim.get("companions", [])
-            claim_text = "진술: %s · %s" % [session.room_name(str(claim.get("position", ""))), "혼자" if mates.is_empty() else session.names_of(mates)]
-        var mark := str(session.marks.get(_selected, ""))
-        var mark_text := ""
-        if mark != "":
-            mark_text = " · [color=#%s]%s[/color]" % [AstraUI.hex(AstraUI.MARK_COLORS[mark]), str(AstraUI.MARK_LABEL[mark])]
-        _summary.text = "[color=#%s]선택[/color]  [b][color=#%s]%s[/color][/b] %s · %s%s" % [AstraUI.hex(AstraUI.DIM), AstraUI.hex(member.accent), member.display_name, member.job, claim_text, mark_text]
-    else:
-        _summary.text = ""
+    if member != null and session.phase not in ["INVESTIGATION", "BRIEFING"]:
+        var who := "[b][color=#%s]%s[/color][/b] (%s)" % [AstraUI.hex(member.accent), member.display_name, member.job]
+        if session.has_feature("marks"):
+            var mark := str(session.marks.get(_selected, ""))
+            who += "  ·  내 판단: " + str(AstraUI.MARK_LABEL.get(mark, "미정"))
+        line = who + "        " + line
+    _summary.text = line
+
     _primary.visible = session.phase != "RESULT"
-    _primary.text = session.advance_label() + ("  →" if session.can_advance() else "")
-    _primary.disabled = not session.can_advance()
+    var can_advance := session.can_advance()
+    _primary.disabled = not can_advance
+    var done := session.phase_exhausted()
+    _primary.text = session.advance_label() + ("  →" if can_advance else "")
+    # When there is genuinely nothing left to do here, the next button stops
+    # looking like one option among several and starts looking like the answer.
+    if can_advance and done:
+        _primary.text = "✔  " + _primary.text
+        if not _ready_pulse:
+            _ready_pulse = true
+            _primary.add_theme_stylebox_override("normal", AstraUI.style(Color(AstraUI.GREEN, 0.42), AstraUI.GREEN, 8, 2, 10))
+            _primary.add_theme_stylebox_override("hover", AstraUI.style(Color(AstraUI.GREEN, 0.58), AstraUI.GREEN, 8, 2, 10))
+            _primary.add_theme_color_override("font_color", Color.WHITE)
+    elif _ready_pulse:
+        _ready_pulse = false
+        _primary.add_theme_stylebox_override("normal", AstraUI.style(Color(AstraUI.CYAN, 0.34), Color(AstraUI.CYAN, 0.75), 8, 1, 10))
+        _primary.add_theme_stylebox_override("hover", AstraUI.style(Color(AstraUI.CYAN, 0.5), AstraUI.CYAN, 8, 1, 10))
+        _primary.add_theme_color_override("font_color", AstraUI.TEXT)
 
 func _swap_view() -> void:
     if _view != null:
@@ -241,7 +368,8 @@ func _swap_view() -> void:
     _view.setup(self)
     AstraUI.fade_in(_view, 0.2)
     var accent: Color = PHASE_COLORS.get(session.phase, AstraUI.CYAN)
-    _center.add_theme_stylebox_override("panel", AstraUI.style(AstraUI.PANEL if session.phase != "NIGHT" else Color("080b1d"), Color(accent, 0.35), 12, 1, 16))
+    _center.add_theme_stylebox_override("panel", AstraUI.style(Color(0.03,0.05,0.08,0.89), Color(accent,0.25),12,1,16))
+    _background.texture = AstraUI.texture(AstraArt.background("breach" if session.phase == "NIGHT" else "lounge") if session.phase in ["MEETING","VOTE","NIGHT"] else AstraArt.chapter(session.case_id))
 
 func _on_phase_changed(phase: String) -> void:
     _announce_phase(phase)
@@ -253,7 +381,7 @@ func _announce_phase(phase: String) -> void:
             fx.banner("DAY %d" % session.day, "%s · %s" % [str(session.case_data.get("title", "")), "사건 브리핑" if session.day == 1 else "밤사이 보고"], accent)
             fx.play("phase")
         "INVESTIGATION":
-            fx.banner("현장 조사", "흔적 두 개의 명단이 겹치는 사람을 찾으세요.", accent)
+            fx.banner("현장 조사", "어디를 살필지, 무엇을 남길지 선택하세요.", accent)
             fx.play("phase")
         "INTERROGATION":
             fx.banner("개인 심문", "말의 내용보다, 말이 어긋나는 지점을 보세요.", accent)
@@ -289,8 +417,7 @@ func select(npc_id: String) -> void:
     if npc_id != _selected:
         fx.play("select")
     _selected = npc_id
-    session.selected_id = npc_id
-    _on_changed()
+    session.select(npc_id)
 
 func _on_mark(npc_id: String) -> void:
     var mark := session.cycle_mark(npc_id)
@@ -305,13 +432,13 @@ func _on_primary() -> void:
     match session.phase:
         "INVESTIGATION":
             if session.investigation_ap > 0:
-                warning = "조사 행동력이 %d 남았습니다. 남은 행동력은 다음 날로 넘어가지 않습니다." % session.investigation_ap
+                warning = "현장을 더 살펴볼 시간이 있습니다. 조사를 마치고 승무원에게 확인하러 갈까요?"
         "INTERROGATION":
             if session.talk_ap > 0:
-                warning = "심문 행동력이 %d 남았습니다. 남은 행동력은 다음 날로 넘어가지 않습니다." % session.talk_ap
+                warning = "아직 대화를 이어 갈 수 있습니다. 지금 회의를 소집할까요?"
         "MEETING":
             if session.meeting_actions_left > 0:
-                warning = "발언권이 %d회 남았습니다. 단서를 공개하거나 지목·변호하지 않고 투표로 넘어갈까요?" % session.meeting_actions_left
+                warning = "아직 회의에 개입할 수 있습니다. 발언을 마치고 투표할까요?"
     if warning != "":
         confirm("다음 단계로 넘어갈까요?", warning, "넘어가기", func(): _advance())
     else:
@@ -363,17 +490,33 @@ func handle_hotkey(event: InputEventKey) -> bool:
     if session == null:
         return false
     var code := event.keycode
-    if code >= KEY_1 and code <= KEY_8:
-        select(str(AstraCrewCatalog.ORDER[code - KEY_1]))
+    var roster: Array = session.active_roster()
+    if code >= KEY_1 and code < KEY_1 + roster.size():
+        select(str(roster[code - KEY_1]))
         return true
     if code == KEY_SPACE or code == KEY_ENTER or code == KEY_KP_ENTER:
+        # In a meeting, space belongs to the transcript: it steps to the next
+        # speaker rather than skipping the whole phase (§20).
+        if _view != null and _view.has_method("consume_advance") and _view.consume_advance():
+            return true
         if not _primary.disabled and _primary.visible:
             _on_primary()
         return true
     if code == KEY_N:
-        _notebook.cycle_tab()
+        open_notebook()
         return true
-    if code == KEY_M:
+    if code == KEY_M and session.has_feature("marks"):
         _on_mark(_selected)
         return true
+    if code == KEY_H:
+        _open_screen_help()
+        return true
     return false
+
+func open_notebook() -> void:
+    if app.modal_open():
+        return
+    _notebook = AstraNotebookPanel.new()
+    _notebook.custom_minimum_size = Vector2(0, 520)
+    _notebook.setup(session)
+    AstraModal.open(app.overlay_root(), "조사 노트 / 사실과 나의 가설", _notebook, [["현장으로 돌아가기", AstraUI.CYAN]], Callable(), 1040)

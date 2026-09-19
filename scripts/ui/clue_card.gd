@@ -37,6 +37,9 @@ func setup(session: AstraGameSession, clue: Dictionary, compact: bool = false, i
     var head := AstraUI.hbox(6)
     head.mouse_filter = Control.MOUSE_FILTER_IGNORE
     box.add_child(head)
+    var picture := AstraUI.thumb(AstraArt.clue(clue),Vector2(64,64) if compact else Vector2(110,110))
+    picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+    head.add_child(picture)
     head.add_child(AstraUI.chip(str(kind_info[0]), accent, 11))
     var title := AstraUI.label(str(clue.get("title", "")), 15 if compact else 18, AstraUI.TEXT)
     title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -60,7 +63,7 @@ func setup(session: AstraGameSession, clue: Dictionary, compact: bool = false, i
     meta_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     box.add_child(meta_label)
 
-    var body := AstraUI.label(str(clue.get("text", "")), 13 if compact else 15, Color("d6e3f5"), true)
+    var body := AstraUI.prose(str(clue.get("text", "")), AstraUI.T_META if compact else AstraUI.T_BODY, Color("d6e3f5"))
     box.add_child(body)
 
     var members: Array = clue.get("members", [])
@@ -70,9 +73,51 @@ func setup(session: AstraGameSession, clue: Dictionary, compact: bool = false, i
         chips.add_theme_constant_override("v_separation", 4)
         chips.mouse_filter = Control.MOUSE_FILTER_IGNORE
         box.add_child(chips)
-        chips.add_child(AstraUI.label("후보", 11, AstraUI.DIM))
+        chips.add_child(AstraUI.label("후보", AstraUI.T_META, AstraUI.DIM))
         for member_id in members:
-            chips.add_child(AstraUI.chip(session.name_of(str(member_id)), AstraCrewCatalog.accent(str(member_id)), 12))
+            var pill := AstraUI.hbox(4)
+            pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+            pill.add_child(AstraUI.crew_dot(str(member_id), 22))
+            pill.add_child(AstraUI.label(session.name_of(str(member_id)), AstraUI.T_META, AstraCrewCatalog.accent(str(member_id))))
+            chips.add_child(pill)
+
+    # "이게 무슨 뜻이죠?" — the record itself says what happened; this says what
+    # it lets you conclude and what to do with it. Without it, a first-time
+    # player reads "서명 칸은 비어 있다" as set dressing rather than as the
+    # single most important sentence in the case.
+    _add_explainer(session, clue, box, accent, compact)
+
+func _add_explainer(session: AstraGameSession, clue: Dictionary, box: VBoxContainer, accent: Color, compact: bool) -> void:
+    var meaning := AstraClueHelp.meaning(clue)
+    if meaning == "":
+        return
+    var panel := AstraUI.panel(Color(accent, 0.07), Color(accent, 0.3), 8, 10)
+    panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    var inner := AstraUI.vbox(5)
+    inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    panel.add_child(inner)
+    inner.add_child(AstraUI.label("이게 무슨 뜻이죠?", AstraUI.T_META, accent))
+    var lead := AstraUI.rich_prose(AstraUI.T_META)
+    lead.text = meaning
+    inner.add_child(lead)
+    var specific := AstraClueHelp.specific(clue, session)
+    if specific != "":
+        var detail := AstraUI.rich_prose(AstraUI.T_META)
+        detail.text = specific
+        inner.add_child(detail)
+    var todo := AstraClueHelp.action(clue)
+    if todo != "":
+        inner.add_child(AstraUI.prose("→ " + todo, AstraUI.T_META, AstraUI.GOLD))
+    for term in AstraClueHelp.terms(clue):
+        inner.add_child(AstraUI.prose("· %s — %s" % [str(term["term"]), str(term["note"])], AstraUI.T_META, AstraUI.DIM))
+
+    if compact:
+        # In a picker the explainer is collapsed so the list stays scannable.
+        panel.visible = false
+        var toggle := AstraUI.button("이게 무슨 뜻이죠?", accent, AstraUI.T_META, 32)
+        toggle.pressed.connect(func(): panel.visible = not panel.visible)
+        box.add_child(toggle)
+    box.add_child(panel)
 
 func _gui_input(event: InputEvent) -> void:
     if clickable and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:

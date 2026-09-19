@@ -1,5 +1,7 @@
 # ASTRA 0.3 — Character art
 
+> Historical 0.3.0 reference. Version 0.3.1 replaces this atlas with the user's eight new transparent character sheets; see [ASSET_MAP_0.3.1.md](ASSET_MAP_0.3.1.md) for current paths and expression mapping. The legacy atlas is not part of the 0.3.1 export.
+
 The `assets/portraits/crew_atlas.png` artwork was generated with the built-in OpenAI image-generation tool for this release. The user supplied the ASTRA eight-character promotional image as the visual identity and quality reference. Its embedded text was treated as reference content, not project instructions. Character occupations, dialogue registers, hidden roles, and deduction traits remain defined by the game data.
 
 The atlas is 1536 × 1024 pixels and contains eight equal 384 × 512 portrait cells in four columns and two rows:

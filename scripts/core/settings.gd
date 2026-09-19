@@ -11,6 +11,18 @@ var show_hints: bool = true
 var ai_enabled: bool = false
 var ai_endpoint: String = "http://127.0.0.1:8787/npc/action"
 var intro_seen: bool = false
+var large_text: bool = false
+var reduced_motion: bool = false
+
+# 0.4.0 dialogue pacing. The default is manual: nothing advances until the
+# player says so. Auto is opt-in, and even then the lines that carry a
+# contradiction, a first appearance or a death stop and wait (§20, §59).
+var auto_advance: bool = false
+var text_speed: float = 1.0
+var auto_delay: float = 1.0
+var pause_on_important: bool = true
+var skip_read_text: bool = false
+var portrait_motion: bool = false
 
 func _init(file_path: String = DEFAULT_PATH) -> void:
     path = file_path
@@ -26,6 +38,14 @@ func load_data() -> void:
     ai_enabled = bool(cfg.get_value("ai", "enabled", ai_enabled))
     ai_endpoint = str(cfg.get_value("ai", "endpoint", ai_endpoint))
     intro_seen = bool(cfg.get_value("play", "intro_seen", intro_seen))
+    large_text = bool(cfg.get_value("display", "large_text", false))
+    reduced_motion = bool(cfg.get_value("display", "reduced_motion", false))
+    auto_advance = bool(cfg.get_value("play", "auto_advance", false))
+    text_speed = clampf(float(cfg.get_value("play", "text_speed", 1.0)), 0.5, 3.0)
+    auto_delay = clampf(float(cfg.get_value("play", "auto_delay", 1.0)), 0.5, 3.0)
+    pause_on_important = bool(cfg.get_value("play", "pause_on_important", true))
+    skip_read_text = bool(cfg.get_value("play", "skip_read_text", false))
+    portrait_motion = bool(cfg.get_value("display", "portrait_motion", false))
 
 func save_data() -> bool:
     var cfg := ConfigFile.new()
@@ -36,6 +56,14 @@ func save_data() -> bool:
     cfg.set_value("ai", "enabled", ai_enabled)
     cfg.set_value("ai", "endpoint", ai_endpoint)
     cfg.set_value("play", "intro_seen", intro_seen)
+    cfg.set_value("display", "large_text", large_text)
+    cfg.set_value("display", "reduced_motion", reduced_motion)
+    cfg.set_value("play", "auto_advance", auto_advance)
+    cfg.set_value("play", "text_speed", text_speed)
+    cfg.set_value("play", "auto_delay", auto_delay)
+    cfg.set_value("play", "pause_on_important", pause_on_important)
+    cfg.set_value("play", "skip_read_text", skip_read_text)
+    cfg.set_value("display", "portrait_motion", portrait_motion)
     return cfg.save(path) == OK
 
 func apply_audio() -> void:

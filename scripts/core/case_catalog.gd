@@ -5,13 +5,113 @@ extends RefCounted
 # seeded case: who the two Nulls are, where everyone really was, and which
 # clues exist in which room.
 
+const CALIBRATION := "CALIBRATION"
 const CAMPAIGN := ["DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD", "SILENT_ORBIT", "RED_SHIFT", "LAST_LIGHT"]
 
 # The archive reconstructs six incidents using the same eight identity models.
 # Roles are regenerated per seed: a past culprit is never evidence in a new case.
-const CAMPAIGN_PREMISE := "당신은 항성선 ASTRA의 마지막 관측자입니다. 훼손된 블랙박스 속 여섯 사건을 재구성해, 사라진 지구 귀환 좌표를 복원하세요. 아카이브는 같은 여덟 인격 모델로 각 사건을 재연합니다. 이전 사건의 역할은 다음 사건의 증거가 아닙니다."
+const CAMPAIGN_PREMISE := "당신은 항성선 ASTRA의 마지막 관측자입니다. 블랙박스는 손상됐습니다. 무엇이 언제 어디서 조작됐는지는 남아 있지만, 어떤 인격이 그 행동을 했는지를 가리키는 신원 바인딩이 지워졌습니다.
+
+그래서 아카이브는 과거를 재생하지 않습니다. 남은 증거가 허용하는 가능한 사건 모델을 하나씩 세우고, 그 모델이 기록과 모순되지 않는지 검증합니다. 여덟 인격 모델은 재구성마다 다시 세워지고, 누가 Null 명령을 수행했는지는 그때마다 다시 계산됩니다. 이전 사건의 역할은 다음 사건의 증거가 될 수 없습니다.
+
+여섯 사건을 모두 검증하면 사라진 귀환 좌표가 복원됩니다."
 
 const CASES := {
+    "CALIBRATION": {
+        "code": "CALIBRATION",
+        "title": "FIRST CONTACT",
+        "title_ko": "첫 접속",
+        "chapter": "00 · 교정",
+        "tier": "calibration",
+        "roster": ["mira", "rho", "noa", "sena"],
+        "null_count": 1,
+        "max_days": 1,
+        "story_intro": "아카이브가 처음으로 안정적인 조각을 붙잡았다. 네 사람, 한 시간, 하나의 조작. 여기서 재구성하는 법을 익힌다.",
+        "story_outro": "첫 조각이 고정됐다. 사람의 말과 배의 기록은 같은 사건을 다르게 말한다. 이제 더 큰 기록을 열 수 있다.",
+        "dispatches": ["네 명뿐이다. 말과 기록을 한 번씩만 맞춰 보면 된다."],
+        "mission": {},
+        "challenge": {"id": "claims", "label": "네 사람의 진술 확인", "target": 3},
+        "theme": "구조 채널 차단",
+        "difficulty": 0,
+        "accent": "8fbee5",
+        "environment": "res://assets/art031/backgrounds/bridge.webp",
+        "victim": "Ives",
+        "victim_role": "함장",
+        "window_start": 450,
+        "window_end": 460,
+        "hook": "07:41, 함장 Ives의 구조 요청이 도중에 끊겼다. 그 시간에 배에는 네 사람이 깨어 있었다.",
+        "card_line": "네 사람. 한 번의 조작. 누군가는 사실대로 말하지 않는다.",
+        "objective": "조작한 한 사람을 찾아 격리하라.",
+        "rooms": [
+            {"id": "comms", "name": "통신실", "desc": "구조 채널이 닫힌 콘솔. 백색소음이 끊이지 않는다."},
+            {"id": "engine", "name": "엔진실", "desc": "열기와 윤활유 냄새. 작업 기록 단말이 벽에 붙어 있다."},
+            {"id": "medbay", "name": "의료실", "desc": "함장의 마지막 생체 기록이 남은 곳."}
+        ],
+        "commons": [
+            {"id": "lounge", "name": "중앙 라운지"}
+        ],
+        # One trace instead of two. With four people a single trace already
+        # narrows the field to two, and the access logs finish the job — which
+        # is one inference to teach instead of two stacked on each other.
+        "trace_steps": 1,
+        # The tutorial is the case people replay the most, so the crime itself
+        # moves. Same four people and the same lesson, but a different room,
+        # a different act and a different time each run, picked from the seed.
+        "variants": [
+            {
+                "hook": "07:41, 함장 Ives의 구조 요청이 도중에 끊겼다. 통신실 콘솔에서 누군가 외부 채널을 손으로 닫았다. 그 시간에 배에는 네 사람이 깨어 있었다.",
+                "theme": "구조 채널 차단",
+                "ops": [
+                    {"id": "signal", "room": "comms", "name": "통신 차단", "minute": 458, "second": 20,
+                        "record_title": "구조 채널 차단 로그",
+                        "record_text": "07:38:20, 통신실 콘솔에서 외부 구조 채널이 수동으로 닫혔다. 실행자 서명 칸은 비어 있다."}
+                ],
+                "context": {
+                    "room": "medbay", "title": "함장 생체 기록",
+                    "text": "함장의 구조 요청은 07:36에 시작해 07:39에 끊겼다. 통신실 콘솔은 원격으로 닫을 수 없다. 그 시각 통신실에 사람이 있었다."
+                }
+            },
+            {
+                "hook": "07:41, 함장 Ives가 자기 선실에서 숨진 채 발견됐다. 엔진실에서 누군가 선실 생명유지 전력을 손으로 끊었다. 그 시간에 배에는 네 사람이 깨어 있었다.",
+                "theme": "생명유지 전력 차단",
+                "ops": [
+                    {"id": "power", "room": "engine", "name": "전력 차단", "minute": 457, "second": 45,
+                        "record_title": "생명유지 전력 차단 로그",
+                        "record_text": "07:37:45, 엔진실 제어기에서 함장 선실의 생명유지 전력이 수동으로 끊겼다. 실행자 서명 칸은 비어 있다."}
+                ],
+                "context": {
+                    "room": "medbay", "title": "함장 검시 기록",
+                    "text": "사망 추정 시각은 07:36~07:40. 선실 전력은 엔진실 제어기에서만 끊을 수 있고, 원격 조작 기록은 없다. 그 시각 엔진실에 사람이 있었다."
+                }
+            },
+            {
+                "hook": "07:41, 함장 Ives의 검시 기록이 의료실 단말에서 삭제됐다. 원본은 복구되지 않는다. 그 시간에 배에는 네 사람이 깨어 있었다.",
+                "theme": "검시 기록 삭제",
+                "ops": [
+                    {"id": "records", "room": "medbay", "name": "검시 기록 삭제", "minute": 459, "second": 10,
+                        "record_title": "의료 기록 삭제 명령",
+                        "record_text": "07:39:10, 의료실 단말에서 함장의 검시 기록이 삭제됐다. 실행자 서명 칸은 비어 있다."}
+                ],
+                "context": {
+                    "room": "comms", "title": "선내 통신 기록",
+                    "text": "07:36~07:40 사이 의료실로 향한 원격 접속은 없다. 의료실 단말은 그 자리에서만 조작할 수 있다. 그 시각 의료실에 사람이 있었다."
+                }
+            }
+        ],
+        "ops": [
+            {"id": "signal", "room": "comms", "name": "통신 차단", "minute": 458, "second": 20,
+                "record_title": "구조 채널 차단 로그",
+                "record_text": "07:38:20, 통신실 콘솔에서 외부 구조 채널이 수동으로 닫혔다. 실행자 서명 칸은 비어 있다."}
+        ],
+        "context": {
+            "room": "medbay", "title": "함장 생체 기록",
+            "text": "함장의 구조 요청은 07:36에 시작해 07:39에 끊겼다. 통신실 콘솔은 원격으로 닫을 수 없다. 그 시각 통신실에 사람이 있었다."
+        },
+        "decoy_traces": 0,
+        "mutual_alibi_chance": 0.0,
+        "tamper_chance": 0.0,
+        "sightings": 1
+    },
     "DEAD_AIR": {
         "code": "INCIDENT ZERO",
         "title": "DEAD AIR",
@@ -25,7 +125,7 @@ const CASES := {
         "theme": "전력 우회 · 통신 차단",
         "difficulty": 1,
         "accent": "55d6ff",
-        "environment": "res://assets/environments/dead_air_scene.tres",
+        "environment": "res://assets/art031/backgrounds/bridge.webp",
         "victim": "Ives",
         "victim_role": "함장",
         "window_start": 456,
@@ -73,7 +173,7 @@ const CASES := {
         "theme": "영양액 오염 · 정수 인터록 우회",
         "difficulty": 2,
         "accent": "71e39b",
-        "environment": "res://assets/environments/glass_garden_scene.tres",
+        "environment": "res://assets/art031/backgrounds/garden.webp",
         "victim": "Orin",
         "victim_role": "연구원",
         "window_start": 1162,
@@ -121,7 +221,7 @@ const CASES := {
         "theme": "냉동수면 포드 해제 · 의료 기록 은폐",
         "difficulty": 3,
         "accent": "c79bff",
-        "environment": "res://assets/environments/echo_ward_scene.tres",
+        "environment": "res://assets/art031/backgrounds/medical.webp",
         "victim": "Sael",
         "victim_role": "의료 책임자",
         "window_start": 191,
@@ -159,7 +259,7 @@ const CASES := {
     "SILENT_ORBIT": {
         "code": "INCIDENT THREE", "title": "SILENT ORBIT", "title_ko": "침묵의 궤도",
         "chapter": "04 · 돌아오지 않는 응답", "theme": "항법 편향 · 구조 비콘 위장", "difficulty": 3,
-        "accent": "6aaaff", "environment": "res://assets/environments/silent_orbit_scene.tres",
+        "accent": "6aaaff", "environment": "res://assets/art031/backgrounds/engine.webp",
         "victim": "Tess", "victim_role": "외부 정비사", "window_start": 628, "window_end": 632,
         "hook": "10:36, 외부 정비사 Tess의 생명줄이 끊어진 채 발견됐다. 항법 자이로가 선체를 틀던 순간 구조 비콘은 반대 방향으로 좌표를 보냈다. 두 원격 조작의 서명이 모두 지워졌다.",
         "card_line": "돌아갈 길을 바꾼 손과 구조 신호를 속인 손.",
@@ -186,7 +286,7 @@ const CASES := {
     "RED_SHIFT": {
         "code": "INCIDENT FOUR", "title": "RED SHIFT", "title_ko": "붉은 편이",
         "chapter": "05 · 우리가 보낸 명령", "theme": "관측 렌즈 변조 · 항로 원본 소각", "difficulty": 4,
-        "accent": "ff8a81", "environment": "res://assets/environments/red_shift_scene.tres",
+        "accent": "ff8a81", "environment": "res://assets/art031/backgrounds/security.webp",
         "victim": "Ren", "victim_role": "관측 책임자", "window_start": 1301, "window_end": 1305,
         "hook": "21:50, 관측 책임자 Ren이 방사선 차폐실에서 발견됐다. 관측 렌즈가 수동으로 정렬된 직후 항로 원본이 소각됐다. 선창에 보이는 붉은 별은 실제 목적지가 아니다.",
         "card_line": "눈앞의 별도, 기록된 항로도 조작됐다.",
@@ -213,7 +313,7 @@ const CASES := {
     "LAST_LIGHT": {
         "code": "INCIDENT FIVE", "title": "LAST LIGHT", "title_ko": "마지막 빛",
         "chapter": "06 · 우리가 고르는 내일", "theme": "심장로 차단 · 탈출 좌표 봉인", "difficulty": 4,
-        "accent": "f8d28c", "environment": "res://assets/environments/last_light_scene.tres",
+        "accent": "f8d28c", "environment": "res://assets/art031/backgrounds/archive.webp",
         "victim": "Ari", "victim_role": "항해 기록관", "window_start": 356, "window_end": 360,
         "hook": "06:04, 항해 기록관 Ari가 동력 코어 옆에서 발견됐다. 심장로 냉각이 끊기고 탈출 좌표가 봉인됐다. 마지막 재구성이 끝나기 전에 ASTRA의 선택권을 되찾아야 한다.",
         "card_line": "여섯 번째 기록. 이번에는 우리가 항로를 고른다.",
@@ -263,3 +363,58 @@ static func format_time(minutes: int, seconds: int = -1) -> String:
 
 static func window_text(case_data: Dictionary) -> String:
     return "%s~%s" % [format_time(int(case_data.get("window_start", 0))), format_time(int(case_data.get("window_end", 0)))]
+
+# ---------------------------------------------------------------- 0.4.0 shape
+
+# Cases may run with fewer than the full eight identity models. CALIBRATION
+# does; the campaign does not, because its fairness maths (crew minus Nulls
+# across four days) was tuned for eight and re-tuning it would change every
+# existing record. See docs/WHY_CHANGED.md.
+static func roster(case_data: Dictionary) -> Array:
+    var ids: Array = case_data.get("roster", [])
+    if ids.is_empty():
+        return AstraCrewCatalog.ORDER.duplicate()
+    var ordered: Array = []
+    for npc_id in AstraCrewCatalog.ORDER:
+        if npc_id in ids:
+            ordered.append(npc_id)
+    return ordered
+
+static func null_count(case_data: Dictionary) -> int:
+    return clampi(int(case_data.get("null_count", 2)), 1, 2)
+
+static func max_days(case_data: Dictionary) -> int:
+    return clampi(int(case_data.get("max_days", 4)), 1, 6)
+
+static func is_calibration(case_id: String) -> bool:
+    return str(get_case(case_id).get("tier", "")) == "calibration"
+
+static func op_count(case_data: Dictionary) -> int:
+    return case_data.get("ops", []).size()
+
+# Some cases carry `variants`: alternative versions of the same incident, same
+# people and same lesson, differing in which room was touched, what was done and
+# when. The variant is chosen from the seed, so the case is reproducible but a
+# replay does not open on the sentence the player has already read.
+#
+# Only the keys a variant declares are replaced; everything else — roster, rooms,
+# difficulty, the title — stays as written.
+static func resolve(case_id: String, seed_value: int) -> Dictionary:
+    var data := get_case(case_id)
+    var variants: Array = data.get("variants", [])
+    if variants.is_empty():
+        return data
+    var resolved := data.duplicate(true)
+    var variant: Dictionary = variants[posmod(seed_value, variants.size())]
+    for key in variant:
+        resolved[key] = variant[key]
+    resolved["variant_index"] = posmod(seed_value, variants.size())
+    return resolved
+
+static func variant_count(case_id: String) -> int:
+    return maxi(1, get_case(case_id).get("variants", []).size())
+
+# How many traces each Null leaves. Two have to be crossed to name one person;
+# the tutorial uses one so there is a single inference to learn.
+static func trace_steps(case_data: Dictionary) -> int:
+    return clampi(int(case_data.get("trace_steps", 2)), 1, 2)

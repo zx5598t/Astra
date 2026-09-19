@@ -33,21 +33,79 @@ func refresh() -> void:
     hero_text.add_child(AstraUI.label("사건 종료 · DAY %d" % int(report.get("day", 1)), 13, AstraUI.MUTED))
     hero_text.add_child(AstraUI.label(str(report.get("title", "")), 36, color))
     hero_text.add_child(AstraUI.label(str(report.get("subtitle", "")), 16, AstraUI.TEXT, true))
-    var rank_box := AstraUI.vbox(0)
-    rank_box.alignment = BoxContainer.ALIGNMENT_CENTER
-    hero_row.add_child(rank_box)
-    var rank_label := AstraUI.label(str(report.get("rank", "D")), 64, _rank_color(str(report.get("rank", "D"))))
-    rank_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    rank_box.add_child(rank_label)
-    var total_label := AstraUI.label("%d점" % int(report.get("total", 0)), 16, AstraUI.TEXT)
-    total_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    rank_box.add_child(total_label)
+
+    # What was different about *this* run, before any score appears. A player
+    # who just lost needs the story of the run, not a receipt (§29, §92).
+    var summary: Dictionary = report.get("loop_summary", {})
+    var summary_lines: Array = summary.get("lines", [])
+    if not summary_lines.is_empty():
+        var recap := AstraUI.panel(AstraUI.PANEL_2, Color(AstraUI.CYAN, 0.3), 12, 14)
+        _body.add_child(recap)
+        var recap_box := AstraUI.vbox(6)
+        recap.add_child(recap_box)
+        recap_box.add_child(AstraUI.label("이번 재구성에서", AstraUI.T_META, AstraUI.CYAN))
+        for line in summary_lines:
+            recap_box.add_child(AstraUI.prose("· " + str(line), AstraUI.T_BODY, AstraUI.TEXT))
+
+    if outcome != "WIN":
+        var post: Dictionary = report.get("post_mortem", {})
+        var lesson := AstraUI.panel(Color(AstraUI.GOLD, 0.06), Color(AstraUI.GOLD, 0.38), 12, 14)
+        _body.add_child(lesson)
+        var lesson_box := AstraUI.vbox(6)
+        lesson.add_child(lesson_box)
+        lesson_box.add_child(AstraUI.label("놓친 것", AstraUI.T_META, AstraUI.GOLD))
+        if str(post.get("innocent_lie", "")) != "":
+            lesson_box.add_child(AstraUI.prose("· " + str(post["innocent_lie"]), AstraUI.T_BODY, AstraUI.TEXT))
+        if str(post.get("decisive_vote", "")) != "":
+            lesson_box.add_child(AstraUI.prose("· " + str(post["decisive_vote"]), AstraUI.T_BODY, AstraUI.TEXT))
+        for missed_clue in post.get("missed_clues", []):
+            lesson_box.add_child(AstraUI.prose("· 끝내 찾지 못한 기록 — %s (%s)" % [str(missed_clue.get("title", "")), str(missed_clue.get("room", ""))], AstraUI.T_META, AstraUI.MUTED))
+        # After a couple of losses the game offers the gentler speed itself
+        # rather than waiting for the player to find the settings menu.
+        if screen.app.meta.should_offer_assist():
+            var assist := AstraUI.button("조사 지원 켜기 (스토리 속도)", AstraUI.GREEN, AstraUI.T_UI, 42)
+            assist.pressed.connect(func():
+                screen.app.meta.difficulty_mode = "STORY"
+                screen.app.meta.save_data()
+                assist.text = "조사 지원이 켜졌습니다"
+                assist.disabled = true
+            )
+            lesson_box.add_child(assist)
 
     var story := str(report.get("story", ""))
     if story != "":
-        _body.add_child(AstraUI.label(story, 16, AstraUI.TEXT, true))
+        _body.add_child(AstraUI.prose(story, AstraUI.T_BODY, AstraUI.TEXT))
     if bool(report.get("mission_complete", false)):
         _body.add_child(AstraUI.chip("함선 복구 임무 완료 · 항해 기록에 저장됨", AstraUI.GREEN, 13))
+    if outcome == "WIN":
+        var fragment: Array = AstraStory.MEMENTOS.get(session.case_id,[])
+        if not fragment.is_empty():
+            var memory := AstraUI.hbox(16)
+            memory.add_child(AstraArt.icon(AstraArt.item(str(fragment[1])),Vector2(110,110)))
+            var text := AstraUI.vbox(8)
+            text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+            text.add_child(AstraUI.section("복구된 기억 · " + str(fragment[0])))
+            text.add_child(AstraUI.label(str(fragment[2]),16,AstraUI.TEXT,true))
+            memory.add_child(text)
+            _body.add_child(memory)
+    _body.add_child(AstraUI.section("그날의 진실 재구성"))
+    for op in session.case_data.get("ops",[]):
+        var executor := ""
+        for id in session.truth["null_ops"]:
+            if str(session.truth["null_ops"][id]) == str(op["id"]):
+                executor = session.name_of(str(id))
+        _body.add_child(AstraUI.label("%s · %s\n%s %s 명령을 실행했다." % [AstraCaseCatalog.format_time(int(op.get("minute",0)),int(op.get("second",0))),session.room_name(str(op["room"])),AstraJosa.i(executor),str(op["name"])],16,AstraUI.TEXT,true))
+    var missed: Array[String] = []
+    for clue in session.clues:
+        if not bool(clue.get("found",false)) and str(clue.get("kind","")) in ["access_log","op_record","trace"]:
+            missed.append(str(clue.get("title","")) + " · " + session.room_name(str(clue.get("room",""))) + " · " + str(clue.get("time","")))
+    if not missed.is_empty():
+        var reveal := AstraUI.button("놓친 기록 살펴보기",AstraUI.MUTED,14,40)
+        var detail := AstraUI.label("\n".join(missed),14,AstraUI.MUTED,true)
+        detail.visible = false
+        reveal.pressed.connect(func(): detail.visible = not detail.visible)
+        _body.add_child(reveal)
+        _body.add_child(detail)
     var left := _body
 
     left.add_child(AstraUI.section("Null의 정체", AstraUI.RED))
@@ -98,7 +156,7 @@ func refresh() -> void:
     var side := AstraUI.vbox(6)
     side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     columns.add_child(side)
-    right.add_child(AstraUI.section("점수", AstraUI.GOLD))
+    right.add_child(AstraUI.section("평가 · %s / %d점" % [str(report.get("rank","")),int(report.get("total",0))], AstraUI.MUTED))
     var score_grid := GridContainer.new()
     score_grid.columns = 2
     score_grid.add_theme_constant_override("h_separation", 12)
@@ -118,21 +176,23 @@ func refresh() -> void:
         side.add_child(AstraUI.label("제출하지 않았습니다. 다음에는 투표 전에 두 명을 ‘N’으로 표시해 보세요.", 13, AstraUI.MUTED, true))
     else:
         side.add_child(AstraUI.label("%s · %d점" % [str(theory.get("label", "")), int(theory.get("grade", 0))], 16, AstraUI.TEXT))
-        side.add_child(AstraUI.label("DAY %d 제출 · %s · 적중 %d/2 · 확신도 %d%%" % [int(theory.get("day", 1)), session.names_of(suspects), int(theory.get("matched", 0)), int(theory.get("confidence", 0))], 13, AstraUI.MUTED, true))
+        side.add_child(AstraUI.label("%d일째 제출 · %s · 적중 %d/2" % [int(theory.get("day", 1)), session.names_of(suspects), int(theory.get("matched", 0))], 13, AstraUI.MUTED, true))
 
     var change: Dictionary = screen.archive_change
     if not change.is_empty():
         side.add_child(AstraUI.section("아카이브", AstraUI.CYAN))
-        side.add_child(AstraUI.label("통찰 +%d · %s" % [int(change.get("insight_gain", 0)), screen.app.meta.archive_rank()], 14, AstraUI.TEXT))
+        side.add_child(AstraUI.label("항해 기록에 이번 재구성을 보관했습니다.", 14, AstraUI.TEXT))
         if bool(change.get("new_best", false)):
             side.add_child(AstraUI.chip("이 사건 최고 기록 갱신", AstraUI.GOLD, 13))
         for case_id in change.get("unlocked", []):
             side.add_child(AstraUI.chip("새 사건 해금 · " + screen.app.meta.case_display_name(str(case_id)), AstraUI.GREEN, 13))
+        for feature in change.get("new_features", []):
+            side.add_child(AstraUI.chip("새 기능 · " + AstraUnlocks.title_of(str(feature)), AstraUI.GOLD, 13))
 
     var buttons := AstraUI.hbox(10)
     _body.add_child(buttons)
     var archive := AstraUI.button("아카이브로", AstraUI.MUTED, 16, 50)
-    archive.pressed.connect(screen.exit_to_title)
+    archive.pressed.connect(screen.app.show_archive)
     buttons.add_child(archive)
     var retry := AstraUI.button("같은 사건 다시 (새 배치)", AstraUI.CYAN, 16, 50)
     retry.pressed.connect(screen.restart_case)

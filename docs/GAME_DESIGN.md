@@ -1,3 +1,5 @@
+> 0.3.1의 변경점은 [RELEASE_NOTES.md](RELEASE_NOTES.md)에 있습니다. 아래 0.3.0 설계 기록의 상시 노트·교차표·수치 HUD는 현재 수동 가설/접이식 노트로 대체됐습니다.
+
 # ASTRA 0.3.0 — Game Design
 
 ## 1. 한 사건의 진실 (case_generator.gd)
