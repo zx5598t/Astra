@@ -52,8 +52,8 @@ const BEATS = [
         "weight": 3.5,
         "cooldown": 99,
         "needs": "protected_last_night",
-        "summary": "%s가 어젯밤 지켜 준 일을 기억하고 조사관을 지지했다.",
-        "line": "어젯밤 제 선실 앞을 지켜 준 게 조사관이에요. 저는 그쪽 판단을 듣겠어요."
+        "summary": "%s가 어젯밤 지켜 준 일을 기억하고 탐사요원을 지지했다.",
+        "line": "어젯밤 제 선실 앞을 지켜 준 게 탐사요원이에요. 저는 그쪽 판단을 듣겠어요."
     },
     {
         "id": "grief_turn",
@@ -84,7 +84,7 @@ const BEATS = [
         "weight": 4.0,
         "cooldown": 2,
         "needs": "player_pattern",
-        "summary": "%s가 조사관의 행동 패턴을 지적했다.",
+        "summary": "%s가 탐사요원의 행동 패턴을 지적했다.",
         "line": ""
     }
 ]

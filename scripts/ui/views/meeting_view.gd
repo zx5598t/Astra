@@ -24,7 +24,7 @@ const KIND_TAGS := {
     "mourn": ["애도", AstraUI.NIGHT],
     "calm": ["중재", AstraUI.GREEN],
     "record": ["기록 공개", AstraUI.PINK],
-    "player": ["조사관", AstraUI.CYAN]
+    "player": ["탐사요원", AstraUI.CYAN]
 }
 
 # Lines the player is never allowed to blink past, even with auto on.
@@ -56,7 +56,7 @@ func setup(game_screen) -> void:
     _auto_toggle.tooltip_text = AstraCodex.tooltip("auto")
     _auto_toggle.pressed.connect(_toggle_auto)
     head_row.add_child(_auto_toggle)
-    var log_button := AstraUI.button("전체 기록", AstraUI.MUTED, AstraUI.T_META, 34)
+    var log_button := AstraUI.button("이전 발언 · 전체 기록", AstraUI.MUTED, AstraUI.T_META, 34)
     log_button.tooltip_text = AstraCodex.tooltip("log")
     log_button.pressed.connect(_open_log)
     head_row.add_child(log_button)
@@ -192,6 +192,7 @@ func _flush() -> void:
 
 func _add_entry(entry: Dictionary) -> void:
     var session: AstraGameSession = screen.session
+    AstraUI.clear(_feed_box)
     _shown += 1
     var speaker := str(entry.get("speaker", ""))
     var kind := str(entry.get("kind", ""))
@@ -202,12 +203,20 @@ func _add_entry(entry: Dictionary) -> void:
         _seen_speakers[speaker] = true
     var card := AstraUI.speaker_card(
         speaker,
-        "조사관" if is_player else "%s (%s)" % [session.name_of(speaker), AstraCrewCatalog.role_short(speaker)],
+        "탐사요원" if is_player else "%s (%s)" % [session.name_of(speaker), AstraCrewCatalog.role_short(speaker)],
         str(tag[0]), tag[1],
         str(entry.get("text", "")),
         accent, is_player
     )
-    _feed_box.add_child(card)
+    var focus := AstraUI.hbox(14)
+    _feed_box.add_child(focus)
+    if not is_player and speaker != "":
+        focus.add_child(AstraUI.thumb(AstraCrewCatalog.portrait_path(speaker,"tense" if kind == "dispute" else "calm"),Vector2(150,170)))
+    var target := str(entry.get("target",""))
+    if target != "" and target != speaker and target != "player":
+        focus.add_child(AstraUI.thumb(AstraCrewCatalog.dot_path(target),Vector2(100,100)))
+    card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    focus.add_child(card)
 
     # When somebody has just contradicted themselves, the player gets a chance
     # to say so on the spot. The game does not say "this is a lie" — it offers
@@ -249,7 +258,7 @@ func _open_log() -> void:
     var box := AstraUI.vbox(8)
     for entry in session.meeting_feed:
         var speaker := str(entry.get("speaker", ""))
-        var line := AstraUI.prose("[%s] %s" % ["조사관" if speaker == "player" else session.name_of(speaker), str(entry.get("text", ""))], AstraUI.T_META, AstraUI.TEXT)
+        var line := AstraUI.prose("[%s] %s" % ["탐사요원" if speaker == "player" else session.name_of(speaker), str(entry.get("text", ""))], AstraUI.T_META, AstraUI.TEXT)
         box.add_child(line)
     var scroller := AstraUI.scroll(box)
     scroller.custom_minimum_size.y = 460

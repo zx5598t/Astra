@@ -10,11 +10,7 @@ const CAMPAIGN := ["DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD", "SILENT_ORBIT", "RED
 
 # The archive reconstructs six incidents using the same eight identity models.
 # Roles are regenerated per seed: a past culprit is never evidence in a new case.
-const CAMPAIGN_PREMISE := "당신은 항성선 ASTRA의 마지막 관측자입니다. 블랙박스는 손상됐습니다. 무엇이 언제 어디서 조작됐는지는 남아 있지만, 어떤 인격이 그 행동을 했는지를 가리키는 신원 바인딩이 지워졌습니다.
-
-그래서 아카이브는 과거를 재생하지 않습니다. 남은 증거가 허용하는 가능한 사건 모델을 하나씩 세우고, 그 모델이 기록과 모순되지 않는지 검증합니다. 여덟 인격 모델은 재구성마다 다시 세워지고, 누가 Null 명령을 수행했는지는 그때마다 다시 계산됩니다. 이전 사건의 역할은 다음 사건의 증거가 될 수 없습니다.
-
-여섯 사건을 모두 검증하면 사라진 귀환 좌표가 복원됩니다."
+const CAMPAIGN_PREMISE := "당신은 ASTRA의 탐사요원이다. 네 명의 동료가 깨어 있고 네 명은 아직 장기수면 중이다. 서로 다른 목적지 기록을 확인하며 잠긴 구역을 연다. 어제의 기억과 오늘의 기록이 조금씩 달라진다."
 
 const CASES := {
     "CALIBRATION": {
@@ -318,7 +314,7 @@ const CASES := {
         "hook": "06:04, 항해 기록관 Ari가 동력 코어 옆에서 발견됐다. 심장로 냉각이 끊기고 탈출 좌표가 봉인됐다. 마지막 재구성이 끝나기 전에 ASTRA의 선택권을 되찾아야 한다.",
         "card_line": "여섯 번째 기록. 이번에는 우리가 항로를 고른다.",
         "objective": "냉각 차단과 좌표 봉인을 실행한 Null 두 명을 격리하고 마지막 기록을 완성하라.",
-        "story_intro": "모든 사건은 하나의 명령으로 이어진다. 살아남은 관측자인 당신에게만 프로토콜을 해제할 권한이 있다. 마지막 두 실행자를 가려내야 아카이브가 승무원에게 진실을 돌려준다.",
+        "story_intro": "모든 사건은 하나의 명령으로 이어진다. 살아남은 탐사요원인 당신에게만 프로토콜을 해제할 권한이 있다. 마지막 두 실행자를 가려내야 아카이브가 승무원에게 진실을 돌려준다.",
         "story_outro": "Null 프로토콜이 정지했다. ‘지구는 돌아갈 곳이 아니다. 그래도 우리는 함께 갈 수 있다.’ 여덟 얼굴이 창 너머의 진짜 별을 바라본다. ASTRA의 다음 항로는 이제 사람의 손에 있다.",
         "dispatches": ["마지막 블랙박스다. 어떤 얼굴도 이전의 유죄나 무죄로 판단하지 말자.", "관측 코어가 재가동을 기다린다. 복구하면 다음 날부터 조사 시간이 늘어난다.", "정답을 찾는 일과 살아남을 사람을 지키는 일, 둘 다 우리의 선택이다.", "새로운 별의 아침이 다가온다. 마지막 투표를 준비하자."],
         "mission": {"title": "관측 코어 재가동", "description": "코어실의 조사 보조 장치를 가동합니다. 다음 날부터 매일 현장 조사 행동력이 1 증가합니다.", "room": "core", "effect": "investigation", "reward": "다음 날부터 조사 행동력 +1 · 임무 점수 +180"},
@@ -343,7 +339,43 @@ static func has_case(case_id: String) -> bool:
     return CASES.has(case_id)
 
 static func get_case(case_id: String) -> Dictionary:
-    return CASES.get(case_id, {})
+    var data: Dictionary = CASES.get(case_id, {}).duplicate(true)
+    if data.is_empty():
+        return data
+    var story := AstraVoyageContent.chapter(case_id)
+    data["roster"] = AstraVoyageContent.awake_roster(case_id)
+    data["null_count"] = 1 if data["roster"].size() < 7 else 2
+    data["trace_steps"] = 2
+    data["max_days"] = 2 if data["roster"].size() < 7 else 4
+    data["ops"] = data.get("ops",[]).slice(0,data["null_count"])
+    data["title_ko"] = story["title"]
+    data["story_intro"] = story["goal"]
+    data["story_outro"] = story["outro"]
+    data["card_line"] = story["goal"]
+    data["hook"] = story["discovery"]
+    data["objective"] = "기록과 증언이 어긋나는 이유를 확인한다."
+    data["victim"] = "수면 중인 승무원"
+    data["victim_role"] = "생체 신호 유지 중"
+    data["chapter"] = "첫 각성" if case_id == CALIBRATION else str(data.get("chapter", ""))
+    # Keep deterministic evidence templates; replace obsolete murder framing.
+    data["dispatches"] = [story["goal"]]
+    if case_id == CALIBRATION:
+        data["max_days"] = 2
+        data["variants"] = []
+        data["ops"] = [{"id":"signal", "room":"comms", "name":"통신 차단", "minute":458, "second":20,
+            "record_title":"통신 차단 로그", "record_text":"07:38:20, 통신실에서 외부 채널이 닫혔다. 실행자 칸은 비어 있다."}]
+        data["context"] = {"room":"medbay", "title":"포드 상태 기록", "text":"장기수면 포드의 생체 신호는 정상이다. 통신 차단은 현장의 콘솔에서 실행됐다."}
+    # Only topology and timestamps are shared with legacy cases. Current prose
+    # never exposes the previous campaign's deaths or resolved ending.
+    data["chapter"] = story["title"]
+    data["theme"] = "기록과 기억의 불일치"
+    data["context"] = {"room": data["context"]["room"], "title":"동기화 기록", "text": "이 구간의 기록에 승인자가 빠져 있다. 실행 시각의 흔적과 동료들의 동선을 대조할 수 있다."}
+    for room in data["rooms"]:
+        room["desc"] = str(room["name"]) + "의 설비와 출입 기록을 확인할 수 있다."
+    for op in data["ops"]:
+        op["record_text"] = "%s, %s에서 %s 명령이 실행됐다. 승인자 서명이 누락되어 있다." % [format_time(int(op["minute"]),int(op["second"])),room_name(data,str(op["room"])),str(op["name"])]
+    data["mission"]["description"] = "동료와 설비를 복구한다. " + str(data["mission"].get("reward",""))
+    return data
 
 static func room_name(case_data: Dictionary, room_id: String) -> String:
     for room in case_data.get("rooms", []):
@@ -418,3 +450,11 @@ static func variant_count(case_id: String) -> int:
 # the tutorial uses one so there is a single inference to learn.
 static func trace_steps(case_data: Dictionary) -> int:
     return clampi(int(case_data.get("trace_steps", 2)), 1, 2)
+
+static func resolve_legacy(case_id: String, seed: int) -> Dictionary:
+    var data: Dictionary = CASES.get(case_id,{}).duplicate(true)
+    var variants: Array = data.get("variants",[])
+    if not variants.is_empty():
+        var variant: Dictionary = variants[posmod(seed,variants.size())]
+        for key in variant: data[key]=variant[key]
+    return data

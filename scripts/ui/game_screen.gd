@@ -15,7 +15,7 @@ const NightView = preload("res://scripts/ui/views/night_view.gd")
 const ResultView = preload("res://scripts/ui/views/result_view.gd")
 
 const STEPS := ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"]
-const STEP_LABELS := {"BRIEFING": "브리핑", "INVESTIGATION": "조사", "INTERROGATION": "심문", "MEETING": "회의", "VOTE": "투표", "NIGHT": "밤"}
+const STEP_LABELS := {"BRIEFING": "브리핑", "INVESTIGATION": "조사", "INTERROGATION": "대화", "MEETING": "회의", "VOTE": "투표", "NIGHT": "밤"}
 const PHASE_COLORS := {
     "BRIEFING": AstraUI.CYAN, "INVESTIGATION": AstraUI.GOLD, "INTERROGATION": AstraUI.GREEN,
     "MEETING": AstraUI.PINK, "VOTE": AstraUI.RED, "NIGHT": AstraUI.NIGHT, "RESULT": AstraUI.GOLD
@@ -158,7 +158,7 @@ func _build() -> void:
         var id := str(roster[index])
         # Sprite + Korean name + job on every roster button. The 0.3.1 button was
         # a number and a Latin name, which is the least memorable pair possible.
-        var button := AstraUI.button("%d  %s  (%s)" % [index + 1, session.name_of(id), AstraCrewCatalog.role_short(id)], AstraUI.MUTED, AstraUI.T_UI, 56)
+        var button := AstraUI.button("%s\n%s" % [session.name_of(id), AstraCrewCatalog.role_short(id)], AstraUI.MUTED, AstraUI.T_UI, 56)
         button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         button.icon = AstraUI.texture(AstraCrewCatalog.dot_path(id))
         button.expand_icon = true
@@ -216,7 +216,9 @@ func _on_changed() -> void:
         # what happened first and what they gained second (§35).
         var opened: Array = archive_change.get("new_features", [])
         if not opened.is_empty():
-            app.show_unlock_cards.call_deferred(opened)
+            for feature in opened:
+                app.meta.mark_unlock_announced(str(feature))
+            app.meta.save_data()
 
 func _refresh_top() -> void:
     var day_text := "%d일째" % session.day
@@ -390,7 +392,7 @@ func _announce_phase(phase: String) -> void:
             fx.banner("공개 회의", "알리바이가 공개되고, 반박이 시작됩니다.", accent)
             fx.play("phase")
         "VOTE":
-            fx.banner("격리 투표", "한 명을 격리합니다. 조사관의 표는 2표입니다.", accent)
+            fx.banner("격리 투표", "한 명을 격리합니다. 모두 각자 1표입니다. 동률이면 격리하지 않습니다.", accent)
             fx.play("alert")
         "NIGHT":
             fx.banner("밤", "Null이 움직입니다.", accent, 1.1)

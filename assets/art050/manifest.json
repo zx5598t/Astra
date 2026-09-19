@@ -1,0 +1,954 @@
+{
+  "daren": {
+    "expressions": {
+      "afraid": {
+        "rect": [
+          10,
+          522,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (2).png"
+      },
+      "angry": {
+        "rect": [
+          778,
+          10,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (2).png"
+      },
+      "annoyed": {
+        "rect": [
+          10,
+          522,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (1).png"
+      },
+      "determined": {
+        "rect": [
+          1162,
+          10,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (2).png"
+      },
+      "embarrassed": {
+        "rect": [
+          394,
+          522,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (1).png"
+      },
+      "happy": {
+        "rect": [
+          778,
+          10,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (1).png"
+      },
+      "neutral": {
+        "rect": [
+          10,
+          10,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (1).png"
+      },
+      "sad": {
+        "rect": [
+          394,
+          10,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (2).png"
+      },
+      "shocked": {
+        "rect": [
+          10,
+          10,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (2).png"
+      },
+      "smile": {
+        "rect": [
+          394,
+          10,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (1).png"
+      },
+      "suspicious": {
+        "rect": [
+          1162,
+          10,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (1).png"
+      },
+      "tired": {
+        "rect": [
+          394,
+          522,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (2).png"
+      }
+    },
+    "head_rect": [
+      365,
+      0,
+      330,
+      330
+    ],
+    "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/다렌/다렌.png"
+  },
+  "jun": {
+    "expressions": {
+      "afraid": {
+        "rect": [
+          522,
+          522,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/준/ChatGPT Image 2026년 9월 19일 오후 06_38_09 (2).png"
+      },
+      "angry": {
+        "rect": [
+          1034,
+          10,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/준/ChatGPT Image 2026년 9월 19일 오후 06_38_09 (2).png"
+      },
+      "annoyed": {
+        "rect": [
+          522,
+          522,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/준/ChatGPT Image 2026년 9월 19일 오후 06_38_09 (1).png"
+      },
+      "determined": {
+        "rect": [
+          10,
+          522,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/준/ChatGPT Image 2026년 9월 19일 오후 06_38_09 (2).png"
+      },
+      "embarrassed": {
+        "rect": [
+          1034,
+          522,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/준/ChatGPT Image 2026년 9월 19일 오후 06_38_09 (1).png"
+      },
+      "happy": {
+        "rect": [
+          1034,
+          10,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/준/ChatGPT Image 2026년 9월 19일 오후 06_38_09 (1).png"
+      },
+      "neutral": {
+        "rect": [
+          10,
+          10,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/준/ChatGPT Image 2026년 9월 19일 오후 06_38_09 (1).png"
+      },
+      "sad": {
+        "rect": [
+          522,
+          10,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/준/ChatGPT Image 2026년 9월 19일 오후 06_38_09 (2).png"
+      },
+      "shocked": {
+        "rect": [
+          10,
+          10,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/준/ChatGPT Image 2026년 9월 19일 오후 06_38_09 (2).png"
+      },
+      "smile": {
+        "rect": [
+          522,
+          10,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/준/ChatGPT Image 2026년 9월 19일 오후 06_38_09 (1).png"
+      },
+      "suspicious": {
+        "rect": [
+          10,
+          522,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/준/ChatGPT Image 2026년 9월 19일 오후 06_38_09 (1).png"
+      },
+      "tired": {
+        "rect": [
+          1034,
+          522,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/준/ChatGPT Image 2026년 9월 19일 오후 06_38_09 (2).png"
+      }
+    },
+    "head_rect": [
+      355,
+      0,
+      330,
+      330
+    ],
+    "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/준/준.png"
+  },
+  "lucan": {
+    "expressions": {
+      "afraid": {
+        "rect": [
+          492,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/루칸/ChatGPT Image 2026년 9월 19일 오후 06_26_27.png"
+      },
+      "angry": {
+        "rect": [
+          974,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/루칸/ChatGPT Image 2026년 9월 19일 오후 06_26_27.png"
+      },
+      "annoyed": {
+        "rect": [
+          522,
+          522,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/루칸/ChatGPT Image 2026년 9월 19일 오후 06_22_41.png"
+      },
+      "determined": {
+        "rect": [
+          10,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/루칸/ChatGPT Image 2026년 9월 19일 오후 06_26_27.png"
+      },
+      "embarrassed": {
+        "rect": [
+          1034,
+          522,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/루칸/ChatGPT Image 2026년 9월 19일 오후 06_22_41.png"
+      },
+      "happy": {
+        "rect": [
+          1034,
+          10,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/루칸/ChatGPT Image 2026년 9월 19일 오후 06_22_41.png"
+      },
+      "neutral": {
+        "rect": [
+          10,
+          10,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/루칸/ChatGPT Image 2026년 9월 19일 오후 06_22_41.png"
+      },
+      "sad": {
+        "rect": [
+          492,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/루칸/ChatGPT Image 2026년 9월 19일 오후 06_26_27.png"
+      },
+      "shocked": {
+        "rect": [
+          10,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/루칸/ChatGPT Image 2026년 9월 19일 오후 06_26_27.png"
+      },
+      "smile": {
+        "rect": [
+          522,
+          10,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/루칸/ChatGPT Image 2026년 9월 19일 오후 06_22_41.png"
+      },
+      "suspicious": {
+        "rect": [
+          10,
+          522,
+          492,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/루칸/ChatGPT Image 2026년 9월 19일 오후 06_22_41.png"
+      },
+      "tired": {
+        "rect": [
+          974,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/루칸/ChatGPT Image 2026년 9월 19일 오후 06_26_27.png"
+      }
+    },
+    "head_rect": [
+      365,
+      0,
+      330,
+      330
+    ],
+    "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/루칸/루칸.png"
+  },
+  "maren": {
+    "expressions": {
+      "afraid": {
+        "rect": [
+          350,
+          624,
+          150,
+          259
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/마렌/ChatGPT Image 2026년 9월 19일 오후 07_06_32 (1).png"
+      },
+      "angry": {
+        "rect": [
+          690,
+          624,
+          150,
+          259
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/마렌/ChatGPT Image 2026년 9월 19일 오후 07_06_32 (1).png"
+      },
+      "annoyed": {
+        "rect": [
+          690,
+          317,
+          150,
+          259
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/마렌/ChatGPT Image 2026년 9월 19일 오후 07_06_32 (1).png"
+      },
+      "determined": {
+        "rect": [
+          10,
+          931,
+          150,
+          259
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/마렌/ChatGPT Image 2026년 9월 19일 오후 07_06_32 (1).png"
+      },
+      "embarrassed": {
+        "rect": [
+          520,
+          624,
+          150,
+          259
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/마렌/ChatGPT Image 2026년 9월 19일 오후 07_06_32 (1).png"
+      },
+      "happy": {
+        "rect": [
+          350,
+          10,
+          150,
+          259
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/마렌/ChatGPT Image 2026년 9월 19일 오후 07_06_32 (1).png"
+      },
+      "neutral": {
+        "rect": [
+          860,
+          10,
+          150,
+          259
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/마렌/ChatGPT Image 2026년 9월 19일 오후 07_06_32 (1).png"
+      },
+      "sad": {
+        "rect": [
+          860,
+          317,
+          150,
+          259
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/마렌/ChatGPT Image 2026년 9월 19일 오후 07_06_32 (1).png"
+      },
+      "shocked": {
+        "rect": [
+          520,
+          1238,
+          150,
+          259
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/마렌/ChatGPT Image 2026년 9월 19일 오후 07_06_32 (1).png"
+      },
+      "smile": {
+        "rect": [
+          180,
+          10,
+          150,
+          259
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/마렌/ChatGPT Image 2026년 9월 19일 오후 07_06_32 (1).png"
+      },
+      "suspicious": {
+        "rect": [
+          180,
+          317,
+          150,
+          259
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/마렌/ChatGPT Image 2026년 9월 19일 오후 07_06_32 (1).png"
+      },
+      "tired": {
+        "rect": [
+          350,
+          931,
+          150,
+          259
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/마렌/ChatGPT Image 2026년 9월 19일 오후 07_06_32 (1).png"
+      }
+    },
+    "head_rect": [
+      365,
+      0,
+      330,
+      330
+    ],
+    "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/마렌/마렌.png"
+  },
+  "mira": {
+    "expressions": {
+      "afraid": {
+        "rect": [
+          492,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/미라/ChatGPT Image 2026년 9월 19일 오후 06_09_09 (2).png"
+      },
+      "angry": {
+        "rect": [
+          974,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/미라/ChatGPT Image 2026년 9월 19일 오후 06_09_09 (2).png"
+      },
+      "annoyed": {
+        "rect": [
+          492,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/미라/ChatGPT Image 2026년 9월 19일 오후 06_09_08 (1).png"
+      },
+      "determined": {
+        "rect": [
+          10,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/미라/ChatGPT Image 2026년 9월 19일 오후 06_09_09 (2).png"
+      },
+      "embarrassed": {
+        "rect": [
+          974,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/미라/ChatGPT Image 2026년 9월 19일 오후 06_09_08 (1).png"
+      },
+      "happy": {
+        "rect": [
+          974,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/미라/ChatGPT Image 2026년 9월 19일 오후 06_09_08 (1).png"
+      },
+      "neutral": {
+        "rect": [
+          10,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/미라/ChatGPT Image 2026년 9월 19일 오후 06_09_08 (1).png"
+      },
+      "sad": {
+        "rect": [
+          492,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/미라/ChatGPT Image 2026년 9월 19일 오후 06_09_09 (2).png"
+      },
+      "shocked": {
+        "rect": [
+          10,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/미라/ChatGPT Image 2026년 9월 19일 오후 06_09_09 (2).png"
+      },
+      "smile": {
+        "rect": [
+          492,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/미라/ChatGPT Image 2026년 9월 19일 오후 06_09_08 (1).png"
+      },
+      "suspicious": {
+        "rect": [
+          10,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/미라/ChatGPT Image 2026년 9월 19일 오후 06_09_08 (1).png"
+      },
+      "tired": {
+        "rect": [
+          974,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/미라/ChatGPT Image 2026년 9월 19일 오후 06_09_09 (2).png"
+      }
+    },
+    "head_rect": [
+      365,
+      0,
+      330,
+      330
+    ],
+    "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/미라/미라.png"
+  },
+  "noa": {
+    "expressions": {
+      "afraid": {
+        "rect": [
+          492,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/노아/ChatGPT Image 2026년 9월 19일 오후 06_30_25 (2).png"
+      },
+      "angry": {
+        "rect": [
+          974,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/노아/ChatGPT Image 2026년 9월 19일 오후 06_30_25 (2).png"
+      },
+      "annoyed": {
+        "rect": [
+          492,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/노아/ChatGPT Image 2026년 9월 19일 오후 06_30_25 (1).png"
+      },
+      "determined": {
+        "rect": [
+          10,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/노아/ChatGPT Image 2026년 9월 19일 오후 06_30_25 (2).png"
+      },
+      "embarrassed": {
+        "rect": [
+          974,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/노아/ChatGPT Image 2026년 9월 19일 오후 06_30_25 (1).png"
+      },
+      "happy": {
+        "rect": [
+          974,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/노아/ChatGPT Image 2026년 9월 19일 오후 06_30_25 (1).png"
+      },
+      "neutral": {
+        "rect": [
+          10,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/노아/ChatGPT Image 2026년 9월 19일 오후 06_30_25 (1).png"
+      },
+      "sad": {
+        "rect": [
+          492,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/노아/ChatGPT Image 2026년 9월 19일 오후 06_30_25 (2).png"
+      },
+      "shocked": {
+        "rect": [
+          10,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/노아/ChatGPT Image 2026년 9월 19일 오후 06_30_25 (2).png"
+      },
+      "smile": {
+        "rect": [
+          492,
+          10,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/노아/ChatGPT Image 2026년 9월 19일 오후 06_30_25 (1).png"
+      },
+      "suspicious": {
+        "rect": [
+          10,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/노아/ChatGPT Image 2026년 9월 19일 오후 06_30_25 (1).png"
+      },
+      "tired": {
+        "rect": [
+          974,
+          553,
+          462,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/노아/ChatGPT Image 2026년 9월 19일 오후 06_30_25 (2).png"
+      }
+    },
+    "head_rect": [
+      370,
+      0,
+      320,
+      320
+    ],
+    "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/노아/노아.png"
+  },
+  "sena": {
+    "expressions": {
+      "afraid": {
+        "rect": [
+          351,
+          778,
+          321,
+          720
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/세나/ChatGPT Image 2026년 9월 19일 오후 07_05_30 (2).png"
+      },
+      "angry": {
+        "rect": [
+          692,
+          10,
+          321,
+          720
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/세나/ChatGPT Image 2026년 9월 19일 오후 07_05_30 (2).png"
+      },
+      "annoyed": {
+        "rect": [
+          351,
+          778,
+          321,
+          720
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/세나/ChatGPT Image 2026년 9월 19일 오후 07_05_30 (1).png"
+      },
+      "determined": {
+        "rect": [
+          10,
+          778,
+          321,
+          720
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/세나/ChatGPT Image 2026년 9월 19일 오후 07_05_30 (2).png"
+      },
+      "embarrassed": {
+        "rect": [
+          692,
+          778,
+          321,
+          720
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/세나/ChatGPT Image 2026년 9월 19일 오후 07_05_30 (1).png"
+      },
+      "happy": {
+        "rect": [
+          692,
+          10,
+          321,
+          720
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/세나/ChatGPT Image 2026년 9월 19일 오후 07_05_30 (1).png"
+      },
+      "neutral": {
+        "rect": [
+          10,
+          10,
+          321,
+          720
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/세나/ChatGPT Image 2026년 9월 19일 오후 07_05_30 (1).png"
+      },
+      "sad": {
+        "rect": [
+          351,
+          10,
+          321,
+          720
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/세나/ChatGPT Image 2026년 9월 19일 오후 07_05_30 (2).png"
+      },
+      "shocked": {
+        "rect": [
+          10,
+          10,
+          321,
+          720
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/세나/ChatGPT Image 2026년 9월 19일 오후 07_05_30 (2).png"
+      },
+      "smile": {
+        "rect": [
+          351,
+          10,
+          321,
+          720
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/세나/ChatGPT Image 2026년 9월 19일 오후 07_05_30 (1).png"
+      },
+      "suspicious": {
+        "rect": [
+          10,
+          778,
+          321,
+          720
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/세나/ChatGPT Image 2026년 9월 19일 오후 07_05_30 (1).png"
+      },
+      "tired": {
+        "rect": [
+          692,
+          778,
+          321,
+          720
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/세나/ChatGPT Image 2026년 9월 19일 오후 07_05_30 (2).png"
+      }
+    },
+    "head_rect": [
+      365,
+      0,
+      330,
+      330
+    ],
+    "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/세나/세나.png"
+  },
+  "soren": {
+    "expressions": {
+      "afraid": {
+        "rect": [
+          10,
+          522,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/소렌/ChatGPT Image 2026년 9월 19일 오후 06_17_43.png"
+      },
+      "angry": {
+        "rect": [
+          778,
+          10,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/소렌/ChatGPT Image 2026년 9월 19일 오후 06_17_43.png"
+      },
+      "annoyed": {
+        "rect": [
+          10,
+          553,
+          342,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/소렌/ChatGPT Image 2026년 9월 19일 오후 06_10_44 (2).png"
+      },
+      "determined": {
+        "rect": [
+          1162,
+          10,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/소렌/ChatGPT Image 2026년 9월 19일 오후 06_17_43.png"
+      },
+      "embarrassed": {
+        "rect": [
+          372,
+          553,
+          342,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/소렌/ChatGPT Image 2026년 9월 19일 오후 06_10_44 (2).png"
+      },
+      "happy": {
+        "rect": [
+          734,
+          10,
+          342,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/소렌/ChatGPT Image 2026년 9월 19일 오후 06_10_44 (2).png"
+      },
+      "neutral": {
+        "rect": [
+          10,
+          10,
+          342,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/소렌/ChatGPT Image 2026년 9월 19일 오후 06_10_44 (2).png"
+      },
+      "sad": {
+        "rect": [
+          394,
+          10,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/소렌/ChatGPT Image 2026년 9월 19일 오후 06_17_43.png"
+      },
+      "shocked": {
+        "rect": [
+          10,
+          10,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/소렌/ChatGPT Image 2026년 9월 19일 오후 06_17_43.png"
+      },
+      "smile": {
+        "rect": [
+          372,
+          10,
+          342,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/소렌/ChatGPT Image 2026년 9월 19일 오후 06_10_44 (2).png"
+      },
+      "suspicious": {
+        "rect": [
+          1096,
+          10,
+          342,
+          495
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/소렌/ChatGPT Image 2026년 9월 19일 오후 06_10_44 (2).png"
+      },
+      "tired": {
+        "rect": [
+          394,
+          522,
+          364,
+          464
+        ],
+        "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/소렌/ChatGPT Image 2026년 9월 19일 오후 06_17_43.png"
+      }
+    },
+    "head_rect": [
+      365,
+      0,
+      330,
+      330
+    ],
+    "source": "C:/Users/songsorosong/Documents/ChatGPT/ASTRA/ASTRA-0.4.0/../0.5.0 수정 인물 이미지/Astra/소렌/소렌.png"
+  }
+}

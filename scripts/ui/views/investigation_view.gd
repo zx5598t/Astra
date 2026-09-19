@@ -65,13 +65,12 @@ func refresh() -> void:
     var caption := AstraUI.vbox(2)
     caption_card.add_child(caption)
     caption.add_child(AstraUI.label(session.room_name(_room_id), AstraUI.T_TITLE, AstraUI.TEXT))
-    caption.add_child(AstraUI.label("이동은 무료 · 조사 지점 1곳당 30분", AstraUI.T_META, AstraUI.MUTED))
+    caption.add_child(AstraUI.label("이동은 무료 · 조사 지점 1곳당 1 행동", AstraUI.T_META, AstraUI.MUTED))
 
     var points := session.investigation_points(_room_id)
-    var positions := [Vector2(0.20, 0.52), Vector2(0.51, 0.66), Vector2(0.80, 0.40)]
     for i in range(points.size()):
         var point: Dictionary = points[i]
-        var pos: Vector2 = positions[i]
+        var pos: Vector2 = point["position"]
         var searched: bool = bool(point["searched"])
         var available: bool = bool(point["available"])
         var box := AstraUI.vbox(2)
@@ -124,7 +123,7 @@ func refresh() -> void:
         _latest.add_child(row)
         row.add_child(AstraArt.icon("tools_02",Vector2(36,36)))
         row.add_child(AstraUI.label("선택 · " + str(mission.get("title","")),14,AstraUI.MUTED,true))
-        var action := AstraUI.button("복구 완료" if bool(mission.get("complete",false)) else "설비 복구 · 30분",AstraUI.CYAN,14,36)
+        var action := AstraUI.button("복구 완료" if bool(mission.get("complete",false)) else "설비 복구 · 1 행동",AstraUI.CYAN,14,36)
         action.disabled = not bool(mission.get("available",false))
         action.pressed.connect(_perform_mission)
         row.add_child(action)

@@ -62,7 +62,7 @@ func _first_day(s: AstraGameSession) -> void:
     _body.add_child(reason)
     var reason_box := AstraUI.vbox(8)
     reason.add_child(reason_box)
-    reason_box.add_child(AstraUI.label("사고가 아닌 이유", AstraUI.T_META, AstraUI.RED))
+    reason_box.add_child(AstraUI.label("기억에 없는 조작", AstraUI.T_META, AstraUI.RED))
     for op in ops:
         var line := AstraUI.hbox(10)
         reason_box.add_child(line)
@@ -89,7 +89,7 @@ func _first_day(s: AstraGameSession) -> void:
     _body.add_child(roster_panel)
     var roster_box := AstraUI.vbox(6)
     roster_panel.add_child(roster_box)
-    roster_box.add_child(AstraUI.label("이 재구성에 남은 사람", AstraUI.T_META, AstraUI.MUTED))
+    roster_box.add_child(AstraUI.label("지금 깨어 있는 동료", AstraUI.T_META, AstraUI.MUTED))
     var grid := GridContainer.new()
     grid.columns = 2
     grid.add_theme_constant_override("h_separation", 18)
@@ -115,23 +115,13 @@ func _later_day(s: AstraGameSession) -> void:
     var left := s.max_days - s.day
     status.add_child(AstraUI.chip("판단할 날 %d일 남음" % (left + 1), AstraUI.GOLD if left <= 1 else AstraUI.MUTED, AstraUI.T_UI))
     if s.day == s.max_days:
-        _body.add_child(AstraUI.prose("오늘이 마지막 판단 기회입니다. 저녁 투표가 끝나면 재구성이 종료됩니다.", AstraUI.T_BODY, AstraUI.GOLD))
+        _body.add_child(AstraUI.prose("오늘이 마지막 판단 기회입니다. 저녁 투표가 끝나면 이번 기록을 마무리합니다.", AstraUI.T_BODY, AstraUI.GOLD))
 
 # Why the case needs a culprit rather than a repair crew, derived from the case
 # rather than written per case, so every incident explains itself the same way.
 func _why_a_person(s: AstraGameSession, ops: Array) -> String:
-    if ops.size() >= 2:
-        return "두 조작은 서로 다른 장소에서, 1분도 안 되는 간격으로 실행됐습니다. 한 사람이 두 곳을 오갈 수 있는 시간이 아닙니다. 적어도 두 사람이 따로 움직였다는 뜻입니다.\n\n기록에는 실행자 이름이 남아야 하지만, 그 칸은 지워져 있습니다. 시스템이 지운 것이 아니라, 실행한 사람이 지웠습니다."
-    if ops.is_empty():
-        return ""
-    var where := s.room_name(str(ops[0].get("room", "")))
-    return "이 조작은 원격으로 할 수 없습니다. 그 시각 %s에 사람이 직접 있었다는 뜻입니다.\n\n기록에는 실행자 이름이 남아야 하지만, 그 칸은 지워져 있습니다. 시스템이 지운 것이 아니라, 실행한 사람이 지웠습니다." % where
+    if ops.is_empty(): return ""
+    return "%s의 콘솔에서 직접 실행한 명령입니다. 실행자 칸은 비어 있습니다. 누가 왜 움직였는지는 아직 알 수 없습니다." % s.room_name(str(ops[0].get("room","")))
 
 func _mission_text(s: AstraGameSession) -> String:
-    var count := s.null_total()
-    var days := s.max_days
-    var who := "이 중 %d명은 배를 망가뜨리라는 명령을 따르고 있습니다. 기록은 그들을 [color=#ff6f7f][b]Null[/b][/color]이라고 부릅니다. 겉으로는 나머지와 구별되지 않습니다." % count
-    if AstraCaseCatalog.is_calibration(s.case_id):
-        who = "네 사람 중 한 명이 통신을 끊었습니다. 본인은 그렇게 말하지 않을 겁니다."
-    var deadline := "오늘 저녁 투표에서 격리할 사람을 정해야 합니다." if days <= 1 else "%d일 안에 %d명을 모두 격리하면 이깁니다. 남은 승무원 수가 Null과 같아지면 집니다." % [days, count]
-    return "%s\n\n%s\n\n조사해서 기록을 모으고, 사람들의 말과 맞춰 보세요. 말이 기록과 어긋나는 사람이 나옵니다. 다만 [b]거짓말한다고 전부 실행자는 아닙니다[/b] — 숨길 것이 있는 사람은 결백해도 거짓말을 합니다." % [who, deadline]
+    return "확인할 실행자는 %d명입니다. " % s.null_count + "조작이 일어난 곳을 살피고, 동료가 기억하는 동선과 비교하세요. 거짓말에도 다른 사정이 있을 수 있습니다. 위험한 행동을 멈출지는 같은 표 한 장씩으로 결정합니다."

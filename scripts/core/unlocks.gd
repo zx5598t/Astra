@@ -37,7 +37,7 @@ const FEATURES := {
         "order": 1, "needs_calibration": true,
         "title": "밤",
         "blurb": "투표 뒤 밤이 옵니다. 한 사람을 지키거나 한 곳을 감시할 수 있습니다.",
-        "flavor": "재구성이 하루를 넘어갑니다. 이제 지키지 못한 것이 생깁니다."
+        "flavor": "조사가 다음 날로 이어집니다. 이제 지키지 못한 것이 생깁니다."
     },
     "claim_search": {
         "order": 1, "needs_calibration": true,
@@ -67,7 +67,7 @@ const FEATURES := {
     "theory_report": {
         "order": 2, "needs_cases": 1,
         "title": "추리 보고서",
-        "blurb": "Null로 의심하는 두 사람을 표시해 두면 투표와 함께 제출되고 채점됩니다.",
+        "blurb": "실행자로 의심하는 사람을 표시해 두면 투표와 함께 제출되고 채점됩니다.",
         "flavor": ""
     },
     "night_tactics": {
@@ -138,7 +138,7 @@ static func flavor_of(feature: String) -> String:
 # as a list of things the player cannot have.
 static func next_hint(calibration_done: bool, campaign_cases_played: int) -> String:
     if not calibration_done:
-        return "교정을 마치면 재구성이 하루를 넘어갑니다."
+        return "첫 각성이 끝나면 다음 기록을 확인할 수 있습니다."
     var open := unlocked(calibration_done, campaign_cases_played)
     for key in REVEAL_ORDER:
         if key in open:
@@ -146,5 +146,5 @@ static func next_hint(calibration_done: bool, campaign_cases_played: int) -> Str
         var spec: Dictionary = FEATURES.get(key, {})
         var needed := int(spec.get("needs_cases", 0)) - campaign_cases_played
         if needed > 0:
-            return "사건 %d건을 더 재구성하면 · %s" % [needed, str(spec.get("title", ""))]
+            return "기록 %d건을 더 확인하면 · %s" % [needed, str(spec.get("title", ""))]
     return ""

@@ -22,7 +22,7 @@ var app
 func setup(app_node) -> void:
     app = app_node
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    var art := AstraUI.thumb(AstraArt.scene("crew_deck"), Vector2.ZERO)
+    var art := AstraUI.thumb(AstraArt.background("medical"), Vector2.ZERO)
     art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     add_child(art)
     add_child(AstraArt.shade(true))
@@ -48,12 +48,12 @@ func setup(app_node) -> void:
     var top := AstraUI.hbox(10)
     left.add_child(top)
     top.add_child(AstraArt.icon("icons_14", Vector2(38, 38)))
-    top.add_child(AstraUI.label("ASTRA  /  OBSERVER ARCHIVE", AstraUI.T_META, AstraUI.MUTED))
+    top.add_child(AstraUI.label("ASTRA  /  목적지 미확인", AstraUI.T_META, AstraUI.MUTED))
 
     left.add_child(AstraUI.spacer(false))
     left.add_child(AstraUI.label("A S T R A", 88, AstraUI.TEXT))
     left.add_child(AstraUI.label("마지막 교신", AstraUI.T_TITLE, AstraUI.CYAN))
-    left.add_child(AstraUI.prose("여덟 개의 목소리.\n아무도 믿을 수 없는 배에서, 누군가는 믿어야 한다.", AstraUI.T_HEAD, AstraUI.TEXT))
+    left.add_child(AstraUI.prose("같은 배에서 깨어났지만,\n우리는 서로 다른 목적지를 기억한다.", AstraUI.T_HEAD, AstraUI.TEXT))
     left.add_child(AstraUI.spacer(false))
 
     var footer := AstraUI.hbox(10)
@@ -82,7 +82,7 @@ func setup(app_node) -> void:
         var begin := AstraUI.primary_button("처음 시작   →")
         begin.pressed.connect(_begin_first_run)
         menu.add_child(begin)
-        menu.add_child(AstraUI.prose("네 사람, 세 장소, 하나의 조작. 직접 해 보면서 규칙을 배웁니다. 10분 정도 걸립니다.", AstraUI.T_META, AstraUI.MUTED))
+        menu.add_child(AstraUI.prose("당신은 ASTRA의 탐사요원입니다. 네 명의 동료가 깨어 있고, 네 명은 아직 잠들어 있습니다.", AstraUI.T_META, AstraUI.MUTED))
         if has_save:
             menu.add_child(_slot_section(slots))
     else:
@@ -93,7 +93,7 @@ func setup(app_node) -> void:
         var fresh := AstraUI.primary_button("새로 시작   →")
         fresh.pressed.connect(_begin_new_case)
         menu.add_child(fresh)
-        menu.add_child(AstraUI.prose("다음 사건을 엽니다. 역할과 관계는 매번 새로 결정됩니다.", AstraUI.T_META, AstraUI.MUTED))
+        menu.add_child(AstraUI.prose("다음 항해 기록을 따라갑니다. 지난번에 나눈 마음은 작은 행동으로 남습니다.", AstraUI.T_META, AstraUI.MUTED))
         if app.meta.has_feature("case_select"):
             var archive := AstraUI.secondary_button("사건 선택 · 항해 기록")
             archive.pressed.connect(func(): app.show_archive())
@@ -166,7 +166,7 @@ func _progress_strip() -> Control:
     var card := AstraUI.panel(Color(0.02, 0.05, 0.09, 0.85), Color(AstraUI.CYAN, 0.25), 10, 12)
     var box := AstraUI.vbox(6)
     card.add_child(box)
-    box.add_child(AstraUI.label("블랙박스 복원  %d / %d" % [recovered, total], AstraUI.T_META, AstraUI.CYAN))
+    box.add_child(AstraUI.label("확인한 항해 기록  %d / %d" % [recovered, total], AstraUI.T_META, AstraUI.CYAN))
     var blocks := AstraUI.hbox(4)
     box.add_child(blocks)
     for index in range(total):

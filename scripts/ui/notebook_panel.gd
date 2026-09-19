@@ -60,6 +60,14 @@ func cycle_tab() -> void:
 
 func refresh() -> void:
     AstraUI.clear(_clue_list)
+    if not session.voyage.is_empty():
+        _clue_list.add_child(AstraUI.label("함께 확인한 것",20,AstraUI.CYAN))
+        for note in session.voyage.get("notes",[]):
+            _clue_list.add_child(AstraUI.prose(str(note),17,AstraUI.TEXT))
+        if int(session.voyage.get("loop",0)) > 0:
+            _clue_list.add_child(AstraUI.label("지난번과 달라진 점",20,AstraUI.CYAN))
+            for note in session.voyage.get("changes",[]):
+                _clue_list.add_child(AstraUI.prose(str(note),16,AstraUI.MUTED))
     var found := session.found_clues()
     if found.is_empty():
         _clue_list.add_child(AstraUI.label("아직 확보한 단서가 없습니다. 현장의 단말과 흔적을 살펴보세요.",16,AstraUI.MUTED,true))
@@ -144,7 +152,7 @@ func _save_link() -> void:
 # ---- 인물 -------------------------------------------------------------------
 #
 # One row per person: what they said, and whether anything they said conflicts.
-# Deliberately not a trust meter — showing "Rho 0.42" would replace the reading
+# Deliberately not a trust meter — showing "Jun 0.42" would replace the reading
 # of a person with the reading of a number (§100).
 func _refresh_people() -> void:
     AstraUI.clear(_people)
@@ -241,7 +249,7 @@ func _list_recent_claims(target: VBoxContainer, entries: Array) -> void:
         var speaker := str(entry.get("speaker", ""))
         var accent: Color = AstraUI.CYAN if speaker == "player" else AstraCrewCatalog.accent(speaker)
         var line := AstraUI.hbox(8)
-        var who := AstraUI.label("조사관" if speaker == "player" else session.name_of(speaker), AstraUI.T_META, accent)
+        var who := AstraUI.label("탐사요원" if speaker == "player" else session.name_of(speaker), AstraUI.T_META, accent)
         who.custom_minimum_size.x = 84
         line.add_child(who)
         var day_tag := AstraUI.label("DAY %d" % int(entry.get("day", 1)), AstraUI.T_META, AstraUI.DIM)

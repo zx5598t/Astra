@@ -24,38 +24,14 @@ signal finished
 
 # `art` picks the backdrop; `who` set means the line is spoken by a person.
 const BEATS := [
-    {"art": "ship", "system": "ASTRA · 블랙박스 복원 세션 개시",
-        "text": "항성선 ASTRA. 민간 연구선. 승무원 여덟.\n지구와의 교신이 끊긴 지 73시간."},
-    {"art": "ship", "system": "회수 기록 · 손상",
-        "text": "구조대가 찾은 것은 배가 아니라 비행 기록 장치 하나였습니다.\n안에 남은 것은 여덟 사람의 마지막 며칠뿐입니다."},
-    {"art": "ship", "who": "???",
-        "text": "…응답하라. 여기는 항성선 ASTRA."},
-    {"art": "ship", "who": "???",
-        "text": "승무원 여덟. 생존자… 확인 불가."},
-    {"art": "ship", "who": "???",
-        "text": "기록을 믿지 마.\n우리 중 누군가는, 자기 의지로 움직이지 않았다."},
-    {"art": "faces", "system": "신원 바인딩 · 손상",
-        "text": "무엇이 언제 어디서 일어났는지는 남았습니다.\n그 일을 누가 했는지만 지워졌습니다."},
-    {"art": "faces", "system": "NULL",
-        "text": "여덟 중 몇 명은 배를 망가뜨리라는 명령을 따르고 있었습니다.\n기록은 그들을 [b]Null[/b]이라고 부릅니다. 겉으로는 나머지와 구별되지 않습니다."},
-    {"art": "faces", "system": "당신의 역할",
-        "text": "당신은 이 기록을 다시 세웁니다.\n현장을 조사하고, 사람들의 말을 듣고, 어긋나는 지점을 찾아\n누가 Null이었는지 가려내는 일입니다."},
-    {"art": "crew", "system": "주의",
-        "text": "거짓말한다고 전부 Null은 아닙니다.\n숨길 것이 있는 사람은, 결백해도 거짓말을 합니다."},
-    {"art": "crew", "system": "BLACKBOX RECONSTRUCTION — RETRYING…",
-        "text": "복원을 시작합니다."},
-    {"art": "wake", "who": "mira",
-        "text": "…들리나요?"},
-    {"art": "wake", "who": "mira",
-        "text": "신호가 잡혔어요. 거기, 누구 있죠?"}
+    {"art":"wake", "system":"ASTRA · 의료실", "text":"손목을 잡은 손이 따뜻하다.\n천장에는 느리게 깜빡이는 등이 하나 있다."},
+    {"art":"wake", "who":"mira", "text":"들리나요? 천천히 눈 떠요.\n탐사팀 명부에 이름이 있었어요. 당신 맞죠?"},
+    {"art":"wake", "who":"rho", "text":"미라, 문 열려? 잠깐만. 이쪽 전원부터 살려 볼게."},
+    {"art":"wake", "who":"noa", "text":"당신까지 다섯 명. 나머지 포드 네 개는 아직 닫혀 있어요."},
+    {"art":"wake", "who":"dax", "text":"돌아가던 중이라고? 나는 탐사 임무로 왔는데."},
+    {"art":"wake", "system":"수신 기록", "text":"목적지: 지구.\n바로 아래, 같은 날짜의 명령서에는 다른 이름이 적혀 있다."}
 ]
-
-const ART := {
-    "ship": "res://assets/art040/scenes/crew_deck.webp",
-    "faces": "res://assets/art040/scenes/faces_glitch.webp",
-    "crew": "res://assets/art040/scenes/crew_console.webp",
-    "wake": "res://assets/art040/scenes/crew_console.webp"
-}
+const ART := {"wake":"res://assets/art031/backgrounds/medical.webp"}
 
 var _app
 var _index: int = -1

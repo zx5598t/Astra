@@ -68,7 +68,7 @@ func _protect_card(session: AstraGameSession) -> Control:
     button.disabled = not ok
     button.pressed.connect(_choose.bind("protect", target))
     box.add_child(button)
-    box.add_child(AstraUI.label("팁: Null은 자기를 강하게 의심하는 사람이나 조사관이 신뢰하는 사람을 노리는 경향이 있습니다.", 12, AstraUI.DIM, true))
+    box.add_child(AstraUI.label("팁: Null은 자기를 강하게 의심하는 사람이나 탐사요원이 신뢰하는 사람을 노리는 경향이 있습니다.", 12, AstraUI.DIM, true))
     return card
 
 func _secure_card(session: AstraGameSession) -> Control:

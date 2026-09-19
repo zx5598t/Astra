@@ -2,7 +2,7 @@ extends Control
 
 # Application root: background, screen routing, overlays and persistence.
 
-const VERSION_FALLBACK := "0.4.0"
+const VERSION_FALLBACK := "0.5.0"
 
 var meta := AstraMetaProgress.new()
 var settings := AstraSettings.new()
@@ -77,7 +77,7 @@ func show_opening() -> void:
     opening.finished.connect(func():
         settings.intro_seen = true
         settings.save_data()
-        _ask_experience()
+        start_case(AstraCaseCatalog.CALIBRATION, "ANALYST")
     , CONNECT_ONE_SHOT)
 
 # The only question asked before play, and it has two answers. 0.3.1 opened on a
@@ -86,7 +86,7 @@ func show_opening() -> void:
 func _ask_experience() -> void:
     show_title()
     var body := AstraUI.vbox(8)
-    body.add_child(AstraUI.prose("재구성 속도를 정합니다. 나중에 설정에서 언제든 바꿀 수 있습니다.", AstraUI.T_BODY, AstraUI.TEXT))
+    body.add_child(AstraUI.prose("진행 속도를 정합니다. 나중에 설정에서 언제든 바꿀 수 있습니다.", AstraUI.T_BODY, AstraUI.TEXT))
     var handler := func(choice: int) -> void:
         meta.difficulty_mode = "STANDARD" if choice == 1 else "STORY"
         meta.save_data()
@@ -149,12 +149,20 @@ func start_case(case_id: String, protocol: String, slot: int = -1) -> void:
     # not settle on one face over a run of cases (§67).
     session.setup(case_id, seed_value, protocol, meta.difficulty_mode, meta.recent_null_history())
     session.features = meta.unlocked_features()
-    session.set_tutorial(AstraCaseCatalog.is_calibration(case_id))
+    session.set_tutorial(false)
+    session.begin_voyage(meta.voyage_memory)
     _connect_autosave()
-    var screen := AstraGameScreen.new()
-    _set_screen(screen)
-    screen.setup(self, session, fx)
-    _introduce_new_faces(session)
+    show_session_screen()
+
+func show_session_screen() -> void:
+    if session.phase == "EXPLORE":
+        var voyage_screen := AstraVoyageView.new()
+        _set_screen(voyage_screen)
+        voyage_screen.setup(self,session)
+    else:
+        var screen := AstraGameScreen.new()
+        _set_screen(screen)
+        screen.setup(self,session,fx)
 
 # Anyone the player has not seen before gets one card before the case starts,
 # one at a time. Eight dossiers at once is the thing that made 0.3.1's opening
@@ -257,11 +265,12 @@ func resume_case(slot: int = -1) -> void:
     session.features = meta.unlocked_features()
     selected_protocol = session.protocol
     _connect_autosave()
-    var screen := AstraGameScreen.new()
-    _set_screen(screen)
-    screen.setup(self, session, fx)
+    show_session_screen()
 
 func record_result(finished: AstraGameSession) -> Dictionary:
+    var memory := finished.voyage_memory()
+    if not memory.is_empty():
+        meta.voyage_memory = memory
     var before := meta.unlocked_features()
     var result := meta.record_case_result(finished.case_id, finished.protocol, finished.final_report, true)
     AstraGameSession.delete_snapshot(snapshot_path())
@@ -346,7 +355,7 @@ func show_settings() -> void:
         var mode_panel := AstraUI.panel(AstraUI.PANEL_2, AstraUI.BORDER, 10, 12)
         var mode_box := AstraUI.vbox(8)
         mode_panel.add_child(mode_box)
-        mode_box.add_child(AstraUI.label("재구성 속도", AstraUI.T_HEAD, AstraUI.CYAN))
+        mode_box.add_child(AstraUI.label("진행 속도", AstraUI.T_HEAD, AstraUI.CYAN))
         var detail := AstraUI.prose(AstraDifficulty.value(meta.difficulty_mode, "detail", ""), AstraUI.T_META, AstraUI.MUTED)
         var row := AstraUI.hbox(8)
         mode_box.add_child(row)
@@ -493,11 +502,11 @@ func _first_run_seen() -> bool:
 func _first_run_prompt() -> void:
     settings.intro_seen = true
     settings.save_data()
-    var body := AstraUI.label("ASTRA는 흔적과 알리바이를 맞춰 숨은 Null 두 명을 찾아내는 추리 게임입니다. 처음이라면 2분만 규칙을 읽어 보세요. 게임 중에도 Esc → 플레이 방법에서 다시 볼 수 있습니다.", 16, AstraUI.TEXT, true)
+    var body := AstraUI.label("ASTRA의 탐사요원으로서 동료들과 배를 살펴봅니다. 위쪽의 현재 목표를 따라가거나, 궁금한 사람과 장소부터 확인하세요.", 16, AstraUI.TEXT, true)
     var handler := func(choice: int) -> void:
         if choice == 1:
             show_help()
-    AstraModal.open(_overlay_root, "관측자 프로그램에 오신 것을 환영합니다", body, [["바로 시작", AstraUI.MUTED], ["플레이 방법 보기", AstraUI.CYAN]], handler, 600.0)
+    AstraModal.open(_overlay_root, "탐사요원 프로그램에 오신 것을 환영합니다", body, [["바로 시작", AstraUI.MUTED], ["플레이 방법 보기", AstraUI.CYAN]], handler, 600.0)
 
 # ---------------------------------------------------------------- input
 

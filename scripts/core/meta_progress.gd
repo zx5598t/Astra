@@ -5,7 +5,7 @@ extends RefCounted
 # Save v6 keeps every v4/v5 key, so older archives load without loss.
 
 const DEFAULT_SAVE_PATH := "user://astra_meta.cfg"
-const SAVE_VERSION := 7
+const SAVE_VERSION := 8
 const CAMPAIGN_CASES := AstraCaseCatalog.CAMPAIGN
 const RANK_ORDER := ["D", "C", "B", "A", "S"]
 
@@ -40,6 +40,7 @@ var introduced_locations: Array[String] = []
 var unlocks_announced: Array[String] = []
 var failed_case_count: int = 0
 var loop_summaries: Array = []
+var voyage_memory: Dictionary = {}
 
 func _init(path: String = DEFAULT_SAVE_PATH) -> void:
     save_path = path
@@ -48,6 +49,7 @@ func load_data() -> void:
     var cfg := ConfigFile.new()
     if cfg.load(save_path) != OK:
         return
+    voyage_memory = _dict(cfg.get_value("progress","voyage_memory",{}))
     total_insight = int(cfg.get_value("progress", "total_insight", 0))
     total_cases_completed = int(cfg.get_value("progress", "total_cases_completed", 0))
     correct_isolations = int(cfg.get_value("progress", "correct_isolations", 0))
@@ -83,6 +85,7 @@ func load_data() -> void:
 func save_data() -> bool:
     var cfg := ConfigFile.new()
     cfg.set_value("meta", "save_version", SAVE_VERSION)
+    cfg.set_value("progress","voyage_memory",voyage_memory)
     cfg.set_value("progress", "total_insight", total_insight)
     cfg.set_value("progress", "total_cases_completed", total_cases_completed)
     cfg.set_value("progress", "correct_isolations", correct_isolations)
@@ -139,6 +142,7 @@ func reset() -> void:
     unlocks_announced.clear()
     failed_case_count = 0
     loop_summaries.clear()
+    voyage_memory.clear()
 
 # Records a finished case. Returns what changed so the result screen can show it.
 func record_case_result(case_id: String, protocol: String, report: Dictionary, persist: bool = true) -> Dictionary:
@@ -155,7 +159,7 @@ func record_case_result(case_id: String, protocol: String, report: Dictionary, p
     record_null_roles(report.get("nulls", []))
     for npc_id in report.get("roster", []):
         meet_person(str(npc_id))
-    if str(report.get("outcome", "")) != "WIN":
+    if str(report.get("outcome", "")) not in ["WIN", "CONTINUE"]:
         note_failure()
     if report.has("loop_summary"):
         record_loop_summary(report.get("loop_summary", {}))
@@ -232,14 +236,11 @@ func campaign_complete() -> bool:
     return completed_campaign_cases() >= CAMPAIGN_CASES.size()
 
 func recommended_case_id() -> String:
-    if not past_calibration():
-        return AstraCaseCatalog.CALIBRATION
-    for case_id in CAMPAIGN_CASES:
-        if is_case_unlocked(case_id) and int(case_counts.get(case_id, 0)) <= 0:
-            return case_id
-    for case_id in CAMPAIGN_CASES:
-        if is_case_unlocked(case_id) and int(case_wins.get(case_id, 0)) <= 0:
-            return case_id
+    # Keep historical scores while giving returning 0.4 players the new opening.
+    # Completed chapters are recorded separately from historical case wins.
+    var chapters: Array = voyage_memory.get("chapters",[])
+    for case_id in [AstraCaseCatalog.CALIBRATION] + CAMPAIGN_CASES:
+        if case_id not in chapters: return str(case_id)
     return str(CAMPAIGN_CASES[CAMPAIGN_CASES.size() - 1])
 
 func case_display_name(case_id: String) -> String:
@@ -267,25 +268,25 @@ func story_archive() -> Array:
         entries.append({
             "id": case_id, "chapter": str(data.get("chapter", "")), "title": str(data.get("title", "")),
             "unlocked": is_case_unlocked(case_id), "completed": completed, "solved": solved,
-            "text": str(data.get("story_outro", "")) if solved else ("기록 재구성이 중단됐습니다. 사건을 해결하면 후일담이 복원됩니다." if completed else "아직 복원되지 않은 기록입니다."),
+            "text": str(data.get("story_outro", "")) if completed else "아직 확인하지 않은 기록입니다.",
             "mission_badge": bool(mission_badges.get(case_id, false)), "challenge_badge": bool(chapter_challenges.get(case_id, false))
         })
     return entries
 
 func archive_rank() -> String:
     if total_insight >= 180:
-        return "관측자 VI"
+        return "탐사요원 VI"
     if total_insight >= 120:
-        return "관측자 V"
+        return "탐사요원 V"
     if total_insight >= 80:
-        return "관측자 IV"
+        return "탐사요원 IV"
     if total_insight >= 45:
-        return "관측자 III"
+        return "탐사요원 III"
     if total_insight >= 20:
-        return "관측자 II"
+        return "탐사요원 II"
     if total_insight >= 8:
-        return "관측자 I"
-    return "견습 관측자"
+        return "탐사요원 I"
+    return "견습 탐사요원"
 
 func _dict(value) -> Dictionary:
     if value is Dictionary:
@@ -311,7 +312,7 @@ func campaign_cases_played() -> int:
     return played
 
 func unlocked_features() -> Array:
-    return AstraUnlocks.unlocked(calibration_completed, campaign_cases_played())
+    return AstraUnlocks.unlocked(calibration_completed, completed_campaign_cases())
 
 func has_feature(feature: String) -> bool:
     return AstraUnlocks.has(unlocked_features(), feature)

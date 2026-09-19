@@ -15,4 +15,4 @@ Godot and its third-party library license notices: https://godotengine.org/licen
 
 ## Artwork
 
-Character, environment, item and icon artwork was supplied by the project owner. The replacement white-background character sheets were background-extracted using ImageGen, then cropped into four poses. This patch does not assign a new license to those supplied images.
+Character, environment, item and icon artwork was supplied by the project owner. Version 0.5.0 uses the owner's new character folders. Representative portraits and expression cells were mechanically cropped, resized and border-cleaned using Godot. Source files remain unchanged. This update does not assign a new license to those images.

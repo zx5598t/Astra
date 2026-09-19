@@ -199,7 +199,7 @@ static func play_passive(case_id: String, seed_value: int, protocol: String) -> 
         match s.phase:
             "INTERROGATION":
                 if not s.pending_event.is_empty():
-                    s.resolve_private_event(1)
+                    s.resolve_private_event(mini(1,s.pending_event.get("choices",[]).size()-1))
                 s.advance()
             "VOTE":
                 s.cast_vote("")
@@ -228,7 +228,7 @@ static func play_random(case_id: String, seed_value: int, protocol: String) -> D
                 s.advance()
             "INTERROGATION":
                 if not s.pending_event.is_empty():
-                    s.resolve_private_event(rng.randi_range(0, 2))
+                    s.resolve_private_event(rng.randi_range(0,s.pending_event["choices"].size()-1))
                 for _i in range(8):
                     var living := s.living_ids()
                     var target := str(living[rng.randi_range(0, living.size() - 1)])

@@ -12,29 +12,31 @@ signal changed
 signal phase_changed(phase: String)
 signal notice(kind: String, payload: Dictionary)
 
-const PHASES := ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT", "RESULT"]
+const PHASES := ["EXPLORE", "BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT", "RESULT"]
 const PHASE_LABELS := {
-    "BRIEFING": "브리핑", "INVESTIGATION": "현장 조사", "INTERROGATION": "개인 심문",
-    "MEETING": "공개 회의", "VOTE": "격리 투표", "NIGHT": "밤", "RESULT": "사건 종료"
+    "EXPLORE": "선내 탐색",
+    "BRIEFING": "브리핑", "INVESTIGATION": "현장 조사", "INTERROGATION": "동료 대화",
+    "MEETING": "공개 회의", "VOTE": "격리 투표", "NIGHT": "밤", "RESULT": "항해 기록"
 }
 const MAX_DAYS := 4
 const BASE_INVESTIGATION_AP := 3
 const BASE_TALK_AP := 3
 const MEETING_ACTIONS := 2
-const PLAYER_VOTE_WEIGHT := 2
+const PLAYER_VOTE_WEIGHT := 1
 const CONFIDE_TRUST := 0.6
 const THEORY_DAY_FACTORS := [1.0, 1.0, 0.92, 0.84, 0.76]
 const VOTE_NOISE := 0.16
 const SNAPSHOT_PATH := "user://astra_session.cfg"
-const SNAPSHOT_VERSION := 2
+const SNAPSHOT_VERSION := 3
 # 0.3.1 wrote version 1. It is still readable; the fields it never had are
 # filled from the case template on load.
-const SUPPORTED_SNAPSHOT_VERSIONS := [1, 2]
+const SUPPORTED_SNAPSHOT_VERSIONS := [1, 2, 3]
 const FIELDS_ADDED_IN_040 := [
     "roster", "null_count", "max_days", "difficulty",
     "claim_ledger", "retractions", "dialogue_recent", "social_beats", "player_claims"
 ]
 const SNAPSHOT_FIELDS := [
+    "voyage",
     "case_id", "seed_value", "protocol", "roster", "null_count", "max_days", "difficulty",
     "claim_ledger", "retractions", "dialogue_recent", "social_beats", "player_claims", "truth", "clues", "day", "phase",
     "investigation_ap", "talk_ap", "meeting_actions_left", "selected_id", "marks",
@@ -80,15 +82,16 @@ const INTENT_LINE_KEY := {
 
 const ISOLATED_LINES := {
     "mira": "…알겠어요. 제 기록이 끝까지 도움이 되길 바라요.",
-    "rho": "좋아. 가둬. 대신 진짜 범인 놓치면 가만 안 둔다.",
-    "eli": "이번 판은 내가 지는 걸로 하지. 다음 수는 잘 둬.",
-    "sena": "결정에 따르겠습니다. 선내 보안을 부탁드립니다.",
-    "vale": "조사관님… 이게 정말 맞는 선택이길 바라요.",
+    "rho": "공구는 문 앞에 둘게. 펌프 소리 달라지면 바로 멈춰.",
+    "eli": "항로 사본은 남겼어. 좌표를 다시 확인해.",
+    "sena": "알았어. 문은 닫을게. 밖에 있는 사람들 잘 봐 줘.",
+    "vale": "탐사요원님… 이게 정말 맞는 선택이길 바라요.",
     "noa": "마지막 기록이에요. ‘나는 끝까지 말을 바꾸지 않았다.’",
     "lyra": "괜찮아요… 다들, 서로를 너무 미워하지는 마요.",
-    "dax": "결정 수용. 오류였다면 다음 계산에 반영해라."
+    "dax": "내 판단도 틀릴 수 있어. 그러니까 기록은 지우지 마."
 }
 
+var voyage: Dictionary = {}
 var case_id: String = ""
 var case_data: Dictionary = {}
 var seed_value: int = 0
@@ -154,6 +157,7 @@ var _found_counter: int = 0
 # ---------------------------------------------------------------- setup
 
 func setup(case_id_in: String, seed_in: int, protocol_in: String = "ANALYST", difficulty_in: String = "STANDARD", history: Array = []) -> void:
+    voyage.clear()
     case_id = case_id_in if AstraCaseCatalog.has_case(case_id_in) else "DEAD_AIR"
     seed_value = seed_in
     case_data = AstraCaseCatalog.resolve(case_id, seed_in)
@@ -299,9 +303,9 @@ func load_snapshot(path: String = SNAPSHOT_PATH) -> bool:
         # rejecting the file, fill them from the case template: a resumed 0.3.1
         # case is an eight-person, two-Null, four-day case on STANDARD, which is
         # exactly what those defaults describe (§47).
-        case_data = AstraCaseCatalog.resolve(case_id, seed_value)
+        case_data = AstraCaseCatalog.resolve_legacy(case_id, seed_value) if int(cfg.get_value("meta","version",1)) < 3 else AstraCaseCatalog.resolve(case_id,seed_value)
         if roster.is_empty():
-            roster = AstraCaseCatalog.roster(case_data)
+            roster = AstraCrewCatalog.ORDER.duplicate() if int(cfg.get_value("meta", "version", 1)) == 1 else AstraCaseCatalog.roster(case_data)
         if null_count <= 0:
             null_count = AstraCaseCatalog.null_count(case_data)
         if max_days <= 0:
@@ -333,7 +337,7 @@ func _valid_snapshot(cfg: ConfigFile) -> bool:
         # Absent is fine only for fields 0.3.1 never wrote; present-but-wrong-type
         # is still a corrupt save and is still rejected.
         if not cfg.has_section_key("session", field):
-            if field in FIELDS_ADDED_IN_040:
+            if field in FIELDS_ADDED_IN_040 or field == "voyage":
                 continue
             return false
         if typeof(cfg.get_value("session", field)) != typeof(get(field)):
@@ -346,12 +350,18 @@ func _valid_snapshot(cfg: ConfigFile) -> bool:
         return false
     if not cfg.has_section_key("session", "rng_state") or typeof(cfg.get_value("session", "rng_state")) != TYPE_INT:
         return false
+    if saved_phase == "EXPLORE":
+        var saved_voyage: Dictionary = cfg.get_value("session","voyage",{})
+        for key in ["room","loop","actions","line","goal_done","scene","facts","notes","met","visits","recent","seen","bonds","echo","memories","past","choices","deferred","inventory","used_items","inspected","companion"]:
+            if not saved_voyage.has(key): return false
+        if not saved_voyage["scene"] is Dictionary or not saved_voyage["met"] is Array: return false
+        if not AstraVoyageContent.ROOMS.has(str(saved_voyage["room"])): return false
     var saved_truth: Dictionary = cfg.get_value("session", "truth")
     for required in ["nulls", "claims", "positions", "null_ops", "trace_pairs"]:
         if not saved_truth.has(required):
             return false
     var saved_case_data := AstraCaseCatalog.get_case(saved_case)
-    var expected_nulls := AstraCaseCatalog.null_count(saved_case_data)
+    var expected_nulls := int(cfg.get_value("session", "null_count", 2))
     if not saved_truth["nulls"] is Array or saved_truth["nulls"].size() != expected_nulls:
         return false
     for required in ["claims", "positions", "null_ops", "trace_pairs"]:
@@ -361,7 +371,7 @@ func _valid_snapshot(cfg: ConfigFile) -> bool:
     # the case template otherwise; `self.roster` is still empty at this point.
     var saved_roster: Array = cfg.get_value("session", "roster", [])
     if saved_roster.is_empty():
-        saved_roster = AstraCaseCatalog.roster(saved_case_data)
+        saved_roster = AstraCrewCatalog.ORDER.duplicate() if version == 1 else AstraCaseCatalog.roster(saved_case_data)
     for npc_id in saved_roster:
         if not saved_truth["claims"].get(npc_id, null) is Dictionary or not saved_truth["positions"].has(npc_id):
             return false
@@ -706,9 +716,9 @@ func phase_hint() -> String:
         "INVESTIGATION": return "장소와 조사 지점을 고르세요. 기록 시각을 사건 시간대와 대조하는 것이 중요합니다."
         "INTERROGATION": return "이름을 골라 진술을 듣고 확보한 증거와 비교하세요. 모든 거짓말이 범행을 뜻하지는 않습니다."
         "MEETING": return "공개된 말과 기록을 비교하세요. 단서나 나의 가설을 제시해 회의에 개입할 수 있습니다."
-        "VOTE": return "한 명을 고른 뒤 투표하세요. 득표는 개표 후 공개됩니다. 동률에 조사관의 대상이 있으면 그 대상을 우선합니다."
+        "VOTE": return "한 명을 고른 뒤 투표하세요. 득표는 개표 후 공개됩니다. 동률이면 아무도 격리하지 않습니다."
         "NIGHT": return "밤에 할 수 있는 일은 하나입니다. 보호·감시·기록 백업·휴식 중 선택하세요."
-        "RESULT": return "사건 재구성이 끝났습니다. 진실과 그날의 선택을 돌아보세요."
+        "RESULT": return "조사가 끝났습니다. 진실과 그날의 선택을 돌아보세요."
     return ""
 
 func _enter(next_phase: String) -> void:
@@ -860,7 +870,7 @@ func ask(npc_id: String, intent: String, clue_id: String = "") -> Dictionary:
         "WITNESS", "TIMELINE", "TRUST": _ask_open(member, intent, result)
 
     member.refresh_expression()
-    member.remember("DAY %d · 조사관 질문 %s" % [day, intent])
+    member.remember("DAY %d · 탐사요원 질문 %s" % [day, intent])
     _recompute_contradictions()
     changed.emit()
     return result
@@ -1365,17 +1375,17 @@ func _event_vale_record(member: AstraCrewMember, result: Dictionary) -> String:
             _discover(picked, true)
             result["clue"] = picked
             member.adjust_trust(0.04)
-            return "베일이 보여 준 기록은 공식 로그와 일치했다. 단서 ‘%s’를 확보했다." % str(picked.get("title", ""))
-        return "베일이 기록을 펼쳤지만 이미 확인한 내용뿐이었다."
+            return "소렌이 보여 준 기록은 공식 로그와 일치했다. 단서 ‘%s’를 확보했다." % str(picked.get("title", ""))
+        return "소렌이 기록을 펼쳤지만 이미 확인한 내용뿐이었다."
     var fake := _fabricate_group(member.id)
     if fake.is_empty():
-        return "베일이 기록을 펼쳤지만 의미 있는 내용은 없었다."
+        return "소렌이 기록을 펼쳤지만 의미 있는 내용은 없었다."
     var op_id := str(truth["null_ops"].get(member.id, ""))
-    var clue := _add_testimony_clue("planted", member.id, "베일의 신호 해석",
-        "베일의 해석: %s 직전 외부로 나간 신호에 %s 서명 조각이 섞여 있다. 해당: %s. (출처: 베일 개인 분석)" % [op_name(op_id), AstraCrewCatalog.group_label(str(fake["category"]), str(fake["group"])), names_of(AstraCrewCatalog.group_members_in(str(fake["category"]), str(fake["group"]), roster))],
+    var clue := _add_testimony_clue("planted", member.id, "소렌의 신호 해석",
+        "소렌의 해석: %s 직전 외부로 나간 신호에 %s 서명 조각이 섞여 있다. 해당: %s. (출처: 소렌 개인 분석)" % [op_name(op_id), AstraCrewCatalog.group_label(str(fake["category"]), str(fake["group"])), names_of(AstraCrewCatalog.group_members_in(str(fake["category"]), str(fake["group"]), roster))],
         str(fake["category"]), str(fake["group"]), op_id, member.id, true)
     result["clue"] = clue
-    return "베일이 자신만의 해석을 담은 기록을 건넸다. 공식 로그로는 확인되지 않는다."
+    return "소렌이 자신만의 해석을 담은 기록을 건넸다. 공식 로그로는 확인되지 않는다."
 
 func _event_noa(member: AstraCrewMember, make_public: bool, result: Dictionary) -> String:
     var target := ""
@@ -1583,7 +1593,7 @@ func _maybe_challenge_player(subject_id: String) -> void:
     for candidate in observers:
         if candidate == subject_id:
             continue
-        # Noa keeps the records and Dax argues from patterns, so they notice
+        # Noa keeps the records and Daren argues from patterns, so they notice
         # first; anyone can, but those two are likelier.
         if candidate in ["noa", "dax"]:
             speaker = candidate
@@ -1602,11 +1612,11 @@ func _maybe_challenge_player(subject_id: String) -> void:
     var target_name := name_of(str(remark["target"]))
     var text := ""
     if str(remark["kind"]) == "defend":
-        text = "조사관. %s 얘기가 나올 때마다 먼저 끼어드시는군요. 회의 %d번 모두요." % [target_name, int(remark["count"])]
+        text = "탐사요원. %s 얘기가 나올 때마다 먼저 끼어드시는군요. 회의 %d번 모두요." % [target_name, int(remark["count"])]
     else:
-        text = "조사관은 %s|eul %d번 지목했습니다. 다른 이름은 한 번도 나오지 않았습니다." % [target_name, int(remark["count"])]
+        text = "탐사요원은 %s|eul %d번 지목했습니다. 다른 이름은 한 번도 나오지 않았습니다." % [target_name, int(remark["count"])]
     _feed_line(speaker, "player", text, "react")
-    _record_beat("player_pattern", [speaker], "%s가 조사관의 행동 패턴을 지적했다." % name_of(speaker))
+    _record_beat("player_pattern", [speaker], "%s가 탐사요원의 행동 패턴을 지적했다." % name_of(speaker))
 
 func _record_beat(beat_id: String, participants: Array, summary: String) -> void:
     if AstraSocialEvents.on_cooldown(social_beats, beat_id, day):
@@ -1708,13 +1718,21 @@ func _open_meeting() -> void:
             if mourner != "":
                 _feed_npc(mourner, "m_mourn", {"victim": name_of(victim_id)}, "mourn", victim_id)
 
-    for npc_id in living_ids():
+    var speakers := living_ids()
+    AstraCaseGenerator._shuffle(speakers,rng)
+    var spoken_claims := 0
+    for npc_id in speakers:
         if public_claims.has(npc_id):
             continue
         var claim := current_claim(npc_id)
         var companions: Array = claim.get("companions", [])
         var key := "m_alibi_with" if not companions.is_empty() else "m_alibi_alone"
-        _feed_npc(npc_id, key, {"pos": room_name(str(claim.get("position", ""))), "mates": AstraJosa.join_names(_names(companions))}, "alibi", "")
+        var params := {"pos":room_name(str(claim.get("position",""))),"mates":AstraJosa.join_names(_names(companions))}
+        if spoken_claims < 2:
+            _feed_npc(npc_id,key,params,"alibi","")
+            spoken_claims += 1
+        else:
+            _record_claim(npc_id,AstraClaimLedger.KIND_POSITION,AstraClaimLedger.SCOPE_PUBLIC,AstraDialogue.line(npc_id,key,params,0),{"position":claim.get("position",""),"companions":companions})
         public_claims[npc_id] = true
         known_claims[npc_id] = {"position": str(claim.get("position", "")), "companions": companions.duplicate(), "day": day}
 
@@ -2118,10 +2136,12 @@ func vote_intentions() -> Dictionary:
         for other in living:
             if other == npc_id:
                 continue
-            var value := member.get_suspicion(other) - member.get_affinity(other) * 0.12 + (_stable_noise(npc_id + other) - 0.5) * VOTE_NOISE
+            var value := member.get_suspicion(other) - member.get_affinity(other) * 0.12 + (_stable_noise(npc_id + other) - 0.5) * VOTE_NOISE + _public_trace_support(other)
             if value > best:
                 best = value
                 target = other
+        if null_count == 1 and clues.filter(func(clue): return bool(clue.get("public",false))).is_empty() and best < 0.8:
+            target = ""
         result[npc_id] = target
         crew_votes[target] = int(crew_votes.get(target, 0)) + 1
     for npc_id in living:
@@ -2154,8 +2174,8 @@ func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int =
         return {"ok": false}
     if target_id != "" and not is_alive(target_id):
         return {"ok": false}
-    if theory_suspects.size() == 2 and str(theory_suspects[0]) != str(theory_suspects[1]):
-        theories.append({"day": day, "suspects": [str(theory_suspects[0]), str(theory_suspects[1])], "confidence": clampi(confidence, 0, 100)})
+    if theory_suspects.size() >= null_count and (null_count == 1 or str(theory_suspects[0]) != str(theory_suspects[1])):
+        theories.append({"day": day, "suspects": theory_suspects.slice(0,null_count), "confidence": clampi(confidence, 0, 100)})
     var intentions := vote_intentions()
     var tally := vote_tally(target_id)
     var top := 0
@@ -2168,8 +2188,6 @@ func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int =
     var isolated := ""
     if leaders.size() == 1:
         isolated = str(leaders[0])
-    elif target_id in leaders:
-        isolated = target_id
     vote_cast = true
     last_vote = {"tally": tally, "intentions": intentions, "player_target": target_id, "isolated": isolated, "top": top, "tie": leaders.size() > 1 and isolated == ""}
     if isolated != "":
@@ -2466,7 +2484,7 @@ func _finalize() -> void:
     match outcome:
         "WIN":
             title = "ASTRA 안정화"
-            subtitle = "두 명의 Null을 모두 격리했다. 선내 신호가 다시 맑아진다."
+            subtitle = "기록이 가리키는 %d명의 행동을 멈췄다. 그들이 기억하지 못하는 시간은 여전히 비어 있다." % null_count
         "TIMEOUT":
             title = "신호 두절"
             subtitle = "%d일이 지났지만 Null은 아직 선내에 있다. 기록만이 다음 조사로 남는다." % max_days
@@ -2483,7 +2501,7 @@ func _finalize() -> void:
         "roster": roster.duplicate(), "difficulty": difficulty,
         "loop_summary": loop_summary(),
         "post_mortem": post_mortem(),
-        "story": str(case_data.get("story_outro", "")) if outcome == "WIN" else "재구성이 중단됐다. 확보한 기록과 복구 임무는 아카이브에 남는다. 새로운 시드로 다시 조사하거나 다음 사건에서 여정을 이어갈 수 있다."
+        "story": str(case_data.get("story_outro", ""))
     }
 
 # What made *this* run different from the last one, in sentences rather than in
@@ -2533,7 +2551,7 @@ func post_mortem() -> Dictionary:
         var sorted_ids: Array = tally.keys()
         sorted_ids.sort_custom(func(a, b): return int(tally[a]) > int(tally[b]))
         if sorted_ids.size() >= 2 and int(tally[sorted_ids[0]]) - int(tally[sorted_ids[1]]) <= PLAYER_VOTE_WEIGHT:
-            decisive = "마지막 투표는 %s표 차였다. 조사관의 표가 결과를 갈랐다." % str(int(tally[sorted_ids[0]]) - int(tally[sorted_ids[1]]))
+            decisive = "마지막 투표는 %s표 차였다. 탐사요원의 표가 결과를 갈랐다." % str(int(tally[sorted_ids[0]]) - int(tally[sorted_ids[1]]))
     return {"missed_clues": missed.slice(0, 4), "innocent_lie": innocent_lie, "decisive_vote": decisive}
 
 func grade_theory() -> Dictionary:
@@ -2557,14 +2575,14 @@ func grade_theory() -> Dictionary:
     evidence = mini(20, evidence) if matched > 0 else mini(8, evidence)
     var confidence := int(theory.get("confidence", 60))
     var calibration := 0
-    if matched == 2 and confidence >= 70:
+    if matched == null_count and confidence >= 70:
         calibration = 10
     elif matched == 0 and confidence >= 70:
         calibration = -10
     elif matched == 1 and confidence >= 40 and confidence <= 70:
         calibration = 5
     var day_factor: float = float(THEORY_DAY_FACTORS[clampi(int(theory.get("day", 1)), 0, THEORY_DAY_FACTORS.size() - 1)])
-    var grade := clampi(int(round((matched * 35 + evidence + calibration) * day_factor)), 0, 100)
+    var grade := clampi(int(round((matched * (70.0 / null_count) + evidence + calibration) * day_factor)), 0, 100)
     var label := "단편적 추리"
     if grade >= 90:
         label = "S · 완벽한 관측"
@@ -2638,13 +2656,13 @@ func tutorial_active() -> bool:
 
 func time_caption() -> String:
     match phase:
-        "INVESTIGATION": return "%02d:%02d · 선내 탐색" % [12 + (investigation_ap_max() - investigation_ap) / 2, 30 * ((investigation_ap_max() - investigation_ap) % 2)]
-        "INTERROGATION": return "늦은 오후 · " + ("대화할 여유가 있다" if talk_ap > 1 else ("회의가 가까워진다" if talk_ap == 1 else "회의 시간이 되었다"))
-        "MEETING": return "저녁 회의 · " + ("발언할 기회가 있다" if meeting_actions_left > 0 else "이제 판단할 시간")
-        "VOTE": return "21:00 · 격리 판단"
-        "NIGHT": return "00:30 · 소등"
-        "RESULT": return "사건 재구성 종료"
-    return "08:00 · 아침 보고"
+        "INVESTIGATION": return "이동은 무료"
+        "INTERROGATION": return "기록을 보여 주거나 말을 듣는다"
+        "MEETING": return "같은 증거를 함께 확인한다"
+        "VOTE": return "동률이면 격리 보류"
+        "NIGHT": return "오늘 밤 한 가지 행동"
+        "RESULT": return "다음 항해에 남은 기록"
+    return "함께 확인할 기록"
 
 func investigation_points(room_id: String) -> Array:
     var specs := [
@@ -2662,6 +2680,13 @@ func investigation_points(room_id: String) -> Array:
                 pending = pending or (not bool(clue.get("found", false)) and not bool(clue.get("destroyed", false)))
         if exists:
             var point: Dictionary = spec.duplicate(true)
+            var room_key: String = AstraArt.ROOM_ART.get(room_id,"bridge")
+            var logical_room: String = {"bridge":"comms", "medical":"medbay", "engine":"engine", "security":"security", "archive":"archive", "garden":"garden", "lounge":"lounge", "breach":"security"}.get(room_key,"comms")
+            var object_points: Array = AstraVoyageContent.ROOMS[logical_room]["points"]
+            var point_index := ["records","traces","access"].find(str(spec["id"]))
+            var object: Array = object_points[point_index]
+            point["label"] = object[1]
+            point["position"] = Vector2(float(object[2]),float(object[3]))
             point["available"] = pending and investigation_ap > 0 and phase == "INVESTIGATION" and outcome == ""
             point["searched"] = not pending
             result.append(point)
@@ -2995,7 +3020,7 @@ func opinions_about(target_id: String) -> Array:
 # 0.3.1 gave the meeting three moves — publish a clue, accuse, defend — and all
 # three are about one person. The move a social deduction game actually turns on
 # is making two people answer *each other*, and there was no way to do it. The
-# player could see in their notes that Rho claimed the lounge while Sena placed
+# player could see in their notes that Jun claimed the lounge while Sena placed
 # herself there and did not mention him, but the only way to use that was to
 # accuse somebody outright.
 #
@@ -3110,3 +3135,348 @@ func confront_candidates(a_id: String) -> Array:
             "reason": "같은 장소를 말했습니다" if same_room else "서로를 동행으로 언급했습니다"
         })
     return result
+
+# ---------------------------------------------------------------- 0.5.0 voyage
+# Snapshot-safe state; UI only invokes the public methods below.
+func begin_voyage(memory: Dictionary = {}) -> void:
+    var loop_count := int(memory.get("loops", 0))
+    voyage = {"loop":loop_count, "room":"medbay", "visits":["medbay"], "facts":[], "notes":[],
+        "inspected":[], "met":[], "recent":memory.get("recent", []).duplicate(), "seen":{},
+        "echo":memory.get("echo", {}).duplicate(true), "bonds":memory.get("bonds", {}).duplicate(true),
+        "memories":{}, "past":{}, "changes":[], "actions":0, "choices":{}, "deferred":[],
+        "scene":{}, "line":0, "companion":"", "inventory":[], "used_items":[], "goal_done":false,
+        "previous_choices":memory.get("choices",{}).duplicate(true),"losses":memory.get("losses",[]).duplicate()}
+    voyage["chapters"] = memory.get("chapters",[]).duplicate()
+    var previous: Dictionary = memory.get("memories", {})
+    var previous_past: Dictionary = memory.get("past", {})
+    for id in roster:
+        var index := rng.randi_range(0,2)
+        var destination := str(AstraVoyageContent.DESTINATIONS[index])
+        if loop_count > 0 and previous.get(id, "") == destination:
+            destination = str(AstraVoyageContent.DESTINATIONS[(index+1)%3])
+        voyage["memories"][id] = destination
+        if previous.has(id) and previous[id] != destination:
+            voyage["changes"].append("%s의 목적지" % name_of(id) + ": " + str(previous[id]) + " → " + destination)
+        var bond := float(voyage["bonds"].get(id, 0.0))
+        crew[id].adjust_trust(clampf(bond * 0.2, -0.12, 0.16))
+        for other in roster:
+            if id == other:
+                continue
+            var pair: String = id + ":" + other
+            var history := "오래된 동료" if rng.randf() > 0.5 else "처음 함께 일함"
+            voyage["past"][pair] = history
+            crew[id].affinity[other] = clampf(AstraCrewCatalog.affinity_bias(id,other) + (0.18 if history == "오래된 동료" else -0.08),-1.0,1.0)
+            if previous_past.has(pair) and previous_past[pair] != history and voyage["changes"].size() < 8:
+                voyage["changes"].append("%s / %s: %s → %s" % [name_of(id),name_of(other),previous_past[pair],history])
+    phase = "EXPLORE"
+    var waking := str(AstraVoyageContent.chapter(case_id)["awake"])
+    _voyage_scene(AstraVoyageContent.scene((waking if waking != "" else "mira") + "_awakening"))
+    phase_changed.emit(phase)
+    changed.emit()
+
+func voyage_rooms() -> Array:
+    return AstraVoyageContent.room_ids(roster)
+
+func voyage_people() -> Array:
+    var ids: Array = []
+    var room := str(voyage.get("room", "medbay"))
+    for id in roster:
+        var home := str(AstraVoyageContent.HOME[id])
+        if home == room or voyage.get("companion", "") == id:
+            ids.append(id)
+    # A shared break is a controlled variation, independent of hidden roles.
+    if room == "lounge":
+        var visitor := str(roster[posmod(seed_value + int(voyage.get("actions",0)), roster.size())])
+        if visitor not in ids:
+            ids.append(visitor)
+    return ids
+
+func voyage_move(room: String, greet: bool = true) -> bool:
+    if phase != "EXPLORE" or room not in voyage_rooms() or not voyage.get("scene",{}).is_empty():
+        return false
+    voyage["room"] = room
+    if room not in voyage["visits"]:
+        voyage["visits"].append(room)
+    _voyage_tick(greet)
+    if greet and voyage["scene"].is_empty():
+        var waiting: Array = voyage_people()
+        for id in waiting:
+            if id not in voyage["met"]:
+                _voyage_scene(AstraVoyageContent.scene(id + "_awakening"))
+                break
+        if voyage["scene"].is_empty() and not waiting.is_empty() and int(voyage["actions"]) % 3 == 0:
+            voyage_talk(str(waiting[0]))
+    changed.emit()
+    return true
+
+func voyage_points() -> Array:
+    var points: Array = AstraVoyageContent.ROOMS.get(voyage.get("room","medbay"),{}).get("points",[])
+    var result: Array = []
+    var stage := AstraCaseCatalog.CAMPAIGN.find(case_id)
+    for point in points:
+        if str(point[4]) == "arrival" and stage < 3:
+            continue
+        if str(point[4]) == "sample" and stage < 4:
+            continue
+        if str(point[4]) == "signal" and stage < 2:
+            continue
+        if str(point[4]) == "archive" and stage < 3:
+            continue
+        var visible: Array = point.duplicate()
+        if str(voyage["room"]) == "medbay" and str(point[0]) == "pod":
+            visible[5] = "수면 중인 포드는 %d개다. 잠금 해제 이력에는 실행자 서명이 없다." % (8-roster.size())
+        result.append(visible)
+    return result
+
+func voyage_inspect(point_id: String) -> bool:
+    if phase != "EXPLORE" or not voyage.get("scene",{}).is_empty():
+        return false
+    for point in voyage_points():
+        if str(point[0]) != point_id:
+            continue
+        var key := str(voyage["room"]) + ":" + point_id
+        if key in voyage["inspected"]:
+            return false
+        voyage["inspected"].append(key)
+        _voyage_fact(str(point[4]),str(point[5]))
+        if key == "engine:worklog" and int(voyage["loop"]) > 0 and "recorder" not in voyage["inventory"]:
+            voyage["inventory"].append("recorder")
+            voyage["notes"].append("정비 로그 옆에서 휴대 기록기를 챙겼다. 통신실에서 신호를 따로 저장할 수 있다.")
+        _voyage_tick()
+        if voyage["scene"].is_empty():
+            _voyage_scene({"id":"inspect_"+key,"action":str(point[5]),"lines":[],"choices":[]})
+        changed.emit()
+        return true
+    return false
+
+func _voyage_fact(id: String, note: String) -> void:
+    if id not in voyage["facts"]:
+        voyage["facts"].append(id)
+    if note not in voyage["notes"]:
+        voyage["notes"].append(note)
+    if id == str(AstraVoyageContent.chapter(case_id)["fact"]):
+        voyage["goal_done"] = true
+
+func _voyage_scene(scene: Dictionary) -> void:
+    if scene.is_empty():
+        return
+    voyage["scene"] = scene.duplicate(true)
+    voyage["line"] = -1
+    var who := str(scene.get("speaker",""))
+    if who != "" and who not in voyage["met"]:
+        voyage["met"].append(who)
+    var id := str(scene.get("id",""))
+    voyage["seen"][id] = int(voyage["seen"].get(id,0)) + 1
+    voyage["recent"].append(id)
+    while voyage["recent"].size() > 18:
+        voyage["recent"].pop_front()
+
+func voyage_talk(who: String, topic: String = "") -> bool:
+    if phase != "EXPLORE" or who not in voyage_people() or not voyage["scene"].is_empty():
+        return false
+    var eligible: Array = []
+    var bond := float(voyage["bonds"].get(who,0.0))
+    var echo := float(voyage["echo"].get(who,0.0))
+    for scene in AstraVoyageContent.SCENES:
+        if scene["speaker"] != who:
+            continue
+        var tag := str(scene["tag"])
+        if topic != "" and tag != topic:
+            continue
+        if tag == "awakening": continue
+        var choices: Dictionary = voyage["choices"]
+        if tag == "conflict" and int(choices.get("hide",0)) == 0: continue
+        if tag == "suspected" and int(voyage.get("previous_choices",{}).get("accuse",0)) == 0: continue
+        if tag == "after" and int(voyage["loop"]) == 0: continue
+        if tag == "danger" and (str(voyage["room"]) not in ["engine","security"] or bool(voyage["goal_done"])): continue
+        if tag == "relief" and not bool(voyage["goal_done"]): continue
+        if tag == "night" and int(voyage["actions"]) < 10: continue
+        if tag == "grief" and voyage.get("losses",[]).is_empty(): continue
+        if tag == "apology" and int(choices.get("hide",0)) + int(voyage.get("previous_choices",{}).get("accuse",0)) == 0: continue
+        if tag == "defense" and not bool(voyage["goal_done"]): continue
+        if tag == "secret" and bond < 0.1: continue
+        if tag in ["personal","echo","secret"]:
+            if int(voyage["actions"]) < 5 or int(voyage["seen"].get(scene["id"],0)) > 0: continue
+        if tag == "pair" and scene.get("target", "") not in voyage_people():
+            continue
+        if tag == "trust" and bond < 0.25: continue
+        if tag == "distant" and bond > -0.15: continue
+        if tag == "echo" and (int(voyage["loop"]) < 1 or absf(echo) < 0.1): continue
+        if tag == "personal" and int(voyage["loop"]) < 1: continue
+        if not voyage["recent"].is_empty() and scene["id"] == voyage["recent"].back() and topic == "": continue
+        eligible.append(scene)
+        if tag in ["everyday","work","observation"]:
+            eligible.append(scene)
+    # Explicit topics always remain seekable, but normal conversations never
+    # reroll indefinitely searching for an eligible event.
+    if eligible.is_empty():
+        _voyage_scene({"id":who+"_busy","speaker":who,"action":AstraJosa.eun(name_of(who))+" 하던 일을 마무리한다. 잠시 조용히 곁에 선다.","lines":[],"choices":[]})
+    else:
+        # Prefer scenes not seen in the last few conversations. Fall back only
+        # when the eligible pool is genuinely small; never block progression.
+        var fresh: Array = eligible.filter(func(item): return item["id"] not in voyage["recent"].slice(-6))
+        if not fresh.is_empty(): eligible = fresh
+        var selected: Dictionary = eligible[rng.randi_range(0,eligible.size()-1)].duplicate(true)
+        if str(selected["tag"]) == "memory":
+            selected["lines"] = [["", "%s의 기억: %s. 같은 목적지가 적힌 서명 원본도 있다." % [name_of(who),str(voyage["memories"][who])]]]
+        if str(selected["tag"]) == "pair":
+            var other := str(selected["target"])
+            selected["action"] += " 두 사람의 배치 기록에는 ‘%s’라고 적혀 있다." % str(voyage["past"].get(who+":"+other,"처음 함께 일함"))
+        _voyage_scene(selected)
+    _voyage_tick(false)
+    changed.emit()
+    return true
+
+func voyage_ask_goal(who: String) -> bool:
+    if phase != "EXPLORE" or who not in voyage_people() or not voyage["scene"].is_empty():
+        return false
+    var chapter := AstraVoyageContent.chapter(case_id)
+    var fact := str(chapter["fact"])
+    var directions := {"mira":"포드 상태 기록을 같이 봐요.","rho":"이쪽 배선부터 같이 보자. 손전등 잡아 줘.","dax":"이 파일도 확인해 봐. 나는 다른 쪽을 볼게.","noa":"같은 날짜의 기록이 하나 더 있어요.","sena":"문을 열어 둘게. 같이 확인하자.","vale":"저장해 뒀어요. 여기부터 들어요.","eli":"전체 경로를 띄울게. 끝을 봐.","lyra":"라벨이 남아 있어요. 날짜를 봐요."}
+    _voyage_fact(fact,str(chapter["discovery"]))
+    var id := "goal_"+who
+    _voyage_scene({"id":id,"speaker":who,"tag":"work","action":AstraJosa.wa(name_of(who))+" 함께 기록을 펼친다.","lines":[[who,str(directions[who])],["",str(chapter["discovery"])]],"choices":[{"label":"함께 확인한 내용을 남긴다.","effect":"record"},{"label":"다른 동료에게도 가져간다.","effect":"share"}]})
+    _voyage_tick(false)
+    changed.emit()
+    return true
+
+func voyage_next() -> void:
+    if phase != "EXPLORE" or voyage["scene"].is_empty(): return
+    var scene: Dictionary = voyage["scene"]
+    var last: int = scene.get("lines",[]).size()-1
+    if int(voyage["line"]) < last:
+        voyage["line"] = int(voyage["line"])+1
+    elif scene.get("choices",[]).is_empty():
+        voyage["scene"] = {}
+    changed.emit()
+
+func voyage_choose(index: int) -> bool:
+    if phase != "EXPLORE" or voyage["scene"].is_empty(): return false
+    var scene: Dictionary = voyage["scene"]
+    var choices: Array = scene.get("choices",[])
+    if int(voyage["line"]) < scene.get("lines",[]).size()-1 or index < 0 or index >= choices.size(): return false
+    var effect := str(choices[index]["effect"])
+    var who := str(scene.get("speaker",""))
+    voyage["choices"][effect] = int(voyage["choices"].get(effect,0))+1
+    var preferences: Dictionary = AstraVoyageContent.RESPONSES.get(who,{})
+    var delta := float(preferences.get(effect,0.0))
+    # Privacy makes sharing a personal admission different from sharing a log.
+    if str(scene.get("tag","")) == "secret" and effect == "share": delta = -0.02
+    voyage["bonds"][who] = clampf(float(voyage["bonds"].get(who,0.0))+delta,-1.0,1.0)
+    voyage["echo"][who] = clampf(float(voyage["echo"].get(who,0.0))+delta,-1.0,1.0)
+    if crew.has(who): crew[who].adjust_trust(delta)
+    if effect in ["share","hide","help","defend"]:
+        voyage["deferred"].append({"who":who,"effect":effect,"due":int(voyage["actions"])+2})
+    voyage["scene"] = {}
+    changed.emit()
+    return true
+
+func voyage_use_recorder() -> bool:
+    if phase != "EXPLORE" or not voyage["scene"].is_empty() or voyage["room"] != "comms": return false
+    if "recorder" not in voyage["inventory"] or "recorder" in voyage["used_items"]: return false
+    voyage["used_items"].append("recorder")
+    voyage["notes"].append("휴대 기록기에 별도 사본을 남겼다. 누군가 원본을 지워도 비교할 수 있다.")
+    # A small, usable consequence in the subsequent deduction phase.
+    flags["voyage_backup"] = true
+    _voyage_scene({"id":"portable_copy","speaker":"", "action":"두 개의 재생 바가 같은 위치에서 멈춘다. 사본을 주머니에 넣는다.","lines":[],"choices":[]})
+    _voyage_tick(false)
+    changed.emit()
+    return true
+
+func voyage_follow(who: String) -> bool:
+    if phase != "EXPLORE" or who not in voyage_people() or not voyage["scene"].is_empty(): return false
+    voyage["companion"] = "" if voyage["companion"] == who else who
+    changed.emit()
+    return true
+
+func _voyage_tick(deliver: bool = true) -> void:
+    voyage["actions"] = int(voyage["actions"])+1
+    if not deliver or not voyage["scene"].is_empty(): return
+    for event in voyage["deferred"]:
+        if int(event["due"]) > int(voyage["actions"]): continue
+        var who := str(event["who"])
+        var reaction := {"share":"앞서 건넨 기록 옆에 새로운 메모가 붙어 있다. 혼자서는 놓쳤던 시각이다.","hide":"감춰 둔 사본을 동료가 발견했다. 질문 대신 두 파일을 나란히 놓는다.","help":"동료가 다음 작업의 자리를 미리 비워 둔다. 이번에는 당신의 도움이 필요하다.","defend":"대화가 막히자 동료가 당신 쪽으로 의자를 돌린다. 먼저 말을 끝내도록 기다린다."}
+        _voyage_scene({"id":"delayed_"+str(event["effect"]),"speaker":who,"action":str(reaction[event["effect"]]),"lines":[],"choices":[]})
+        voyage["deferred"].erase(event)
+        return
+    # Pity: main information is offered after six actions without the goal.
+    if int(voyage["actions"]) >= 6 and not bool(voyage["goal_done"]):
+        var chapter := AstraVoyageContent.chapter(case_id)
+        _voyage_fact(str(chapter["fact"]),str(chapter["discovery"]))
+        _voyage_scene({"id":"record_delivery","speaker":"noa","action":"노아가 복구한 기록을 가져왔다.","lines":[["noa","놓친 파일이 있어요. 같이 봐요."],["",chapter["discovery"]]],"choices":[]})
+
+func voyage_can_finish() -> bool:
+    return phase == "EXPLORE" and bool(voyage.get("goal_done",false)) and voyage.get("scene",{}).is_empty() and voyage.get("visits",[]).size() >= 2 and voyage.get("met",[]).size() >= mini(4,roster.size())
+
+func voyage_summary() -> Array:
+    var result: Array = ["당신은 ASTRA의 탐사요원이다.","깨어 있는 동료 %d명 · 장기수면 %d명" % [roster.size(),8-roster.size()]]
+    result.append_array(voyage.get("notes",[]).slice(-3))
+    return result
+
+func finish_voyage() -> bool:
+    if not voyage_can_finish(): return false
+    if case_id == AstraCaseCatalog.CALIBRATION:
+        outcome = "CONTINUE"
+        phase = "RESULT"
+        final_report = {"outcome":"CONTINUE","roster":roster.duplicate(),"nulls":[],"total":0,"rank":"","null_isolated":0,"mission_complete":false,"loop_summary":{"text":str(AstraVoyageContent.chapter(case_id)["outro"])}}
+    else:
+        phase = "BRIEFING"
+        if bool(flags.get("voyage_backup",false)):
+            flags["mission_backup"] = true
+    phase_changed.emit(phase)
+    changed.emit()
+    return true
+
+func voyage_memory() -> Dictionary:
+    if voyage.is_empty(): return {}
+    var echo: Dictionary = voyage.get("echo",{}).duplicate(true)
+    var bonds: Dictionary = voyage.get("bonds",{}).duplicate(true)
+    for id in roster:
+        var stance := player_stance_on(id)
+        bonds[id] = clampf(float(bonds.get(id,0.0)) + int(stance.get("defended",0))*0.03 - int(stance.get("accused",0))*0.02,-1.0,1.0)
+        echo[id] = lerpf(float(echo.get(id,0.0)),float(bonds[id]),0.3)
+    var choices: Dictionary = voyage.get("choices",{}).duplicate(true)
+    choices["accuse"] = int(stats.get("accusations",0))
+    var chapters: Array = voyage.get("chapters",[]).duplicate()
+    if case_id not in chapters: chapters.append(case_id)
+    return {"loops":int(voyage.get("loop",0))+1,"echo":echo,"bonds":bonds,"memories":voyage.get("memories",{}).duplicate(true),"past":voyage.get("past",{}).duplicate(true),"recent":voyage.get("recent",[]).duplicate(),"changes":voyage.get("changes",[]).duplicate(),"choices":choices,"losses":casualties.duplicate(),"chapters":chapters}
+
+func voyage_visit_person(who: String) -> bool:
+    if phase != "EXPLORE" or who not in roster or not voyage["scene"].is_empty(): return false
+    var room := str(AstraVoyageContent.HOME[who])
+    if not voyage_move(room,false): return false
+    if who not in voyage["met"]:
+        _voyage_scene(AstraVoyageContent.scene(who+"_awakening"))
+        changed.emit()
+    elif voyage["scene"].is_empty(): return voyage_talk(who)
+    return true
+
+func voyage_memory_talk(who: String) -> bool:
+    if phase != "EXPLORE" or who not in voyage_people() or not voyage["scene"].is_empty(): return false
+    var destination := str(voyage["memories"][who])
+    var notes := {"지구 귀환":"귀환 후 검진 예약", "새 거주지":"새 거주지 배정 명부", "외곽 탐사":"외곽 탐사 임무서"}
+    var scene := AstraVoyageContent.scene(who+"_memory")
+    # Do not contradict the seed's memory with fixed, destination-specific lines.
+    scene["lines"] = [["", "%s의 기억: %s. %s에도 같은 목적지가 적혀 있다." % [name_of(who),destination,str(notes[destination])]]]
+    scene["action"] = AstraJosa.i(name_of(who))+" 기억을 뒷받침하는 문서를 가져온다."
+    _voyage_scene(scene)
+    changed.emit()
+    return true
+
+
+func _public_trace_support(target: String) -> float:
+    for op in case_data.get("ops",[]):
+        var sets: Array = []
+        for clue in clues:
+            if not bool(clue.get("public",false)) or str(clue.get("kind","")) != "trace" or str(clue.get("op","")) != str(op["id"]): continue
+            var minute := int(clue.get("minute",0))
+            if minute < int(case_data["window_start"]) or minute > int(case_data["window_end"]): continue
+            sets.append(clue.get("members",[]))
+        for a in range(sets.size()):
+            for b in range(a+1,sets.size()):
+                var intersection: Array = []
+                for id in sets[a]:
+                    if id in sets[b]: intersection.append(id)
+                if intersection.size()==1 and intersection[0]==target: return 0.85
+    return 0.0
+

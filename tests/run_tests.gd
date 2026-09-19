@@ -43,15 +43,15 @@ func check(condition: bool, label: String) -> void:
 
 func test_josa() -> void:
     check(AstraJosa.eun("Mira") == "Mira는", "josa Mira는")
-    check(AstraJosa.eun("Vale") == "Vale은", "josa Vale은")
+    check(AstraJosa.eun("소렌") == "소렌은", "josa Vale은")
     check(AstraJosa.i("의료실") == "의료실이", "josa 의료실이")
     check(AstraJosa.ro("의료실") == "의료실로", "josa 의료실로 (ㄹ)")
     check(AstraJosa.ro("엔진실") == "엔진실로", "josa 엔진실로")
     check(AstraJosa.ro("통신 콘솔") == "통신 콘솔로", "josa 콘솔로")
     check(AstraJosa.eul("라운지") == "라운지를", "josa 라운지를")
-    check(AstraJosa.wa("Dax") == "Dax와", "josa Dax와")
-    check(AstraJosa.fill("{a|eul} 봤어요", {"a": "Rho"}) == "Rho를 봤어요", "fill token")
-    check(AstraJosa.join_names(["Mira", "Noa", "Dax"]) == "Mira, Noa와 Dax", "join names")
+    check(AstraJosa.wa("다렌") == "다렌과", "josa Dax와")
+    check(AstraJosa.fill("{a|eul} 봤어요", {"a": "준"}) == "준을 봤어요", "fill token")
+    check(AstraJosa.join_names(["Mira", "Noa", "Daren"]) == "Mira, Noa와 Daren", "join names")
 
 func test_crew_traits() -> void:
     for npc_id in AstraCrewCatalog.ORDER:
@@ -71,9 +71,9 @@ func test_generator() -> void:
             var t := AstraCaseGenerator.generate(case_id, seed_value)
             total += 1
             var nulls: Array = t["nulls"]
-            check(nulls.size() == 2 and nulls[0] != nulls[1], "%s/%d two distinct nulls" % [case_id, seed_value])
+            check(nulls.size() == AstraCaseCatalog.null_count(AstraCaseCatalog.get_case(case_id)) and (nulls.size()==1 or nulls[0]!=nulls[1]), "%s/%d distinct roster-sized influences" % [case_id, seed_value])
             check(str(t["herring"]) not in nulls, "%s/%d herring is innocent" % [case_id, seed_value])
-            for npc_id in AstraCrewCatalog.ORDER:
+            for npc_id in AstraCaseCatalog.roster(AstraCaseCatalog.get_case(case_id)):
                 var claim: Dictionary = t["claims"].get(npc_id, {})
                 check(not claim.is_empty(), "%s/%d claim for %s" % [case_id, seed_value, npc_id])
                 var honest: bool = npc_id not in nulls and str(npc_id) != str(t["herring"])
@@ -97,7 +97,7 @@ func test_generator() -> void:
                             both.append(member_id)
                     if both.size() == 1 and both[0] == null_id:
                         solved += 1
-            if solved == 2:
+            if solved == nulls.size():
                 intersect_ok += 1
             for clue in t["clues"]:
                 if bool(clue["decoy"]):
@@ -121,7 +121,7 @@ func test_session_flow() -> void:
     check(s.phase == "INTERROGATION", "interrogation reached")
     if not s.pending_event.is_empty():
         check(not s.can_advance(), "private event blocks advance")
-        var result := s.resolve_private_event(1)
+        var result := s.resolve_private_event(mini(1,s.pending_event.get("choices",[]).size()-1))
         check(bool(result.get("ok", false)) and s.pending_event.is_empty(), "private event resolves")
     var target := str(s.living_ids()[0])
     var ap := s.talk_ap
@@ -130,11 +130,11 @@ func test_session_flow() -> void:
     for line in answer.get("lines", []):
         check(str(line.get("text", "")).find("{") < 0 and str(line.get("text", "")).find("|") < 0, "alibi line formatted")
     s.advance()
-    check(s.phase == "MEETING" and s.meeting_feed.size() >= 8, "meeting opens with alibi round (%d lines)" % s.meeting_feed.size())
+    check(s.phase == "MEETING" and s.meeting_feed.size() >= 2, "meeting opens with focused statements (%d lines)" % s.meeting_feed.size())
     for entry in s.meeting_feed:
         var text := str(entry.get("text", ""))
         check(text != "" and text.find("{") < 0 and text.find("|") < 0, "meeting line formatted: " + text)
-    check(s.known_claims.size() == 8, "all claims known after meeting")
+    check(s.known_claims.size() == s.roster.size(), "all claims known after meeting")
     s.advance()
     check(s.phase == "VOTE" and not s.can_advance(), "vote gates advance")
     var vote := s.cast_vote(str(s.living_ids()[1]), [str(s.living_ids()[1]), str(s.living_ids()[2])], 60)
@@ -223,7 +223,15 @@ func test_night_and_endings() -> void:
                     if not s.pending_event.is_empty():
                         s.resolve_private_event(0)
                     s.advance()
+                "INVESTIGATION":
+                    for room_id in s.room_ids():
+                        while s.investigation_ap > 0:
+                            if s.search_room(room_id).is_empty(): break
+                    s.advance()
                 "MEETING":
+                    for clue in s.found_clues():
+                        if clue.get("kind", "") == "trace" and not clue.get("decoy",false):
+                            s.present_clue(str(clue["id"]))
                     for null_id in nulls:
                         if s.is_alive(str(null_id)):
                             s.accuse(str(null_id))
@@ -243,7 +251,7 @@ func test_night_and_endings() -> void:
         check(s.phase == "RESULT" and not s.final_report.is_empty(), "oracle game %d reaches result" % seed_value)
         if s.outcome == "WIN":
             wins += 1
-            check(int(s.final_report["theory"]["matched"]) == 2, "oracle theory matched")
+            check(int(s.final_report["theory"]["matched"]) == s.null_count, "oracle theory matched")
     check(wins >= 8, "oracle voting wins most games (%d/10)" % wins)
 
 func test_meta_progress() -> void:

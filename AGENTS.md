@@ -1,7 +1,7 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **0.3.1** (Last Light). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- Version **0.5.0** (Awakening). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
 - GitHub-first, CI-validated. Every release branch must pass `Godot CI` before it is promoted to `main`.
 
 ## Architecture rules (why 0.2.0 was a rebuild)
@@ -25,8 +25,8 @@ walking the node tree. Do not reintroduce that pattern.
 4. **Korean text goes through `AstraJosa`.** Use `{name|eun}`-style tokens in dialogue, `AstraJosa.eun()`
    etc. in UI code, and `|i`-style inline markers only inside `game_session.gd` strings that pass through
    `_josa_inline`. Never write `은(는)` / `이(가)`.
-5. **Each character keeps their register**: Mira 해요체, Rho/Eli 반말, Sena 다나까체, Vale 공손한 해요체,
-   Noa 짧은 해요체, Lyra 따뜻한 해요체, Dax 하다체. See `docs/CHARACTERS.md`.
+5. **Each character keeps their register**: 미라 해요체, 준/루칸/세나/다렌 자연스러운 반말, 소렌 차분한 해요체,
+   노아 짧은 해요체, 마렌 따뜻한 해요체. See `docs/CHARACTERS.md`.
 6. **Optional AI stays optional.** The backend may only reword a line that the rules already produced
    (`apply_ai_line`). It never changes roles, clues, suspicion, votes or score. Off by default.
 7. **Saves stay compatible.** `AstraMetaProgress` must load older archives (v4 keys are kept).

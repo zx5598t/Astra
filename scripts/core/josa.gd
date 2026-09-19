@@ -7,12 +7,12 @@ extends RefCounted
 # Latin-script names as they are read aloud in Korean.
 # true = the reading ends with a final consonant (받침).
 const LATIN_FINAL := {
-    "Mira": false, "Rho": false, "Eli": false, "Sena": false, "Vale": true,
-    "Noa": false, "Lyra": false, "Dax": false, "Ives": false, "Orin": true,
+    "Mira": false, "Jun": true, "Lucan": true, "Sena": false, "Soren": true,
+    "Noa": false, "Maren": true, "Daren": true, "Ives": false, "Orin": true,
     "Sael": true, "Null": true, "ASTRA": false, "Observer": false
 }
 # Readings that end in ㄹ (so 으로 becomes 로).
-const LATIN_RIEUL := {"Vale": true, "Sael": true, "Null": true}
+const LATIN_RIEUL := { "Sael": true, "Null": true}
 
 static func _last_char(word: String) -> String:
     var clean := word.strip_edges()
@@ -134,7 +134,7 @@ static func fill(template: String, params: Dictionary) -> String:
         cursor = close + 1
     return out
 
-# "Mira", "Mira와 Noa", "Mira, Noa와 Dax"
+# "Mira", "Mira와 Noa", "Mira, Noa와 Daren"
 static func join_names(names: Array) -> String:
     if names.is_empty():
         return ""

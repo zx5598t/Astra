@@ -24,6 +24,8 @@ func _expect(condition: bool, label: String) -> void:
         printerr("UI SMOKE FAIL · " + label)
 
 func _run() -> void:
+    for path in [META_PATH, SETTINGS_PATH]:
+        DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
     app = load("res://scenes/main.tscn").instantiate()
     app.meta = AstraMetaProgress.new(META_PATH)
     app.settings = AstraSettings.new(SETTINGS_PATH)
@@ -39,7 +41,9 @@ func _run() -> void:
         if child.has_method("close"):
             child.close(-1)
     await _wait(3)
-    _expect(app._current is AstraTitleScreen, "title screen shown")
+    _expect(app._current is AstraVoyageView, "cold open enters real ship exploration")
+    app.show_title()
+    await _wait(3)
     _expect(app.settings.intro_seen, "cold open is not shown twice")
 
     # The tutorial case has to be playable end to end before the campaign opens.
@@ -47,6 +51,7 @@ func _run() -> void:
     app.meta.calibration_completed = true
 
     app.start_case("DEAD_AIR", "ANALYST")
+    await _finish_exploration()
     app.session.advance()
     app.session.perform_mission()
     await _wait(3)
@@ -111,6 +116,10 @@ func _play_case(case_id: String, protocol: String) -> void:
         if not open_modal:
             break
         await _wait(2)
+    await _finish_exploration()
+    if app.session.phase == "RESULT":
+        _expect(app.meta.calibration_completed,"first loop completes without voting")
+        return
     var screen = app._current
     _expect(screen is AstraGameScreen, "%s game screen" % case_id)
     var s: AstraGameSession = app.session
@@ -128,7 +137,7 @@ func _play_case(case_id: String, protocol: String) -> void:
                         await _wait(1)
             "INTERROGATION":
                 if not s.pending_event.is_empty():
-                    view._resolve_event(1)
+                    view._resolve_event(mini(1,s.pending_event["choices"].size()-1))
                     await _wait(2)
                 for npc_id in s.living_ids():
                     if s.talk_ap <= 0:
@@ -164,3 +173,31 @@ func _play_case(case_id: String, protocol: String) -> void:
     _expect(s.phase == "RESULT", "%s/%s reached result" % [case_id, protocol])
     await _wait(4)
     _expect(not screen.archive_change.is_empty(), "%s/%s archive recorded" % [case_id, protocol])
+
+func _close_scene() -> void:
+    var s: AstraGameSession = app.session
+    var guard := 0
+    while not s.voyage.get("scene",{}).is_empty() and guard < 20:
+        guard += 1
+        var scene: Dictionary = s.voyage["scene"]
+        if int(s.voyage["line"]) >= scene.get("lines",[]).size()-1 and not scene.get("choices",[]).is_empty():
+            s.voyage_choose(0)
+        else:
+            s.voyage_next()
+    await _wait(2)
+
+func _finish_exploration() -> void:
+    var s: AstraGameSession = app.session
+    if s.phase != "EXPLORE": return
+    await _close_scene()
+    for who in s.roster:
+        s.voyage_visit_person(who)
+        await _close_scene()
+    if not s.voyage["goal_done"]:
+        s.voyage_ask_goal(str(s.voyage_people()[0]))
+        await _close_scene()
+    _expect(s.voyage_can_finish(),"exploration has a reachable exit")
+    s.finish_voyage()
+    await _wait(3)
+    if s.phase != "RESULT": app.show_session_screen()
+    await _wait(3)

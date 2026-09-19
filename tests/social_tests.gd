@@ -47,7 +47,7 @@ func test_calibration_shape() -> void:
     check(AstraCaseCatalog.roster(data).size() <= 5, "calibration roster is at most five people")
     check(data.get("rooms", []).size() <= 3, "calibration uses at most three rooms")
     check(AstraCaseCatalog.null_count(data) == 1, "calibration has exactly one Null")
-    check(AstraCaseCatalog.max_days(data) == 1, "calibration is one day, one meeting")
+    check(AstraCaseCatalog.roster(data) == AstraCrewCatalog.INITIAL, "first awakening uses the new four-person roster")
     for seed_value in range(1, 41):
         var s := AstraGameSession.new()
         s.setup(AstraCaseCatalog.CALIBRATION, seed_value, "ANALYST", "STORY")
@@ -214,7 +214,7 @@ func test_null_distribution() -> void:
         counts[npc_id] = 0
     var history: Array = []
     for run in range(240):
-        var truth := AstraCaseGenerator.generate("DEAD_AIR", 1000 + run, history, "STANDARD")
+        var truth := AstraCaseGenerator.generate("LAST_LIGHT", 1000 + run, history, "STANDARD")
         var nulls: Array = truth.get("nulls", [])
         for npc_id in nulls:
             counts[str(npc_id)] = int(counts[str(npc_id)]) + 1
@@ -230,7 +230,7 @@ func test_null_distribution() -> void:
     var previous: Array = []
     var rolling: Array = []
     for run in range(200):
-        var truth := AstraCaseGenerator.generate("DEAD_AIR", 5000 + run, rolling, "STANDARD")
+        var truth := AstraCaseGenerator.generate("LAST_LIGHT", 5000 + run, rolling, "STANDARD")
         var nulls: Array = truth.get("nulls", [])
         for npc_id in nulls:
             if npc_id in previous:
@@ -270,7 +270,7 @@ func test_dialogue_variety() -> void:
 func test_save_compatibility() -> void:
     var path := "user://astra_social_compat.cfg"
     var s := AstraGameSession.new()
-    s.setup("DEAD_AIR", 777, "ANALYST")
+    s.setup("LAST_LIGHT", 777, "ANALYST")
     s.advance()
     s.search_room(str(s.room_ids()[0]))
     check(s.save_snapshot(path), "snapshot writes")
@@ -284,7 +284,7 @@ func test_save_compatibility() -> void:
     cfg.save(path)
     var restored := AstraGameSession.new()
     check(restored.load_snapshot(path), "a 0.3.1 snapshot still loads")
-    check(restored.case_id == "DEAD_AIR" and restored.seed_value == 777, "legacy snapshot keeps its case and seed")
+    check(restored.case_id == "LAST_LIGHT" and restored.seed_value == 777, "legacy snapshot keeps its case and seed")
     check(restored.roster.size() == 8, "legacy snapshot fills the roster from the case")
     check(restored.null_count == 2 and restored.max_days == 4, "legacy snapshot fills the case shape")
     check(restored.difficulty == "STANDARD", "legacy snapshot defaults to standard")
@@ -360,7 +360,7 @@ func _play_to_night(case_id: String, seed_value: int, difficulty: String):
 # The tutorial is the case people replay the most, so the crime itself has to
 # move — otherwise the second run is the first run with a different name on it.
 func test_calibration_varies() -> void:
-    check(AstraCaseCatalog.variant_count(AstraCaseCatalog.CALIBRATION) >= 3, "calibration has several incidents")
+    check(AstraCaseCatalog.variant_count(AstraCaseCatalog.CALIBRATION) == 1, "the first discovery has a stable authored anchor")
     var themes := {}
     var rooms := {}
     var culprits := {}
@@ -368,15 +368,16 @@ func test_calibration_varies() -> void:
     for seed_value in range(1, 61):
         var s := AstraGameSession.new()
         s.setup(AstraCaseCatalog.CALIBRATION, seed_value, "ANALYST", "STORY")
-        themes[str(s.case_data.get("theme", ""))] = true
-        rooms[str(s.case_data["ops"][0]["room"])] = true
+        s.begin_voyage()
+        themes[str(s.voyage["memories"]["mira"])] = true
+        rooms[str(s.voyage["past"])] = true
         culprits[str(s.truth["nulls"][0])] = true
         liars[str(s.truth.get("herring", ""))] = true
         # However the incident lands, the tutorial stays small.
-        check(s.clues.size() <= 6, "seed %d keeps the tutorial short (%d clues)" % [seed_value, s.clues.size()])
+        check(s.clues.size() <= 8, "seed %d keeps the tutorial short (%d clues)" % [seed_value, s.clues.size()])
         check(s.roster.size() == 4, "seed %d keeps four people" % seed_value)
-    check(themes.size() >= 3, "the tutorial crime varies (%d kinds)" % themes.size())
-    check(rooms.size() >= 3, "the tutorial scene varies (%d rooms)" % rooms.size())
+    check(themes.size() >= 3, "destination memories vary (%d kinds)" % themes.size())
+    check(rooms.size() >= 3, "past relationships vary (%d rooms)" % rooms.size())
     check(culprits.size() == 4, "every one of the four takes a turn as the culprit")
     check(liars.size() >= 3, "the innocent liar varies too (%d people)" % liars.size())
     # The same seed still replays identically, so a bug report is reproducible.
@@ -393,7 +394,7 @@ func test_confrontation() -> void:
     var found_conflict := false
     var found_agreement := false
     for seed_value in range(1, 41):
-        var s := _play_to_meeting("DEAD_AIR", seed_value, "STANDARD")
+        var s := _play_to_meeting("LAST_LIGHT", seed_value, "STANDARD")
         if s.phase != "MEETING":
             continue
         for a_id in s.living_ids():
@@ -432,7 +433,7 @@ func test_confrontation() -> void:
 func test_face_icons() -> void:
     for npc_id in AstraCrewCatalog.ORDER:
         var path := AstraCrewCatalog.dot_path(npc_id)
-        check(path.begins_with("res://assets/art040/heads/"), "%s uses the head icon" % npc_id)
+        check(path.begins_with("res://assets/art050/heads/"), "%s uses the head icon" % npc_id)
         check(ResourceLoader.exists(path), "%s head icon exists" % npc_id)
         var texture: Texture2D = load(path)
         check(texture != null, "%s head icon loads" % npc_id)

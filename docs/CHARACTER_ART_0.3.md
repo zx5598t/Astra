@@ -8,8 +8,8 @@ The atlas is 1536 × 1024 pixels and contains eight equal 384 × 512 portrait ce
 
 | Row | Column 1 | Column 2 | Column 3 | Column 4 |
 | --- | --- | --- | --- | --- |
-| Top, y = 0 | Mira | Sena | Noa | Lyra |
-| Bottom, y = 512 | Rho | Eli | Vale | Dax |
+| Top, y = 0 | Mira | Sena | Noa | Maren |
+| Bottom, y = 512 | Jun | Lucan | Soren | Daren |
 | x | 0 | 384 | 768 | 1152 |
 
 Each `assets/portraits/{id}_portrait.tres` is a Godot `AtlasTexture` resource with filtering clipped to its own cell. The art is shared across emotional states; the portrait component displays the current reaction as a readable label and accent color. Never infer a hidden role from a portrait expression or color.

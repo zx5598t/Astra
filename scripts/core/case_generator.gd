@@ -53,7 +53,7 @@ static func generate(case_id: String, seed_value: int, null_history: Array = [],
 
     # 1. Hidden roles.
     # A flat shuffle lets the same face draw Null three cases running, which
-    # reads as "the game has decided Rho is the villain" and kills the point of
+    # reads as "the game has decided Jun is the villain" and kills the point of
     # re-rolling roles. `null_history` is the archive's record of recent picks:
     # a face that came up lately is weighted down, never excluded. The residual
     # randomness stays large enough that the player cannot count whose turn it

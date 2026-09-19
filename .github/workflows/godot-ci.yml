@@ -85,6 +85,13 @@ jobs:
           grep -q "ASTRA REPLAY VARIETY OK" replay.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error" replay.log; then exit 1; fi
 
+      - name: Awakening, exploration, loop memory and item consequences
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/voyage_tests.gd 2>&1 | tee voyage.log
+          grep -q "ASTRA VOYAGE TESTS OK" voyage.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error" voyage.log; then exit 1; fi
+
       - name: Boot main scene headlessly
         run: |
           set +e

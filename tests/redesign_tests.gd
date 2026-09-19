@@ -94,8 +94,8 @@ func _case(case_id: String, protocol: String, seed_value: int) -> void:
     s.advance()
     r.advance()
     if not s.pending_event.is_empty():
-        s.resolve_private_event(1)
-        r.resolve_private_event(1)
+        s.resolve_private_event(mini(1,s.pending_event.get("choices",[]).size()-1))
+        r.resolve_private_event(mini(1,r.pending_event.get("choices",[]).size()-1))
     var old_ap := s.talk_ap
     var answer := s.ask("mira","PERSONAL")
     r.ask("mira","PERSONAL")

@@ -227,7 +227,7 @@ func _transcript_text(session: AstraGameSession, member: AstraCrewMember) -> Str
         # Speaker on its own line above the words. Running "이름  말" together on
         # one line made long answers wrap under the name and read as one block.
         if speaker == "player":
-            lines.append("[color=#%s]▸ 조사관[/color]\n[color=#%s]%s[/color]" % [AstraUI.hex(AstraUI.CYAN), AstraUI.hex(AstraUI.MUTED), text])
+            lines.append("[color=#%s]▸ 탐사요원[/color]\n[color=#%s]%s[/color]" % [AstraUI.hex(AstraUI.CYAN), AstraUI.hex(AstraUI.MUTED), text])
         elif speaker == "narration":
             lines.append("[i][color=#%s]%s[/color][/i]" % [AstraUI.hex(AstraUI.PINK), text])
         else:

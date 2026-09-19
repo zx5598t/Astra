@@ -3,8 +3,8 @@ extends RefCounted
 
 # What each person has said out loud, in the order they said it.
 #
-# 0.3.1 kept one current alibi per crew member, so "Rho changed his story" was
-# not a thing the game could notice — only "Rho's story does not match a log".
+# 0.3.1 kept one current alibi per crew member, so "Jun changed his story" was
+# not a thing the game could notice — only "Jun's story does not match a log".
 # The ledger stores every assertion instead, which gives the social layer the
 # three moves a deduction game needs:
 #

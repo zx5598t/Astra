@@ -16,6 +16,7 @@ try {
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/redesign_tests.gd') "$logDir\redesign.log" 'ASTRA REDESIGN TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/social_tests.gd') "$logDir\social.log" 'ASTRA SOCIAL TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/replay_variety.gd') "$logDir\replay.log" 'ASTRA REPLAY VARIETY OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/voyage_tests.gd') "$logDir\voyage.log" 'ASTRA VOYAGE TESTS OK'
     $exe = Join-Path $packageDir 'ASTRA.exe'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--export-release', 'Windows Desktop', $exe) "$logDir\export.log"
     if (-not (Test-Path -LiteralPath $exe)) { throw 'The Windows export did not produce ASTRA.exe.' }

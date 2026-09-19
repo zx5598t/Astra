@@ -43,7 +43,7 @@ func refresh() -> void:
         _body.add_child(recap)
         var recap_box := AstraUI.vbox(6)
         recap.add_child(recap_box)
-        recap_box.add_child(AstraUI.label("이번 재구성에서", AstraUI.T_META, AstraUI.CYAN))
+        recap_box.add_child(AstraUI.label("이번 조사에서", AstraUI.T_META, AstraUI.CYAN))
         for line in summary_lines:
             recap_box.add_child(AstraUI.prose("· " + str(line), AstraUI.T_BODY, AstraUI.TEXT))
 
@@ -88,7 +88,7 @@ func refresh() -> void:
             text.add_child(AstraUI.label(str(fragment[2]),16,AstraUI.TEXT,true))
             memory.add_child(text)
             _body.add_child(memory)
-    _body.add_child(AstraUI.section("그날의 진실 재구성"))
+    _body.add_child(AstraUI.section("그날의 기록 대조"))
     for op in session.case_data.get("ops",[]):
         var executor := ""
         for id in session.truth["null_ops"]:
@@ -173,7 +173,7 @@ func refresh() -> void:
     side.add_child(AstraUI.section("추리 보고서", AstraUI.GOLD))
     var suspects: Array = theory.get("suspects", [])
     if suspects.is_empty():
-        side.add_child(AstraUI.label("제출하지 않았습니다. 다음에는 투표 전에 두 명을 ‘N’으로 표시해 보세요.", 13, AstraUI.MUTED, true))
+        side.add_child(AstraUI.label("제출하지 않았습니다. 다음에는 투표 전에 실행자로 판단한 사람을 ‘N’으로 표시해 보세요.", 13, AstraUI.MUTED, true))
     else:
         side.add_child(AstraUI.label("%s · %d점" % [str(theory.get("label", "")), int(theory.get("grade", 0))], 16, AstraUI.TEXT))
         side.add_child(AstraUI.label("%d일째 제출 · %s · 적중 %d/2" % [int(theory.get("day", 1)), session.names_of(suspects), int(theory.get("matched", 0))], 13, AstraUI.MUTED, true))
@@ -181,7 +181,7 @@ func refresh() -> void:
     var change: Dictionary = screen.archive_change
     if not change.is_empty():
         side.add_child(AstraUI.section("아카이브", AstraUI.CYAN))
-        side.add_child(AstraUI.label("항해 기록에 이번 재구성을 보관했습니다.", 14, AstraUI.TEXT))
+        side.add_child(AstraUI.label("항해 기록에 이번 조사을 보관했습니다.", 14, AstraUI.TEXT))
         if bool(change.get("new_best", false)):
             side.add_child(AstraUI.chip("이 사건 최고 기록 갱신", AstraUI.GOLD, 13))
         for case_id in change.get("unlocked", []):

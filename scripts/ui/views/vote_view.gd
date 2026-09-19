@@ -19,7 +19,7 @@ func refresh() -> void:
     var session: AstraGameSession = screen.session
     AstraUI.clear(_body)
     var head := AstraUI.rich(18)
-    head.text = "[b]격리 투표 · DAY %d[/b]   [color=#%s]살아 있는 승무원 %d명이 각 1표, 조사관이 %d표. 최다 득표자가 격리됩니다.[/color]" % [session.day, AstraUI.hex(AstraUI.MUTED), session.living_ids().size(), AstraGameSession.PLAYER_VOTE_WEIGHT]
+    head.text = "[b]격리 투표 · DAY %d[/b]   [color=#%s]살아 있는 승무원 %d명이 각 1표, 탐사요원이 %d표. 최다 득표자가 격리됩니다.[/color]" % [session.day, AstraUI.hex(AstraUI.MUTED), session.living_ids().size(), AstraGameSession.PLAYER_VOTE_WEIGHT]
     _body.add_child(head)
     if session.vote_cast:
         _result(session)
@@ -85,7 +85,7 @@ func _theory_panel(session: AstraGameSession) -> Control:
     var box := AstraUI.vbox(8)
     panel.add_child(box)
     box.add_child(AstraUI.label("나의 결론 (선택) · 진실은 사건 종료 후 대조합니다", 14, AstraUI.GOLD))
-    if suspects.size() == 2:
+    if suspects.size() == session.null_count:
         var chips := AstraUI.hbox(6)
         box.add_child(chips)
         chips.add_child(AstraUI.label("Null로 지목:", 14, AstraUI.MUTED))
@@ -102,7 +102,7 @@ func _theory_panel(session: AstraGameSession) -> Control:
             choices.add_child(button)
 
     else:
-        box.add_child(AstraUI.label("이름을 선택한 뒤 아래 ‘내 판단 표시’ 버튼(M)으로 두 명을 ‘N (Null 의심)’으로 표시하면 투표와 함께 보고서가 제출됩니다.", 13, AstraUI.MUTED, true))
+        box.add_child(AstraUI.label("이름을 선택한 뒤 아래 ‘내 판단 표시’ 버튼(M)으로 실행자로 판단한 사람을 ‘N (Null 의심)’으로 표시하면 투표와 함께 보고서가 제출됩니다.", 13, AstraUI.MUTED, true))
     return panel
 
 func _tally_bars(session: AstraGameSession, tally: Dictionary, highlight: String) -> Control:
@@ -139,13 +139,12 @@ func _confirm(target: String) -> void:
 func _cast(target: String) -> void:
     var session: AstraGameSession = screen.session
     var suspects := session.marked_suspects()
-    var result := session.cast_vote(target, suspects if suspects.size() == 2 else [], _confidence)
+    var result := session.cast_vote(target, suspects if suspects.size() == session.null_count else [], _confidence)
     if not bool(result.get("ok", false)):
         return
     var vote: Dictionary = result.get("result", {})
     screen.fx.play("vote")
     screen.fx.flash(AstraUI.RED, 0.14)
-    screen.fx.shake(screen, 6.0)
     var isolated := str(vote.get("isolated", ""))
     if isolated != "":
         screen.fx.banner("격리 · " + session.name_of(isolated), "%d표로 격리가 결정됐다." % int(vote.get("top", 0)), AstraUI.RED, 1.2)
@@ -153,7 +152,7 @@ func _cast(target: String) -> void:
         screen.fx.banner("격리 무산", "표가 갈려 아무도 격리되지 않았다.", AstraUI.GOLD, 1.2)
 
 # Ballots are opened one at a time. The tally was already decided when the vote
-# was cast — nothing here changes the outcome — but reading "Noa → Rho" six
+# was cast — nothing here changes the outcome — but reading "Noa → Jun" six
 # times in a row is the part that hurts, and 0.3.1 printed it as a single line
 # of comma-separated text (§19).
 func _count_panel(session: AstraGameSession, vote: Dictionary) -> Control:
@@ -174,7 +173,7 @@ func _count_panel(session: AstraGameSession, vote: Dictionary) -> Control:
     # a five-person crew producing a seven-vote tally looked like a bug.
     var total := voters.size() + (AstraGameSession.PLAYER_VOTE_WEIGHT if player_target != "" else 0)
     head.add_child(AstraUI.label(
-        "승무원 %d표 + 조사관 %d표 = 총 %d표" % [voters.size(), AstraGameSession.PLAYER_VOTE_WEIGHT if player_target != "" else 0, total],
+        "승무원 %d표 + 탐사요원 %d표 = 총 %d표" % [voters.size(), AstraGameSession.PLAYER_VOTE_WEIGHT if player_target != "" else 0, total],
         AstraUI.T_META, AstraUI.MUTED))
     var rows := AstraUI.vbox(4)
     box.add_child(rows)
@@ -197,7 +196,7 @@ func _count_panel(session: AstraGameSession, vote: Dictionary) -> Control:
         var picked := str(ballot["target"])
         var row := AstraUI.hbox(8)
         if voter == "player":
-            row.add_child(AstraUI.label("조사관", AstraUI.T_BODY, AstraUI.CYAN))
+            row.add_child(AstraUI.label("탐사요원", AstraUI.T_BODY, AstraUI.CYAN))
         else:
             row.add_child(AstraUI.crew_dot(voter, 26))
             var who := AstraUI.label(session.name_of(voter), AstraUI.T_BODY, AstraCrewCatalog.accent(voter))
@@ -243,7 +242,7 @@ func _result(session: AstraGameSession) -> void:
         box.add_child(AstraUI.label("격리 무산", 26, AstraUI.GOLD))
         box.add_child(AstraUI.label("표가 동률로 갈려 아무도 격리되지 않았습니다.", 15, AstraUI.TEXT))
     _body.add_child(_count_panel(session, vote))
-    _body.add_child(AstraUI.section("최종 득표 (조사관 표 포함)", AstraUI.GOLD))
+    _body.add_child(AstraUI.section("최종 득표 (탐사요원 표 포함)", AstraUI.GOLD))
     _body.add_child(_tally_bars(session, vote.get("tally", {}), str(vote.get("player_target", ""))))
     if session.outcome != "":
         _body.add_child(AstraUI.label("사건의 결말이 정해졌습니다. 아래 버튼으로 결과를 확인하세요.", 16, AstraUI.GOLD, true))

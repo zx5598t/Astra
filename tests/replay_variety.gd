@@ -42,7 +42,7 @@ func _initialize() -> void:
 func test_role_distribution() -> void:
     for case_id in AstraCaseCatalog.CAMPAIGN:
         var counts := {}
-        for npc_id in AstraCrewCatalog.ORDER:
+        for npc_id in AstraCaseCatalog.roster(AstraCaseCatalog.get_case(case_id)):
             counts[npc_id] = 0
         var history: Array = []
         for index in range(seeds):
@@ -52,7 +52,7 @@ func test_role_distribution() -> void:
             history.append_array(truth.get("nulls", []))
             while history.size() > 12:
                 history.remove_at(0)
-        var expected := float(seeds) * 2.0 / float(AstraCrewCatalog.ORDER.size())
+        var expected := float(seeds) * AstraCaseCatalog.null_count(AstraCaseCatalog.get_case(case_id)) / float(counts.size())
         var lowest := 1e9
         var highest := -1.0
         for npc_id in counts:
@@ -66,7 +66,7 @@ func test_pair_distribution() -> void:
     var pairs := {}
     var history: Array = []
     for index in range(seeds * 2):
-        var truth := AstraCaseGenerator.generate("DEAD_AIR", index * 17 + 3, history, "STANDARD")
+        var truth := AstraCaseGenerator.generate("LAST_LIGHT", index * 17 + 3, history, "STANDARD")
         var nulls: Array = truth.get("nulls", []).duplicate()
         nulls.sort()
         var key := ":".join(PackedStringArray(nulls))
@@ -88,7 +88,7 @@ func test_innocent_liar_distribution() -> void:
     for npc_id in AstraCrewCatalog.ORDER:
         counts[npc_id] = 0
     for index in range(seeds):
-        var truth := AstraCaseGenerator.generate("GLASS_GARDEN", index * 13 + 11, [], "STANDARD")
+        var truth := AstraCaseGenerator.generate("LAST_LIGHT", index * 13 + 11, [], "STANDARD")
         var herring := str(truth.get("herring", ""))
         counts[herring] = int(counts.get(herring, 0)) + 1
     var expected := float(seeds) / float(AstraCrewCatalog.ORDER.size())
@@ -101,7 +101,7 @@ func test_opening_line_variety() -> void:
     var all_lines := {}
     var total_lines := 0
     for index in range(30):
-        var s := _play_to_meeting("DEAD_AIR", index * 97 + 5)
+        var s := _play_to_meeting("LAST_LIGHT", index * 97 + 5)
         if s.meeting_feed.is_empty():
             continue
         first_lines[str(s.meeting_feed[0].get("text", ""))] = true
@@ -123,7 +123,7 @@ func test_ten_run_comparison() -> void:
     var history: Array = []
     for index in range(10):
         var s := AstraGameSession.new()
-        s.setup("DEAD_AIR", 4200 + index * 811, "ANALYST", "STANDARD", history)
+        s.setup("LAST_LIGHT", 4200 + index * 811, "ANALYST", "STANDARD", history)
         history.append_array(s.truth.get("nulls", []))
         var nulls: Array = s.truth.get("nulls", []).duplicate()
         nulls.sort()
@@ -156,7 +156,7 @@ func test_ten_run_comparison() -> void:
         var window_history: Array = []
         for index in range(10):
             var s := AstraGameSession.new()
-            s.setup("DEAD_AIR", 90000 + window * 1000 + index * 137, "ANALYST", "STANDARD", window_history)
+            s.setup("LAST_LIGHT", 90000 + window * 1000 + index * 137, "ANALYST", "STANDARD", window_history)
             var nulls_in_run: Array = s.truth.get("nulls", []).duplicate()
             window_history.append_array(nulls_in_run)
             nulls_in_run.sort()
@@ -170,9 +170,9 @@ func test_ten_run_comparison() -> void:
     # Determinism: the same seed and the same history replays identically, so QA
     # can still reproduce a report (§74).
     var a := AstraGameSession.new()
-    a.setup("DEAD_AIR", 31337, "ANALYST", "STANDARD")
+    a.setup("LAST_LIGHT", 31337, "ANALYST", "STANDARD")
     var b := AstraGameSession.new()
-    b.setup("DEAD_AIR", 31337, "ANALYST", "STANDARD")
+    b.setup("LAST_LIGHT", 31337, "ANALYST", "STANDARD")
     check(str(a.truth.get("nulls", [])) == str(b.truth.get("nulls", [])), "the same seed replays the same case")
     check(str(a.truth.get("positions", {})) == str(b.truth.get("positions", {})), "the same seed replays the same layout")
 
