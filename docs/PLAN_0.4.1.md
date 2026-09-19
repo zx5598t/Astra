@@ -1,4 +1,4 @@
-# ASTRA 0.5.0 구현 계획
+# ASTRA 0.4.1 구현 계획
 
 ## 변경 범위
 scripts/core/{crew_catalog,case_catalog,case_generator,game_session,meta_progress,story_content,dialogue_bank,dialogue_variants,private_events,social_events,unlocks}.gd, scripts/ui/{app,title_screen,opening_view,game_screen,art,notebook_panel}.gd, views/{investigation,meeting,vote,result,interrogation}_view.gd, 신규 voyage_content.gd / voyage_view.gd, assets/art050, tests, VERSION/project.godot 및 플레이 문서.

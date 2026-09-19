@@ -1,6 +1,6 @@
 extends SceneTree
 # Run after tests/legacy_fixture.gd in the unmodified 0.3.0 tree.
-# Vote rules intentionally changed in 0.5.0; saved evidence and RNG must not.
+# Vote rules intentionally changed in 0.4.1; saved evidence and RNG must not.
 func _initialize() -> void:
     var s := AstraGameSession.new()
     var expected := ConfigFile.new()

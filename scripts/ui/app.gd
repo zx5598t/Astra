@@ -2,7 +2,7 @@ extends Control
 
 # Application root: background, screen routing, overlays and persistence.
 
-const VERSION_FALLBACK := "0.5.0"
+const VERSION_FALLBACK := "0.4.1"
 
 var meta := AstraMetaProgress.new()
 var settings := AstraSettings.new()

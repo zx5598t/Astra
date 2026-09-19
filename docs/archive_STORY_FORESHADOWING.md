@@ -1,3 +1,7 @@
+> **HISTORICAL — 당시 기록으로 보존.** 이 표가 다루는 살인사건 중심 캠페인 서사는 이후
+> voyage 레이어 통합 과정에서 전면 재작성되어 더 이상 유효하지 않습니다. 현재 서사는
+> `docs/RELEASE_NOTES.md`와 `scripts/core/voyage_content.gd`의 `CHAPTERS`를 따르세요.
+
 # FORESHADOWING MAP — 0.4.0
 
 각 폭로가 갑자기 튀어나온 설정으로 읽히지 않도록, 언제 무엇을 먼저 보여 줄지 정리한 표입니다.

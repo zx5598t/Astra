@@ -108,8 +108,11 @@ func test_exploration_consequences() -> void:
     pity.setup("CALIBRATION",8)
     pity.begin_voyage()
     close_scene(pity)
+    # CALIBRATION is one room by design, so the pity clock (which only ticks
+    # on a "deliver" action such as a move) is exercised by re-entering the
+    # same room rather than room-hopping.
     for i in range(12):
-        pity.voyage_move("comms" if i%2==0 else "lounge")
+        pity.voyage_move("medbay")
         close_scene(pity)
     check(pity.voyage["goal_done"],"main discovery offered even without inspecting")
     var last := ""

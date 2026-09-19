@@ -50,9 +50,25 @@ func _draw() -> void:
     if session.phase == "RESULT":
         _ending(chapter)
         return
+    var calibration := session.case_id == "CALIBRATION"
     var goal := str(chapter["goal"])
-    if bool(state.get("goal_done",false)):
-        goal = "깨어 있는 동료들과 만나 기록을 확인한다." if state["met"].size() < 4 else "확인한 기록을 함께 살핀다."
+    var met_count: int = state["met"].size()
+    if calibration:
+        # First playthrough: name the exact next click instead of restating
+        # the chapter's whole premise (see the first-play redesign notes).
+        if not bool(state.get("goal_done",false)):
+            goal = "빛나는 조사 지점을 눌러 전원 문제를 확인하세요."
+        elif met_count < session.roster.size():
+            var next_person := ""
+            for id in session.roster:
+                if id not in state["met"]:
+                    next_person = AstraCrewCatalog.name_ko(str(id))
+                    break
+            goal = "%s와 이야기해 보세요." % next_person if next_person != "" else "남은 동료와 이야기해 보세요."
+        else:
+            goal = "아래의 ‘기록을 함께 확인한다’를 눌러 마무리하세요."
+    elif bool(state.get("goal_done",false)):
+        goal = "깨어 있는 동료들과 만나 기록을 확인한다." if met_count < 4 else "확인한 기록을 함께 살핀다."
     var objective := AstraUI.panel(Color(0.025,0.065,0.10,0.96),Color(AstraUI.CYAN,0.5),10,12)
     objective.add_child(AstraUI.prose("지금 할 일   " + goal,AstraUI.T_BODY,AstraUI.TEXT))
     _root.add_child(objective)
@@ -136,6 +152,12 @@ func _draw() -> void:
         _dialogue(words,scene,state)
     var footer := AstraUI.hbox(8)
     _root.add_child(footer)
+    var nudge_person := ""
+    if calibration and bool(state.get("goal_done",false)):
+        for id in session.roster:
+            if str(id) not in state["met"]:
+                nudge_person = str(id)
+                break
     for id in session.roster:
         var who := str(id)
         var person := AstraUI.button(AstraCrewCatalog.labelled(who,true),AstraUI.CYAN if who in state["met"] else AstraUI.MUTED,15,50)
@@ -146,6 +168,7 @@ func _draw() -> void:
         person.tooltip_text = AstraCrewCatalog.labelled(who)+" · 있는 곳으로 이동"
         person.disabled = not scene.is_empty()
         person.pressed.connect(func(): session.voyage_visit_person(who))
+        AstraUI.set_tutorial_nudge(person, who == nudge_person)
         footer.add_child(person)
     var bottom := AstraUI.hbox(12)
     _root.add_child(bottom)
@@ -159,6 +182,7 @@ func _draw() -> void:
         bottom.add_child(next)
 
 func _hotspots(stage: Control) -> void:
+    var calibration := session.case_id == "CALIBRATION"
     for point in session.voyage_points():
         var key := str(session.voyage["room"])+":"+str(point[0])
         var done: bool = key in session.voyage["inspected"]
@@ -168,6 +192,7 @@ func _hotspots(stage: Control) -> void:
         button.offset_left = -80
         button.offset_right = 80
         button.disabled = done
+        AstraUI.set_tutorial_nudge(button, calibration and not done)
         var point_id := str(point[0])
         button.pressed.connect(func(): session.voyage_inspect(point_id))
         stage.add_child(button)
@@ -214,9 +239,10 @@ func _ending(chapter: Dictionary) -> void:
     _root.add_child(panel)
     var box := AstraUI.vbox(22)
     panel.add_child(box)
-    box.add_child(AstraUI.label("같은 목소리",30,AstraUI.CYAN))
+    var framing := AstraVoyageContent.reset_framing(session.case_id)
+    box.add_child(AstraUI.label(str(framing["title"]),30,AstraUI.CYAN))
     box.add_child(AstraUI.prose(str(chapter["outro"]),24,AstraUI.TEXT))
-    box.add_child(AstraUI.prose("손목에는 조금 전 미라가 붙여 준 반창고가 없다.",20,AstraUI.MUTED))
+    box.add_child(AstraUI.prose(str(framing["detail"]),20,AstraUI.MUTED))
     var next := AstraUI.primary_button("다시 눈을 뜬다   →")
     next.pressed.connect(func(): app.start_case(app.meta.recommended_case_id(),app.selected_protocol,app.active_slot))
     box.add_child(next)

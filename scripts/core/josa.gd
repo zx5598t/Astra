@@ -8,11 +8,10 @@ extends RefCounted
 # true = the reading ends with a final consonant (받침).
 const LATIN_FINAL := {
     "Mira": false, "Jun": true, "Lucan": true, "Sena": false, "Soren": true,
-    "Noa": false, "Maren": true, "Daren": true, "Ives": false, "Orin": true,
-    "Sael": true, "Null": true, "ASTRA": false, "Observer": false
+    "Noa": false, "Maren": true, "Daren": true, "Null": true, "ASTRA": false
 }
 # Readings that end in ㄹ (so 으로 becomes 로).
-const LATIN_RIEUL := { "Sael": true, "Null": true}
+const LATIN_RIEUL := { "Null": true}
 
 static func _last_char(word: String) -> String:
     var clean := word.strip_edges()

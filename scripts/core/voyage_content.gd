@@ -66,6 +66,21 @@ const CHAPTERS := {
         "room": "archive"
     }
 }
+# How each chapter's loop-reset screen frames itself. Every chapter ending the
+# same way ("same wrapper, different outro line") is the fastest way to make a
+# seven-chapter game feel like one screen repeated seven times, so the title
+# and the small physical detail underneath vary by what just happened.
+const RESET_FRAMING := {
+    "CALIBRATION": {"title": "같은 목소리", "detail": "손목에는 조금 전 미라가 붙여 준 반창고가 없다."},
+    "DEAD_AIR": {"title": "아직 하지 않은 말", "detail": "통신 로그에는 방금 그 문장이 남아 있지 않다."},
+    "GLASS_GARDEN": {"title": "안쪽에서 열린 문", "detail": "손잡이에 남은 흔적은 이미 식어 있다."},
+    "ECHO_WARD": {"title": "겹쳐진 시간", "detail": "재생 목록에는 방금 들은 구간이 없다."},
+    "SILENT_ORBIT": {"title": "움직이지 않는 별", "detail": "항법 화면의 좌표만 다시 흐르기 시작한다."},
+    "RED_SHIFT": {"title": "다른 과거", "detail": "근무 기록의 잉크는 이미 말라 있다."},
+    "LAST_LIGHT": {"title": "손상된 다음 줄", "detail": "코어의 표시등이 다시 깜빡이기 시작한다."}
+}
+static func reset_framing(case_id: String) -> Dictionary:
+    return RESET_FRAMING.get(case_id, RESET_FRAMING["CALIBRATION"])
 const ROOMS := {
     "medbay": {
         "name": "의료실",
@@ -3268,7 +3283,12 @@ static func awake_roster(id: String) -> Array:
     var count := maxi(0, AstraCaseCatalog.CAMPAIGN.find(id))
     return AstraCrewCatalog.INITIAL + AstraCrewCatalog.AWAKENING_ORDER.slice(0, mini(count,4))
 
-static func room_ids(roster: Array) -> Array:
+static func room_ids(roster: Array, case_id: String = "") -> Array:
+    # CALIBRATION is one room on purpose: a first-time player should never
+    # have to guess which of several doors leads somewhere useful (see the
+    # first-play redesign notes at the top of this file).
+    if case_id == "CALIBRATION":
+        return ["medbay"]
     var result: Array = ["medbay","engine","archive","comms","lounge"]
     for id in roster:
         var room := str(HOME[id])

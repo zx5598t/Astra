@@ -414,7 +414,7 @@ func op_name(op_id: String) -> String:
     return str(op_data(op_id).get("name", op_id))
 
 func victim_name() -> String:
-    return str(case_data.get("victim", ""))
+    return str(case_data.get("subject", ""))
 
 func window_text() -> String:
     return AstraCaseCatalog.window_text(case_data)
@@ -3136,7 +3136,7 @@ func confront_candidates(a_id: String) -> Array:
         })
     return result
 
-# ---------------------------------------------------------------- 0.5.0 voyage
+# ---------------------------------------------------------------- 0.4.1 voyage
 # Snapshot-safe state; UI only invokes the public methods below.
 func begin_voyage(memory: Dictionary = {}) -> void:
     var loop_count := int(memory.get("loops", 0))
@@ -3175,11 +3175,16 @@ func begin_voyage(memory: Dictionary = {}) -> void:
     changed.emit()
 
 func voyage_rooms() -> Array:
-    return AstraVoyageContent.room_ids(roster)
+    return AstraVoyageContent.room_ids(roster, case_id)
 
 func voyage_people() -> Array:
-    var ids: Array = []
     var room := str(voyage.get("room", "medbay"))
+    # CALIBRATION never asks a first-time player to travel to find a
+    # crewmate: everyone still awake converges on medbay instead, so the
+    # whole tutorial plays out in one room (see voyage_rooms()).
+    if case_id == AstraCaseCatalog.CALIBRATION and room == "medbay":
+        return roster.duplicate()
+    var ids: Array = []
     for id in roster:
         var home := str(AstraVoyageContent.HOME[id])
         if home == room or voyage.get("companion", "") == id:
@@ -3221,6 +3226,11 @@ func voyage_points() -> Array:
         if str(point[4]) == "signal" and stage < 2:
             continue
         if str(point[4]) == "archive" and stage < 3:
+            continue
+        # CALIBRATION shows exactly one investigation point (the power fact).
+        # The destination cabinet belongs to DEAD_AIR's discovery; showing it
+        # here would hand the player a second chapter's clue during the first.
+        if str(point[4]) == "destination" and stage < 0:
             continue
         var visible: Array = point.duplicate()
         if str(voyage["room"]) == "medbay" and str(point[0]) == "pod":
@@ -3406,7 +3416,13 @@ func _voyage_tick(deliver: bool = true) -> void:
         _voyage_scene({"id":"record_delivery","speaker":"noa","action":"노아가 복구한 기록을 가져왔다.","lines":[["noa","놓친 파일이 있어요. 같이 봐요."],["",chapter["discovery"]]],"choices":[]})
 
 func voyage_can_finish() -> bool:
-    return phase == "EXPLORE" and bool(voyage.get("goal_done",false)) and voyage.get("scene",{}).is_empty() and voyage.get("visits",[]).size() >= 2 and voyage.get("met",[]).size() >= mini(4,roster.size())
+    if phase != "EXPLORE" or not bool(voyage.get("goal_done",false)) or not voyage.get("scene",{}).is_empty():
+        return false
+    # CALIBRATION stays in one room by design (§ voyage_rooms), so it cannot
+    # require a second visited room the way every later chapter does.
+    if case_id == AstraCaseCatalog.CALIBRATION:
+        return voyage.get("met",[]).size() >= mini(4,roster.size())
+    return voyage.get("visits",[]).size() >= 2 and voyage.get("met",[]).size() >= mini(4,roster.size())
 
 func voyage_summary() -> Array:
     var result: Array = ["당신은 ASTRA의 탐사요원이다.","깨어 있는 동료 %d명 · 장기수면 %d명" % [roster.size(),8-roster.size()]]
@@ -3443,7 +3459,9 @@ func voyage_memory() -> Dictionary:
 
 func voyage_visit_person(who: String) -> bool:
     if phase != "EXPLORE" or who not in roster or not voyage["scene"].is_empty(): return false
-    var room := str(AstraVoyageContent.HOME[who])
+    # During CALIBRATION nobody has a separate room yet to walk to; every
+    # crewmate is introduced in medbay, where the player already is.
+    var room := "medbay" if case_id == AstraCaseCatalog.CALIBRATION else str(AstraVoyageContent.HOME[who])
     if not voyage_move(room,false): return false
     if who not in voyage["met"]:
         _voyage_scene(AstraVoyageContent.scene(who+"_awakening"))

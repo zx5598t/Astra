@@ -24,6 +24,11 @@ func refresh() -> void:
     var session: AstraGameSession = screen.session
     AstraUI.clear(_rooms)
     var recommended: Array = session.recommended_rooms()
+    # AstraGameSession.tutorial_active() is permanently false in normal play
+    # (see game_session.gd); the one-target highlight below instead targets
+    # DEAD_AIR's first day, the second chapter and the first time a player
+    # reaches this older investigation screen, so it still gets a gentle nudge.
+    var first_time_guidance := session.case_id == "DEAD_AIR" and session.day == 1
     for room in session.case_data["rooms"]:
         var id := str(room["id"])
         var status := session.room_status(id)
@@ -47,10 +52,9 @@ func refresh() -> void:
             refresh()
         )
         _rooms.add_child(button)
-        # During calibration the recommended room is ringed, so a first-time
-        # player does not spend the first minute hunting for where to click.
-        if wanted and id != _room_id and session.tutorial_active():
-            AstraUI.mark_as_target(button, AstraUI.GOLD, "")
+        # The recommended room is ringed on a first-time player's first day,
+        # so they do not spend the first minute hunting for where to click.
+        AstraUI.set_tutorial_nudge(button, wanted and id != _room_id and first_time_guidance)
     AstraUI.clear(_stage)
     var art := AstraUI.thumb(AstraArt.room(_room_id),Vector2.ZERO)
     art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -100,8 +104,7 @@ func refresh() -> void:
         button.disabled = not available
         button.pressed.connect(_inspect.bind(str(point["id"])))
         box.add_child(button)
-        if available and session.tutorial_active():
-            AstraUI.mark_as_target(button, AstraUI.GOLD, "")
+        AstraUI.set_tutorial_nudge(button, available and first_time_guidance)
     AstraUI.clear(_latest)
     var clue := session.clue_by_id(_last_clue_id)
     if not clue.is_empty():

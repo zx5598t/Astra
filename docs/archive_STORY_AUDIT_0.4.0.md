@@ -1,3 +1,7 @@
+> **HISTORICAL — 당시 기록으로 보존.** 이 문서가 감사한 살인사건 중심 캠페인 서사(함장 Ives,
+> 연구원 Orin 등)는 이후 voyage 레이어 통합 과정에서 전면 재작성되어 더 이상 유효하지 않습니다.
+> 현재 서사는 `docs/RELEASE_NOTES.md`와 `scripts/core/voyage_content.gd`의 `CHAPTERS`를 따르세요.
+
 # 스토리 / 루프 논리 감사 — 0.4.0
 
 `story_content.gd`, `case_catalog.gd`(6사건의 intro/outro/dispatches), `private_events.gd`,

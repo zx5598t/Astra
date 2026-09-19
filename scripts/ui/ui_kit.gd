@@ -451,6 +451,28 @@ static func mark_as_target(control: Control, accent: Color = GOLD, caption: Stri
     elif control is PanelContainer:
         control.add_theme_stylebox_override("panel", ring)
 
+# Named wrapper pair so call sites read as intent ("nudge this button") rather
+# than as styling, and so every screen shares one on/off switch instead of
+# hand-rolling its own highlight. `enabled` lets a caller pass a condition
+# straight through without an if/else at every call site.
+static func set_tutorial_nudge(control: Control, enabled: bool, accent: Color = GOLD) -> void:
+    if enabled:
+        mark_as_target(control, accent, "")
+    else:
+        clear_tutorial_nudge(control)
+
+static func clear_tutorial_nudge(control: Control) -> void:
+    if control == null:
+        return
+    if control is Button:
+        control.remove_theme_stylebox_override("normal")
+        control.remove_theme_stylebox_override("hover")
+        control.remove_theme_color_override("font_color")
+        if control.text.begins_with("▶  "):
+            control.text = control.text.substr(3)
+    elif control is PanelContainer:
+        control.remove_theme_stylebox_override("panel")
+
 # ---- who suspects whom -----------------------------------------------------
 #
 # Eight people each holding an opinion about seven others is fifty-six
