@@ -15,4 +15,4 @@ Godot and its third-party library license notices: https://godotengine.org/licen
 
 ## Artwork
 
-Character, environment, item and icon artwork was supplied by the project owner. Version 0.4.1 uses the owner's new character folders (`assets/art050`). Representative portraits and expression cells were mechanically cropped, resized and border-cleaned using Godot. Source files remain unchanged. This update does not assign a new license to those images.
+Character, environment, item and icon artwork was supplied by the project owner. Version 0.4.2 uses the owner's new character folders (`assets/art050`). Representative portraits and expression cells were mechanically cropped, resized and border-cleaned using Godot. Source files remain unchanged. This update does not assign a new license to those images.

@@ -7,13 +7,13 @@ extends Control
 # to dismiss before anything happened. The words "Null", "재구성" and "프로토콜"
 # all appeared before a single button had been pressed.
 #
-# This version answers the four questions a new player actually has, in order,
-# and stops:
+# This version answers the questions a new player actually has, in order, and
+# stops — it never explains Null, loops, or destination records; it only shows
+# a crew waking up to a small contradiction (see BEATS below):
 #
-#   무슨 일이 있었지?   — a research ship went silent with eight people aboard
-#   나는 누구지?        — you reconstruct what the damaged recorder still holds
-#   왜 조사하지?        — some of them were acting on a hidden order, and killed
-#   누구를 찾지?        — the game calls those people Null
+#   여기가 어디지?      — a research ship, medbay, four other people awake
+#   나는 누구지?        — a fifth crewmate, just woken like the rest
+#   뭐가 이상하지?      — one destination record with two different answers
 #
 # Every beat waits for a click. There is no timer to lose a line to, the skip
 # button is on screen from the first frame, and every line of text sits inside

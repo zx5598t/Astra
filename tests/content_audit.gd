@@ -1,20 +1,34 @@
 extends SceneTree
-# Content-diversity audit (design doc §20). This is a REPORT, not a gate: it
-# never fails the build. Its job is to stop "170 scenes exist" from being
-# mistaken for "170 scenes are actually different from each other" — the
-# checks below are the ones a raw scene count hides.
+# Content-quality audit (design doc §20, promoted to a real gate in §57).
+# FAIL = a regression against something this project claims to already do.
+# WARN = a known, disclosed gap — not yet true, but not a regression either.
+# Exit code is 1 iff there is at least one FAIL; WARN never changes the exit
+# code. This script is intentionally NOT wired into tools/build_windows.ps1:
+# as of 0.4.2 it FAILS on two checks (uniform tag sets, scene-count spread)
+# because the full per-character scene rewrite (§10-12) is still undone —
+# gating the build on that would block a working build on a disclosed,
+# out-of-scope gap. Run it on its own to see exactly where content stands.
 #   godot --headless --path . --script res://tests/content_audit.gd
 
+var fails: Array[String] = []
+var warns: Array[String] = []
+
 func _initialize() -> void:
-    print("=== ASTRA CONTENT AUDIT (report only, always exits 0) ===")
+    print("=== ASTRA CONTENT AUDIT ===")
     _tag_sets_by_character()
     _scene_counts_by_character()
-    _choice_effect_repetition()
+    _choice_effect_vocabulary()
     _sentence_openers()
     _pair_scene_distribution()
     _personal_vs_everyday_ratio()
-    print("=== end of audit ===")
-    quit(0)
+    _private_event_counts()
+    _pair_history_symmetry()
+    _calibration_never_shows_meeting_or_vote()
+    _dead_air_light_phase_flow()
+    print("\n=== summary: %d FAIL, %d WARN ===" % [fails.size(), warns.size()])
+    for f in fails: printerr("FAIL · " + f)
+    for w in warns: print("WARN · " + w)
+    quit(1 if not fails.is_empty() else 0)
 
 func _by_speaker() -> Dictionary:
     var out := {}
@@ -39,7 +53,7 @@ func _tag_sets_by_character() -> void:
         if who == "mira": continue
         if sets[who] != reference: identical = false
     if identical:
-        print("  FLAG: every character has the identical tag set %s — no character skips or adds a tag." % [str(reference)])
+        fails.append("every character has the identical %d-tag set (§10/§12 not yet done)" % reference.size())
     else:
         print("  OK: tag sets differ across characters.")
     for who in sets:
@@ -53,13 +67,12 @@ func _scene_counts_by_character() -> void:
     var lo: int = counts.min()
     var hi: int = counts.max()
     if hi - lo <= 2:
-        print("  FLAG: scene counts only range %d–%d. Section 10 asks for counts that follow each character's" % [lo, hi])
-        print("        personality (e.g. Jun/Maren talkative, Soren quiet-until-the-signal), not a fixed quota.")
+        fails.append("scene counts only range %d-%d (§10 asks for a spread that follows personality, not a fixed quota)" % [lo, hi])
     else:
         print("  OK: scene counts range %d–%d." % [lo, hi])
     for who in by_speaker: print("  %s: %d scenes" % [who, by_speaker[who].size()])
 
-func _choice_effect_repetition() -> void:
+func _choice_effect_vocabulary() -> void:
     print("\n-- 3. Choice effect vocabulary --")
     var effects := {}
     for scene in AstraVoyageContent.SCENES:
@@ -70,8 +83,7 @@ func _choice_effect_repetition() -> void:
     keys.sort()
     print("  %d distinct effects across all choices: %s" % [keys.size(), str(keys)])
     if keys.size() <= 7:
-        print("  FLAG: section 7 asks for the effect vocabulary to grow beyond the original seven")
-        print("        (help/record/share/wait/observe/defend/hide) with state-changing choices.")
+        fails.append("effect vocabulary fell back to 7 or fewer kinds (§16 added confront/withhold/keep_copy/promise)")
 
 func _sentence_openers() -> void:
     print("\n-- 4. Repeated opening words in 'action' lines (possible template smell) --")
@@ -87,19 +99,19 @@ func _sentence_openers() -> void:
     if repeated.is_empty():
         print("  OK: no opening word repeats 5+ times across all scenes.")
     else:
-        print("  FLAG: openers repeated 5+ times: %s" % ", ".join(PackedStringArray(repeated)))
+        warns.append("openers repeated 5+ times: %s" % ", ".join(PackedStringArray(repeated)))
 
 func _pair_scene_distribution() -> void:
     print("\n-- 5. NPC-pair ('pair' tag) scene distribution --")
     var pairs := {}
     for scene in AstraVoyageContent.SCENES:
         if str(scene.get("tag","")) != "pair": continue
-        var key := str(scene["speaker"]) + ":" + str(scene.get("target",""))
+        var key := AstraCrewCatalog.pair_key(str(scene["speaker"]), str(scene.get("target","")))
         pairs[key] = int(pairs.get(key,0)) + 1
-    print("  %d pair scenes across %d distinct pairings: %s" % [pairs.values().reduce(func(a,b): return a+b, 0), pairs.size(), str(pairs)])
-    var full_mesh := AstraCrewCatalog.ORDER.size() * (AstraCrewCatalog.ORDER.size()-1) / 2
+    var total: int = pairs.values().reduce(func(a,b): return a+b, 0)
+    print("  %d pair scenes across %d distinct unordered pairings: %s" % [total, pairs.size(), str(pairs)])
     if pairs.size() < 8:
-        print("  FLAG: section 12 asks for a real relationship web; %d distinct pairings is thin against %d possible unordered pairs." % [pairs.size(), full_mesh])
+        warns.append("only %d distinct pair scene pairings (§12 wants a real relationship web); pair_history (§20-23) now covers every pair even where no scene exists yet" % pairs.size())
 
 func _personal_vs_everyday_ratio() -> void:
     print("\n-- 6. Personal/secret/echo vs. everyday/work ratio, per character --")
@@ -116,4 +128,71 @@ func _personal_vs_everyday_ratio() -> void:
             elif tag in everyday_tags: everyday += 1
         ratios.append("%s %d:%d" % [who, personal, everyday])
     print("  " + ", ".join(PackedStringArray(ratios)))
-    print("  (Section 11 asks these ratios to differ by character rather than land on the same split.)")
+    warns.append("personal:everyday ratio is not yet differentiated per character (§11)")
+
+func _private_event_counts() -> void:
+    print("\n-- 7. Private events per character --")
+    var counts := {}
+    for npc_id in AstraCrewCatalog.ORDER:
+        counts[npc_id] = AstraPrivateEvents.count_for(npc_id)
+    print("  " + str(counts))
+    for npc_id in counts:
+        if int(counts[npc_id]) <= 1:
+            fails.append("private events for %s: %d (§18 asks for 4-7 per character)" % [npc_id, counts[npc_id]])
+
+func _pair_history_symmetry() -> void:
+    print("\n-- 8. pair_key() symmetry (canonical pair history) --")
+    var ok := true
+    for a in AstraCrewCatalog.ORDER:
+        for b in AstraCrewCatalog.ORDER:
+            if a == b: continue
+            if AstraCrewCatalog.pair_key(a,b) != AstraCrewCatalog.pair_key(b,a):
+                ok = false
+    if ok:
+        print("  OK: pair_key(a,b) == pair_key(b,a) for every crew pair.")
+    else:
+        fails.append("pair_key() is not symmetric — A/B would see different histories (§9/§20)")
+
+func _calibration_never_shows_meeting_or_vote() -> void:
+    print("\n-- 9. CALIBRATION never reaches MEETING/VOTE/NIGHT --")
+    var s := AstraGameSession.new()
+    s.setup("CALIBRATION", 55)
+    s.begin_voyage()
+    var guard := 0
+    while not s.voyage.get("scene",{}).is_empty() and guard < 20:
+        guard += 1
+        var scene: Dictionary = s.voyage["scene"]
+        if int(s.voyage["line"]) >= scene.get("lines",[]).size()-1 and not scene.get("choices",[]).is_empty():
+            s.voyage_choose(0)
+        else:
+            s.voyage_next()
+    for point in s.voyage_points():
+        s.voyage_inspect(str(point[0]))
+        guard = 0
+        while not s.voyage.get("scene",{}).is_empty() and guard < 20:
+            guard += 1
+            s.voyage_next()
+    for who in s.roster:
+        s.voyage_visit_person(who)
+        guard = 0
+        while not s.voyage.get("scene",{}).is_empty() and guard < 20:
+            guard += 1
+            var scene: Dictionary = s.voyage["scene"]
+            if int(s.voyage["line"]) >= scene.get("lines",[]).size()-1 and not scene.get("choices",[]).is_empty():
+                s.voyage_choose(0)
+            else:
+                s.voyage_next()
+    s.finish_voyage()
+    if s.phase in ["MEETING","VOTE","NIGHT"]:
+        fails.append("CALIBRATION reached phase %s" % s.phase)
+    else:
+        print("  OK: CALIBRATION resolved via phase %s." % s.phase)
+
+func _dead_air_light_phase_flow() -> void:
+    print("\n-- 10. DEAD_AIR meeting budget stays light --")
+    var s := AstraGameSession.new()
+    s.setup("DEAD_AIR", 9)
+    if s.meeting_actions_max() > 1:
+        fails.append("DEAD_AIR meeting_actions_max() is %d (§8 asks for 0)" % s.meeting_actions_max())
+    else:
+        print("  OK: DEAD_AIR meeting_actions_max() == %d." % s.meeting_actions_max())

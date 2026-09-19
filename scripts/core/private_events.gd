@@ -139,6 +139,12 @@ const EVENTS := {
 static func has_event(npc_id: String) -> bool:
     return EVENTS.has(npc_id)
 
+# How many distinct private events this character actually has. Still 1 for
+# everyone as of 0.4.2 — see tests/content_audit.gd §7 and the design notes
+# §18, which ask for 4-7 per character; that content pass is not done yet.
+static func count_for(npc_id: String) -> int:
+    return 1 if EVENTS.has(npc_id) else 0
+
 static func build(npc_id: String, victim: String) -> Dictionary:
     var source: Dictionary = EVENTS.get(npc_id, {})
     if source.is_empty():

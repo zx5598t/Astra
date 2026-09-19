@@ -174,7 +174,11 @@ func test_claim_ledger() -> void:
 
 # L, M — the investigator is on the record too, and it can be used against them.
 func test_player_is_on_the_record() -> void:
-    var s := _play_to_meeting("DEAD_AIR", 21, "STANDARD")
+    # DEAD_AIR's meeting budget is 0 by design now (§8 of the design notes:
+    # its first meeting is meant to be watched, not argued in), so the
+    # defend/pattern-citing mechanic under test here needs a chapter that
+    # actually grants a meeting action.
+    var s := _play_to_meeting("GLASS_GARDEN", 21, "STANDARD")
     var target := str(s.living_ids()[0])
     s.defend(target)
     check(not s.player_claims.is_empty(), "player statements reach the ledger")

@@ -364,7 +364,7 @@ const SCENES := [
         ],
         "choices": [
             {
-                "label": "함께 가져간다.",
+                "label": "장갑을 대신 받아 든다.",
                 "effect": "help"
             },
             {
@@ -372,12 +372,12 @@ const SCENES := [
                 "effect": "share"
             },
             {
-                "label": "“조금 있다 다시 올게.”",
-                "effect": "wait"
+                "label": "“이따 다시 와서 마저 볼게요.”",
+                "effect": "promise"
             },
             {
-                "label": "말없이 옆자리를 비워 준다.",
-                "effect": "observe"
+                "label": "지금은 아무 말도 하지 않는다.",
+                "effect": "withhold"
             }
         ]
     },
@@ -626,20 +626,20 @@ const SCENES := [
         ],
         "choices": [
             {
-                "label": "함께 가져간다.",
+                "label": "공구함을 받아 챙긴다.",
                 "effect": "help"
             },
             {
-                "label": "지금 확인한 기록을 건넨다.",
+                "label": "지금 확인한 기록을 보여 준다.",
                 "effect": "share"
             },
             {
-                "label": "“조금 있다 다시 올게.”",
-                "effect": "wait"
+                "label": "일단 맡아만 둔다.",
+                "effect": "keep_copy"
             },
             {
-                "label": "말없이 옆자리를 비워 준다.",
-                "effect": "observe"
+                "label": "두 번째 서랍부터 궁금해서 물어본다.",
+                "effect": "confront"
             }
         ]
     },
@@ -888,20 +888,20 @@ const SCENES := [
         ],
         "choices": [
             {
-                "label": "함께 가져간다.",
+                "label": "옆에서 같이 짚어 본다.",
                 "effect": "help"
             },
             {
-                "label": "지금 확인한 기록을 건넨다.",
+                "label": "지금 확인한 기록을 보여 준다.",
                 "effect": "share"
             },
             {
-                "label": "“조금 있다 다시 올게.”",
-                "effect": "wait"
+                "label": "계산 결과만 따로 적어 둔다.",
+                "effect": "keep_copy"
             },
             {
-                "label": "말없이 옆자리를 비워 준다.",
-                "effect": "observe"
+                "label": "처음부터 다시 짚어 보자고 한다.",
+                "effect": "confront"
             }
         ]
     },
@@ -1150,20 +1150,20 @@ const SCENES := [
         ],
         "choices": [
             {
-                "label": "함께 가져간다.",
+                "label": "메모를 함께 읽는다.",
                 "effect": "help"
             },
             {
-                "label": "지금 확인한 기록을 건넨다.",
+                "label": "지금 확인한 기록을 보여 준다.",
                 "effect": "share"
             },
             {
-                "label": "“조금 있다 다시 올게.”",
-                "effect": "wait"
+                "label": "따로 사본을 남겨 둔다.",
+                "effect": "keep_copy"
             },
             {
-                "label": "말없이 옆자리를 비워 준다.",
-                "effect": "observe"
+                "label": "지금은 의견을 말하지 않는다.",
+                "effect": "withhold"
             }
         ]
     },
@@ -1412,20 +1412,20 @@ const SCENES := [
         ],
         "choices": [
             {
-                "label": "함께 가져간다.",
+                "label": "카드를 받아 챙긴다.",
                 "effect": "help"
             },
             {
-                "label": "지금 확인한 기록을 건넨다.",
+                "label": "지금 확인한 기록을 보여 준다.",
                 "effect": "share"
             },
             {
-                "label": "“조금 있다 다시 올게.”",
-                "effect": "wait"
+                "label": "카드는 맡아만 두고 쓰지 않는다.",
+                "effect": "keep_copy"
             },
             {
-                "label": "말없이 옆자리를 비워 준다.",
-                "effect": "observe"
+                "label": "왜 늦을 것 같은지 물어본다.",
+                "effect": "confront"
             }
         ]
     },
@@ -1674,20 +1674,20 @@ const SCENES := [
         ],
         "choices": [
             {
-                "label": "함께 가져간다.",
+                "label": "이어폰을 받아 함께 듣는다.",
                 "effect": "help"
             },
             {
-                "label": "지금 확인한 기록을 건넨다.",
+                "label": "지금 확인한 기록을 보여 준다.",
                 "effect": "share"
             },
             {
-                "label": "“조금 있다 다시 올게.”",
-                "effect": "wait"
+                "label": "들은 구간을 따로 저장해 둔다.",
+                "effect": "keep_copy"
             },
             {
-                "label": "말없이 옆자리를 비워 준다.",
-                "effect": "observe"
+                "label": "무슨 소리인지 지금은 묻지 않는다.",
+                "effect": "withhold"
             }
         ]
     },
@@ -1936,20 +1936,20 @@ const SCENES := [
         ],
         "choices": [
             {
-                "label": "함께 가져간다.",
+                "label": "옆에 서서 같이 본다.",
                 "effect": "help"
             },
             {
-                "label": "지금 확인한 기록을 건넨다.",
+                "label": "지금 확인한 기록을 보여 준다.",
                 "effect": "share"
             },
             {
-                "label": "“조금 있다 다시 올게.”",
-                "effect": "wait"
+                "label": "본 것을 그림으로 남겨 둔다.",
+                "effect": "keep_copy"
             },
             {
-                "label": "말없이 옆자리를 비워 준다.",
-                "effect": "observe"
+                "label": "뭐가 이상한지 먼저 물어본다.",
+                "effect": "confront"
             }
         ]
     },
@@ -2198,20 +2198,20 @@ const SCENES := [
         ],
         "choices": [
             {
-                "label": "함께 가져간다.",
+                "label": "씨앗을 받아 자리를 찾아 준다.",
                 "effect": "help"
             },
             {
-                "label": "지금 확인한 기록을 건넨다.",
+                "label": "지금 확인한 기록을 보여 준다.",
                 "effect": "share"
             },
             {
-                "label": "“조금 있다 다시 올게.”",
-                "effect": "wait"
+                "label": "“이따 상태를 다시 보러 올게요.”",
+                "effect": "promise"
             },
             {
-                "label": "말없이 옆자리를 비워 준다.",
-                "effect": "observe"
+                "label": "지금은 손바닥 위에 가만히 둔다.",
+                "effect": "withhold"
             }
         ]
     },
@@ -3259,15 +3259,22 @@ const SCENES := [
 ]
 const HOME := {"mira":"medbay", "rho":"engine", "dax":"archive", "noa":"archive", "sena":"security", "vale":"comms", "eli":"navigation", "lyra":"garden"}
 const DESTINATIONS := ["지구 귀환", "새 거주지", "외곽 탐사"]
+# Beyond help/record/share/wait/observe/defend/hide (§16 of the design
+# notes): confront presses a question instead of letting it pass, withhold
+# declines to give an opinion (distinct from hide, which conceals evidence),
+# keep_copy backs something up on the spot, and promise commits to a later
+# action. Each still just feeds the same bond/echo math every other effect
+# does — the new vocabulary is in what a scene's choices actually offer, not
+# in a special code path.
 const RESPONSES := {
-    "mira":{"help":0.05,"wait":0.04,"record":0.02,"share":0.01,"hide":-0.03,"defend":0.03},
-    "rho":{"help":0.07,"wait":-0.02,"record":0.03,"share":0.04,"hide":0.01,"defend":0.03},
-    "dax":{"help":0.03,"wait":0.01,"record":0.05,"observe":0.03,"share":0.04,"hide":-0.02},
-    "noa":{"help":0.02,"record":0.06,"share":0.04,"observe":0.03,"hide":-0.05},
-    "sena":{"help":0.05,"wait":-0.02,"defend":0.06,"share":0.02,"hide":-0.03},
-    "vale":{"wait":0.06,"observe":0.04,"record":0.03,"help":0.02,"share":0.01,"hide":0.01},
-    "eli":{"record":0.05,"observe":0.04,"help":0.03,"defend":-0.01,"share":0.02},
-    "lyra":{"help":0.06,"wait":0.03,"record":0.02,"share":0.05,"hide":-0.02}
+    "mira":{"help":0.05,"wait":0.04,"record":0.02,"share":0.01,"hide":-0.03,"defend":0.03,"confront":-0.04,"withhold":0.0,"keep_copy":0.03,"promise":0.05},
+    "rho":{"help":0.07,"wait":-0.02,"record":0.03,"share":0.04,"hide":0.01,"defend":0.03,"confront":0.02,"withhold":-0.02,"keep_copy":0.02,"promise":0.04},
+    "dax":{"help":0.03,"wait":0.01,"record":0.05,"observe":0.03,"share":0.04,"hide":-0.02,"confront":-0.02,"withhold":0.01,"keep_copy":0.05,"promise":0.02},
+    "noa":{"help":0.02,"record":0.06,"share":0.04,"observe":0.03,"hide":-0.05,"confront":0.01,"withhold":0.02,"keep_copy":0.06,"promise":0.02},
+    "sena":{"help":0.05,"wait":-0.02,"defend":0.06,"share":0.02,"hide":-0.03,"confront":0.06,"withhold":-0.03,"keep_copy":0.02,"promise":0.03},
+    "vale":{"wait":0.06,"observe":0.04,"record":0.03,"help":0.02,"share":0.01,"hide":0.01,"confront":-0.03,"withhold":0.03,"keep_copy":0.04,"promise":0.02},
+    "eli":{"record":0.05,"observe":0.04,"help":0.03,"defend":-0.01,"share":0.02,"confront":-0.01,"withhold":0.02,"keep_copy":0.03,"promise":0.01},
+    "lyra":{"help":0.06,"wait":0.03,"record":0.02,"share":0.05,"hide":-0.02,"confront":0.0,"withhold":-0.01,"keep_copy":0.03,"promise":0.06}
 }
 
 static func chapter(id: String) -> Dictionary:
@@ -3283,15 +3290,39 @@ static func awake_roster(id: String) -> Array:
     var count := maxi(0, AstraCaseCatalog.CAMPAIGN.find(id))
     return AstraCrewCatalog.INITIAL + AstraCrewCatalog.AWAKENING_ORDER.slice(0, mini(count,4))
 
+# The first two chapters are one-to-three rooms on purpose: a new player
+# should never have to guess which of several doors leads somewhere useful
+# (see the first-play redesign notes at the top of this file). Every room
+# listed here must exist as a key in ROOMS above. A roster member whose HOME
+# is not in this chapter's list still needs to be reachable, so
+# gather_room() below gives them a place to be found instead.
+const ROOM_PROFILE := {
+    "CALIBRATION": ["medbay"],
+    "DEAD_AIR": ["medbay", "comms", "archive"],
+    "GLASS_GARDEN": ["medbay", "security", "garden"]
+}
+
 static func room_ids(roster: Array, case_id: String = "") -> Array:
-    # CALIBRATION is one room on purpose: a first-time player should never
-    # have to guess which of several doors leads somewhere useful (see the
-    # first-play redesign notes at the top of this file).
-    if case_id == "CALIBRATION":
-        return ["medbay"]
+    if ROOM_PROFILE.has(case_id):
+        return ROOM_PROFILE[case_id].duplicate()
     var result: Array = ["medbay","engine","archive","comms","lounge"]
     for id in roster:
         var room := str(HOME[id])
         if room not in result:
             result.append(room)
     return result
+
+# Where a roster member is found when their real HOME is outside this
+# chapter's trimmed room list (e.g. Rho's engine is not one of DEAD_AIR's
+# three rooms). Always the first room in the chapter's own list, so it is
+# never a room the player cannot reach.
+static func gather_room(case_id: String) -> String:
+    var rooms: Array = ROOM_PROFILE.get(case_id, [])
+    return str(rooms[0]) if not rooms.is_empty() else "medbay"
+
+static func home_room(npc_id: String, case_id: String) -> String:
+    var home := str(HOME[npc_id])
+    var profile: Array = ROOM_PROFILE.get(case_id, [])
+    if profile.is_empty() or home in profile:
+        return home
+    return gather_room(case_id)

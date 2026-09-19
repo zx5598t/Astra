@@ -1,7 +1,7 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **0.4.1** (Awakening). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- Version **0.4.2** (Awakening). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
 - GitHub-first, CI-validated. Every release branch must pass `Godot CI` before it is promoted to `main`.
 
 ## Architecture rules (why 0.2.0 was a rebuild)

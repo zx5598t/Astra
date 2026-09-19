@@ -203,10 +203,12 @@ func _talk_layout(session: AstraGameSession, npc_id: String, animate: bool = tru
         hint.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
         cell.add_child(hint)
         grid.add_child(cell)
-        # In the tutorial the question that moves the case forward is ringed, so
-        # the player is not left scanning eight buttons for the right one.
-        if session.tutorial_active() and bool(option.get("key", false)) and not button.disabled:
-            AstraUI.mark_as_target(button, AstraUI.GOLD, "")
+        # On DEAD_AIR's first day, the question that moves the case forward is
+        # ringed, so the player is not left scanning several buttons for the
+        # right one. AstraGameSession.tutorial_active() is permanently false
+        # in normal play (see game_session.gd), so this used to never fire.
+        var first_time_guidance := session.case_id == "DEAD_AIR" and session.day == 1
+        AstraUI.set_tutorial_nudge(button, first_time_guidance and bool(option.get("key", false)) and not button.disabled)
     if session.talk_ap <= 0:
         right.add_child(AstraUI.label("질문을 다 썼습니다. 아래 버튼으로 회의를 소집하세요.", AstraUI.T_BODY, AstraUI.GOLD))
     return row

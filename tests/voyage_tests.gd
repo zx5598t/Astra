@@ -87,8 +87,11 @@ func _initialize() -> void:
         quit(1)
 
 func test_exploration_consequences() -> void:
+    # DEAD_AIR's room list is trimmed to medbay/comms/archive (§4 of the
+    # design notes), so it no longer has "engine" to test the recorder
+    # pickup in; ECHO_WARD keeps the full room set.
     var s := AstraGameSession.new()
-    s.setup("DEAD_AIR",1234)
+    s.setup("ECHO_WARD",1234)
     s.begin_voyage({"loops":1})
     close_scene(s)
     s.voyage_move("engine",false)
@@ -102,6 +105,9 @@ func test_exploration_consequences() -> void:
     check(not s.voyage_use_recorder(),"item cannot apply twice")
     for who in s.roster:
         s.voyage_visit_person(who)
+        close_scene(s)
+    if not s.voyage["goal_done"]:
+        s.voyage_ask_goal(str(s.voyage_people()[0]))
         close_scene(s)
     check(s.finish_voyage() and s.flags.get("mission_backup",false),"exploration choice enables actual night backup")
     var pity := AstraGameSession.new()

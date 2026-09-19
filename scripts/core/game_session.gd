@@ -449,13 +449,16 @@ func living_crew_ids() -> Array:
 
 func investigation_ap_max() -> int:
     var mission_bonus := 1 if bool(flags.get("mission_investigation", false)) and day > int(flags.get("mission_day", 0)) else 0
-    return BASE_INVESTIGATION_AP + (1 if protocol == "ANALYST" else 0) + mission_bonus
+    var base := int(AstraCaseCatalog.ap_profile(case_id, {}).get("investigation", BASE_INVESTIGATION_AP))
+    return base + (1 if protocol == "ANALYST" else 0) + mission_bonus
 
 func talk_ap_max() -> int:
-    return BASE_TALK_AP + (1 if int(flags.get("rested_day", 0)) == day else 0) + (1 if protocol == "EMPATH" else 0) + (1 if bool(flags.get("mission_talk", false)) else 0) + int(AstraDifficulty.number(difficulty, "extra_talk_ap", 0.0))
+    var base := int(AstraCaseCatalog.ap_profile(case_id, {}).get("talk", BASE_TALK_AP))
+    return base + (1 if int(flags.get("rested_day", 0)) == day else 0) + (1 if protocol == "EMPATH" else 0) + (1 if bool(flags.get("mission_talk", false)) else 0) + int(AstraDifficulty.number(difficulty, "extra_talk_ap", 0.0))
 
 func meeting_actions_max() -> int:
-    return MEETING_ACTIONS + (1 if bool(flags.get("mission_meeting", false)) else 0)
+    var base := int(AstraCaseCatalog.ap_profile(case_id, {}).get("meeting", MEETING_ACTIONS))
+    return base + (1 if bool(flags.get("mission_meeting", false)) else 0)
 
 func story_dispatch() -> String:
     var dispatches: Array = case_data.get("dispatches", [])
@@ -3136,7 +3139,7 @@ func confront_candidates(a_id: String) -> Array:
         })
     return result
 
-# ---------------------------------------------------------------- 0.4.1 voyage
+# ---------------------------------------------------------------- 0.4.x voyage
 # Snapshot-safe state; UI only invokes the public methods below.
 func begin_voyage(memory: Dictionary = {}) -> void:
     var loop_count := int(memory.get("loops", 0))
@@ -3159,34 +3162,67 @@ func begin_voyage(memory: Dictionary = {}) -> void:
             voyage["changes"].append("%s의 목적지" % name_of(id) + ": " + str(previous[id]) + " → " + destination)
         var bond := float(voyage["bonds"].get(id, 0.0))
         crew[id].adjust_trust(clampf(bond * 0.2, -0.12, 0.16))
-        for other in roster:
-            if id == other:
-                continue
-            var pair: String = id + ":" + other
-            var history := "오래된 동료" if rng.randf() > 0.5 else "처음 함께 일함"
-            voyage["past"][pair] = history
-            crew[id].affinity[other] = clampf(AstraCrewCatalog.affinity_bias(id,other) + (0.18 if history == "오래된 동료" else -0.08),-1.0,1.0)
-            if previous_past.has(pair) and previous_past[pair] != history and voyage["changes"].size() < 8:
-                voyage["changes"].append("%s / %s: %s → %s" % [name_of(id),name_of(other),previous_past[pair],history])
+    _roll_pair_histories(previous_past)
     phase = "EXPLORE"
     var waking := str(AstraVoyageContent.chapter(case_id)["awake"])
     _voyage_scene(AstraVoyageContent.scene((waking if waking != "" else "mira") + "_awakening"))
     phase_changed.emit(phase)
     changed.emit()
 
+# Canonical (order-independent) pair history for the current roster.
+#
+# Every pair keeps its previous history by default; only a small, chapter-
+# scaled budget of pairs are allowed to reroll each loop (§22 of the design
+# notes — randomizing all of them every loop leaves nothing for the player to
+# actually remember). A pair with no prior history always gets one, since
+# "no history yet" is not itself a kind of history.
+func _roll_pair_histories(previous_past: Dictionary) -> void:
+    var stage := AstraCaseCatalog.CAMPAIGN.find(case_id)
+    var reroll_budget := 0 if case_id == AstraCaseCatalog.CALIBRATION else clampi(stage, 0, 3)
+    var pair_keys: Array = []
+    for i in range(roster.size()):
+        for j in range(i + 1, roster.size()):
+            pair_keys.append(AstraCrewCatalog.pair_key(str(roster[i]), str(roster[j])))
+    var rerollable: Array = pair_keys.duplicate()
+    AstraCaseGenerator._shuffle(rerollable, rng)
+    var allowed_rerolls := {}
+    for i in range(mini(reroll_budget, rerollable.size())):
+        allowed_rerolls[rerollable[i]] = true
+    for key in pair_keys:
+        var names := str(key).split(":")
+        var a := str(names[0])
+        var b := str(names[1])
+        var prior: Variant = previous_past.get(key)
+        var prior_type := str(prior.get("type", "")) if prior is Dictionary else ""
+        var chosen_type := prior_type
+        if prior_type == "" or bool(allowed_rerolls.get(key, false)):
+            var candidates := AstraCrewCatalog.pair_candidates(a, b)
+            chosen_type = str(candidates[rng.randi_range(0, candidates.size() - 1)])
+        var entry: Dictionary = AstraCrewCatalog.pair_history_info(chosen_type).duplicate()
+        entry["type"] = chosen_type
+        voyage["past"][key] = entry
+        var affinity_delta := float(entry.get("affinity_delta", 0.0))
+        var trust_delta := float(entry.get("trust_delta", 0.0))
+        crew[a].affinity[b] = clampf(AstraCrewCatalog.affinity_bias(a, b) + affinity_delta, -1.0, 1.0)
+        crew[b].affinity[a] = clampf(AstraCrewCatalog.affinity_bias(b, a) + affinity_delta, -1.0, 1.0)
+        crew[a].adjust_trust(trust_delta * 0.5)
+        crew[b].adjust_trust(trust_delta * 0.5)
+        if prior_type != "" and prior_type != chosen_type and voyage["changes"].size() < 8:
+            var prior_summary := str(AstraCrewCatalog.pair_history_info(prior_type).get("summary", ""))
+            voyage["changes"].append("%s / %s: %s → %s" % [name_of(a), name_of(b), prior_summary, str(entry["summary"])])
+
 func voyage_rooms() -> Array:
     return AstraVoyageContent.room_ids(roster, case_id)
 
 func voyage_people() -> Array:
     var room := str(voyage.get("room", "medbay"))
-    # CALIBRATION never asks a first-time player to travel to find a
-    # crewmate: everyone still awake converges on medbay instead, so the
-    # whole tutorial plays out in one room (see voyage_rooms()).
-    if case_id == AstraCaseCatalog.CALIBRATION and room == "medbay":
-        return roster.duplicate()
     var ids: Array = []
     for id in roster:
-        var home := str(AstraVoyageContent.HOME[id])
+        # A trimmed-room chapter (CALIBRATION, DEAD_AIR, GLASS_GARDEN) never
+        # makes a first-time player travel to find a crewmate whose real HOME
+        # was cut from the room list: they are found gathered in that
+        # chapter's first room instead (see AstraVoyageContent.home_room).
+        var home := AstraVoyageContent.home_room(str(id), case_id)
         if home == room or voyage.get("companion", "") == id:
             ids.append(id)
     # A shared break is a controlled variation, independent of hidden roles.
@@ -3281,12 +3317,63 @@ func _voyage_scene(scene: Dictionary) -> void:
     while voyage["recent"].size() > 18:
         voyage["recent"].pop_front()
 
+# A crewmate's echo from prior loops, decomposed into what kind of residue it
+# is rather than one scalar (§24-25 of the design notes): familiarity persists
+# just from having spent a loop together; trust/conflict/protection/grief are
+# each earned by a different kind of moment and fade or persist on their own
+# schedule, independent of the *current* loop's bond. `tags` are the specific
+# remembered actions (see ECHO_TAG_THRESHOLDS) a scene can react to without
+# ever saying "in the last loop..." out loud.
+func _echo_entry(who: String) -> Dictionary:
+    var raw: Variant = voyage["echo"].get(who)
+    if raw is Dictionary:
+        var entry: Dictionary = raw.duplicate(true)
+        entry["familiarity"] = float(entry.get("familiarity", 0.0))
+        entry["trust"] = float(entry.get("trust", 0.0))
+        entry["protection"] = float(entry.get("protection", 0.0))
+        entry["conflict"] = float(entry.get("conflict", 0.0))
+        entry["grief"] = float(entry.get("grief", 0.0))
+        entry["tags"] = Array(entry.get("tags", []))
+        return entry
+    # A pre-0.4.2 save stored a single scalar here; it becomes familiarity,
+    # the closest existing dimension to "some residue remains" (§24).
+    var legacy := float(raw) if raw != null else 0.0
+    return {"familiarity": legacy, "trust": 0.0, "protection": 0.0, "conflict": 0.0, "grief": 0.0, "tags": []}
+
+func echo_strength(entry: Dictionary) -> float:
+    var peak := 0.0
+    for dim in ["familiarity", "trust", "protection", "conflict", "grief"]:
+        peak = maxf(peak, absf(float(entry.get(dim, 0.0))))
+    return peak
+
+const ECHO_TAG_THRESHOLDS := {
+    "trust": ["trusted_record", 0.32], "protection": ["shielded_player", 0.28],
+    "familiarity": ["shared_repair", 0.5], "conflict": ["kept_distance", 0.3]
+}
+
+func _adjust_echo(who: String, tag: String, effect: String, delta: float) -> void:
+    var entry := _echo_entry(who)
+    entry["familiarity"] = clampf(float(entry["familiarity"]) + absf(delta) * 0.4 + 0.01, 0.0, 1.0)
+    if tag == "trust" or effect in ["share", "defend"]:
+        entry["trust"] = clampf(float(entry["trust"]) + absf(delta) * 0.9, 0.0, 1.0)
+    if tag in ["conflict", "suspected", "distant"] or effect == "hide":
+        entry["conflict"] = clampf(float(entry["conflict"]) + 0.05, 0.0, 1.0)
+    if tag == "danger" and effect in ["help", "defend"]:
+        entry["protection"] = clampf(float(entry["protection"]) + 0.10, 0.0, 1.0)
+    var tags: Array = entry["tags"]
+    for dim in ECHO_TAG_THRESHOLDS:
+        var spec: Array = ECHO_TAG_THRESHOLDS[dim]
+        if float(entry.get(dim, 0.0)) >= float(spec[1]) and str(spec[0]) not in tags:
+            tags.append(str(spec[0]))
+    entry["tags"] = tags
+    voyage["echo"][who] = entry
+
 func voyage_talk(who: String, topic: String = "") -> bool:
     if phase != "EXPLORE" or who not in voyage_people() or not voyage["scene"].is_empty():
         return false
     var eligible: Array = []
     var bond := float(voyage["bonds"].get(who,0.0))
-    var echo := float(voyage["echo"].get(who,0.0))
+    var echo := echo_strength(_echo_entry(who))
     for scene in AstraVoyageContent.SCENES:
         if scene["speaker"] != who:
             continue
@@ -3331,7 +3418,9 @@ func voyage_talk(who: String, topic: String = "") -> bool:
             selected["lines"] = [["", "%s의 기억: %s. 같은 목적지가 적힌 서명 원본도 있다." % [name_of(who),str(voyage["memories"][who])]]]
         if str(selected["tag"]) == "pair":
             var other := str(selected["target"])
-            selected["action"] += " 두 사람의 배치 기록에는 ‘%s’라고 적혀 있다." % str(voyage["past"].get(who+":"+other,"처음 함께 일함"))
+            var history: Variant = voyage["past"].get(AstraCrewCatalog.pair_key(who, other))
+            var summary := str(history["summary"]) if history is Dictionary else "이번 항해에서 처음 함께 일한다."
+            selected["action"] += " 두 사람의 기록: %s" % summary
         _voyage_scene(selected)
     _voyage_tick(false)
     changed.emit()
@@ -3373,9 +3462,9 @@ func voyage_choose(index: int) -> bool:
     # Privacy makes sharing a personal admission different from sharing a log.
     if str(scene.get("tag","")) == "secret" and effect == "share": delta = -0.02
     voyage["bonds"][who] = clampf(float(voyage["bonds"].get(who,0.0))+delta,-1.0,1.0)
-    voyage["echo"][who] = clampf(float(voyage["echo"].get(who,0.0))+delta,-1.0,1.0)
+    _adjust_echo(who, str(scene.get("tag","")), effect, delta)
     if crew.has(who): crew[who].adjust_trust(delta)
-    if effect in ["share","hide","help","defend"]:
+    if effect in ["share","hide","help","defend","confront","withhold","keep_copy","promise"]:
         voyage["deferred"].append({"who":who,"effect":effect,"due":int(voyage["actions"])+2})
     voyage["scene"] = {}
     changed.emit()
@@ -3405,7 +3494,16 @@ func _voyage_tick(deliver: bool = true) -> void:
     for event in voyage["deferred"]:
         if int(event["due"]) > int(voyage["actions"]): continue
         var who := str(event["who"])
-        var reaction := {"share":"앞서 건넨 기록 옆에 새로운 메모가 붙어 있다. 혼자서는 놓쳤던 시각이다.","hide":"감춰 둔 사본을 동료가 발견했다. 질문 대신 두 파일을 나란히 놓는다.","help":"동료가 다음 작업의 자리를 미리 비워 둔다. 이번에는 당신의 도움이 필요하다.","defend":"대화가 막히자 동료가 당신 쪽으로 의자를 돌린다. 먼저 말을 끝내도록 기다린다."}
+        var reaction := {
+            "share":"앞서 건넨 기록 옆에 새로운 메모가 붙어 있다. 혼자서는 놓쳤던 시각이다.",
+            "hide":"감춰 둔 사본을 동료가 발견했다. 질문 대신 두 파일을 나란히 놓는다.",
+            "help":"동료가 다음 작업의 자리를 미리 비워 둔다. 이번에는 당신의 도움이 필요하다.",
+            "defend":"대화가 막히자 동료가 당신 쪽으로 의자를 돌린다. 먼저 말을 끝내도록 기다린다.",
+            "confront":"동료가 그때 그 질문을 다시 꺼낸다. 이번에는 더 짧게 답한다.",
+            "withhold":"동료가 그 이야기는 꺼내지 않는다. 대신 다른 화제로 먼저 말을 건다.",
+            "keep_copy":"동료가 자신도 따로 사본을 남겼다고 조용히 알려 준다.",
+            "promise":"동료가 그때 약속한 것을 들고 돌아온다.",
+        }
         _voyage_scene({"id":"delayed_"+str(event["effect"]),"speaker":who,"action":str(reaction[event["effect"]]),"lines":[],"choices":[]})
         voyage["deferred"].erase(event)
         return
@@ -3415,6 +3513,16 @@ func _voyage_tick(deliver: bool = true) -> void:
         _voyage_fact(str(chapter["fact"]),str(chapter["discovery"]))
         _voyage_scene({"id":"record_delivery","speaker":"noa","action":"노아가 복구한 기록을 가져왔다.","lines":[["noa","놓친 파일이 있어요. 같이 봐요."],["",chapter["discovery"]]],"choices":[]})
 
+# Who the story actually needs met before a chapter can close, instead of
+# the old one-size-fits-all "meet everyone" rule (§5 of the design notes). A
+# chapter not listed here falls through to the general rule below — by
+# ECHO_WARD the roster is doing enough that "meet the people who are awake"
+# is itself the point, not busywork.
+const REQUIRED_PEOPLE := {
+    "DEAD_AIR": ["noa"],
+    "GLASS_GARDEN": ["sena"]
+}
+
 func voyage_can_finish() -> bool:
     if phase != "EXPLORE" or not bool(voyage.get("goal_done",false)) or not voyage.get("scene",{}).is_empty():
         return false
@@ -3422,6 +3530,11 @@ func voyage_can_finish() -> bool:
     # require a second visited room the way every later chapter does.
     if case_id == AstraCaseCatalog.CALIBRATION:
         return voyage.get("met",[]).size() >= mini(4,roster.size())
+    if REQUIRED_PEOPLE.has(case_id):
+        for who in REQUIRED_PEOPLE[case_id]:
+            if str(who) not in voyage.get("met",[]):
+                return false
+        return voyage.get("visits",[]).size() >= 2
     return voyage.get("visits",[]).size() >= 2 and voyage.get("met",[]).size() >= mini(4,roster.size())
 
 func voyage_summary() -> Array:
@@ -3445,12 +3558,25 @@ func finish_voyage() -> bool:
 
 func voyage_memory() -> Dictionary:
     if voyage.is_empty(): return {}
-    var echo: Dictionary = voyage.get("echo",{}).duplicate(true)
+    var echo: Dictionary = {}
     var bonds: Dictionary = voyage.get("bonds",{}).duplicate(true)
     for id in roster:
         var stance := player_stance_on(id)
         bonds[id] = clampf(float(bonds.get(id,0.0)) + int(stance.get("defended",0))*0.03 - int(stance.get("accused",0))*0.02,-1.0,1.0)
-        echo[id] = lerpf(float(echo.get(id,0.0)),float(bonds[id]),0.3)
+        var bond_value := float(bonds[id])
+        var entry := _echo_entry(str(id))
+        # Each dimension leans toward a different signal from this loop rather
+        # than all of them chasing the same bond value (§25): familiarity just
+        # tracks how strong a loop this was either way, trust/conflict lean
+        # toward the bond's sign, and protection/grief are earned by specific
+        # moments, so they only fade rather than chase the mood.
+        entry["familiarity"] = lerpf(float(entry["familiarity"]), clampf(absf(bond_value) + 0.15, 0.0, 1.0), 0.25)
+        entry["trust"] = lerpf(float(entry["trust"]), clampf(bond_value, 0.0, 1.0), 0.2)
+        entry["conflict"] = lerpf(float(entry["conflict"]), clampf(-bond_value, 0.0, 1.0), 0.2)
+        entry["protection"] = float(entry["protection"]) * 0.92
+        if not casualties.is_empty():
+            entry["grief"] = clampf(float(entry["grief"]) + 0.25, 0.0, 1.0)
+        echo[id] = entry
     var choices: Dictionary = voyage.get("choices",{}).duplicate(true)
     choices["accuse"] = int(stats.get("accusations",0))
     var chapters: Array = voyage.get("chapters",[]).duplicate()
@@ -3459,9 +3585,10 @@ func voyage_memory() -> Dictionary:
 
 func voyage_visit_person(who: String) -> bool:
     if phase != "EXPLORE" or who not in roster or not voyage["scene"].is_empty(): return false
-    # During CALIBRATION nobody has a separate room yet to walk to; every
-    # crewmate is introduced in medbay, where the player already is.
-    var room := "medbay" if case_id == AstraCaseCatalog.CALIBRATION else str(AstraVoyageContent.HOME[who])
+    # A trimmed-room chapter redirects to wherever that crewmate is actually
+    # reachable this chapter (see AstraVoyageContent.home_room); everywhere
+    # else this is just their real home room.
+    var room := AstraVoyageContent.home_room(who, case_id)
     if not voyage_move(room,false): return false
     if who not in voyage["met"]:
         _voyage_scene(AstraVoyageContent.scene(who+"_awakening"))

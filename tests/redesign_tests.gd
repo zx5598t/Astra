@@ -38,7 +38,11 @@ func _initialize() -> void:
     tutorial.advance()
     check(not tutorial.can_advance() and tutorial.pending_event.is_empty(),"first interview stays focused")
     tutorial.ask("mira","ALIBI")
-    check(not tutorial.can_advance(),"one statement is not the whole round")
+    # DEAD_AIR's talk budget is now as low as 1 (§8 of the design notes), so a
+    # single question can legitimately exhaust it; the "not enough yet" gate
+    # only applies while there is still budget left to ask someone else.
+    if tutorial.talk_ap > 0:
+        check(not tutorial.can_advance(),"one statement is not the whole round")
     guard = 0
     while not tutorial.can_advance() and guard < 30:
         guard += 1
@@ -106,10 +110,14 @@ func _case(case_id: String, protocol: String, seed_value: int) -> void:
     r.ask("mira","ALIBI")
     s.advance()
     r.advance()
+    # DEAD_AIR's meeting budget is 0 by design (§8 of the design notes: its
+    # first meeting is watched, not argued in), so presenting anything there
+    # is correctly refused rather than accepted.
     var actions := s.meeting_actions_left
-    check(bool(s.present_hypothesis(0).get("ok",false)),"meeting accepts interpretation")
-    r.present_hypothesis(0)
-    check(s.meeting_actions_left==actions-1 and bool(s.clue_by_id(str(selected["id"]))["public"]),"hypothesis uses one action and shares facts")
+    if actions > 0:
+        check(bool(s.present_hypothesis(0).get("ok",false)),"meeting accepts interpretation")
+        r.present_hypothesis(0)
+        check(s.meeting_actions_left==actions-1 and bool(s.clue_by_id(str(selected["id"]))["public"]),"hypothesis uses one action and shares facts")
     check(not bool(s.present_hypothesis(0).get("ok",false)),"same argument once per day")
     s.advance();r.advance()
     s.cast_vote("");r.cast_vote("")
@@ -125,4 +133,5 @@ func _case(case_id: String, protocol: String, seed_value: int) -> void:
         check(not bool(s.choose_night_action(kind,target).get("ok",false)),"night cannot be repeated")
         s.advance()
         if kind=="rest" and s.outcome=="":
-            check(s.talk_ap_max()==AstraGameSession.BASE_TALK_AP+1+(1 if protocol=="EMPATH" else 0),"rest bonus next day")
+            var talk_base := int(AstraCaseCatalog.ap_profile(case_id,{}).get("talk",AstraGameSession.BASE_TALK_AP))
+            check(s.talk_ap_max()==talk_base+1+(1 if protocol=="EMPATH" else 0),"rest bonus next day")

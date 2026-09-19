@@ -8,7 +8,7 @@ extends RefCounted
 const CALIBRATION := "CALIBRATION"
 const CAMPAIGN := ["DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD", "SILENT_ORBIT", "RED_SHIFT", "LAST_LIGHT"]
 
-# The archive reconstructs six incidents using the same eight identity models.
+# The crew relives six incidents aboard ASTRA with the same eight people.
 # Roles are regenerated per seed: a past culprit is never evidence in a new case.
 const CAMPAIGN_PREMISE := "당신은 ASTRA의 탐사요원이다. 네 명의 동료가 깨어 있고 네 명은 아직 장기수면 중이다. 서로 다른 목적지 기록을 확인하며 잠긴 구역을 연다. 어제의 기억과 오늘의 기록이 조금씩 달라진다."
 
@@ -19,11 +19,11 @@ const CASES := {
         "title_ko": "첫 접속",
         "chapter": "00 · 교정",
         "tier": "calibration",
-        "roster": ["mira", "rho", "noa", "sena"],
+        "roster": ["mira", "rho", "dax", "noa"],
         "null_count": 1,
         "max_days": 1,
-        "story_intro": "아카이브가 처음으로 안정적인 조각을 붙잡았다. 네 사람, 한 시간, 하나의 조작. 여기서 재구성하는 법을 익힌다.",
-        "story_outro": "첫 조각이 고정됐다. 사람의 말과 배의 기록은 같은 사건을 다르게 말한다. 이제 더 큰 기록을 열 수 있다.",
+        "story_intro": "의료실에서 눈을 뜬다. 미라, 준, 다렌, 노아 네 사람이 함께 있다. 수면실 전원이 이상하다.",
+        "story_outro": "전원 문제의 실행자 칸은 비어 있다. 사람의 말과 배의 기록이 같은 시각을 다르게 말한다.",
         "dispatches": ["네 명뿐이다. 말과 기록을 한 번씩만 맞춰 보면 된다."],
         "mission": {},
         "challenge": {"id": "claims", "label": "네 사람의 진술 확인", "target": 3},
@@ -294,6 +294,31 @@ const CASES := {
     }
 }
 
+# Base action budgets per chapter, before protocol/mission/difficulty bonuses
+# (still applied in game_session.gd). Difficulty is meant to come from what
+# has to be reasoned through, not from a bigger click count (§8), so these
+# scale up gently: DEAD_AIR asks for two searches and one conversation and
+# does not spend a meeting action at all; only from SILENT_ORBIT on does a
+# chapter use the historical 3/3/2 baseline.
+const AP_PROFILE := {
+    # meeting stayed at a literal 0 in an earlier pass, but the crew's own
+    # votes lean on what the player presents in the meeting (see
+    # game_session.gd's vote/suspicion logic) — with zero meeting actions
+    # nobody ever hears the player's evidence, so votes never converge and
+    # the case becomes close to unsolvable even for a perfect-information
+    # player (§8's "meeting = 0" read too literally). One action keeps the
+    # first meeting light while leaving it solvable.
+    "DEAD_AIR": {"investigation": 2, "talk": 1, "meeting": 1},
+    "GLASS_GARDEN": {"investigation": 2, "talk": 2, "meeting": 1},
+    "ECHO_WARD": {"investigation": 2, "talk": 2, "meeting": 1},
+    "SILENT_ORBIT": {"investigation": 3, "talk": 3, "meeting": 2},
+    "RED_SHIFT": {"investigation": 3, "talk": 3, "meeting": 2},
+    "LAST_LIGHT": {"investigation": 3, "talk": 3, "meeting": 2}
+}
+
+static func ap_profile(case_id: String, fallback: Dictionary) -> Dictionary:
+    return AP_PROFILE.get(case_id, fallback)
+
 static func has_case(case_id: String) -> bool:
     return CASES.has(case_id)
 
@@ -360,12 +385,13 @@ static func format_time(minutes: int, seconds: int = -1) -> String:
 static func window_text(case_data: Dictionary) -> String:
     return "%s~%s" % [format_time(int(case_data.get("window_start", 0))), format_time(int(case_data.get("window_end", 0)))]
 
-# ---------------------------------------------------------------- 0.4.0 shape
+# ---------------------------------------------------------------- roster size
 
-# Cases may run with fewer than the full eight identity models. CALIBRATION
-# does; the campaign does not, because its fairness maths (crew minus Nulls
-# across four days) was tuned for eight and re-tuning it would change every
-# existing record. See docs/WHY_CHANGED.md.
+# Every case can run with fewer than the full eight crew: CALIBRATION starts
+# at four, and the campaign grows the roster one chapter at a time (4-4-5-6-7-
+# 8-8, see AstraVoyageContent.awake_roster). null_count()/max_days() below
+# scale with roster size so the fairness maths (crew minus Nulls across the
+# case's days) stays sound at every size. See docs/WHY_CHANGED.md.
 static func roster(case_data: Dictionary) -> Array:
     var ids: Array = case_data.get("roster", [])
     if ids.is_empty():

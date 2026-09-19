@@ -1,4 +1,4 @@
-# ASTRA 0.4.1 — 마지막 교신
+# ASTRA 0.4.2 — 마지막 교신
 
 같은 배에서 깨어났지만, 우리는 서로 다른 목적지를 기억한다.
 ASTRA의 탐사요원으로서 배를 살피고, 동료의 말과 기록을 비교하는 싱글플레이 SF 미스터리입니다.
@@ -14,9 +14,9 @@ ASTRA의 탐사요원으로서 배를 살피고, 동료의 말과 기록을 비�
 
 ## 실행
 
-`build/ASTRA-0.4.1-windows.zip`의 압축을 풀고 `ASTRA/ASTRA.exe`를 실행합니다. 리소스가 실행 파일에 포함되어 있습니다. 네트워크와 AI 설정 없이 플레이할 수 있습니다.
+`build/ASTRA-0.4.2-windows.zip`의 압축을 풀고 `ASTRA/ASTRA.exe`를 실행합니다. 리소스가 실행 파일에 포함되어 있습니다. 네트워크와 AI 설정 없이 플레이할 수 있습니다.
 
-소스는 Godot **4.7.2 Standard**에서 `project.godot`을 열거나 `run_astra.bat`으로 실행합니다. 기존 작업 폴더 이름 `ASTRA-0.4.0`은 유지했으며 프로젝트와 Windows 파일 버전은 0.4.1입니다.
+소스는 Godot **4.7.2 Standard**에서 `project.godot`을 열거나 `run_astra.bat`으로 실행합니다. 기존 작업 폴더 이름 `ASTRA-0.4.0`은 유지했으며 프로젝트와 Windows 파일 버전은 0.4.2입니다.
 
 ## 검증 및 빌드
 

@@ -1,4 +1,4 @@
-# ASTRA 0.4.1
+# ASTRA 0.4.2
 
 ## 첫 각성부터 시작하는 항해
 
@@ -20,11 +20,11 @@
 
 ## 유지한 기능과 호환
 
-발언 기록, 모순 대조, 무고한 거짓말, 수동 가설, 관계 판단, 야간 행동, 저장 슬롯, 접근성, 오프라인 실행, 선택형 AI를 유지했다. 메타 저장 v8, 진행 저장 v3이며 v1/v2 진행 저장도 읽는다. 호환 ID는 유지하고 화면과 이미지에서 새 인물로 해석한다. 실제 0.3.0 소스가 만든 저장 파일의 증거와 RNG를 유지하며 재개하는 테스트를 통과했다. 투표 결과에는 0.4.1의 1표 규칙이 적용된다.
+발언 기록, 모순 대조, 무고한 거짓말, 수동 가설, 관계 판단, 야간 행동, 저장 슬롯, 접근성, 오프라인 실행, 선택형 AI를 유지했다. 메타 저장 v8, 진행 저장 v3이며 v1/v2 진행 저장도 읽는다. 호환 ID는 유지하고 화면과 이미지에서 새 인물로 해석한다. 실제 0.3.0 소스가 만든 저장 파일의 증거와 RNG를 유지하며 재개하는 테스트를 통과했다. 투표 결과에는 전원 동일한 1표 규칙이 적용된다.
 
 기존 항해 완료 기록과 새 이야기 진행은 별도로 저장한다. 기존 플레이어의 새 시작도 첫 각성부터 안내한다.
 
-## 이번 패스 — 첫판/둘째판 재설계와 서사 통합
+## 0.4.1 패스 — 첫판/둘째판 재설계와 서사 통합
 
 CALIBRATION을 한 장소(의료실)로 좁혔다. 미라·준·다렌·노아 네 사람은 전부 의료실에서 자동으로 합류하며, 승무원을 만나기 위해 다른 방으로 이동할 필요가 없다. 조사 지점도 전원 패널 하나만 열려 있다. 회의·투표·밤은 CALIBRATION 전체에서 등장하지 않는다.
 
@@ -33,3 +33,17 @@ CALIBRATION을 한 장소(의료실)로 좁혔다. 미라·준·다렌·노아 �
 루프가 끝날 때마다 같은 "같은 목소리 / 손목에는 반창고가 없다" 화면이 반복되던 것을, 장마다 다른 제목과 디테일로 바꿨다(`AstraVoyageContent.reset_framing`). 첫 조사 지점·처음 만나는 동료·완료 버튼에는 금색 테두리로 된 넛지가 한 번에 하나씩만 표시된다.
 
 전 구간 회귀 검사를 위해 `tests/story_consistency_tests.gd`(첫판 회귀 + 7개 장 연속 플레이 서사 정합성)와 `tests/content_audit.gd`(캐릭터별 장면·태그·선택 다양성 리포트)를 추가했다. 아직 남은 문제는 `docs/QA_REPORT.md`의 "남은 문제"에 정리했다 — 특히 170개 장면의 캐릭터별 차별화, 관계망 확장, 감정 잔향 세분화는 이번 패스에서 손대지 못했다.
+
+## 0.4.2 패스 — 관계·잔향 시스템 고도화와 초반 난이도 재조정
+
+**과거 관계(pair_history)** 를 방향별 이진 랜덤(A→B와 B→A가 다르게 나올 수 있던 버그)에서 순서 독립적인 단일 표로 바꿨다. `AstraCrewCatalog.pair_key()`가 항상 같은 키를 반환하므로 두 사람은 이제 정확히 같은 과거를 공유한다. 과거 유형은 `first_mission`/`old_colleagues`/`shared_accident`/`saved_each_other`/`professional_conflict`/`past_failure`/`once_close`/`shared_secret`/`record_only_history`와 몇몇 pair 전용 유형(예: 미라·마렌의 `shared_patient_or_ecology_case`) 13종으로 늘었고, pair마다 어울리는 후보군만 뽑는다. 루프마다 전부 다시 굴리지 않고 챕터가 진행될수록(0→3개) 재추첨 예산이 늘어나, 준·세나의 과거 같은 핵심 관계는 플레이어가 실제로 기억할 시간을 번다.
+
+**감정 잔향(echo)** 을 단일 스칼라에서 `familiarity`/`trust`/`protection`/`conflict`/`grief` 다섯 축과 `tags` 배열로 분리했다. 이제 bond가 나빠져도 protection이나 grief는 독립적으로 남을 수 있다. 기존 세이브의 스칼라 echo 값은 `familiarity`로 자동 이관되며(같은 저장 필드 이름을 재사용해 세이브 파일 스키마는 그대로다), 특정 축이 임계값을 넘으면 `trusted_record`/`shielded_player` 같은 태그가 붙는다.
+
+**첫판·둘째판 구조**를 데이터로 옮겼다. `AstraVoyageContent.ROOM_PROFILE`이 CALIBRATION(의료실 1곳)·DEAD_AIR(의료실·통신실·기록보관실)·GLASS_GARDEN(의료실·보안허브·수목구역)의 방 목록을 정의하고, 그 방에 실제 집이 없는 승무원(예: DEAD_AIR의 준)은 `home_room()`을 통해 자동으로 그 장의 첫 방에 모인다. `voyage_can_finish()`는 "전원을 만나야" 하던 공통 규칙 대신 장마다 실제로 필요한 사람(DEAD_AIR는 노아, GLASS_GARDEN은 세나)만 확인한다. AP 예산도 챕터별 표(`AstraCaseCatalog.AP_PROFILE`)로 옮겨 DEAD_AIR는 조사 2·대화 1·회의 1, SILENT_ORBIT부터 기존 3/3/2로 돌아온다 — 즉 DEAD_AIR의 첫 회의는 길게 논쟁하는 자리가 아니라 짧게 한 번만 끼어드는 자리가 된다. (회의를 0으로 완전히 없애 봤더니 NPC들이 플레이어의 증거를 전혀 듣지 못해 투표가 갈라지고 사건이 사실상 풀리지 않는 회귀가 나와, 1로 조정했다 — `tests/run_tests.gd`의 봇 시뮬레이션이 이 문제를 잡아냈다.) `unlocks.gd`의 `ALWAYS`에서 `meeting`/`vote`를 빼서 CALIBRATION 완료 후 처음 해금되는 기능으로 옮겼다.
+
+**선택 effect**를 7종(help/record/share/wait/observe/defend/hide)에서 `confront`/`withhold`/`keep_copy`/`promise` 4종을 더해 11종으로 넓히고, 8명 전원의 "trust" 장면 선택지를 캐릭터마다 다른 문구·다른 조합으로 다시 썼다(이전에는 8명이 완전히 동일한 4개 선택지 문구를 썼다).
+
+**정리**: `case_catalog.gd`의 "archive reconstructs... identity models" 주석과 CALIBRATION 원본 로스터 오타(다렌 누락), `opening_view.gd`의 콜드 오픈 설명 주석("damaged recorder", "killed"), `story_content.gd`에 남아 있던 구버전 "동률 우선권" 문구, `docs/UI_REFERENCE_NOTES.md`의 "2표" 서술, `tests/bots.gd`의 "identity models" 주석을 모두 현재 규칙에 맞게 고쳤다.
+
+**남은 문제**는 여전히 크다 — 170개 장면의 캐릭터별 재배분과 개인 이벤트 다단계화(현재 캐릭터당 1개)는 이번 패스도 다루지 못했다. `tests/content_audit.gd`가 이제 진짜 게이트로 승격되어 이 두 가지를 FAIL로 정확히 보고한다(고의로 `build_windows.ps1`에는 연결하지 않았다 — 알려진 미완료 항목으로 빌드를 막지 않기 위해서다).

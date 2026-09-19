@@ -68,7 +68,17 @@ func _draw() -> void:
         else:
             goal = "아래의 ‘기록을 함께 확인한다’를 눌러 마무리하세요."
     elif bool(state.get("goal_done",false)):
-        goal = "깨어 있는 동료들과 만나 기록을 확인한다." if met_count < 4 else "확인한 기록을 함께 살핀다."
+        var still_needed := ""
+        for who in session.REQUIRED_PEOPLE.get(session.case_id, []):
+            if str(who) not in state["met"]:
+                still_needed = AstraCrewCatalog.name_ko(str(who))
+                break
+        if still_needed != "":
+            goal = "%s와 이야기해 보세요." % still_needed
+        elif session.REQUIRED_PEOPLE.has(session.case_id):
+            goal = "확인한 기록을 함께 살핀다."
+        else:
+            goal = "깨어 있는 동료들과 만나 기록을 확인한다." if met_count < 4 else "확인한 기록을 함께 살핀다."
     var objective := AstraUI.panel(Color(0.025,0.065,0.10,0.96),Color(AstraUI.CYAN,0.5),10,12)
     objective.add_child(AstraUI.prose("지금 할 일   " + goal,AstraUI.T_BODY,AstraUI.TEXT))
     _root.add_child(objective)
@@ -157,6 +167,11 @@ func _draw() -> void:
         for id in session.roster:
             if str(id) not in state["met"]:
                 nudge_person = str(id)
+                break
+    elif bool(state.get("goal_done",false)):
+        for who in session.REQUIRED_PEOPLE.get(session.case_id, []):
+            if str(who) not in state["met"]:
+                nudge_person = str(who)
                 break
     for id in session.roster:
         var who := str(id)

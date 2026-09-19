@@ -7,8 +7,9 @@ extends RefCounted
 const INFO_EFFECTS := ["witness", "open_records", "noa_private", "noa_public", "dax_hint", "top_suspect", "patrol", "vale_record", "flow", "crowd_target"]
 
 static func deduce(s: AstraGameSession) -> Dictionary:
-    # 0.4.0: a case may run with fewer than the eight identity models, so the
-    # bot scores the roster it was actually given.
+    # A case may run with fewer than all eight crew (CALIBRATION starts at
+    # four, the campaign grows one chapter at a time), so the bot scores the
+    # roster it was actually given.
     var scores := {}
     for npc_id in s.active_roster():
         scores[npc_id] = 0.0

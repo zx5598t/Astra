@@ -137,11 +137,62 @@ const CREW := {
     }
 }
 
-# Initial affinity nudges on top of the random roll (source -> target).
+# Baseline proximity only — who tends to cross paths, not who is already
+# close. The actual shape of a relationship (were they ever partners, did one
+# fail the other) belongs to PAIR_HISTORY below; a pair's affinity is this
+# bias plus that history's delta, so this table stays small.
 const AFFINITY_BIAS := {
-    "mira:lyra": 0.18, "lyra:mira": 0.14, "noa:eli": 0.12, "eli:noa": 0.06,
-    "sena:rho": -0.10, "rho:sena": -0.06, "dax:vale": -0.06, "vale:sena": 0.08
+    "mira:lyra": 0.08, "lyra:mira": 0.06, "noa:eli": 0.05, "eli:noa": 0.03,
+    "sena:rho": -0.04, "rho:sena": -0.02, "dax:vale": -0.03, "vale:sena": 0.03
 }
+
+# Every kind of past two crewmates can share, keyed by a short id. `summary`
+# is what a "pair" scene or a records check can surface in prose; `tone`
+# colors how a scene plays it; the deltas nudge affinity/trust once, on top
+# of AFFINITY_BIAS, when the history is (re)rolled.
+const PAIR_HISTORY := {
+    "first_mission": {"summary": "이번 항해에서 처음 함께 일한다.", "tone": "neutral", "affinity_delta": 0.0, "trust_delta": 0.0},
+    "old_colleagues": {"summary": "오래전부터 함께 일해 온 동료다.", "tone": "warm", "affinity_delta": 0.16, "trust_delta": 0.06},
+    "former_partners": {"summary": "예전에 같은 조로 묶여 일한 적이 있다.", "tone": "warm", "affinity_delta": 0.11, "trust_delta": 0.05},
+    "shared_accident": {"summary": "이전에 사고를 함께 겪었다.", "tone": "complicated", "affinity_delta": 0.09, "trust_delta": 0.04},
+    "saved_each_other": {"summary": "서로를 구한 적이 있다.", "tone": "warm", "affinity_delta": 0.20, "trust_delta": 0.10},
+    "professional_conflict": {"summary": "업무 방식으로 크게 부딪힌 적이 있다.", "tone": "tense", "affinity_delta": -0.12, "trust_delta": -0.04},
+    "past_failure": {"summary": "한쪽의 판단 때문에 문제가 생긴 적이 있다.", "tone": "tense", "affinity_delta": -0.08, "trust_delta": -0.06},
+    "once_close": {"summary": "가까웠지만 지금은 멀어졌다.", "tone": "complicated", "affinity_delta": -0.05, "trust_delta": 0.0},
+    "shared_secret": {"summary": "서로의 비밀을 하나씩 알고 있다.", "tone": "complicated", "affinity_delta": 0.08, "trust_delta": 0.08},
+    "record_only_history": {"summary": "기록상으로는 함께 근무했지만 정작 두 사람 다 기억하지 못한다.", "tone": "uncanny", "affinity_delta": 0.0, "trust_delta": -0.02},
+    "shared_patient_or_ecology_case": {"summary": "예전에 함께 다룬 응급 환자 혹은 생태 사고가 있었다.", "tone": "complicated", "affinity_delta": 0.10, "trust_delta": 0.05},
+    "shared_signal_route": {"summary": "같은 통신·항로 임무를 여러 번 함께 맡았다.", "tone": "warm", "affinity_delta": 0.13, "trust_delta": 0.05},
+    "quiet_trust": {"summary": "말은 거의 나누지 않았지만 서로를 신뢰해 왔다.", "tone": "warm", "affinity_delta": 0.09, "trust_delta": 0.07}
+}
+
+# Which histories are plausible for a given unordered pair (§21 of the design
+# notes). A pair not listed here draws from CANDIDATES_DEFAULT instead of
+# every entry in PAIR_HISTORY, so a medic and a navigator do not roll a
+# "shared signal route" they never plausibly had.
+const PAIR_CANDIDATES := {
+    "rho:sena": ["first_mission", "old_colleagues", "shared_accident", "saved_each_other", "professional_conflict"],
+    "lyra:mira": ["old_colleagues", "shared_patient_or_ecology_case", "professional_conflict", "once_close"],
+    "dax:noa": ["old_colleagues", "professional_conflict", "shared_secret", "record_only_history"],
+    "eli:vale": ["old_colleagues", "former_partners", "shared_signal_route", "first_mission"],
+    "dax:rho": ["professional_conflict", "old_colleagues", "past_failure"],
+    "mira:sena": ["saved_each_other", "professional_conflict", "old_colleagues"],
+    "dax:lyra": ["professional_conflict", "past_failure", "first_mission"],
+    "noa:vale": ["shared_secret", "quiet_trust", "record_only_history"]
+}
+const CANDIDATES_DEFAULT := ["first_mission", "old_colleagues", "professional_conflict", "record_only_history"]
+
+# Canonical, order-independent key so "A's history with B" and "B's history
+# with A" are always the same lookup — the single biggest bug in the old
+# per-direction random past (§9 of the design notes).
+static func pair_key(a: String, b: String) -> String:
+    return (a + ":" + b) if a < b else (b + ":" + a)
+
+static func pair_candidates(a: String, b: String) -> Array:
+    return PAIR_CANDIDATES.get(pair_key(a, b), CANDIDATES_DEFAULT)
+
+static func pair_history_info(history_id: String) -> Dictionary:
+    return PAIR_HISTORY.get(history_id, PAIR_HISTORY["first_mission"])
 
 static func info(npc_id: String) -> Dictionary:
     return CREW.get(npc_id, {})

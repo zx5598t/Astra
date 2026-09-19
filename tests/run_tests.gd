@@ -108,8 +108,11 @@ func test_generator() -> void:
     check(intersect_ok == total, "every case solvable by trace intersection (%d/%d)" % [intersect_ok, total])
 
 func test_session_flow() -> void:
+    # SILENT_ORBIT still uses the historical 3/3/2 AP baseline this test's
+    # hardcoded numbers assume; DEAD_AIR's is deliberately lower now (§8 of
+    # the design notes).
     var s := AstraGameSession.new()
-    s.setup("DEAD_AIR", 4242, "ANALYST")
+    s.setup("SILENT_ORBIT", 4242, "ANALYST")
     check(s.phase == "BRIEFING", "starts in briefing")
     check(s.can_advance(), "briefing can advance")
     s.advance()
@@ -153,8 +156,11 @@ func test_session_flow() -> void:
 
 func test_protocols() -> void:
     for protocol in ["ANALYST", "EMPATH", "AUDITOR"]:
+        # SILENT_ORBIT keeps the historical 3/3 investigation/talk baseline
+        # this loop's hardcoded numbers assume; GLASS_GARDEN's is lower now
+        # (§8 of the design notes).
         var s := AstraGameSession.new()
-        s.setup("GLASS_GARDEN", 777, protocol)
+        s.setup("SILENT_ORBIT", 777, protocol)
         for day_index in range(2):
             while s.phase != "INVESTIGATION":
                 _auto_step(s)
@@ -187,8 +193,10 @@ func _auto_step(s: AstraGameSession) -> void:
             s.advance()
 
 func test_meeting_limits() -> void:
+    # SILENT_ORBIT keeps the historical 2-meeting-action baseline; DEAD_AIR's
+    # is deliberately 1 now (§8 of the design notes).
     var s := AstraGameSession.new()
-    s.setup("DEAD_AIR", 99, "EMPATH")
+    s.setup("SILENT_ORBIT", 99, "EMPATH")
     s.advance()
     while s.investigation_ap > 0:
         var searched := false

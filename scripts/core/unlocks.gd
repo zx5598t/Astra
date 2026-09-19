@@ -15,7 +15,7 @@ extends RefCounted
 # Unlocks are derived from the archive, never stored as a separate truth, so a
 # 0.3.1 save that already finished three cases arrives with everything open.
 
-const ALWAYS := ["move", "investigate", "interrogate", "notebook_basic", "meeting", "vote"]
+const ALWAYS := ["move", "investigate", "interrogate", "notebook_basic"]
 
 # `needs_calibration` — the tutorial case must be finished.
 # `needs_cases` — this many campaign cases must have been played to the end.
@@ -24,8 +24,20 @@ const FEATURES := {
     "investigate": {"order": 0, "title": "조사", "blurb": "현장에서 기록이나 흔적을 찾습니다."},
     "interrogate": {"order": 0, "title": "심문", "blurb": "승무원에게 특정 상황을 질문합니다."},
     "notebook_basic": {"order": 0, "title": "조사 노트", "blurb": "찾은 단서와 들은 말이 자동으로 정리됩니다."},
-    "meeting": {"order": 0, "title": "회의", "blurb": "모두 앞에서 주장과 증거를 공개합니다."},
-    "vote": {"order": 0, "title": "투표", "blurb": "한 명을 격리합니다."},
+
+    # CALIBRATION never reaches a meeting or a vote (it resolves entirely in
+    # EXPLORE), so neither belongs in ALWAYS; both become relevant starting
+    # DEAD_AIR, the first chapter that actually uses them.
+    "meeting": {
+        "order": 1, "needs_calibration": true,
+        "title": "회의", "blurb": "모두 앞에서 주장과 증거를 공개합니다.",
+        "flavor": "처음으로, 혼자가 아니라 모두 앞에서 말합니다."
+    },
+    "vote": {
+        "order": 1, "needs_calibration": true,
+        "title": "투표", "blurb": "한 명을 격리합니다.",
+        "flavor": "표는 모두 동등합니다. 당신의 표도 하나입니다."
+    },
 
     "marks": {
         "order": 1, "needs_calibration": true,
@@ -98,7 +110,7 @@ const FEATURES := {
 
 # Order matters for the "what is next" hint on the title screen.
 const REVEAL_ORDER := [
-    "marks", "night", "claim_search", "difficulty_select",
+    "meeting", "vote", "marks", "night", "claim_search", "difficulty_select",
     "case_select", "private_talk", "theory_report",
     "night_tactics", "hypothesis", "protocols", "relationship_events"
 ]
