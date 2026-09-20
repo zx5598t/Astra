@@ -209,7 +209,7 @@ static func arc_actor(chain_id: String) -> String:
             return str(who)
     return ""
 
-static func select_arcs(seed_value: int, loop_index: int, chapter: String, roster: Array, recent: Array, max_count: int = 3) -> Array:
+static func select_arcs(seed_value: int, loop_index: int, chapter: String, roster: Array, recent: Array, max_count: int = 3, pity: Dictionary = {}) -> Array:
     if chapter in ["CALIBRATION","DEAD_AIR","GLASS_GARDEN"]:
         return []
     var candidates: Array = []
@@ -218,6 +218,10 @@ static func select_arcs(seed_value: int, loop_index: int, chapter: String, roste
         if actor in roster:
             candidates.append(str(chain_id))
     candidates.sort_custom(func(a,b):
+        var a_pity := int(pity.get(str(a),0))
+        var b_pity := int(pity.get(str(b),0))
+        if a_pity != b_pity:
+            return a_pity > b_pity
         var ap := 1 if str(a) in recent else 0
         var bp := 1 if str(b) in recent else 0
         if ap != bp:
@@ -237,3 +241,16 @@ static func speaker_counts() -> Dictionary:
 
 static func micro_arc_count() -> int:
     return arc_ids().size()
+
+
+static func update_arc_pity(previous: Dictionary, roster: Array, selected: Array) -> Dictionary:
+    var result := previous.duplicate(true)
+    for chain_id in arc_ids():
+        var id := str(chain_id)
+        if arc_actor(id) not in roster:
+            continue
+        if id in selected:
+            result[id] = 0
+        else:
+            result[id] = mini(6,int(result.get(id,0)) + 1)
+    return result
