@@ -108,7 +108,6 @@ func _build() -> void:
     # single most missed piece of information in playtesting: people asked
     # questions until they ran out and only then noticed there was a budget.
     _budget_panel = AstraUI.panel(Color(0.04, 0.07, 0.11, 0.95), Color(AstraUI.GOLD, 0.45), 8, 10)
-    top.add_child(_budget_panel)
     _budget_row = AstraUI.hbox(10)
     _budget_panel.add_child(_budget_row)
     _budget_name = AstraUI.label("", AstraUI.T_META, AstraUI.MUTED)
@@ -120,7 +119,6 @@ func _build() -> void:
     _budget_row.add_child(_budget_count)
     _ap_label = AstraUI.rich(AstraUI.T_META)
     _ap_label.custom_minimum_size.x = 230
-    top.add_child(_ap_label)
     _note_button = AstraUI.button("조사 노트 · N", AstraUI.CYAN, AstraUI.T_META, 40)
     _note_button.tooltip_text = AstraCodex.tooltip("notebook")
     _note_button.pressed.connect(open_notebook)
@@ -134,6 +132,14 @@ func _build() -> void:
     var menu := AstraUI.button("메뉴 · Esc", AstraUI.MUTED, AstraUI.T_META, 40)
     menu.pressed.connect(func(): app.show_pause_menu())
     top.add_child(menu)
+
+    # Keep the action budget on its own short row. On 1366-wide screens the
+    # old all-in-one header pushed this panel past the viewport edge.
+    var status_row := AstraUI.hbox(10)
+    root.add_child(status_row)
+    status_row.add_child(_budget_panel)
+    status_row.add_child(_ap_label)
+    status_row.add_child(AstraUI.spacer())
 
     # PRIMARY: one line saying what to do next, always in the same place.
     # Built once and updated in place. Rebuilding it into an anchored holder on
