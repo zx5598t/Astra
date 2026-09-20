@@ -13,6 +13,9 @@ const HUMAN_REASON_TEXT := {
     "relationship_support":"이전 상호작용과 현재 관계가 지지 판단에 남음",
     "public_verification":"공개된 기록이 이 사람의 진술을 뒷받침함",
     "statement_response":"바로 앞 사람의 발언과 같은 논점에 반응함",
+    "operational_need":"업무나 안전에 직접 필요한 정보라고 판단함",
+    "trusted_colleague":"현재 관계에서 이 사람과 공유할 가치가 있다고 판단함",
+    "privacy_boundary":"확인되지 않았거나 개인적인 정보라 공유를 제한함",
     "accumulated_behavior":"며칠 동안 쌓인 발언과 행동 정황",
     "insufficient_evidence":"직접 근거가 부족해 기권"
 }
