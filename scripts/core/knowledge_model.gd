@@ -104,3 +104,45 @@ static func trace_text(flags: Dictionary, npc_id: String, fact_id: String) -> St
         if str(step.get("to","")) == "public":
             return "%s knows %s because it became public on day %d" % [npc_id,fact_id,int(step.get("day",0))]
     return "%s has no recorded path to %s" % [npc_id,fact_id]
+
+
+static func share_between(flags: Dictionary, fact_id: String, from_id: String, to_id: String, day: int, reason: String = "crew_share") -> bool:
+    if fact_id == "" or from_id == "" or to_id == "" or from_id == to_id:
+        return false
+    if not knows(flags,from_id,fact_id):
+        return false
+    if knows(flags,to_id,fact_id):
+        return false
+    var root := _root(flags)
+    var facts: Dictionary = root["facts"]
+    var entry: Dictionary = facts.get(fact_id,{"knowers":[],"public":false,"provenance":[]})
+    var knowers: Array = entry.get("knowers",[])
+    if to_id not in knowers:
+        knowers.append(to_id)
+    entry["knowers"] = knowers
+    var provenance_steps: Array = entry.get("provenance",[])
+    provenance_steps.append({"from":from_id,"to":to_id,"day":day,"reason":reason})
+    entry["provenance"] = provenance_steps
+    facts[fact_id] = entry
+    root["facts"] = facts
+    var propagation: Array = root["propagation"]
+    propagation.append({"fact":fact_id,"from":from_id,"to":to_id,"day":day,"reason":reason})
+    while propagation.size() > 80:
+        propagation.pop_front()
+    root["propagation"] = propagation
+    _store(flags,root)
+    return true
+
+static func known_facts(flags: Dictionary, npc_id: String) -> Array:
+    var result: Array = []
+    var root := _root(flags)
+    for fact_id in Dictionary(root["facts"]).keys():
+        if knows(flags,npc_id,str(fact_id)):
+            result.append(str(fact_id))
+    return result
+
+static func knowers(flags: Dictionary, fact_id: String) -> Array:
+    var root := _root(flags)
+    var facts: Dictionary = root["facts"]
+    var entry: Dictionary = facts.get(fact_id,{})
+    return Array(entry.get("knowers",[])).duplicate()
