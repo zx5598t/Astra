@@ -119,6 +119,23 @@ func _run() -> void:
     else:
         quit(1)
 
+func _inside_viewport(control: Control, viewport_size: Vector2) -> bool:
+    if control == null or not control.is_visible_in_tree():
+        return false
+    var rect := control.get_global_rect()
+    return rect.size.x > 0.0 and rect.size.y > 0.0 and rect.position.x >= -2.0 and rect.position.y >= -2.0 and rect.end.x <= viewport_size.x + 2.0 and rect.end.y <= viewport_size.y + 2.0
+
+func _check_game_layout(screen: AstraGameScreen, size: Vector2i, label: String) -> void:
+    root.size = size
+    await _wait(5)
+    var viewport_size := Vector2(size)
+    _expect(_inside_viewport(screen._objective_panel, viewport_size), label + " objective visible in viewport")
+    _expect(_inside_viewport(screen._primary, viewport_size), label + " primary CTA visible in viewport")
+    _expect(_inside_viewport(screen._help_button, viewport_size), label + " help button visible in viewport")
+    _expect(_inside_viewport(screen._budget_panel, viewport_size), label + " remaining-action panel visible in viewport")
+    if screen.session.case_id in [AstraCaseCatalog.CALIBRATION, "DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD"]:
+        _expect("도움말" in screen._help_button.text, label + " early help button is text-labelled")
+
 func _play_case(case_id: String, protocol: String) -> void:
     app.start_case(case_id, protocol)
     await _wait(4)
@@ -144,6 +161,9 @@ func _play_case(case_id: String, protocol: String) -> void:
         return
     var screen = app._current
     _expect(screen is AstraGameScreen, "%s game screen" % case_id)
+    if screen is AstraGameScreen and case_id == "DEAD_AIR":
+        await _check_game_layout(screen, Vector2i(1366, 768), "1366x768")
+        await _check_game_layout(screen, Vector2i(1920, 1080), "1920x1080")
     var s: AstraGameSession = app.session
     var guard := 0
     while s.phase != "RESULT" and guard < 80:
@@ -169,6 +189,12 @@ func _play_case(case_id: String, protocol: String) -> void:
                     screen._view._do_ask(str(npc_id), "ALIBI", "")
                     await _wait(1)
             "MEETING":
+                _expect("회의 자동 넘김" in view._auto_toggle.text, "%s meeting auto is clearly meeting-only" % case_id)
+                var auto_before: bool = app.settings.auto_advance
+                view._toggle_auto()
+                _expect(app.settings.auto_advance != auto_before, "%s meeting auto toggle changes state" % case_id)
+                view._toggle_auto()
+                _expect(app.settings.auto_advance == auto_before, "%s meeting auto toggle restores state" % case_id)
                 view._flush()
                 if not s.found_clues().is_empty():
                     s.present_clue(str(s.found_clues()[0]["id"]))
