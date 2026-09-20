@@ -1150,6 +1150,21 @@ func _maybe_tell(member: AstraCrewMember, lying: bool, result: Dictionary) -> vo
 func _is_lying_about_claim(member: AstraCrewMember) -> bool:
     return bool(current_claim(member.id).get("lie", false))
 
+func innocent_discrepancy_reason() -> String:
+    return str(truth.get("herring_reason","PERSONAL_SECRET"))
+
+func innocent_discrepancy_text(reason: String = "") -> String:
+    var code := reason if reason != "" else innocent_discrepancy_reason()
+    return str({
+        "EMBARRASSMENT":"창피해서 사실과 다른 말을 했다.",
+        "PROTECT_OTHER":"다른 사람을 보호하려고 일부 사실을 숨겼다.",
+        "HIDE_MISTAKE":"자기 실수를 감추려고 진술을 바꿨다.",
+        "KEEP_PROMISE":"누군가와 한 약속을 지키려고 일부 사실을 숨겼다.",
+        "PERSONAL_SECRET":"사건과 무관한 개인 사정을 숨기려고 진술을 바꿨다.",
+        "FEAR":"두려움 때문에 사실대로 말하지 못했다.",
+        "MISREMEMBERED":"거짓말한 것이 아니라 장소 순서를 잘못 기억하고 있었다."
+    }.get(code,"사건과 무관한 사정으로 진술이 어긋났다."))
+
 func _ask_alibi(member: AstraCrewMember, result: Dictionary) -> void:
     var claim := current_claim(member.id)
     var companions: Array = claim.get("companions", [])
@@ -1283,19 +1298,28 @@ func _ask_contradiction(member: AstraCrewMember, result: Dictionary) -> void:
     var is_herring := str(truth.get("herring", "")) == member.id
     if is_herring and not member.secret_revealed:
         if member.trust >= 0.5 or member.stress >= 0.65:
-            _say(member, "contra_confess", {}, result)
-            var secret := str(member.info.get("secret", ""))
-            _transcript(member.id, member.id, secret)
-            result["lines"].append({"speaker": member.id, "text": secret})
+            var reason := innocent_discrepancy_reason()
+            var misremembered := reason == "MISREMEMBERED"
+            if misremembered:
+                var correction := "잠깐. 일부러 숨긴 게 아니에요. 제가 장소 순서를 잘못 기억했어요."
+                _transcript(member.id, member.id, correction, "CONTRADICTION")
+                result["lines"].append({"speaker":member.id,"text":correction,"intent":"CONTRADICTION"})
+            else:
+                _say(member, "contra_confess", {}, result)
+                var secret := str(member.info.get("secret", ""))
+                _transcript(member.id, member.id, secret)
+                result["lines"].append({"speaker": member.id, "text": secret})
+                stats["secrets"] = int(stats.get("secrets", 0)) + 1
             member.secret_revealed = true
             member.adjust_trust(0.06)
             member.adjust_stress(-0.12)
-            stats["secrets"] = int(stats.get("secrets", 0)) + 1
             var true_pos := str(truth["positions"].get(member.id, ""))
             known_claims[member.id] = {"position": true_pos, "companions": [], "day": day, "revised": true}
-            _log("숨긴 사정 · %s|i 진술을 정정했다: 실제로는 %s에 혼자 있었다." % [member.display_name, room_name(true_pos)])
-            result["secret"] = true
-            notice.emit("secret", {"npc_id": member.id})
+            _log("%s · %s|i 진술을 정정했다: 실제로는 %s에 혼자 있었다." % ["기억 정정" if misremembered else "숨긴 사정", member.display_name, room_name(true_pos)])
+            result["secret"] = not misremembered
+            result["misremembered"] = misremembered
+            result["innocent_reason"] = reason
+            notice.emit("secret", {"npc_id": member.id, "reason":reason, "misremembered":misremembered})
         else:
             member.adjust_stress(0.12)
             _say(member, "contra_hold", {}, result)
@@ -1524,7 +1548,7 @@ func resolve_private_event(choice_index: int) -> Dictionary:
     var effect := str(choice.get("effect", ""))
     var result := {"ok": true, "npc_id": npc_id, "effect": effect, "lines": [], "text": ""}
     _transcript(npc_id, "player", str(choice.get("label", "")))
-    var lying := member.is_null() or (str(truth.get("herring", "")) == npc_id and not member.secret_revealed)
+    var lying := member.is_null() or (_is_lying_about_claim(member) and not member.secret_revealed)
 
     match effect:
         "comfort":
@@ -2493,7 +2517,8 @@ func defend(target_id: String) -> Dictionary:
     if target.secret_revealed and not flags.has("secret_public_" + target_id):
         flags["secret_public_" + target_id] = true
         var true_pos := room_name(str(truth["positions"].get(target_id, "")))
-        _feed_line("player", target_id, "%s의 거짓 진술에는 사건과 무관한 사정이 있었습니다. 실제로는 %s에 혼자 있었습니다. 제가 직접 확인했습니다." % [name_of(target_id), true_pos], "player")
+        var reason_text := innocent_discrepancy_text()
+        _feed_line("player", target_id, "%s의 진술 차이는 Null의 증거가 아닙니다. %s 실제 위치는 %s였습니다." % [name_of(target_id), reason_text, true_pos], "player")
         _feed_npc(target_id, "m_secret", {}, "defense", "")
         verification = public_verification(target_id)
         for observer_id in living_ids():
@@ -3021,7 +3046,9 @@ func _finalize() -> void:
             "id": npc_id, "role": member.role, "status": member.status,
             "true_position": room_name(str(truth["positions"].get(npc_id, ""))),
             "claim_position": room_name(str(claim.get("position", ""))),
-            "lie": bool(claim.get("lie", false)), "herring": str(truth.get("herring", "")) == npc_id,
+            "lie": bool(claim.get("lie", false)), "misremembered": bool(claim.get("misremembered",false)),
+            "innocent_reason": str(claim.get("innocent_reason","")),
+            "herring": str(truth.get("herring", "")) == npc_id,
             "op": op_name(str(truth["null_ops"].get(npc_id, "")))
         })
     var title := ""
@@ -3089,7 +3116,8 @@ func post_mortem() -> Dictionary:
     var herring_id := str(truth.get("herring", ""))
     var innocent_lie := ""
     if herring_id != "":
-        innocent_lie = "%s 거짓말했지만 Null이 아니었다. 숨긴 것은 사건과 무관한 사정이었다." % AstraJosa.eun(name_of(herring_id))
+        var reason := innocent_discrepancy_reason()
+        innocent_lie = "%s Null이 아니었다. %s" % [AstraJosa.eun(name_of(herring_id)), innocent_discrepancy_text(reason)]
     var decisive := ""
     if not last_vote.is_empty():
         var tally: Dictionary = last_vote.get("tally", {})
