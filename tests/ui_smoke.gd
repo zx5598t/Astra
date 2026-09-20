@@ -44,7 +44,24 @@ func _run() -> void:
     _expect(app._current is AstraVoyageView, "cold open enters real ship exploration")
     app.show_title()
     await _wait(3)
-    _expect(app.settings.intro_seen, "cold open is not shown twice")
+    _expect(app.settings.intro_seen, "compatibility intro flag is still written")
+    _expect(app.meta.intro_seen_for_slot(app.active_slot), "finished opening is remembered for that save slot")
+    var first_slot := app.active_slot
+    var second_slot := 1 if first_slot != 1 else 2
+    app.start_new_campaign(second_slot)
+    await _wait(3)
+    _expect(app._current is AstraOpeningView, "new save slot shows calibration opening again")
+    app._current._finish()
+    await _wait(4)
+    _expect(app.meta.intro_seen_for_slot(second_slot), "second save remembers its own opening")
+    app.show_title()
+    await _wait(2)
+    app.start_case(AstraCaseCatalog.CALIBRATION, "ANALYST", second_slot)
+    await _wait(3)
+    _expect(not (app._current is AstraOpeningView), "same save slot does not repeat calibration opening")
+    app.show_title()
+    await _wait(2)
+    app.active_slot = first_slot
 
     # The tutorial case has to be playable end to end before the campaign opens.
     await _play_case(AstraCaseCatalog.CALIBRATION, "ANALYST")
@@ -105,6 +122,11 @@ func _run() -> void:
 func _play_case(case_id: String, protocol: String) -> void:
     app.start_case(case_id, protocol)
     await _wait(4)
+    # A fresh save slot owns its own calibration intro in 0.5.1. Complete that
+    # short opening before expecting the voyage/game screen.
+    if app._current is AstraOpeningView:
+        app._current._finish()
+        await _wait(4)
     # First-appearance cards stack up in front of a new roster; dismiss them the
     # way a player would before driving the case.
     for _pass in range(12):
