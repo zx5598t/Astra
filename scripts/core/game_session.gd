@@ -2103,7 +2103,9 @@ func _feed_line(speaker_id: String, target_id: String, text: String, kind: Strin
     if not meeting_feed.is_empty():
         var previous: Dictionary = meeting_feed[meeting_feed.size() - 1]
         var force_reply := thread_role in ["response", "support", "challenge", "clarify", "followup", "close"]
-        if force_reply or str(previous.get("topic", "")) == topic or kind in ["react", "defense", "dispute", "record"]:
+        if thread_role == "anchor":
+            transition = true
+        elif force_reply or str(previous.get("topic", "")) == topic or (thread_role == "" and kind in ["react", "defense", "dispute", "record"]):
             thread_id = str(previous.get("thread_id", entry_id))
             reply_to = str(previous.get("entry_id", ""))
             topic = str(previous.get("topic", topic)) if force_reply else topic
