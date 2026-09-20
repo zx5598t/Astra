@@ -126,7 +126,9 @@ jobs:
           grep -q "ASTRA 0.5.3 KNOWLEDGE PROPAGATION TESTS OK" knowledge-053.log
           ./godot --headless --path . --script res://tests/relationship_callback_tests.gd 2>&1 | tee callbacks-053.log
           grep -q "ASTRA 0.5.3 RELATIONSHIP CALLBACK TESTS OK" callbacks-053.log
-          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" mira-053.log scheduler-053.log autonomy-053.log knowledge-053.log callbacks-053.log; then exit 1; fi
+          ./godot --headless --path . --script res://tests/heartbeat_053_simulation.gd 2>&1 | tee heartbeat-053.log
+          grep -q "ASTRA 0.5.3 HEARTBEAT SIMULATION OK" heartbeat-053.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" mira-053.log scheduler-053.log autonomy-053.log knowledge-053.log callbacks-053.log heartbeat-053.log; then exit 1; fi
 
       - name: Story continuity and first-play regression
         run: |
