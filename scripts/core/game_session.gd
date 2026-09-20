@@ -25,7 +25,7 @@ const MEETING_ACTIONS := 2
 const PLAYER_VOTE_WEIGHT := 1
 const CONFIDE_TRUST := 0.6
 const THEORY_DAY_FACTORS := [1.0, 1.0, 0.92, 0.84, 0.76]
-const VOTE_NOISE := 0.16
+const VOTE_NOISE := 0.04
 const SNAPSHOT_PATH := "user://astra_session.cfg"
 const SNAPSHOT_VERSION := 3
 # 0.3.1 wrote version 1. It is still readable; the fields it never had are
@@ -219,6 +219,9 @@ func setup(case_id_in: String, seed_in: int, protocol_in: String = "ANALYST", di
     night_result.clear()
     outcome = ""
     flags.clear()
+    flags["knowledge_052"] = {"facts":{}, "propagation":[]}
+    flags["decision_traces_052"] = []
+    flags["vote_history_052"] = []
     disputes_done.clear()
     meeting_pushers.clear()
     accused_today.clear()
@@ -388,6 +391,15 @@ func _valid_snapshot(cfg: ConfigFile) -> bool:
 
 func protocol_name() -> String:
     return str(PROTOCOLS.get(protocol, {}).get("name", protocol))
+
+func npc_knows_fact(npc_id: String, fact_id: String) -> bool:
+    return AstraKnowledgeModel.knows(flags, npc_id, fact_id)
+
+func knowledge_debug_trace(npc_id: String, fact_id: String) -> String:
+    return AstraKnowledgeModel.trace_text(flags, npc_id, fact_id)
+
+func decision_trace_for(npc_id: String) -> Array:
+    return AstraDecisionModel.recent(flags, npc_id)
 
 func npc(npc_id: String) -> AstraCrewMember:
     return crew.get(npc_id, null)
@@ -873,6 +885,7 @@ func _discover(clue: Dictionary, announce: bool) -> void:
     _found_counter += 1
     clue["found_order"] = _found_counter
     stats["clues_found"] = int(stats.get("clues_found", 0)) + 1
+    AstraKnowledgeModel.discover_player(flags, str(clue.get("id","")), day)
     var where := room_name(str(clue.get("room", ""))) if str(clue.get("room", "")) != "" else "진술"
     _log("단서 확보 · [%s] %s" % [where, str(clue.get("title", ""))])
     _recompute_contradictions()
@@ -1223,6 +1236,7 @@ func _evidence_specialist_note(member: AstraCrewMember, topic: String, clue: Dic
     return ""
 
 func _ask_evidence(member: AstraCrewMember, clue: Dictionary, result: Dictionary) -> void:
+    AstraKnowledgeModel.share_with(flags, str(clue.get("id","")), member.id, day)
     var kind := str(clue.get("kind", ""))
     var claim := current_claim(member.id)
     var params := {
@@ -2219,6 +2233,13 @@ const FEED_KIND_TO_CLAIM := {
 func can_meeting_speak(speaker_id: String) -> bool:
     return speaker_id == "player" or speaker_id in active_participants()
 
+func _meeting_thread_type(topic: String, kind: String) -> String:
+    if kind in ["record","dispute","alibi"] or topic.begins_with("clue:") or topic.begins_with("movement:"):
+        return "FACT_THREAD"
+    if kind in ["defense","suspect","react","mourn","calm"] or topic.begins_with("suspicion:"):
+        return "RELATION_THREAD"
+    return "DECISION_THREAD"
+
 func _meeting_topic_label(topic: String, target_id: String, kind: String) -> String:
     if topic.begins_with("movement:"):
         return "%s의 동선" % name_of(topic.trim_prefix("movement:"))
@@ -2263,6 +2284,7 @@ func _feed_line(speaker_id: String, target_id: String, text: String, kind: Strin
     var entry := {
         "entry_id": entry_id, "thread_id": thread_id, "reply_to": reply_to,
         "speaker": speaker_id, "target": target_id, "topic": topic,
+        "thread_type": _meeting_thread_type(topic, kind),
         "topic_label": _meeting_topic_label(topic, target_id, kind),
         "topic_transition": transition, "reply_context": reply_context,
         "thread_role": role, "text": _josa_inline(text), "kind": kind, "day": day
@@ -2332,6 +2354,7 @@ func present_clue(clue_id: String) -> Dictionary:
         return {"ok": false}
     meeting_actions_left -= 1
     clue["public"] = true
+    AstraKnowledgeModel.make_public(flags, clue_id, active_participants(), day)
     stats["presented"] = int(stats.get("presented", 0)) + 1
     var start := meeting_feed.size()
     _feed_line("player", "", "단서를 공개합니다. ‘%s’ — %s" % [str(clue.get("title", "")), str(clue.get("text", ""))], "player")
@@ -2553,21 +2576,47 @@ func _sanitize_ballot(voter_id: String, target_id: String) -> String:
     alternatives.sort_custom(func(a, b): return crew[voter_id].get_suspicion(a) > crew[voter_id].get_suspicion(b))
     return str(alternatives[0])
 
-func _vote_reason(voter_id: String, target_id: String) -> String:
+func _vote_reason_items(voter_id: String, target_id: String) -> Array:
     if target_id == "":
-        return "직접 근거가 부족해 기권"
+        return []
+    var result: Array = []
     var code := reason_for(voter_id, target_id)
     match code:
-        "log": return "공개된 출입 기록과 진술이 맞지 않음"
-        "dispute": return "회의에서 드러난 진술 모순"
-        "clue": return "공개된 현장 흔적이 겹침"
-        "slip": return "공개 발언에서 드러난 실언"
-        "victim": return "신호 두절 승무원이 남긴 의심"
-        "accused": return "회의에서 제기된 구체적 의혹"
-        "alone": return "사건 시각의 단독 행동이 설명되지 않음"
-        "friction": return "이전 진술과 관계 갈등을 함께 고려함"
-        _: return "확신이 부족한 정황 판단"
+        "log":
+            result.append(AstraDecisionModel.reason("public_log_conflict", 1.0))
+        "disputed":
+            result.append(AstraDecisionModel.reason("public_statement_conflict", 0.92))
+        "clue2":
+            result.append(AstraDecisionModel.reason("public_trace", 0.95))
+        "clue":
+            result.append(AstraDecisionModel.reason("public_trace", 0.72))
+        "slip":
+            result.append(AstraDecisionModel.reason("public_slip", 1.0))
+        "victim":
+            result.append(AstraDecisionModel.reason("victim_suspicion", 0.74))
+        "accused":
+            result.append(AstraDecisionModel.reason("meeting_accusation", 0.68))
+        "alone":
+            result.append(AstraDecisionModel.reason("unexplained_alone", 0.6))
+        "friction":
+            result.append(AstraDecisionModel.reason("relationship_friction", 0.5))
+        _:
+            result.append(AstraDecisionModel.reason("accumulated_behavior", 0.35))
+    # Attach only evidence this voter can actually know. Public clues should
+    # always pass this check; a clue shown only to another NPC must not.
+    for clue in clues:
+        if not bool(clue.get("public", false)) or target_id not in clue.get("members", []):
+            continue
+        var clue_id := str(clue.get("id",""))
+        if clue_id != "" and AstraKnowledgeModel.knows(flags, voter_id, clue_id):
+            result.append(AstraDecisionModel.reason("public_trace", 0.76, clue_id))
+    return result
 
+func _vote_decision_trace(voter_id: String, target_id: String) -> Dictionary:
+    return AstraDecisionModel.trace(voter_id, "vote", target_id, _vote_reason_items(voter_id, target_id), day)
+
+func _vote_reason(voter_id: String, target_id: String) -> String:
+    return str(_vote_decision_trace(voter_id, target_id).get("explanation", "직접 근거가 부족해 기권"))
 func vote_intentions() -> Dictionary:
     var result := {}
     var crew_votes := {}
@@ -2630,10 +2679,14 @@ func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int =
         theories.append({"day": day, "suspects": theory_suspects.slice(0,null_count), "confidence": clampi(confidence, 0, 100)})
     var intentions := vote_intentions()
     var reasons := {}
+    var decision_traces := {}
     for voter in intentions.keys():
         var sanitized := _sanitize_ballot(str(voter), str(intentions[voter]))
         intentions[voter] = sanitized
-        reasons[voter] = _vote_reason(str(voter), sanitized)
+        var trace := _vote_decision_trace(str(voter), sanitized)
+        decision_traces[voter] = trace
+        reasons[voter] = str(trace.get("explanation","직접 근거가 부족해 기권"))
+        AstraDecisionModel.append_trace(flags, trace)
     var tally := {}
     for voter in intentions.keys():
         var target := str(intentions[voter])
@@ -2653,10 +2706,25 @@ func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int =
         isolated = str(leaders[0])
     vote_cast = true
     last_vote = {
-        "tally": tally, "intentions": intentions, "vote_reasons": reasons,
+        "tally": tally, "intentions": intentions, "vote_reasons": reasons, "decision_traces": decision_traces,
         "player_target": target_id, "isolated": isolated, "top": top,
         "tie": leaders.size() > 1 and isolated == ""
     }
+    var vote_history: Array = Array(flags.get("vote_history_052", [])).duplicate(true)
+    var vote_changes: Array = []
+    if not vote_history.is_empty():
+        var previous: Dictionary = vote_history[vote_history.size() - 1]
+        var previous_intentions: Dictionary = previous.get("intentions", {})
+        for voter in intentions:
+            var before := str(previous_intentions.get(voter, ""))
+            var after := str(intentions.get(voter, ""))
+            if before != after:
+                vote_changes.append({"voter":str(voter),"before":before,"after":after,"reason":str(reasons.get(voter,""))})
+    last_vote["vote_changes"] = vote_changes
+    vote_history.append({"day":day,"intentions":intentions.duplicate(true),"reasons":reasons.duplicate(true)})
+    while vote_history.size() > 6:
+        vote_history.pop_front()
+    flags["vote_history_052"] = vote_history
     if isolated != "":
         var member: AstraCrewMember = crew[isolated]
         member.status = AstraCrewMember.STATUS_ISOLATED
