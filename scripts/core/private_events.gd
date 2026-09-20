@@ -1,7 +1,7 @@
 class_name AstraPrivateEvents
 extends RefCounted
 
-# 0.5.0: authored private moments are a pool, not one biography dump per face.
+# 0.5.3: authored private moments are a pool, with Mira carrying the deepest emotional range without becoming a mandatory route.
 # Counts intentionally differ by character. Conditions decide which moment is
 # appropriate now; the session passes day/trust/stress instead of revealing a
 # scene simply because a scalar crossed one universal threshold.
@@ -13,7 +13,14 @@ const EVENTS := {
         {"scene":"의료 단말에 같은 체온 기록이 두 번 겹쳐 있다. 미라가 한 줄씩 손가락으로 짚는다.","prompt":"“제가 잘못 옮긴 건지, 원본부터 이런 건지 같이 봐요.”","choices":[{"label":"원본과 사본을 나란히 놓는다.","hint":"","effect":"open_records"},{"label":"미라의 설명을 먼저 듣는다.","hint":"","effect":"read"}]},
         {"scene":"미라가 비어 있는 침상을 정리하다가 베개를 다시 제자리에 둔다.","prompt":"“사람이 없는데도 자꾸 습관처럼 준비하게 되네요.”","choices":[{"label":"말없이 시트를 같이 편다.","hint":"","effect":"comfort"},{"label":"“누가 가장 걱정돼요?”","hint":"","effect":"top_suspect"}],"min_stress":0.35},
         {"scene":"미라가 자신의 맥박 기록을 열어 둔 채 화면 밝기를 낮춘다.","prompt":"“제 기록도 남들 것처럼 보세요. 저만 예외면 더 이상하잖아요.”","choices":[{"label":"같은 기준으로 기록을 확인한다.","hint":"","effect":"read"},{"label":"“그 말, 회의에서도 해 주세요.”","hint":"","effect":"calm_meeting"}],"min_trust":0.1},
-        {"scene":"미라가 응급 키트를 채우다 진통제 한 칸이 비어 있는 걸 발견한다.","prompt":"“쓴 사람은 괜찮겠죠. 다만 언제 썼는지는 알아야 해요.”","choices":[{"label":"사용 기록을 같이 연다.","hint":"","effect":"open_records"},{"label":"일단 사람들 상태부터 확인한다.","hint":"","effect":"witness"}],"min_day":2}
+        {"scene":"미라가 응급 키트를 채우다 진통제 한 칸이 비어 있는 걸 발견한다.","prompt":"“쓴 사람은 괜찮겠죠. 다만 언제 썼는지는 알아야 해요.”","choices":[{"label":"사용 기록을 같이 연다.","hint":"","effect":"open_records"},{"label":"일단 사람들 상태부터 확인한다.","hint":"","effect":"witness"}],"min_day":2},
+        {"scene":"미라는 모두의 검사표를 닫고도 자기 이름이 적힌 마지막 줄은 비워 둔다.","prompt":"“저는 나중에 해도 돼요. 지금은 다른 사람이—”","choices":[{"label":"센서를 미라에게 건넨다.","hint":"","effect":"comfort"},{"label":"“본인도 환자예요.”","hint":"","effect":"procedure"}],"min_day":2,"min_stress":0.25},
+        {"scene":"의료실 문이 닫힌 뒤 미라가 봉인된 환자 기록 한 장을 책상 아래 서랍에 넣는다.","prompt":"“사건과 관련 있을 수도 있어요. 그래도 확인 전에는 이 사람 기록이에요.”","choices":[{"label":"비공개를 존중한다.","hint":"","effect":"comfort_light"},{"label":"“관련 있으면 공개해야 해요.”","hint":"","effect":"top_suspect"}],"min_day":2,"min_trust":0.15},
+        {"scene":"미라가 피아노 곡을 틀었다가 한 소절 만에 볼륨을 낮춘다.","prompt":"“이 정도가 더 편한 것 같아요. 전에 들은 적은 없는데.”","choices":[],"resolution":"음악은 대화보다 작게 남고, 미라는 다시 차트를 정리한다.","min_day":2},
+        {"scene":"격리 포드의 생체 표시가 안정된 걸 확인한 뒤에도 미라는 한동안 손을 떼지 않는다.","prompt":"“결정은 끝났어도 이 사람 상태는 제 일이니까요.”","choices":[{"label":"옆에서 마지막 수치를 같이 확인한다.","hint":"","effect":"comfort"},{"label":"“결정이 틀렸다고 생각해요?”","hint":"","effect":"top_suspect"}],"min_day":3,"min_stress":0.35},
+        {"scene":"미라가 빈 침상의 담요를 접었다 펴며 모서리를 계속 맞춘다.","prompt":"“이상하죠. 사람이 없는데도 다음 검사를 준비하고 있어요.”","choices":[{"label":"담요 한쪽을 같이 맞춘다.","hint":"","effect":"comfort"},{"label":"아무 말 없이 기다린다.","hint":"","effect":"comfort_light"}],"min_day":3,"min_stress":0.55},
+        {"scene":"당신이 들어오자 미라가 쓰던 의료 기록을 바로 닫지 않는다. 대신 한 줄을 손가락으로 가린다.","prompt":"“여기까진 같이 봐도 돼요. 나머지는 아직 제 판단으로 남겨 둘게요.”","choices":[{"label":"경계를 받아들인다.","hint":"","effect":"comfort_light"},{"label":"가린 이유를 묻는다.","hint":"","effect":"read"}],"min_day":3,"min_trust":0.35},
+        {"scene":"미라는 피곤한 얼굴로 의자에 기대 있다가 당신을 보고 일어나려 한다.","prompt":"“잠깐만 쉬고 있었어요. 정말로요.”","choices":[{"label":"“그대로 있어요. 제가 차트 가져올게요.”","hint":"","effect":"comfort"},{"label":"같이 남은 검사 목록만 정리한다.","hint":"","effect":"procedure"}],"min_day":3,"min_stress":0.45}
     ],
     "rho": [
         {"scene":"준이 바닥에 공구를 펼쳐 놓았다. 평소와 달리 농담을 하지 않는다.","prompt":"“내가 만진 데가 있어. 같이 봐 줘. 혼자 확인하면 또 놓칠 것 같아.”","choices":[{"label":"옆에 앉아 기록을 편다.","hint":"","effect":"open_records"}]},
