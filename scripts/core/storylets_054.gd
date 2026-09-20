@@ -91,7 +91,7 @@ const ARC_PACKS := {
 # Four extra scenes each, plus extra depth for Soren/Lucan.
 const EXTRA_PACKS := {
     "mira":[
-        ["routine","DAILY","mira_routine_break","의료실 의자는 비어 있고 미라의 차트만 펼쳐져 있다. 잠시 뒤 통신실 쪽에서 미라가 돌아온다.","소렌이 너무 오래 듣고 있었어요. 확인만 하고 왔어요.",{"routine_relevance":"CHECKING_CREW"}],
+        ["routine","DAILY","mira_routine_break","빈 의자와 펼쳐진 차트만 의료실에 남아 있다. 잠시 뒤 통신실 쪽에서 미라가 돌아온다.","소렌이 너무 오래 듣고 있었어요. 확인만 하고 왔어요.",{"routine_relevance":"CHECKING_CREW"}],
         ["reaction","RELATIONSHIP","mira_people_request","미라는 새 기록을 들고 왔지만 바로 내밀지 않고 당신이 하던 대화를 끝낼 때까지 기다린다.","사람부터 볼 거라고 생각했어요. 이건 끝나면 같이 봐요.",{"requires":{"player_axis":"people_first"}}],
         ["work","WORK","mira_medical_delegate","미라는 준에게 센서 수리를 맡기고 자신은 환자 기록을 계속 본다.","고치는 사람 따로, 보는 사람 따로면 둘 다 덜 놓쳐요.",{}],
         ["opinion","RELATIONSHIP","mira_opinion_softens","미라는 앞서 경계하던 사람의 새 검사표를 확인한 뒤 질문 수를 줄인다.","이 부분은 설명이 맞아요. 다른 문제와 섞지 않을게요.",{"opinion_change":{"reason":"new_evidence"}}]
@@ -103,7 +103,7 @@ const EXTRA_PACKS := {
     ],
     "dax":[
         ["routine","DAILY","dax_paper_break","다렌은 화면을 끄고 종이 한 장에 중간값만 다시 쓴다.","답보다 어디서 갈렸는지 보는 게 빠를 때가 있어.",{}],
-        ["reaction","RELATIONSHIP","dax_skeptical_player","다렌은 당신이 한 번 더 확인하자 같은 계산을 다른 순서로 보여 준다.","좋아. 의심할 거면 방법도 바꿔 보자.",{"requires":{"player_axis":"skeptical"}}],
+        ["reaction","RELATIONSHIP","dax_skeptical_player","다렌은 재확인을 요청받자 같은 계산을 다른 순서로 보여 준다.","좋아. 의심할 거면 방법도 바꿔 보자.",{"requires":{"player_axis":"skeptical"}}],
         ["opinion","RELATIONSHIP","dax_opinion_change","다렌은 이전 판단 옆에 작은 화살표를 그어 다른 사람의 이름으로 옮긴다.","입력이 바뀌었으면 결론도 바뀌어야지.",{"opinion_change":{"reason":"new_evidence"}}]
     ],
     "noa":[
@@ -113,13 +113,13 @@ const EXTRA_PACKS := {
     ],
     "sena":[
         ["routine","DAILY","sena_food_break","세나는 순찰표를 접고 식판 앞에 정확히 다섯 분만 앉는다.","다 먹을 시간은 없고, 안 먹을 이유도 없지.",{}],
-        ["reaction","RELATIONSHIP","sena_protective_player","세나는 당신이 다른 사람을 먼저 빼내는 걸 보고 출구 하나를 더 열어 둔다.","그쪽 맡아. 뒤는 내가 볼게.",{"requires":{"player_axis":"protective"}}],
+        ["reaction","RELATIONSHIP","sena_protective_player","세나는 다른 사람을 먼저 빼내는 선택을 보고 출구 하나를 더 열어 둔다.","그쪽 맡아. 뒤는 내가 볼게.",{"requires":{"player_axis":"protective"}}],
         ["opinion","RELATIONSHIP","sena_opinion_change","세나는 의심하던 사람의 출입 시간을 다시 본 뒤 차단 목록에서 이름 하나를 지운다.","이 시간은 맞네. 그럼 다른 쪽부터 보자.",{"opinion_change":{"reason":"new_evidence"}}]
     ],
     "vale":[
         ["routine","DAILY","vale_silent_rest","소렌은 헤드셋 없이 통신실에 앉아 있다. 빈 채널조차 꺼 둔 상태다.","지금은 아무것도 안 듣는 게 일인 것 같아요.",{}],
         ["pair","PAIR","vale_eli_direction","소렌이 신호 방향 하나만 말하자 루칸은 지도에서 두 경로를 지운다.","좌표는 아직 몰라도 방향은 줄일 수 있네요.",{"target":"eli"}],
-        ["reaction","RELATIONSHIP","vale_patient_player","소렌은 당신이 재촉하지 않자 파일을 다시 처음부터 틀지 않는다.","기다려 주면 같은 소리를 덜 의심하게 돼요.",{"requires":{"player_axis":"patient"}}],
+        ["reaction","RELATIONSHIP","vale_patient_player","소렌은 재촉이 없자 파일을 다시 처음부터 틀지 않는다.","기다려 주면 같은 소리를 덜 의심하게 돼요.",{"requires":{"player_axis":"patient"}}],
         ["pair","PAIR","vale_noa_source","소렌은 노아에게 음성 내용보다 파일 생성 시각부터 보여 준다.","제가 들은 말보다 이 시간이 먼저 믿을 만해요.",{"target":"noa"}],
         ["observation","MOOD","vale_window_silence","통신실 밖을 나선 소렌은 기계음이 적은 복도에서 한동안 멈춰 선다.","조용한 데 오면 아까 소리가 더 선명해질 때가 있어요.",{}],
         ["opinion","RELATIONSHIP","vale_opinion_change","소렌은 이전에 의심하던 목소리와 다른 호흡 간격을 찾아 표시를 바꾼다.","같은 사람이라고 생각했는데… 이건 간격이 달라요.",{"opinion_change":{"reason":"new_evidence"}}]
@@ -127,8 +127,8 @@ const EXTRA_PACKS := {
     "eli":[
         ["routine","DAILY","eli_window_check","루칸은 항법 화면보다 창밖 별의 상대 위치를 먼저 확인한다.","화면이 틀려도 저쪽은 같이 틀리진 않으니까.",{}],
         ["pair","PAIR","eli_vale_silence","루칸은 소렌이 말없이 건넨 시간표를 받고 설명을 요구하지 않는다.","시간이면 충분해. 방향은 내가 볼게.",{"target":"vale"}],
-        ["reaction","RELATIONSHIP","eli_protective_player","루칸은 당신이 사람을 먼저 빼내는 걸 보고 가장 덜 흔들리는 경로를 표시한다.","빠른 길 말고 이쪽. 지금은 사람이 먼저잖아.",{"requires":{"player_axis":"protective"}}],
-        ["pair","PAIR","eli_dax_risk","루칸은 다렌의 연료 계산 옆에 실제 진동 구역을 손으로 그린다.","숫자 안에 없는 길도 있어. 이 구간이 그래.",{"target":"dax"}],
+        ["reaction","RELATIONSHIP","eli_protective_player","루칸은 사람을 먼저 빼내는 선택을 보고 가장 덜 흔들리는 경로를 표시한다.","빠른 길 말고 이쪽. 지금은 사람이 먼저잖아.",{"requires":{"player_axis":"protective"}}],
+        ["pair","PAIR","eli_dax_risk","루칸은 연료 계산 옆에 실제 진동 구역을 손으로 그린다. 계산은 다렌이 맡았다.","숫자 안에 없는 길도 있어. 이 구간이 그래.",{"target":"dax"}],
         ["observation","MOOD","eli_exit_check","루칸은 대화에 끼지 않은 채 출구 두 곳을 직접 열었다 닫는다.","말보다 문이 먼저 확인될 때가 있어.",{}],
         ["opinion","RELATIONSHIP","eli_opinion_change","루칸은 이전에 피하던 경로의 새 측정값을 보고 선을 다시 연결한다.","조건이 바뀌었네. 그럼 이 길도 다시 후보야.",{"opinion_change":{"reason":"new_evidence"}}]
     ],
