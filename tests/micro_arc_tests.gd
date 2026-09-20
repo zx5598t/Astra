@@ -47,6 +47,12 @@ func test_selection_budget() -> void:
         for id in arcs:
             seen[str(id)] = true
     check(seen.size() == 8,"seed sweep can reach every character micro-arc")
+    var overdue := str(AstraStorylets054.arc_ids()[0])
+    var pity := {overdue:6}
+    var selected := AstraStorylets054.select_arcs(90123,4,"LAST_LIGHT",roster,[],3,pity)
+    check(overdue in selected,"an repeatedly missed eligible micro-arc is pulled forward by pity")
+    var updated := AstraStorylets054.update_arc_pity(pity,roster,selected)
+    check(int(updated.get(overdue,-1)) == 0,"selected micro-arc pity resets after exposure")
 
 func test_runtime_stage_progression() -> void:
     var s := AstraGameSession.new()
