@@ -50,12 +50,14 @@ const DEVIATIONS := {
     "mira":[
         ["comms","CHECKING_CREW","소렌의 청각 피로와 수면 기록을 확인하러 왔다."],
         ["garden","RESOURCE_CONFLICT","의료용 산소와 생태 순환량을 직접 맞추고 있다."],
-        ["lounge","RECOVERY","자기 검사를 미룬 뒤 혼자 잠깐 앉아 있다."]
+        ["lounge","RECOVERY","자기 검사를 미룬 뒤 혼자 잠깐 앉아 있다."],
+        ["engine","MEDICAL_EMERGENCY","작업 중 다친 사람이 있다는 호출을 받고 응급 키트를 들고 와 있다."]
     ],
     "rho":[
         ["comms","INVESTIGATION","통신 장치가 실제로 손상됐는지 접점을 보고 있다."],
         ["security","RELATIONSHIP_EVENT","세나가 표시한 출입 흔적을 직접 확인하러 왔다."],
-        ["lounge","RECOVERY","작업을 멈추고 손목의 작은 상처를 다시 감고 있다."]
+        ["lounge","RECOVERY","작업을 멈추고 손목의 작은 상처를 다시 감고 있다."],
+        ["archive","NULL_ACTIVITY","작업 로그 한 장을 따로 펼쳐 놓고 누가 들어오는지 먼저 확인한다."]
     ],
     "dax":[
         ["engine","INVESTIGATION","계산과 실제 기계 수치가 왜 다른지 현장에서 다시 잰다."],
@@ -75,7 +77,8 @@ const DEVIATIONS := {
     "vale":[
         ["bridge","INVESTIGATION","신호가 가리키는 방향을 루칸의 지도에서 확인한다."],
         ["medbay","RECOVERY","미라가 청각 피로 검사를 하라고 보내 잠깐 와 있다."],
-        ["lounge","RECOVERY","헤드셋을 두고 아무 소리도 듣지 않는 시간을 갖고 있다."]
+        ["lounge","RECOVERY","헤드셋을 두고 아무 소리도 듣지 않는 시간을 갖고 있다."],
+        ["archive","ECHO","처음 보는 녹음 시각을 이미 찾고 있었던 사람처럼 곧바로 같은 날짜의 기록을 펼친다."]
     ],
     "eli":[
         ["comms","PRIVATE_SIGNAL","좌표보다 먼저 들린 방향 정보를 확인하러 왔다."],
@@ -146,6 +149,8 @@ static func build(seed_value: int, loop_index: int, chapter: String, roster: Arr
             if str(dev[0]) not in allowed or str(dev[0]) == str(result.get(npc_id,{}).get("location","")):
                 continue
             if str(dev[1]) == "NULL_ACTIVITY" and npc_id not in null_ids:
+                continue
+            if str(dev[1]) == "ECHO" and loop_index <= 0:
                 continue
             options.append(dev)
         if options.is_empty():
