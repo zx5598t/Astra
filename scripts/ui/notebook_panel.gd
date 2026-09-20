@@ -89,7 +89,7 @@ func refresh() -> void:
                     var knower := str(knower_raw)
                     names.append("나" if knower == "player" else session.name_of(knower))
                 var public_text := "공개됨" if bool(entry.get("public",false)) else "아직 비공개"
-                _clue_list.add_child(AstraUI.prose("%s · 알고 있음: %s · %s" % [label," / ".join(names),public_text],15,AstraUI.DIM))
+                _clue_list.add_child(AstraUI.prose("%s · 알고 있음: %s · %s" % [label," / ".join(PackedStringArray(names)),public_text],15,AstraUI.DIM))
         if int(session.voyage.get("loop",0)) > 0:
             var differences := session.loop_difference_summary()
             if not differences.is_empty():
