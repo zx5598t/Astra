@@ -12,7 +12,7 @@ func _hidden_scene_text(scene: Dictionary) -> String:
     for line in scene.get("lines",[]):
         if line is Array and line.size() > 1 and str(line[1]) != "":
             text += " / " + str(line[1])
-    return text.replace(AstraCrewCatalog.name(str(scene.get("speaker",""))),"[화자]")
+    return text.replace(AstraCrewCatalog.display_name(str(scene.get("speaker",""))),"[화자]")
 
 func _initialize() -> void:
     var by_speaker := {}
@@ -56,7 +56,7 @@ func _initialize() -> void:
     var roster := AstraCrewCatalog.ORDER.duplicate()
     for run in range(loops):
         var seed_value := 2054000 + run * 113
-        var chapter := ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"][run % 4]
+        var chapter: String = str(["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"][run % 4])
         var arcs := AstraStorylets054.select_arcs(seed_value,run,chapter,roster,[],3)
         var routine := AstraCrewRoutineModel.build(seed_value,run,chapter,roster,roster,[])
         var deviations: Array[String] = []
