@@ -66,3 +66,4 @@ func _initialize() -> void:
                 deviations.append("%s@%s(%s)" % [npc_id,str(entry.get("location","")),str(entry.get("deviation_reason",""))])
         print("LOOP %02d · %s · arcs=%s · routine=%s" % [run+1,chapter,str(arcs),str(deviations)])
     print("ASTRA 0.5.4 HUMAN EDITING REPORT OK")
+    quit(0)
