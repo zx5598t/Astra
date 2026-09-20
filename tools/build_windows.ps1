@@ -31,6 +31,7 @@ try {
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/consequence_chain_tests.gd') "$logDir\consequence-054.log" 'ASTRA 0.5.4 CONSEQUENCE CHAIN TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/meaningful_choice_tests.gd') "$logDir\meaningful-054.log" 'ASTRA 0.5.4 MEANINGFUL CHOICE TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/curiosity_pin_tests.gd') "$logDir\curiosity-054.log" 'ASTRA 0.5.4 CURIOSITY PIN TESTS OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/decision_legibility_054_tests.gd') "$logDir\decision-054.log" 'ASTRA 0.5.4 DECISION LEGIBILITY TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/compatibility_054_tests.gd') "$logDir\compatibility-054.log" 'ASTRA 0.5.4 SAVE COMPATIBILITY TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/aftermath_054_simulation.gd') "$logDir\aftermath-054.log" 'ASTRA 0.5.4 AFTERMATH SIMULATION OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/editorial_054_report.gd', '--', '--loops=20') "$logDir\editorial-054.log" 'ASTRA 0.5.4 HUMAN EDITING REPORT OK'
