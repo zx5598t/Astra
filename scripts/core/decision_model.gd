@@ -10,6 +10,9 @@ const HUMAN_REASON_TEXT := {
     "meeting_accusation":"회의에서 제기된 구체적 의혹",
     "unexplained_alone":"사건 시각의 단독 행동이 설명되지 않음",
     "relationship_friction":"이전 상호작용과 관계 갈등이 판단에 남음",
+    "relationship_support":"이전 상호작용과 현재 관계가 지지 판단에 남음",
+    "public_verification":"공개된 기록이 이 사람의 진술을 뒷받침함",
+    "statement_response":"바로 앞 사람의 발언과 같은 논점에 반응함",
     "accumulated_behavior":"며칠 동안 쌓인 발언과 행동 정황",
     "insufficient_evidence":"직접 근거가 부족해 기권"
 }
