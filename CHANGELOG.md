@@ -1,3 +1,31 @@
+# 0.5.3 · HEARTBEAT · 2026-09-21
+
+0.5.2의 Living Crew / Knowledge / Decision 기반을 그대로 이어 받아, 그 시스템이 실제 장면과 반복 플레이에서 체감되도록 연결했다.
+
+미라를 ASTRA의 **Emotional Anchor**로 강화했다. 정해진 연애 루트나 plot armor를 주지 않고 CARE / DAILY / MEDICAL / PLAYER / RELATIONSHIP / ECHO / CONFLICT 콘텐츠를 확장했다. authored speaker scene은 미라 80개로 가장 깊지만 중후반 한 루프의 optional Mira 노출은 최대 4개이며, 미라가 Null·격리 대상이 되는 기존 규칙도 그대로 유지한다. 미라 private event는 13개로 확대했다.
+
+0.5.3 authored scene 81개를 추가해 전체 voyage/reactive scene library는 **473개**가 됐다. 화자별 총량은 미라 80, 준 65, 다렌 59, 노아 63, 세나 56, 소렌 45, 루칸 43, 마렌 62다. 관계 장면은 서로 앞 말을 실제로 받도록 line relation metadata를 추가했고, pair storylet은 이미 만난 활동 중 동료가 상황에 맞으면 자연스럽게 합류할 수 있게 했다.
+
+새 `AstraStoryletScheduler`는 미노출 authored scene을 약간 우대하고 최근 family를 억제하며 rare/uncommon 이벤트에 내부 pity를 적용한다. RNG는 scene을 고를 뿐 대사를 생성하지 않는다. `AstraCrewActivityModel`에는 **27개의 autonomous crew beat**를 추가해 NPC가 플레이어와 대화할 때만 존재하는 느낌을 줄였다. 목격하지 못한 event는 정상적으로 지나갈 수 있다.
+
+KnowledgeModel에는 NPC→NPC 명시적 전파 경로를 추가했다. A가 실제로 아는 사실만 B에게 전달할 수 있고, B가 C에게 말하기 전 C는 그 사실을 알지 못한다. player/private/public ownership은 Notebook의 가벼운 “정보 공유” 표시와 provenance에 연결된다. 자율 정보 공유에도 DecisionTrace가 남는다.
+
+플레이어 행동 기억과 관계 callback을 강화했다. 미라는 evidence_first / people_first / protective / skeptical / secretive / confrontational / patient 패턴에 모두 반응할 수 있고, 약속·의료 비밀 존중·미라 지목/변호 같은 일부 행동은 뒤의 authored scene 조건이 된다. NPC끼리 공개적으로 변호한 사실도 다음 관계 장면에서 사용할 수 있다.
+
+Curiosity Question은 Notebook의 **지금 궁금한 것**으로 표시하며 최대 3개만 보여 준다. 질문은 OPEN / PARTIAL / ANSWERED / CHANGED 상태를 사용하고, 해결했다고 생각한 질문도 다음 loop의 기록 변화로 다시 CHANGED가 될 수 있다.
+
+검증에는 Mira content/agency/phrase audit, storylet pity와 multi-line coherence, autonomous active-state, knowledge propagation, relationship callback, player-visible 500-loop HEARTBEAT simulation을 추가했다. 검증 기준점에서 500 loop의 visible signature는 500/500, Mira optional exposure 평균 2.50/최대 4, autonomous 27종, 0.5.3 scene coverage 65.4%, rare 즉시 반복 0회였다.
+
+## 0.5.2 · Living Crew · internal branch
+
+0.5.2는 별도 정식 GitHub Release로 발행하지 않은 내부 Living Crew 개발 브랜치다. 0.5.1의 미완성 stabilization 작업을 회수하고 `AstraKnowledgeModel`, `AstraDecisionModel`, `AstraLivingCrew`, `AstraStorylets052`를 추가했다. 관계 5축, 캐릭터 baseline/deviation, player behavior profile, rolling dialogue memory, social theme/loop hook, knowledge provenance, vote DecisionTrace, curiosity question, 1,000 conversation / 1,000 meeting / 500-loop simulation이 이 브랜치에서 만들어졌다.
+
+0.5.2의 코드와 테스트는 0.5.3의 기반으로 보존했다. 공식 릴리스 이력처럼 꾸미지 않고 internal branch로 기록한다.
+
+## 0.5.1 · internal stabilization / incomplete branch
+
+0.5.1은 정식 완결 릴리스가 아니라 0.5.0 이후 onboarding, unlock timing, slot intro, contextual help, objective/archive copy 정합성, meeting coherence, auto UX, 1366×768/1920×1080 검증을 누적하던 내부 브랜치였다. 이 작업은 폐기하지 않고 0.5.2와 0.5.3에 그대로 이어졌다.
+
 # 0.5.0 · 2026-09-20
 
 첫 30분의 시스템 노출을 다시 설계했다. CALIBRATION은 전원 패널 1회 + 미라와의 직접 대화 1회만 요구하고, DEAD_AIR는 조사/대화까지만, GLASS_GARDEN은 짧은 회의까지, ECHO_WARD부터 투표와 밤을 해금한다. 상단 단계 표시와 브리핑도 실제 챕터 흐름만 보여 준다.
