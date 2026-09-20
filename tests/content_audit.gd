@@ -166,9 +166,9 @@ func _authored_scene_volume() -> void:
     print("\n-- 8. Authored voyage scene volume --")
     var total := AstraVoyageContent.all_scenes().size()
     print("  total authored voyage scenes: %d" % total)
-    if total < 380:
-        fails.append("authored voyage/reactive scenes %d; 0.5.2 release floor is 380" % total)
-    if total > 450:
+    if total < 470:
+        fails.append("authored voyage/reactive scenes %d; 0.5.3 release floor is 470" % total)
+    if total > 550:
         warns.append("authored voyage/reactive scenes %d; verify one-run exposure remains restrained" % total)
 
 func _key_pair_and_trio_depth() -> void:
