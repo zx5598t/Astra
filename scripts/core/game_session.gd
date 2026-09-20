@@ -937,7 +937,7 @@ func ask(npc_id: String, intent: String, clue_id: String = "") -> Dictionary:
     talk_ap -= 1
     member.questions_asked += 1
     selected_id = npc_id
-    var result := {"ok": true, "npc_id": npc_id, "intent": intent, "lines": []}
+    var result := {"ok": true, "npc_id": npc_id, "intent": intent, "response_family": intent, "lines": []}
     var question := str(QUESTION_TEXT.get(intent, "이 배에서 당신이 지키고 싶은 것은 무엇인가요?"))
     if intent == "EVIDENCE":
         question = "이 기록을 보세요. ‘%s’" % str(clue_by_id(clue_id).get("title", ""))
@@ -952,7 +952,11 @@ func ask(npc_id: String, intent: String, clue_id: String = "") -> Dictionary:
             member.adjust_trust(0.05)
             member.adjust_stress(-0.04)
         "ALIBI": _ask_alibi(member, result)
-        "EVIDENCE": _ask_evidence(member, clue_by_id(clue_id), result)
+        "EVIDENCE":
+            var evidence := clue_by_id(clue_id)
+            result["clue_topic"] = _clue_topic(evidence)
+            result["evidence_members"] = evidence.get("members", []).duplicate()
+            _ask_evidence(member, evidence, result)
         "CONTRADICTION": _ask_contradiction(member, result)
         "SUSPECT": _ask_suspect(member, result, false)
         "REASSURE": _ask_reassure(member, result)
@@ -966,46 +970,114 @@ func ask(npc_id: String, intent: String, clue_id: String = "") -> Dictionary:
     var reaction := _dialogue_reaction(member, intent, result)
     if not reaction.is_empty():
         result["reaction"] = reaction
+        _apply_dialogue_reaction_effect(member, intent, result, reaction)
     changed.emit()
     return result
 
+func _reaction_action_text(npc_id: String, code: String) -> String:
+    var actions := {
+        "mira": {
+            "CONVINCED":"미라가 굳어 있던 손을 풀고 기록을 다시 펼친다.",
+            "SHAKEN":"미라가 대답 대신 생체 기록을 한 번 더 확인한다.",
+            "RESISTED":"미라가 잠시 입을 다물고 시선을 피한다.",
+            "UNCERTAIN":"미라가 기록과 당신을 번갈아 본다.",
+            "ANGERED":"미라가 의료 단말을 닫고 한 걸음 물러선다."
+        },
+        "rho": {
+            "CONVINCED":"준이 고개를 끄덕이며 공구를 내려놓는다.",
+            "SHAKEN":"준이 대답하려다 입을 다물고 패널 쪽을 본다.",
+            "RESISTED":"준이 팔짱을 끼고 같은 설명을 되풀이한다.",
+            "UNCERTAIN":"준이 턱을 긁으며 기억을 다시 더듬는다.",
+            "ANGERED":"준이 짧게 숨을 내쉬고 더는 대꾸하지 않는다."
+        },
+        "noa": {
+            "CONVINCED":"노아가 기록을 다시 내려다보고 문장 하나를 고친다.",
+            "SHAKEN":"노아의 손이 같은 시각 위에서 멈춘다.",
+            "RESISTED":"노아가 메모를 덮고 답을 미룬다.",
+            "UNCERTAIN":"노아가 두 기록을 나란히 놓고 다시 읽는다.",
+            "ANGERED":"노아가 노트를 닫고 한동안 말을 하지 않는다."
+        },
+        "dax": {
+            "CONVINCED":"다렌이 계산 한 줄을 지우고 순서를 다시 적는다.",
+            "SHAKEN":"다렌이 방금 계산을 지우고 처음부터 다시 본다.",
+            "RESISTED":"다렌이 화면을 돌려 놓고 같은 결론을 유지한다.",
+            "UNCERTAIN":"다렌이 숫자 두 개 사이에 물음표를 적는다.",
+            "ANGERED":"다렌이 단말을 잠그고 대화를 끝낸다."
+        },
+        "sena": {
+            "CONVINCED":"세나가 팔짱을 풀고 출입 기록 쪽으로 몸을 돌린다.",
+            "SHAKEN":"세나가 문 쪽을 보다가 다시 당신을 본다.",
+            "RESISTED":"세나가 자세를 굳힌 채 답을 바꾸지 않는다.",
+            "UNCERTAIN":"세나가 출입카드를 만지작거리며 생각한다.",
+            "ANGERED":"세나가 턱을 굳히고 대화를 끊는다."
+        },
+        "vale": {
+            "CONVINCED":"소렌이 이어폰 한쪽을 빼고 기록을 다시 듣는다.",
+            "SHAKEN":"소렌이 파형을 멈추고 같은 구간을 되감는다.",
+            "RESISTED":"소렌이 볼륨을 낮추고 고개를 젓는다.",
+            "UNCERTAIN":"소렌이 소리 없는 구간을 한 번 더 재생한다.",
+            "ANGERED":"소렌이 이어폰을 다시 끼고 말을 멈춘다."
+        },
+        "eli": {
+            "CONVINCED":"루칸이 항로 화면을 확대해 당신이 짚은 시각을 표시한다.",
+            "SHAKEN":"루칸의 손이 좌표 위에서 잠시 멈춘다.",
+            "RESISTED":"루칸이 시선을 창밖으로 돌린 채 결론을 바꾸지 않는다.",
+            "UNCERTAIN":"루칸이 별 위치와 기록 시각을 다시 맞춘다.",
+            "ANGERED":"루칸이 화면을 닫고 자리에서 일어난다."
+        },
+        "lyra": {
+            "CONVINCED":"마렌이 장갑을 벗고 기록 옆에 새 메모를 놓는다.",
+            "SHAKEN":"마렌이 손에 들고 있던 표본을 천천히 내려놓는다.",
+            "RESISTED":"마렌이 대답 대신 표본 라벨을 다시 확인한다.",
+            "UNCERTAIN":"마렌이 두 표본을 나란히 놓고 비교한다.",
+            "ANGERED":"마렌이 작업대를 정리하며 대화를 끝낸다."
+        }
+    }
+    var by_npc: Dictionary = actions.get(npc_id, {})
+    return str(by_npc.get(code, "%s|eun 잠시 생각에 잠긴다." % name_of(npc_id)))
+
 func _dialogue_reaction(member: AstraCrewMember, intent: String, result: Dictionary) -> Dictionary:
     var code := ""
-    var text := ""
     if bool(result.get("slip", false)):
         code = "SHAKEN"
-        text = "%s|eun 잠시 말을 잃었다." % member.display_name
-    elif bool(result.get("secret", false)):
+    elif bool(result.get("secret", false)) or intent == "REASSURE":
         code = "CONVINCED"
-        text = "%s|eun 숨기던 사정을 털어놓았다." % member.display_name
     elif bool(result.get("deflected", false)):
         code = "RESISTED"
-        text = "%s|eun 질문을 비켜 갔다." % member.display_name
-    elif intent == "REASSURE":
-        code = "CONVINCED"
-        text = "%s의 경계가 조금 풀렸다." % member.display_name
     elif intent == "PRESSURE":
         code = "ANGERED" if member.trust < 0.35 else "SHAKEN"
-        text = ("%s|eun 아직 납득하지 않았다." if code == "ANGERED" else "%s|eun 잠시 대답을 고른다.") % member.display_name
     elif intent == "CONTRADICTION":
-        if member.is_null():
-            code = "RESISTED"
-            text = "%s|eun 설명을 굽히지 않았다." % member.display_name
-        elif member.stress >= 0.55:
-            code = "SHAKEN"
-            text = "%s|eun 기록을 다시 확인하려 한다." % member.display_name
-        else:
-            code = "UNCERTAIN"
-            text = "%s|eun 바로 결론 내리지 못했다." % member.display_name
+        code = "RESISTED" if member.is_null() else ("SHAKEN" if member.stress >= 0.55 else "UNCERTAIN")
     elif intent == "EVIDENCE":
         code = "SHAKEN" if member.stress >= 0.45 else "UNCERTAIN"
-        text = ("%s|eun 기록을 받아들였지만 표정이 굳었다." if code == "SHAKEN" else "%s|eun 기록을 더 확인하려 한다.") % member.display_name
     elif intent == "TRUST":
         code = "RESISTED" if member.trust < 0.25 else "UNCERTAIN"
-        text = ("%s|eun 당신의 판단을 경계한다." if code == "RESISTED" else "%s|eun 자신의 판단을 설명하려 한다.") % member.display_name
     if code == "":
         return {}
-    return {"code": code, "text": _josa_inline(text)}
+    return {"code": code, "text": _josa_inline(_reaction_action_text(member.id, code))}
+
+func _apply_dialogue_reaction_effect(member: AstraCrewMember, intent: String, result: Dictionary, reaction: Dictionary) -> void:
+    var code := str(reaction.get("code", ""))
+    match code:
+        "CONVINCED":
+            member.adjust_trust(0.02)
+            for target in result.get("evidence_members", []):
+                var target_id := str(target)
+                if target_id != member.id and target_id in active_participants():
+                    member.add_suspicion(target_id, 0.04)
+        "SHAKEN":
+            flags["shaken_%s_%d" % [member.id, day]] = true
+        "RESISTED":
+            if intent == "PRESSURE":
+                flags["pressure_resisted_" + member.id] = int(flags.get("pressure_resisted_" + member.id, 0)) + 1
+        "UNCERTAIN":
+            var topic := str(result.get("clue_topic", ""))
+            if topic != "":
+                flags["uncertain_%s_%s" % [member.id, topic]] = day
+        "ANGERED":
+            member.adjust_trust(-0.03)
+            flags["private_block_%s" % member.id] = day
+
 
 # The open questions added in 0.4.0. They cost the same as any other question
 # and never hand over the answer; what they give is a second and third way to
@@ -1104,6 +1176,52 @@ func _ask_alibi(member: AstraCrewMember, result: Dictionary) -> void:
                 str(fake["category"]), str(fake["group"]), op_id, member.id, true)
             result["clue"] = fake_clue
 
+func _clue_topic(clue: Dictionary) -> String:
+    var kind := str(clue.get("kind", ""))
+    var room := str(clue.get("log_room", clue.get("room", "")))
+    var title := str(clue.get("title", "")).to_lower()
+    if "목적지" in title or "도착" in title:
+        return "destination_record" if "목적지" in title else "arrival_log"
+    if "수면" in title or "생체" in title:
+        return "sleep_signal"
+    if room == "comms" or "통신" in title or "신호" in title:
+        return "comms_access"
+    if room == "security" or "보안" in title or "출입" in title:
+        return "security_door"
+    if room == "garden" or "시료" in title or "생태" in title:
+        return "ecology_sample"
+    if kind == "access_log":
+        return "access_log"
+    return kind if kind != "" else "record"
+
+func _evidence_specialist_note(member: AstraCrewMember, topic: String, clue: Dictionary) -> String:
+    match member.id:
+        "vale":
+            if topic in ["comms_access", "sleep_signal"]:
+                return "소렌이 파형의 반복 간격부터 짚는다. “문장보다 신호가 먼저 바뀐 지점을 볼게요.”"
+        "noa":
+            if topic in ["comms_access", "security_door", "arrival_log", "destination_record", "access_log"]:
+                return "노아가 제목보다 작성 시각과 수정 시각을 먼저 비교한다."
+        "rho":
+            if topic in ["comms_access", "security_door", "access_log"]:
+                return "준이 단말 접근 흔적을 훑는다. “직접 접속인지 원격인지부터 보면 돼.”"
+        "dax":
+            if topic in ["comms_access", "arrival_log", "destination_record", "access_log"]:
+                return "다렌이 연결 경로와 시각을 한 줄로 다시 맞춘다."
+        "sena":
+            if topic in ["security_door", "access_log"]:
+                return "세나가 출입 순서와 카드 사용 시각을 다시 대조한다."
+        "mira":
+            if topic == "sleep_signal":
+                return "미라가 수치보다 생체 기록이 끊긴 구간을 먼저 확인한다."
+        "eli":
+            if topic in ["destination_record", "arrival_log"]:
+                return "루칸이 좌표와 기록 시각을 같은 화면에 겹쳐 놓는다."
+        "lyra":
+            if topic == "ecology_sample":
+                return "마렌이 표본의 날짜와 환경 기록을 나란히 놓는다."
+    return ""
+
 func _ask_evidence(member: AstraCrewMember, clue: Dictionary, result: Dictionary) -> void:
     var kind := str(clue.get("kind", ""))
     var claim := current_claim(member.id)
@@ -1139,6 +1257,13 @@ func _ask_evidence(member: AstraCrewMember, clue: Dictionary, result: Dictionary
                     _say(member, "evidence_self_crew", params, result)
             else:
                 _say(member, "evidence_other", params, result)
+
+    var topic := _clue_topic(clue)
+    result["clue_topic"] = topic
+    var note := _evidence_specialist_note(member, topic, clue)
+    if note != "":
+        _transcript(member.id, "narration", note, "EVIDENCE")
+        result["lines"].append({"speaker":"narration", "text":note, "intent":"EVIDENCE", "topic":topic})
 
 func _ask_contradiction(member: AstraCrewMember, result: Dictionary) -> void:
     var is_herring := str(truth.get("herring", "")) == member.id
@@ -1214,8 +1339,11 @@ func _ask_reassure(member: AstraCrewMember, result: Dictionary) -> void:
     _say(member, "reassure_warm" if warm else "reassure_flat", {}, result)
 
 func _ask_pressure(member: AstraCrewMember, result: Dictionary) -> void:
-    member.adjust_stress(0.17)
-    member.adjust_trust(-0.06)
+    var repeats := int(flags.get("pressure_count_" + member.id, 0))
+    flags["pressure_count_" + member.id] = repeats + 1
+    var factor := 1.0 if repeats == 0 else (0.55 if repeats == 1 else 0.3)
+    member.adjust_stress(0.17 * factor)
+    member.adjust_trust(-0.06 * factor)
     if member.is_null():
         var slip_chance := 0.25 + (0.15 if protocol == "EMPATH" else 0.0)
         if member.stress >= 0.72 and not member.slipped and rng.randf() < slip_chance:
@@ -1327,6 +1455,8 @@ func _maybe_private_event() -> void:
             continue
         var seen_count := int(events_seen.get(npc_id, 0))
         if seen_count >= AstraPrivateEvents.count_for(npc_id):
+            continue
+        if int(flags.get("private_block_%s" % npc_id, 0)) >= day:
             continue
         candidates.append(npc_id)
         weights.append(0.15 + crew[npc_id].trust)
