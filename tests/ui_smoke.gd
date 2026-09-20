@@ -46,8 +46,8 @@ func _run() -> void:
     await _wait(3)
     _expect(app.settings.intro_seen, "compatibility intro flag is still written")
     _expect(app.meta.intro_seen_for_slot(app.active_slot), "finished opening is remembered for that save slot")
-    var first_slot := app.active_slot
-    var second_slot := 1 if first_slot != 1 else 2
+    var first_slot: int = int(app.active_slot)
+    var second_slot: int = 1 if first_slot != 1 else 2
     app.start_new_campaign(second_slot)
     await _wait(3)
     _expect(app._current is AstraOpeningView, "new save slot shows calibration opening again")
