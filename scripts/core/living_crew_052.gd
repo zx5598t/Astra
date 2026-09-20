@@ -231,7 +231,7 @@ static func theme_for(seed_value: int, loop_index: int, roster: Array) -> String
             eligible.append(theme)
     if eligible.is_empty():
         return "QUIET_ALLIANCE"
-    var index := abs(hash("astra-theme:%d:%d" % [seed_value,loop_index])) % eligible.size()
+    var index: int = abs(hash("astra-theme:%d:%d" % [seed_value,loop_index])) % eligible.size()
     return str(eligible[index])
 
 static func theme_pair(theme: String) -> Array:
