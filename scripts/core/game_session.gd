@@ -1957,14 +1957,16 @@ func _run_disputes(thread_budget: int) -> int:
             # answer from the person who was challenged.
             if spoken >= thread_budget or witness_id == last_speaker:
                 continue
+            var topic := "movement:" + target_id
             if heard:
-                _feed_npc(witness_id, "m_dispute_absent", {"pos": room_name(witness_pos), "target": name_of(target_id)}, "dispute", target_id)
+                _feed_npc(witness_id, "m_dispute_absent", {"pos": room_name(witness_pos), "target": name_of(target_id)}, "dispute", target_id, "anchor", topic)
             else:
-                _feed_npc(witness_id, "m_dispute_companion", {"target": name_of(target_id)}, "dispute", target_id)
+                _feed_npc(witness_id, "m_dispute_companion", {"target": name_of(target_id)}, "dispute", target_id, "anchor", topic)
             _mark_dispute_public(witness_id, target_id)
             var target := npc(target_id)
             if target != null and target.is_alive():
-                _feed_npc(target_id, "m_react_accused_null" if target.is_null() else "m_react_accused_crew", {}, "defense", target_id)
+                _feed_npc(target_id, "m_react_accused_null" if target.is_null() else "m_react_accused_crew", {}, "defense", target_id, "response", topic)
+                _extend_meeting_thread(witness_id, target_id, topic)
             spoken += 1
             last_speaker = target_id
 
@@ -1986,11 +1988,13 @@ func _run_disputes(thread_budget: int) -> int:
             meeting_pushers[null_id] = float(meeting_pushers.get(null_id, 0.0)) + 1.0
             if spoken >= thread_budget or null_id == last_speaker:
                 continue
-            _feed_npc(null_id, "m_dispute_absent", {"pos": room_name(str(null_claim.get("position", ""))), "target": name_of(crew_id)}, "dispute", crew_id)
+            var topic := "movement:" + crew_id
+            _feed_npc(null_id, "m_dispute_absent", {"pos": room_name(str(null_claim.get("position", ""))), "target": name_of(crew_id)}, "dispute", crew_id, "anchor", topic)
             _mark_dispute_public(null_id, crew_id)
             var target := npc(crew_id)
             if target != null and target.is_alive():
-                _feed_npc(crew_id, "m_react_accused_crew", {}, "defense", crew_id)
+                _feed_npc(crew_id, "m_react_accused_crew", {}, "defense", crew_id, "response", topic)
+                _extend_meeting_thread(null_id, crew_id, topic)
             spoken += 1
             last_speaker = crew_id
     return spoken
@@ -2028,10 +2032,12 @@ func _suspicion_round(max_threads: int) -> int:
         var target_id := str(item["target"])
         if speaker_id == last_speaker or target_id == "":
             continue
-        _feed_npc(speaker_id, "m_suspect", {"target": name_of(target_id), "reason": AstraDialogue.reason_text(str(item["reason"]))}, "suspect", target_id)
+        var topic := "suspicion:" + target_id
+        _feed_npc(speaker_id, "m_suspect", {"target": name_of(target_id), "reason": AstraDialogue.reason_text(str(item["reason"]))}, "suspect", target_id, "anchor", topic)
         var target := npc(target_id)
         if target != null and target.is_alive():
-            _feed_npc(target_id, "m_react_accused_null" if target.is_null() else "m_react_accused_crew", {}, "defense", target_id)
+            _feed_npc(target_id, "m_react_accused_null" if target.is_null() else "m_react_accused_crew", {}, "defense", target_id, "response", topic)
+            _extend_meeting_thread(speaker_id, target_id, topic)
         _crowd_shift(target_id, 0.05, speaker_id)
         meeting_pushers[speaker_id] = float(meeting_pushers.get(speaker_id, 0.0)) + 0.6
         last_speaker = target_id
@@ -2051,11 +2057,11 @@ func _crowd_shift(target_id: String, amount: float, speaker_id: String) -> void:
         var weight := 1.0 + observer.get_affinity(speaker_id) * 0.6 - observer.get_affinity(target_id) * 0.4
         observer.add_suspicion(target_id, amount * clampf(weight, 0.3, 1.6))
 
-func _feed_npc(npc_id: String, key: String, params: Dictionary, kind: String, target_id: String) -> void:
+func _feed_npc(npc_id: String, key: String, params: Dictionary, kind: String, target_id: String, thread_role: String = "", topic_override: String = "") -> void:
     var text := AstraDialogue.line_fresh(npc_id, key, params, dialogue_recent, rng.randf())
     if text == "":
         return
-    _feed_line(npc_id, target_id, text, kind)
+    _feed_line(npc_id, target_id, text, kind, thread_role, topic_override)
 
 const FEED_KIND_TO_CLAIM := {
     "alibi": AstraClaimLedger.KIND_POSITION,
@@ -2069,32 +2075,53 @@ const FEED_KIND_TO_CLAIM := {
 func can_meeting_speak(speaker_id: String) -> bool:
     return speaker_id == "player" or speaker_id in active_participants()
 
-func _feed_line(speaker_id: String, target_id: String, text: String, kind: String) -> void:
+func _meeting_topic_label(topic: String, target_id: String, kind: String) -> String:
+    if topic.begins_with("movement:"):
+        return "%s의 동선" % name_of(topic.trim_prefix("movement:"))
+    if topic.begins_with("suspicion:"):
+        return "%s에 대한 의혹" % name_of(topic.trim_prefix("suspicion:"))
+    if topic.begins_with("clue:"):
+        return topic.trim_prefix("clue:")
+    if target_id != "" and crew.has(target_id):
+        return "%s의 진술" % name_of(target_id)
+    match kind:
+        "record": return "공개된 기록"
+        "dispute": return "엇갈린 진술"
+        "suspect": return "의심과 근거"
+        _: return "현재 논점"
+
+func _feed_line(speaker_id: String, target_id: String, text: String, kind: String, thread_role: String = "", topic_override: String = "") -> void:
     if not can_meeting_speak(speaker_id):
         push_error("ASTRA invariant: inactive meeting speaker " + speaker_id)
         return
     var entry_id := "meeting_%d_%03d" % [day, meeting_feed.size()]
-    var topic := target_id if target_id != "" else kind
+    var topic := topic_override if topic_override != "" else (target_id if target_id != "" else kind)
     var thread_id := entry_id
     var reply_to := ""
     var transition := false
+    var reply_context := ""
     if not meeting_feed.is_empty():
         var previous: Dictionary = meeting_feed[meeting_feed.size() - 1]
-        if str(previous.get("topic", "")) == topic or kind in ["react", "defense", "dispute", "record"]:
+        var force_reply := thread_role in ["response", "support", "challenge", "clarify", "followup", "close"]
+        if force_reply or str(previous.get("topic", "")) == topic or kind in ["react", "defense", "dispute", "record"]:
             thread_id = str(previous.get("thread_id", entry_id))
             reply_to = str(previous.get("entry_id", ""))
-            if kind in ["react", "defense", "dispute", "record"] and target_id == "":
-                topic = str(previous.get("topic", topic))
+            topic = str(previous.get("topic", topic)) if force_reply else topic
+            var prev_speaker := str(previous.get("speaker", ""))
+            reply_context = "탐사요원의 말에" if prev_speaker == "player" else ("%s의 말에" % name_of(prev_speaker))
         else:
             transition = true
+    var role := thread_role
+    if role == "":
+        role = "anchor" if reply_to == "" else ("response" if kind == "defense" else "followup")
     var entry := {
         "entry_id": entry_id, "thread_id": thread_id, "reply_to": reply_to,
         "speaker": speaker_id, "target": target_id, "topic": topic,
-        "topic_transition": transition, "text": _josa_inline(text), "kind": kind, "day": day
+        "topic_label": _meeting_topic_label(topic, target_id, kind),
+        "topic_transition": transition, "reply_context": reply_context,
+        "thread_role": role, "text": _josa_inline(text), "kind": kind, "day": day
     }
     meeting_feed.append(entry)
-    # Everything said in front of everyone goes on the record. This is what lets
-    # a later meeting quote an earlier one instead of starting from nothing.
     if speaker_id != "player" and FEED_KIND_TO_CLAIM.has(kind):
         var claim := current_claim(speaker_id) if kind == "alibi" else {}
         _record_claim(speaker_id, str(FEED_KIND_TO_CLAIM[kind]), AstraClaimLedger.SCOPE_PUBLIC, str(entry["text"]), {
@@ -2103,6 +2130,55 @@ func _feed_line(speaker_id: String, target_id: String, text: String, kind: Strin
             "companions": claim.get("companions", [])
         })
     notice.emit("meeting_line", entry)
+
+func _thread_context_speaker(anchor_id: String, target_id: String) -> String:
+    var claim := current_claim(target_id)
+    var room_id := str(claim.get("position", ""))
+    var specialists := {
+        "engine": ["rho", "dax"],
+        "comms": ["vale", "noa", "rho"],
+        "security": ["sena", "noa"],
+        "medical": ["mira", "lyra"],
+        "garden": ["lyra", "mira"],
+        "bridge": ["eli", "dax"],
+        "archive": ["noa", "dax"],
+        "lounge": ["mira", "noa"]
+    }
+    for candidate in specialists.get(room_id, ["noa", "dax"]):
+        if candidate in active_participants() and candidate not in [anchor_id, target_id]:
+            return str(candidate)
+    for candidate in active_participants():
+        if candidate in [anchor_id, target_id]:
+            continue
+        var observer := npc(str(candidate))
+        if observer != null and (observer.get_affinity(anchor_id) >= 0.2 or observer.get_affinity(target_id) >= 0.2):
+            return str(candidate)
+    return ""
+
+func _thread_context_line(speaker_id: String, target_id: String) -> String:
+    var room := room_name(str(current_claim(target_id).get("position", "")))
+    match speaker_id:
+        "noa": return "기록 순서를 다시 맞춰 봐요. %s의 출입 시각부터 확인하면 됩니다." % name_of(target_id)
+        "dax": return "말보다 시각을 먼저 맞추죠. %s 기록과 %s 로그가 같은 순서인지 보면 됩니다." % [name_of(target_id), room]
+        "rho": return "그 구역 단말이면 접속 방식부터 보면 돼. 직접 갔는지 원격인지 흔적이 달라."
+        "sena": return "출입 기록을 보죠. %s에 실제로 들어갔는지부터 확인하면 돼요." % room
+        "mira": return "기억이 흔들릴 수는 있어요. 기록과 어긋난 시각부터 하나씩 확인해요."
+        "lyra": return "결론부터 내리지 말고, 그 시간 전후 기록을 같이 봐요."
+        "vale": return "신호 시각을 다시 들으면 접속이 먼저였는지 끊김이 먼저였는지 알 수 있어요."
+        "eli": return "위치와 시각을 같이 놓죠. 둘 중 하나만 보면 같은 기록도 다르게 보여요."
+    return "관련 기록부터 다시 확인하죠."
+
+func _extend_meeting_thread(anchor_id: String, target_id: String, topic: String) -> void:
+    var roll := _stable_noise("thread:%s:%s:%s:%d" % [anchor_id, target_id, topic, day])
+    if roll < 0.58:
+        return
+    var helper := _thread_context_speaker(anchor_id, target_id)
+    if helper == "":
+        return
+    _feed_line(helper, target_id, _thread_context_line(helper, target_id), "record", "clarify", topic)
+    if roll >= 0.86 and anchor_id in active_participants():
+        _feed_line(anchor_id, target_id, "좋아요. 그 기록부터 확인하고 판단하죠.", "react", "close", topic)
+
 
 func present_clue(clue_id: String) -> Dictionary:
     var clue := clue_by_id(clue_id)
