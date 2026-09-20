@@ -111,7 +111,12 @@ func _later_day(s: AstraGameSession) -> void:
     box.add_child(AstraUI.prose(s.story_dispatch(), AstraUI.T_META, AstraUI.MUTED))
     var status := AstraUI.hbox(10)
     _body.add_child(status)
-    status.add_child(AstraUI.chip("남은 승무원 %d명" % s.living_ids().size(), AstraUI.CYAN, AstraUI.T_UI))
+    var counts := s.status_counts()
+    status.add_child(AstraUI.chip("활동 중 %d" % int(counts["active"]), AstraUI.CYAN, AstraUI.T_UI))
+    if int(counts["isolated"]) > 0:
+        status.add_child(AstraUI.chip("장기수면 격리 %d" % int(counts["isolated"]), AstraUI.GOLD, AstraUI.T_UI))
+    if int(counts["offline"]) > 0:
+        status.add_child(AstraUI.chip("생체 신호 두절 %d" % int(counts["offline"]), AstraUI.RED, AstraUI.T_UI))
     var left := s.max_days - s.day
     status.add_child(AstraUI.chip("판단할 날 %d일 남음" % (left + 1), AstraUI.GOLD if left <= 1 else AstraUI.MUTED, AstraUI.T_UI))
     if s.day == s.max_days:
