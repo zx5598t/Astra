@@ -18,6 +18,11 @@ const TRACE_AT_SITE := {
     "terminal": ["단말 세션 흔적", "{time}, {op} 명령은 {group|eul} 거쳐 전송됐다. 이 단말을 쓰는 사람: {members}."]
 }
 
+const INNOCENT_SECRET_TYPES := [
+    "EMBARRASSMENT", "PROTECT_OTHER", "HIDE_MISTAKE", "KEEP_PROMISE",
+    "PERSONAL_SECRET", "FEAR", "MISREMEMBERED"
+]
+
 const TRACE_ON_ROUTE := {
     "clearance": ["우회 인증 조회", "{time}, {room} 보조 콘솔에서 {group} 인증이 한 번 조회됐다. {op} 직후다. {group} 보유자: {members}."],
     "fiber": ["통로 필터의 섬유", "{room|ro} 이어지는 통로 필터에서 {group} 조각이 나왔다({time} 전후). {op} 현장에서 이어진 동선이다. 이 작업복을 입는 사람: {members}."],
