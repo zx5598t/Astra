@@ -148,7 +148,7 @@ static func _scene_from_pack(who: String, pack: Array, arc: bool) -> Dictionary:
         var chain_id := str(pack[3])
         var meta: Dictionary = Dictionary(pack[6]).duplicate(true)
         var scene := {
-            "id":"054_%s_%s_%d" % [who,chain_id,stage],
+            "id":"054_%s_%d" % [chain_id,stage],
             "speaker":who,"tag":tag,"category":category,
             "family":chain_id,"intent":"micro_arc",
             "action":str(pack[4]),"lines":[[who,str(pack[5])]] if str(pack[5]) != "" else [],
