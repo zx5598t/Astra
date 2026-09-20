@@ -67,10 +67,33 @@ func refresh() -> void:
             for question in questions:
                 var status := str(question.get("status","OPEN"))
                 var prefix := "?" if status == "OPEN" else ("✓" if status == "ANSWERED" else ("◐" if status == "PARTIAL" else "↻"))
-                _clue_list.add_child(AstraUI.prose("%s %s" % [prefix,str(question.get("text",""))],17,AstraUI.TEXT))
+                var question_id := str(question.get("id",""))
+                var qrow := AstraUI.hbox(8)
+                _clue_list.add_child(qrow)
+                qrow.add_child(AstraUI.prose("%s %s" % [prefix,str(question.get("text",""))],17,AstraUI.TEXT))
+                var pinned := str(session.voyage.get("pinned_question","")) == question_id
+                var pin := AstraUI.button("집중 중" if pinned else "집중해서 확인",AstraUI.GOLD if pinned else AstraUI.MUTED,13,34)
+                pin.custom_minimum_size.x = 104
+                pin.pressed.connect(func(): session.pin_question(question_id))
+                qrow.add_child(pin)
+                if pinned:
+                    var related_labels: Array[String] = []
+                    for raw in question.get("related",[]):
+                        var key := str(raw)
+                        if key in session.roster:
+                            related_labels.append(session.name_of(key))
+                        elif AstraVoyageContent.ROOMS.has(key):
+                            related_labels.append(str(AstraVoyageContent.ROOMS[key]["name"]))
+                    if not related_labels.is_empty():
+                        _clue_list.add_child(AstraUI.prose("관련해서 볼 것 · " + " / ".join(PackedStringArray(related_labels)),14,AstraUI.DIM))
         _clue_list.add_child(AstraUI.label("확인한 사실",20,AstraUI.CYAN))
         for note in session.voyage.get("notes",[]):
             _clue_list.add_child(AstraUI.prose(str(note),17,AstraUI.TEXT))
+        var routine_notes: Array = session.voyage.get("routine_observations",[])
+        if not routine_notes.is_empty():
+            _clue_list.add_child(AstraUI.label("직접 본 변화",18,AstraUI.MUTED))
+            for observation in routine_notes.slice(maxi(0,routine_notes.size()-3)):
+                _clue_list.add_child(AstraUI.prose(str(observation),15,AstraUI.DIM))
         var ownership: Dictionary = session.voyage.get("evidence_ownership",{})
         if not ownership.is_empty():
             _clue_list.add_child(AstraUI.label("정보 공유",18,AstraUI.MUTED))
