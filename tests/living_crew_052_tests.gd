@@ -17,6 +17,7 @@ func _initialize() -> void:
     test_rolling_memory()
     test_knowledge_invariant()
     test_session_living_state()
+    test_innocent_discrepancy_types()
     test_vote_explanations()
     test_private_clue_never_becomes_vote_source()
     test_deterministic_living_replay()
@@ -113,6 +114,25 @@ func test_session_living_state() -> void:
     if first_pair != "":
         var parts := first_pair.split(":")
         check(not s.relationship_status(parts[0],parts[1]).is_empty(), "relationship status can be expressed in natural language")
+
+func test_innocent_discrepancy_types() -> void:
+    var seen := {}
+    var misremembered := 0
+    for seed_value in range(350):
+        var truth := AstraCaseGenerator.generate("LAST_LIGHT", 750000 + seed_value * 19, [], "STANDARD")
+        var reason := str(truth.get("herring_reason",""))
+        seen[reason] = true
+        var herring := str(truth.get("herring",""))
+        var claim: Dictionary = truth.get("claims",{}).get(herring,{})
+        if reason == "MISREMEMBERED":
+            misremembered += 1
+            check(not bool(claim.get("lie",true)), "MISREMEMBERED is not classified as a lie")
+            check(bool(claim.get("misremembered",false)), "MISREMEMBERED carries explicit memory flag")
+        else:
+            check(bool(claim.get("lie",false)), reason + " remains an intentional innocent lie")
+    for reason in AstraCaseGenerator.INNOCENT_SECRET_TYPES:
+        check(str(reason) in seen, "seed sweep reaches innocent discrepancy type " + str(reason))
+    check(misremembered > 0, "seed sweep includes sincere misremembering")
 
 func test_vote_explanations() -> void:
     var non_abstain := 0
