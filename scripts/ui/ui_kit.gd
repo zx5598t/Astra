@@ -303,10 +303,11 @@ static func objective_strip(text: String, accent: Color = CYAN) -> PanelContaine
     return card
 
 # The round [?] that opens help for the screen the player is on, not a manual.
-static func help_button() -> Button:
-    var node := button("?", CYAN, T_UI, 36, false)
-    node.custom_minimum_size = Vector2(36, 36)
-    node.tooltip_text = "이 화면에서 할 수 있는 일"
+static func help_button(expanded: bool = false) -> Button:
+    var text := "도움말 · H" if expanded else "?"
+    var node := button(text, CYAN, T_UI, 36, false)
+    node.custom_minimum_size = Vector2(96, 36) if expanded else Vector2(36, 36)
+    node.tooltip_text = "현재 화면에서 해야 할 일과 남은 행동을 다시 봅니다."
     return node
 
 # First-appearance card: art, name, job, one line. Nothing else — a personality
