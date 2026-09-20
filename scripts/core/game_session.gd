@@ -3739,6 +3739,7 @@ func begin_voyage(memory: Dictionary = {}) -> void:
         "seen_ever":memory.get("seen_ever",{}).duplicate(true),
         "recent_families":memory.get("recent_families",[]).duplicate(),
         "rare_recent":memory.get("rare_recent",[]).duplicate(),
+        "recent_signatures":memory.get("recent_signatures",[]).duplicate(), "replay_signature":"",
         "echo":memory.get("echo", {}).duplicate(true), "bonds":memory.get("bonds", {}).duplicate(true),
         "memories":{}, "past":{}, "changes":[], "actions":0, "choices":{}, "deferred":[],
         "scene":{}, "line":0, "companion":"", "inventory":[], "used_items":[], "goal_done":false,
@@ -3765,7 +3766,9 @@ func begin_voyage(memory: Dictionary = {}) -> void:
     _roll_pair_histories(previous_past)
     _init_living_relationships()
     voyage["social_theme"] = AstraLivingCrew.theme_for(seed_value, loop_count, roster)
+    _avoid_duplicate_loop_signature()
     _apply_social_theme()
+    voyage["replay_signature"] = _replay_signature(str(voyage["social_theme"]))
     if case_id != AstraCaseCatalog.CALIBRATION:
         voyage["loop_hook"] = AstraLivingCrew.loop_hook(str(voyage["social_theme"]), roster, loop_count)
     _ensure_curiosity_questions()
@@ -3798,6 +3801,33 @@ func _init_living_relationships() -> void:
                     relation[axis] = lerpf(float(relation.get(axis,0.5)),float(old.get(axis,0.5)),0.2)
             current[key] = relation
     voyage["relationships"] = current
+
+func _replay_signature(theme: String) -> String:
+    var parts: Array[String] = []
+    for key in voyage.get("past",{}).keys():
+        var entry: Dictionary = voyage["past"][key]
+        parts.append("%s=%s" % [str(key),str(entry.get("type",""))])
+    parts.sort()
+    return "%s|%s" % [theme,",".join(parts)]
+
+func _avoid_duplicate_loop_signature() -> void:
+    var recent: Array = voyage.get("recent_signatures",[])
+    if recent.is_empty():
+        return
+    var current_theme := str(voyage.get("social_theme",""))
+    var current_signature := _replay_signature(current_theme)
+    if current_signature not in recent.slice(maxi(0,recent.size()-5)):
+        return
+    var start := AstraLivingCrew.SOCIAL_THEMES.find(current_theme)
+    for offset in range(1,AstraLivingCrew.SOCIAL_THEMES.size()+1):
+        var candidate := str(AstraLivingCrew.SOCIAL_THEMES[(start + offset) % AstraLivingCrew.SOCIAL_THEMES.size()])
+        var pair := AstraLivingCrew.theme_pair(candidate)
+        if pair.size() < 2 or pair[0] not in roster or pair[1] not in roster:
+            continue
+        var signature := _replay_signature(candidate)
+        if signature not in recent.slice(maxi(0,recent.size()-5)):
+            voyage["social_theme"] = candidate
+            return
 
 func _apply_social_theme() -> void:
     var pair := AstraLivingCrew.theme_pair(str(voyage.get("social_theme","")))
@@ -4460,6 +4490,15 @@ func finish_voyage() -> bool:
     changed.emit()
     return true
 
+func _updated_recent_signatures() -> Array:
+    var result: Array = Array(voyage.get("recent_signatures",[])).duplicate()
+    var signature := str(voyage.get("replay_signature",""))
+    if signature != "":
+        result.append(signature)
+    while result.size() > 5:
+        result.pop_front()
+    return result
+
 func voyage_memory() -> Dictionary:
     if voyage.is_empty(): return {}
     var echo: Dictionary = {}
@@ -4489,6 +4528,7 @@ func voyage_memory() -> Dictionary:
         "recent":voyage.get("recent",[]).duplicate(),
         "recent_families":voyage.get("recent_families",[]).duplicate(),
         "rare_recent":voyage.get("rare_recent",[]).duplicate(),
+        "recent_signatures":_updated_recent_signatures(),
         "seen_ever":voyage.get("seen_ever",{}).duplicate(true),
         "relationships":voyage.get("relationships",{}).duplicate(true),
         "dialogue_memory_052":voyage.get("dialogue_memory_052",{}).duplicate(true),
