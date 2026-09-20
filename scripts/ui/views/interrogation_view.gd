@@ -299,4 +299,6 @@ func _show_reaction(result: Dictionary) -> void:
         _:
             label = "불확실"
             color = AstraUI.MUTED
-    screen.fx.toast("%s · %s" % [label, str(reaction.get("text", ""))], color, 3.4)
+    # The reaction code remains available for tests/rules, but the player sees
+    # an in-world action rather than a repeated system verdict such as "납득함".
+    screen.fx.toast(str(reaction.get("text", "")), color, 3.4)
