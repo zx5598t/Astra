@@ -2032,8 +2032,11 @@ const FEED_KIND_TO_CLAIM := {
     "record": AstraClaimLedger.KIND_WITNESS
 }
 
+func can_meeting_speak(speaker_id: String) -> bool:
+    return speaker_id == "player" or speaker_id in active_participants()
+
 func _feed_line(speaker_id: String, target_id: String, text: String, kind: String) -> void:
-    if speaker_id != "player" and speaker_id not in active_participants():
+    if not can_meeting_speak(speaker_id):
         push_error("ASTRA invariant: inactive meeting speaker " + speaker_id)
         return
     var entry_id := "meeting_%d_%03d" % [day, meeting_feed.size()]
