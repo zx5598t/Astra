@@ -341,6 +341,7 @@ func _hydrate_054_voyage_defaults() -> void:
     if not voyage.has("routine_observations"): voyage["routine_observations"] = []
     if not voyage.has("micro_arc_state"): voyage["micro_arc_state"] = {}
     if not voyage.has("micro_arc_recent"): voyage["micro_arc_recent"] = []
+    if not voyage.has("micro_arc_pity"): voyage["micro_arc_pity"] = {}
     if not voyage.has("consequence_queue"): voyage["consequence_queue"] = []
     if not voyage.has("consequence_history"): voyage["consequence_history"] = []
     if not voyage.has("consequence_stats"): voyage["consequence_stats"] = {"IMMEDIATE":0,"DELAYED":0,"NEXT_DAY":0,"NEXT_LOOP":0}
@@ -348,7 +349,11 @@ func _hydrate_054_voyage_defaults() -> void:
     if not voyage.has("opinion_changes"): voyage["opinion_changes"] = []
     if not voyage.has("active_arcs"):
         voyage["active_arcs"] = AstraStorylets054.select_arcs(
-            seed_value,int(voyage.get("loop",0)),case_id,roster,Array(voyage.get("micro_arc_recent",[])),3
+            seed_value,int(voyage.get("loop",0)),case_id,roster,Array(voyage.get("micro_arc_recent",[])),3,
+            voyage.get("micro_arc_pity",{})
+        )
+        voyage["micro_arc_pity"] = AstraStorylets054.update_arc_pity(
+            voyage.get("micro_arc_pity",{}),roster,voyage.get("active_arcs",[])
         )
     if not voyage.has("routine_state") or Dictionary(voyage.get("routine_state",{})).is_empty():
         voyage["routine_state"] = AstraCrewRoutineModel.build(
@@ -3843,6 +3848,7 @@ func begin_voyage(memory: Dictionary = {}) -> void:
         "routine_state":{}, "routine_observed":[], "routine_observations":[],
         "active_arcs":[], "micro_arc_state":{},
         "micro_arc_recent":memory.get("micro_arc_recent",[]).duplicate(),
+        "micro_arc_pity":memory.get("micro_arc_pity",{}).duplicate(true),
         "consequence_queue":memory.get("consequence_carry",[]).duplicate(true),
         "consequence_history":[], "consequence_stats":{"IMMEDIATE":0,"DELAYED":0,"NEXT_DAY":0,"NEXT_LOOP":0},
         "pinned_question":str(memory.get("pinned_question","")),
@@ -3871,7 +3877,11 @@ func begin_voyage(memory: Dictionary = {}) -> void:
     _ensure_curiosity_questions()
     _mark_changed_questions()
     voyage["active_arcs"] = AstraStorylets054.select_arcs(
-        seed_value, loop_count, case_id, roster, voyage.get("micro_arc_recent",[]), 3
+        seed_value, loop_count, case_id, roster, voyage.get("micro_arc_recent",[]), 3,
+        voyage.get("micro_arc_pity",{})
+    )
+    voyage["micro_arc_pity"] = AstraStorylets054.update_arc_pity(
+        voyage.get("micro_arc_pity",{}),roster,voyage.get("active_arcs",[])
     )
     voyage["routine_state"] = AstraCrewRoutineModel.build(
         seed_value, loop_count, case_id, roster, active_participants(), truth.get("nulls",[])
@@ -5170,6 +5180,7 @@ func voyage_memory() -> Dictionary:
         "autonomous_recent":(Array(voyage.get("autonomous_recent",[])) + Array(voyage.get("autonomous_seen_loop",[]))).slice(-8),
         "visible_signatures":_updated_visible_signatures(),
         "micro_arc_recent":_updated_micro_arc_recent(),
+        "micro_arc_pity":voyage.get("micro_arc_pity",{}).duplicate(true),
         "consequence_carry":AstraConsequenceModel.carry_for_next_loop(
             voyage.get("consequence_queue",[]),int(voyage.get("loop",0))
         ),
