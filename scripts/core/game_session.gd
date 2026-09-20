@@ -2327,6 +2327,12 @@ func _feed_line(speaker_id: String, target_id: String, text: String, kind: Strin
             [AstraDecisionModel.reason(reason_code, 0.7, str(entry.get("thread_id","")))], day
         )
         AstraDecisionModel.append_trace(flags, meeting_trace)
+        if kind == "defense" and not voyage.is_empty():
+            var tags: Array = voyage.get("memory_tags",[])
+            var defense_tag := speaker_id + "_defended_" + target_id
+            if defense_tag not in tags:
+                tags.append(defense_tag)
+            voyage["memory_tags"] = tags
     if speaker_id != "player" and FEED_KIND_TO_CLAIM.has(kind):
         var claim := current_claim(speaker_id) if kind == "alibi" else {}
         _record_claim(speaker_id, str(FEED_KIND_TO_CLAIM[kind]), AstraClaimLedger.SCOPE_PUBLIC, str(entry["text"]), {
