@@ -11,6 +11,7 @@ func check(ok: bool, label: String) -> void:
 
 func _initialize() -> void:
     test_mira_volume_and_mix()
+    test_mira_phrase_and_agency_audit()
     test_mira_private_depth()
     test_mira_tones()
     test_mira_exposure_cap()
@@ -72,6 +73,35 @@ func test_mira_volume_and_mix() -> void:
     check(conflict_count >= 4,"Mira can meaningfully conflict instead of always agreeing (%d)" % conflict_count)
     check(pair_count >= 15,"Mira has an independent relationship network (%d pair/trio scenes)" % pair_count)
     print("MIRA CONTENT · total=%d · player_specific=%d · echo=%d · conflict=%d · pair/trio=%d · groups=%s" % [mira_total,player_specific,echo_count,conflict_count,pair_count,str(groups)])
+
+func test_mira_phrase_and_agency_audit() -> void:
+    var phrases := {
+        "괜찮아요":0, "잠깐":0, "무리하지":0, "확인할게":0,
+        "잃고 싶지":0, "사랑":0
+    }
+    var agency := 0
+    var player_only := 0
+    var mira_speaker := 0
+    for scene in AstraVoyageContent.all_scenes():
+        if str(scene.get("speaker","")) != "mira":
+            continue
+        mira_speaker += 1
+        if bool(scene.get("agency",false)):
+            agency += 1
+        if bool(scene.get("player_specific",false)):
+            player_only += 1
+        var text := str(scene.get("action",""))
+        for line in scene.get("lines",[]):
+            if line is Array and line.size() > 1:
+                text += " " + str(line[1])
+        for phrase in phrases:
+            phrases[phrase] = int(phrases[phrase]) + text.count(str(phrase))
+    check(agency >= 3,"Mira has independent authored decisions, not only player-facing care (%d agency scenes)" % agency)
+    check(player_only < mira_speaker / 2,"less than half of Mira speaker scenes exist only to focus on the player (%d/%d)" % [player_only,mira_speaker])
+    check(int(phrases["괜찮아요"]) <= 8,"Mira does not lean on '괜찮아요?' as a catchphrase (%d)" % int(phrases["괜찮아요"]))
+    check(int(phrases["잠깐"]) <= 8,"Mira '잠깐' repetition stays restrained (%d)" % int(phrases["잠깐"]))
+    check(int(phrases["잃고 싶지"]) <= 1 and int(phrases["사랑"]) == 0,"0.5.3 avoids forced romance-confession language")
+    print("MIRA PHRASE AUDIT · %s · agency=%d · player_specific=%d/%d" % [str(phrases),agency,player_only,mira_speaker])
 
 func test_mira_private_depth() -> void:
     var count := AstraPrivateEvents.count_for("mira")
