@@ -11,6 +11,7 @@ func check(ok: bool, label: String) -> void:
 
 func _initialize() -> void:
     test_memory_tag_unlock()
+    test_pair_defense_callback()
     test_player_pattern_callbacks()
     test_promise_memory()
     if failures.is_empty():
@@ -38,6 +39,19 @@ func test_memory_tag_unlock() -> void:
     check(not s._scene_eligible_052(scene,"mira"),"privacy callback stays locked before remembered action")
     s.voyage["memory_tags"].append("mira:respected_medical_privacy")
     check(s._scene_eligible_052(scene,"mira"),"remembered privacy choice unlocks later Mira callback")
+
+func test_pair_defense_callback() -> void:
+    var s := AstraGameSession.new()
+    s.setup("LAST_LIGHT",530112)
+    s.begin_voyage({"loops":3})
+    s.voyage["scene"] = {}
+    s.voyage["met"] = s.roster.duplicate()
+    s.phase = "MEETING"
+    s._feed_line("rho","sena","세나의 판단은 적어도 이 기록과는 맞아.","defense")
+    check("rho_defended_sena" in s.voyage.get("memory_tags",[]),"Jun defending Sena becomes a relationship memory tag")
+    var callback := _find_family("sena_rho_defense_memory")
+    s.phase = "EXPLORE"
+    check(not callback.is_empty() and s._scene_eligible_052(callback,"sena"),"Sena later has an eligible callback to Jun's defense")
 
 func test_player_pattern_callbacks() -> void:
     var profile := AstraLivingCrew.blank_player_profile()
