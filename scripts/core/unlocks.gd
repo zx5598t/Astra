@@ -29,12 +29,12 @@ const FEATURES := {
     # EXPLORE), so neither belongs in ALWAYS; both become relevant starting
     # DEAD_AIR, the first chapter that actually uses them.
     "meeting": {
-        "order": 1, "needs_calibration": true,
+        "order": 2, "needs_cases": 1,
         "title": "회의", "blurb": "모두 앞에서 주장과 증거를 공개합니다.",
         "flavor": "처음으로, 혼자가 아니라 모두 앞에서 말합니다."
     },
     "vote": {
-        "order": 1, "needs_calibration": true,
+        "order": 3, "needs_cases": 2,
         "title": "투표", "blurb": "한 명을 격리합니다.",
         "flavor": "표는 모두 동등합니다. 당신의 표도 하나입니다."
     },
@@ -43,22 +43,22 @@ const FEATURES := {
         "order": 1, "needs_calibration": true,
         "title": "내 판단 표시",
         "blurb": "이름 옆에 의심·신뢰·보류를 직접 표시합니다.",
-        "flavor": "아카이브는 당신의 판단을 기록하기 시작했습니다."
+        "flavor": "조사 기록에 당신의 판단이 남기 시작합니다."
     },
     "night": {
-        "order": 1, "needs_calibration": true,
+        "order": 3, "needs_cases": 2,
         "title": "밤",
         "blurb": "투표 뒤 밤이 옵니다. 한 사람을 지키거나 한 곳을 감시할 수 있습니다.",
         "flavor": "조사가 다음 날로 이어집니다. 이제 지키지 못한 것이 생깁니다."
     },
     "claim_search": {
-        "order": 1, "needs_calibration": true,
+        "order": 2, "needs_cases": 1,
         "title": "발언 검색",
         "blurb": "“누가 이 말을 했지?”를 노트에서 찾습니다.",
         "flavor": "모든 문장이 남습니다. 당신 것도 포함해서."
     },
     "difficulty_select": {
-        "order": 1, "needs_calibration": true,
+        "order": 2, "needs_cases": 1,
         "title": "속도 선택",
         "blurb": "스토리·표준·전문가 중에서 고릅니다.",
         "flavor": ""
@@ -71,37 +71,37 @@ const FEATURES := {
         "flavor": "같은 기록도 다시 읽으면 다르게 읽힙니다."
     },
     "private_talk": {
-        "order": 2, "needs_cases": 1,
+        "order": 4, "needs_cases": 3,
         "title": "개인 면담",
         "blurb": "승무원이 따로 이야기를 청합니다. 답에 따라 관계가 달라집니다.",
         "flavor": "사람들이 당신에게 말을 걸기 시작했습니다."
     },
     "theory_report": {
-        "order": 2, "needs_cases": 1,
+        "order": 4, "needs_cases": 3,
         "title": "추리 보고서",
         "blurb": "실행자로 의심하는 사람을 표시해 두면 투표와 함께 제출되고 채점됩니다.",
         "flavor": ""
     },
     "night_tactics": {
-        "order": 3, "needs_cases": 1,
+        "order": 4, "needs_cases": 3,
         "title": "야간 행동",
         "blurb": "보호 외에 감시·기록 백업·휴식을 고를 수 있습니다.",
         "flavor": "밤에 할 수 있는 일이 늘었습니다. 여전히 하나뿐이지만."
     },
     "hypothesis": {
-        "order": 3, "needs_cases": 2,
+        "order": 5, "needs_cases": 4,
         "title": "가설 연결",
         "blurb": "노트에서 단서·인물·조작을 직접 연결하고 회의에서 제시합니다.",
-        "flavor": "조각을 잇는 일은 아카이브가 아니라 당신의 몫입니다."
+        "flavor": "조각을 잇고 판단을 남기는 일은 이제 당신의 몫입니다."
     },
     "protocols": {
-        "order": 4, "needs_cases": 2,
+        "order": 5, "needs_cases": 4,
         "title": "조사 방식",
         "blurb": "분석관·공감관·감사관 중에서 시작 방식을 고릅니다.",
         "flavor": "접속 방식을 직접 고를 수 있을 만큼 연결이 안정됐습니다."
     },
     "relationship_events": {
-        "order": 5, "needs_cases": 3,
+        "order": 6, "needs_cases": 5,
         "title": "관계 사건",
         "blurb": "승무원들 사이의 일이 당신 없이도 벌어집니다.",
         "flavor": "이들은 당신이 보지 않을 때도 서로를 기억합니다."
@@ -110,9 +110,11 @@ const FEATURES := {
 
 # Order matters for the "what is next" hint on the title screen.
 const REVEAL_ORDER := [
-    "meeting", "vote", "marks", "night", "claim_search", "difficulty_select",
-    "case_select", "private_talk", "theory_report",
-    "night_tactics", "hypothesis", "protocols", "relationship_events"
+    "marks",
+    "meeting", "claim_search", "difficulty_select", "case_select",
+    "vote", "night",
+    "private_talk", "theory_report", "night_tactics",
+    "hypothesis", "protocols", "relationship_events"
 ]
 
 static func unlocked(calibration_done: bool, campaign_cases_played: int) -> Array:
