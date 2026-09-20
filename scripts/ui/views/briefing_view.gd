@@ -42,6 +42,18 @@ func refresh() -> void:
         _later_day(s)
 
 func _first_day(s: AstraGameSession) -> void:
+    var awakened := _newly_awakened(s)
+    if awakened != "":
+        var member := s.npc(awakened)
+        var arrival := AstraUI.reading_panel(AstraUI.VIOLET)
+        _body.add_child(arrival)
+        var arrival_box := AstraUI.vbox(6)
+        arrival.add_child(arrival_box)
+        arrival_box.add_child(AstraUI.label("새로 깨어난 승무원", AstraUI.T_META, AstraUI.VIOLET))
+        arrival_box.add_child(AstraUI.crew_tag(awakened, AstraUI.T_BODY, true, 30))
+        if member != null:
+            arrival_box.add_child(AstraUI.prose("%s · %s. 이번 장부터 함께 움직입니다." % [member.display_name, member.job], AstraUI.T_META, AstraUI.TEXT))
+
     # 1. What happened.
     var incident := AstraUI.reading_panel(AstraUI.CYAN)
     _body.add_child(incident)
@@ -81,8 +93,18 @@ func _first_day(s: AstraGameSession) -> void:
     task_box.add_child(mission_text)
     var steps := AstraUI.hbox(8)
     task_box.add_child(steps)
-    for step in ["현장 조사", "→", "진술 확인", "→", "회의", "→", "투표"]:
-        steps.add_child(AstraUI.label(step, AstraUI.T_META, AstraUI.MUTED if step == "→" else AstraUI.CYAN))
+    var phase_names := {
+        "INVESTIGATION":"현장 조사", "INTERROGATION":"진술 확인",
+        "MEETING":"짧은 공개 확인", "VOTE":"장기수면 격리 투표", "NIGHT":"밤 행동"
+    }
+    var visible_steps: Array = []
+    for phase_id in AstraCaseCatalog.phase_flow(s.case_id):
+        if phase_names.has(phase_id):
+            visible_steps.append(str(phase_names[phase_id]))
+    for i in range(visible_steps.size()):
+        if i > 0:
+            steps.add_child(AstraUI.label("→", AstraUI.T_META, AstraUI.MUTED))
+        steps.add_child(AstraUI.label(str(visible_steps[i]), AstraUI.T_META, AstraUI.CYAN))
 
     # Who is in the room, with a face and a job against each name.
     var roster_panel := AstraUI.reading_panel(AstraUI.MUTED, 0.9)
@@ -129,4 +151,15 @@ func _why_a_person(s: AstraGameSession, ops: Array) -> String:
     return "%s의 콘솔에서 직접 실행한 명령입니다. 실행자 칸은 비어 있습니다. 누가 왜 움직였는지는 아직 알 수 없습니다." % s.room_name(str(ops[0].get("room","")))
 
 func _mission_text(s: AstraGameSession) -> String:
-    return "확인할 실행자는 %d명입니다. " % s.null_count + "조작이 일어난 곳을 살피고, 동료가 기억하는 동선과 비교하세요. 거짓말에도 다른 사정이 있을 수 있습니다. 위험한 행동을 멈출지는 같은 표 한 장씩으로 결정합니다."
+    var base := "확인할 실행자는 %d명입니다. 조작이 일어난 곳을 살피고, 동료가 기억하는 동선과 비교하세요. 거짓말에도 다른 사정이 있을 수 있습니다." % s.null_count
+    if AstraCaseCatalog.has_phase(s.case_id, "VOTE"):
+        return base + " 충분한 근거가 모이면 장기수면 격리 투표로 행동을 멈출 수 있습니다."
+    if AstraCaseCatalog.has_phase(s.case_id, "MEETING"):
+        return base + " 이번 장은 짧은 공개 확인까지 진행하고 기록을 정리합니다."
+    return base + " 이번 장은 조사와 대화까지만 익히고 기록을 정리합니다."
+
+func _newly_awakened(s: AstraGameSession) -> String:
+    var index := AstraCaseCatalog.CAMPAIGN.find(s.case_id)
+    if index <= 0 or index > AstraCrewCatalog.AWAKENING_ORDER.size():
+        return ""
+    return str(AstraCrewCatalog.AWAKENING_ORDER[index - 1])
