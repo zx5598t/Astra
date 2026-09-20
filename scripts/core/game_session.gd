@@ -325,12 +325,37 @@ func load_snapshot(path: String = SNAPSHOT_PATH) -> bool:
                 else:
                     member.set(field, cfg.get_value("crew_" + npc_id, field))
             crew[npc_id] = member
+        _hydrate_054_voyage_defaults()
         rng.seed = seed_value * 7919 + 17
         rng.state = int(cfg.get_value("session", "rng_state"))
         phase_changed.emit(phase)
         changed.emit()
         return true
     return false
+
+
+func _hydrate_054_voyage_defaults() -> void:
+    if voyage.is_empty():
+        return
+    if not voyage.has("routine_observed"): voyage["routine_observed"] = []
+    if not voyage.has("routine_observations"): voyage["routine_observations"] = []
+    if not voyage.has("micro_arc_state"): voyage["micro_arc_state"] = {}
+    if not voyage.has("micro_arc_recent"): voyage["micro_arc_recent"] = []
+    if not voyage.has("consequence_queue"): voyage["consequence_queue"] = []
+    if not voyage.has("consequence_history"): voyage["consequence_history"] = []
+    if not voyage.has("consequence_stats"): voyage["consequence_stats"] = {"IMMEDIATE":0,"DELAYED":0,"NEXT_DAY":0,"NEXT_LOOP":0}
+    if not voyage.has("pinned_question"): voyage["pinned_question"] = ""
+    if not voyage.has("opinion_changes"): voyage["opinion_changes"] = []
+    if not voyage.has("active_arcs"):
+        voyage["active_arcs"] = AstraStorylets054.select_arcs(
+            seed_value,int(voyage.get("loop",0)),case_id,roster,Array(voyage.get("micro_arc_recent",[])),3
+        )
+    if not voyage.has("routine_state") or Dictionary(voyage.get("routine_state",{})).is_empty():
+        voyage["routine_state"] = AstraCrewRoutineModel.build(
+            seed_value,int(voyage.get("loop",0)),case_id,roster,active_participants(),truth.get("nulls",[])
+        )
+        if not voyage.has("activity_queue"): voyage["activity_queue"] = []
+        _align_activity_queue_to_routine()
 
 func _valid_snapshot(cfg: ConfigFile) -> bool:
     var version := int(cfg.get_value("meta", "version", 0))
