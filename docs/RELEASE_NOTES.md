@@ -1,3 +1,118 @@
+# ASTRA 0.5.3 — HEARTBEAT
+
+## Familiar stranger
+
+0.5.3의 목표는 새 시스템 숫자를 늘리는 것이 아니라 0.5.2에서 만든 Living Crew 시스템을 플레이어가 실제로 느끼게 하는 것이다. NPC가 자기 할 말만 하는 대신 앞선 행동과 관계를 기억하고, 같은 사람을 다음 loop에서 만났을 때 조금 익숙하고 조금 낯설게 보이도록 했다.
+
+미라는 이번 버전의 **Emotional Anchor**다. 처음 만나는 의무관이라는 위치를 이용해 반복의 감정을 가장 깊게 보여 주지만, 정식 romance route·plot armor·항상 플레이어 편인 성격은 만들지 않았다. 미라는 Null이 될 수 있고, 격리될 수 있고, 플레이어에게 실망하거나 플레이어를 의심할 수 있다. 다른 동료의 chapter spotlight와 전문 분야도 그대로 유지한다.
+
+## Mira Emotional Anchor
+
+미라 authored speaker scene은 **80개**다. 0.5.3에서 CARE / DAILY / MEDICAL / PLAYER / RELATIONSHIP / ECHO / CONFLICT 장면을 추가했고 private event pool은 **13개**가 됐다.
+
+반복 motif는 차, 체온/손목 센서, 의료실 의자·담요, 피아노, 컵처럼 작은 생활 요소를 사용한다. 이전 loop를 직접 기억한다고 말하지 않고 같은 컵 위치나 음악 볼륨, 익숙한 붕대 위치처럼 행동이 먼저 달라진다.
+
+플레이어와의 관계 tone은 WARM / PROFESSIONAL / STRAINED로 표현할 수 있다. 같은 상태 확인 장면도 관계와 conflict echo에 따라 문장이 달라진다. player behavioral profile의 evidence_first / people_first / protective / skeptical / secretive / confrontational / patient도 미라 반응에 연결된다.
+
+약속은 HUD quest가 아니다. “다치면 말하기” 같은 일부 선택은 dialogue memory에만 남고, 지키거나 어겼을 때 나중 장면이 자연스럽게 돌아올 수 있다.
+
+미라가 세계를 독점하지 않도록 ECHO WARD 이후 일반 loop의 optional Mira scene은 최대 4개로 제한한다. 자동 시뮬레이션에서 평균 노출은 **2.50**, 최대 **4**였다.
+
+## Living Dialogue
+
+전체 authored voyage/reactive scene은 **473개**다.
+
+- 미라 80
+- 준 65
+- 다렌 59
+- 노아 63
+- 세나 56
+- 소렌 45
+- 루칸 43
+- 마렌 62
+
+0.5.3 신규 authored scene은 **81개**다. Mira 전용 pack 27개, 다른 일곱 명의 player/relationship callback 28개, pair/trio social scene 26개로 구성했다.
+
+여러 사람이 말하는 0.5.3 scene에는 line relation을 기록해 다음 줄이 reply / clarify / challenge / support / proposal / agreement / inference 등 어떤 방식으로 앞 말을 받는지 audit한다. 단순 독백 나열을 새 콘텐츠로 세지 않는다.
+
+기존 pair 장면은 상대가 반드시 현재 같은 방에 있어야 해서 노출률이 낮았는데, 이제 이미 만났고 활동 중이며 scene context가 맞는 동료는 authored storylet에 자연스럽게 합류할 수 있다.
+
+## Autonomous Crew
+
+새 `AstraCrewActivityModel`에는 **27개의 autonomous beat**가 있다. 하루/loop마다 모두 강제로 보여 주지 않고 조건에 맞는 0~2개만 예정한다.
+
+예를 들어 미라는 세나의 붕대를 갈고, 준은 기관실을 수리하고, 노아와 다렌은 기록을 비교하고, 소렌과 루칸은 신호와 좌표를 맞춘다. 플레이어가 그 방에 들어오면 이미 진행 중인 장면을 목격할 수 있고, 일부는 overheard 선택으로 끼어들기 / 듣기 / 지나가기가 가능하다.
+
+DEAD AIR에는 autonomous text를 추가하지 않았고 GLASS GARDEN도 최대 1개만 허용해 초반 텍스트 부하를 유지했다.
+
+## Knowledge / Decision
+
+NPC 지식은 계속 명시적으로 추적한다. 플레이어가 발견한 fact, 특정 NPC에게만 보여 준 fact, 공개된 fact를 구분한다.
+
+0.5.3은 NPC→NPC 전파를 추가했다. Noa → Soren처럼 실제 전달이 발생해야 Soren이 알 수 있고, 그 뒤 Soren → Lucan이 일어나기 전까지 Lucan은 그 사실을 사용할 수 없다. 전파 경로는 provenance에 남는다.
+
+Notebook에는 최근 정보에 대해 **알고 있음: 나 / 노아 · 아직 비공개** 정도의 가벼운 표시만 제공한다. 권한표나 숫자 UI로 만들지는 않았다.
+
+중요한 vote/meeting/share 행동은 DecisionTrace를 유지한다. 투표 화면은 기존처럼 각 NPC의 표 아래에 자연어 이유를 표시하며, 0.5.3의 autonomous 정보 공유도 업무/안전상 필요 같은 이유와 source fact를 trace에 남긴다.
+
+## Storylet selection과 replay
+
+`AstraStoryletScheduler`는 authored content만 선택한다.
+
+- 아직 보지 못한 scene을 약간 우대
+- 최근 family 반복 억제
+- social theme의 중심 pair에 작은 가중치
+- rare/uncommon 조건을 여러 번 만족했는데 못 본 경우 내부 pity 증가
+- 본 뒤 pity reset
+
+pity 수치는 UI에 표시하지 않는다. 메인 story progression을 특별 이벤트 RNG에 묶지도 않는다.
+
+player-visible 500-loop simulation 결과:
+
+- visible signatures: **500 / 500**
+- Mira optional exposure: 평균 **2.50**, 최대 **4**
+- autonomous event coverage: **27종**
+- relationship pair coverage: **21**
+- 0.5.3 authored scene coverage: **65.4%**
+- rare scene immediate repeat: **0**
+
+## Notebook과 질문
+
+Curiosity Question 문구를 시스템 목표가 아니라 플레이어가 실제로 궁금해할 문장으로 다듬었다.
+
+예:
+- “미라가 기억하는 지구 귀환 기록은 어디에서 왔나?”
+- “세나와 준은 정말 예전부터 알던 사이였나?”
+- “19년이 맞다면 왜 우리 몸은 그 시간을 지나지 않은 것처럼 보일까?”
+
+Notebook의 **지금 궁금한 것**은 최대 3개만 보여 준다. OPEN / PARTIAL / ANSWERED / CHANGED를 사용하며, 다음 loop에서 전제가 바뀌면 이미 해결했다고 생각했던 질문이 CHANGED로 다시 열릴 수 있다.
+
+## 첫 30분과 기존 spotlight
+
+CALIBRATION 필수 대사량은 늘리지 않았다. DEAD AIR에도 0.5.3 autonomous event를 넣지 않았다. 대부분의 새 Living Dialogue는 ECHO WARD 이후에 집중한다.
+
+GLASS GARDEN의 세나·준, ECHO WARD의 소렌, SILENT ORBIT의 루칸, RED SHIFT의 마렌 spotlight는 유지한다. 미라는 각 chapter를 연결하는 감정 축이지 모든 mystery의 설명자가 아니다.
+
+## QA와 Windows
+
+0.5.3 전용 검증:
+
+- Mira content / agency / phrase / forced-romance audit
+- WARM / PROFESSIONAL / STRAINED response regression
+- Mira Null / isolation regression
+- storylet unseen weighting / rare pity
+- multi-line dialogue coherence metadata
+- autonomous active-state and budget tests
+- explicit knowledge propagation A→B→C
+- pair defense / player behavior / promise callback
+- player-visible 500-loop HEARTBEAT simulation
+
+기존 1,000 conversation / 1,000 meeting / 500-loop Living Crew simulation과 첫판·캠페인·저장·UI 회귀도 그대로 유지한다.
+
+검증 기준점에서는 Windows Godot 4.7.2 import, 모든 모델/콘텐츠 테스트, UI smoke, Windows release-candidate export, **exported ASTRA.exe boot**까지 통과했다. 최종 0.5.3 VERSION으로 다시 같은 파이프라인을 실행한 결과와 ZIP/SHA-256은 `docs/QA_REPORT.md`에 기록한다.
+
+---
+
 # ASTRA 0.5.0 — Living Crew
 
 ## 첫판: 한 번에 하나씩 배우는 구조
