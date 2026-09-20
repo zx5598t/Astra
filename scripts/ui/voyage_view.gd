@@ -149,9 +149,6 @@ func _draw() -> void:
             var talk := AstraUI.button(AstraCrewCatalog.labelled(who)+" · 대화",AstraUI.CYAN,18,52)
             talk.pressed.connect(func(): session.voyage_talk(who))
             person.add_child(talk)
-            var routine_entry := session.routine_state_for(who)
-            if not routine_entry.is_empty():
-                words.add_child(AstraUI.prose("   "+str(routine_entry.get("activity","")),15,AstraUI.DIM))
             var ask := AstraUI.button("“지금 확인할 기록이 있어?”",AstraUI.MUTED,17,40)
             ask.pressed.connect(func(): session.voyage_ask_goal(who))
             words.add_child(ask)
