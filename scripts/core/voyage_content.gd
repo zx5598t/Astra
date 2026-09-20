@@ -2915,7 +2915,7 @@ const SCENES := [
         "id": "noa_observation",
         "speaker": "noa",
         "tag": "observation",
-        "action": "노아는 당신이 말하기 전에 빈칸을 만든다.",
+        "action": "노아는 말이 나오기 전에 빈칸을 하나 만들어 둔다.",
         "lines": [
             [
                 "noa",
