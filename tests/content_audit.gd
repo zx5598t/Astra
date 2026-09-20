@@ -22,6 +22,9 @@ func _initialize() -> void:
     _pair_scene_distribution()
     _personal_vs_everyday_ratio()
     _private_event_counts()
+    _authored_scene_volume()
+    _key_pair_and_trio_depth()
+    _vote_and_speaker_invariants()
     _pair_history_symmetry()
     _calibration_never_shows_meeting_or_vote()
     _dead_air_light_phase_flow()
@@ -133,12 +136,82 @@ func _personal_vs_everyday_ratio() -> void:
 func _private_event_counts() -> void:
     print("\n-- 7. Private events per character --")
     var counts := {}
+    var total := 0
     for npc_id in AstraCrewCatalog.ORDER:
         counts[npc_id] = AstraPrivateEvents.count_for(npc_id)
-    print("  " + str(counts))
+        total += int(counts[npc_id])
+    print("  " + str(counts) + " / total " + str(total))
     for npc_id in counts:
-        if int(counts[npc_id]) <= 1:
-            fails.append("private events for %s: %d (§18 asks for 4-7 per character)" % [npc_id, counts[npc_id]])
+        var count := int(counts[npc_id])
+        if count < 4 or count > 7:
+            fails.append("private events for %s: %d (0.5.0 requires 4-7 per character)" % [npc_id, count])
+    if total < 40:
+        fails.append("private event pool only %d; 0.5.0 requires about 40+" % total)
+
+func _authored_scene_volume() -> void:
+    print("\n-- 8. Authored voyage scene volume --")
+    var total := AstraVoyageContent.SCENES.size()
+    print("  total authored voyage scenes: %d" % total)
+    if total < 260:
+        fails.append("authored voyage scenes %d; 0.5.0 release floor is 260" % total)
+    if total > 300:
+        warns.append("authored voyage scenes %d; verify one-run text exposure is still restrained" % total)
+
+func _key_pair_and_trio_depth() -> void:
+    print("\n-- 9. Key pair and trio depth --")
+    var required := [
+        ["rho","sena"], ["mira","lyra"], ["dax","noa"], ["vale","eli"],
+        ["rho","dax"], ["sena","mira"], ["lyra","dax"], ["noa","vale"]
+    ]
+    var counts := {}
+    var trios := 0
+    for scene in AstraVoyageContent.SCENES:
+        var tag := str(scene.get("tag",""))
+        if tag == "pair":
+            var key := AstraCrewCatalog.pair_key(str(scene.get("speaker","")), str(scene.get("target","")))
+            counts[key] = int(counts.get(key,0)) + 1
+        elif tag == "trio":
+            trios += 1
+    for pair in required:
+        var key := AstraCrewCatalog.pair_key(str(pair[0]), str(pair[1]))
+        var count := int(counts.get(key,0))
+        print("  %s: %d" % [key,count])
+        if count < 2:
+            fails.append("key pair %s only has %d authored scenes; need at least 2" % [key,count])
+    print("  trio scenes: %d" % trios)
+    if trios < 4:
+        fails.append("only %d authored trio scenes; 0.5.0 requires occasional 3-person conversation" % trios)
+
+func _vote_and_speaker_invariants() -> void:
+    print("\n-- 10. Vote/speaker model invariants --")
+    for seed_value in range(1, 101):
+        var s := AstraGameSession.new()
+        s.setup("ECHO_WARD", 70000 + seed_value)
+        var ballot := s.vote_intentions()
+        for voter in ballot:
+            var target := str(ballot[voter])
+            if target != "" and (str(voter) == target or not s.can_vote_for(str(voter), target)):
+                fails.append("illegal generated ballot %s -> %s at seed %d" % [str(voter),target,seed_value])
+                return
+        var active := s.active_participants()
+        if active.size() < 3:
+            continue
+        var removed := str(active[0])
+        s.crew[removed].status = AstraCrewMember.STATUS_OFFLINE
+        var after := s.vote_intentions()
+        if after.has(removed):
+            fails.append("offline voter remained in ballot at seed %d" % seed_value)
+            return
+        for voter in after:
+            if str(after[voter]) == removed:
+                fails.append("offline target remained in ballot at seed %d" % seed_value)
+                return
+        s.meeting_feed.clear()
+        s._feed_line(removed, "", "이 줄은 절대 기록되면 안 된다.", "suspect")
+        if not s.meeting_feed.is_empty():
+            fails.append("offline speaker entered meeting feed at seed %d" % seed_value)
+            return
+    print("  OK: generated votes and meeting speakers obey ACTIVE-only invariants.")
 
 func _pair_history_symmetry() -> void:
     print("\n-- 8. pair_key() symmetry (canonical pair history) --")
