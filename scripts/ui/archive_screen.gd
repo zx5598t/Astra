@@ -137,7 +137,7 @@ func _refresh_detail() -> void:
         shade.anchor_right = 1.0
         shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
         frame.add_child(shade)
-        var name_label := AstraUI.label(id.to_upper(), 14, AstraUI.TEXT)
+        var name_label := AstraUI.label(AstraCrewCatalog.display_name(id), 14, AstraUI.TEXT)
         name_label.anchor_top = 0.82
         name_label.anchor_bottom = 1.0
         name_label.anchor_right = 1.0
@@ -158,9 +158,25 @@ func _refresh_detail() -> void:
     if not mission.is_empty():
         dossier.add_child(AstraUI.label("선택 임무  /  " + str(mission.get("title", "")), 14, accent, true))
     dossier.add_child(AstraUI.prose(AstraCaseCatalog.CAMPAIGN_PREMISE, AstraUI.T_META, AstraUI.MUTED))
-    dossier.add_child(AstraUI.label("흔적을 찾고  →  진술을 대조하고  →  숨어 있는 두 Null을 격리하세요", 13, AstraUI.DIM, true))
+    dossier.add_child(AstraUI.label(_case_goal_line(_selected_case), 13, AstraUI.DIM, true))
     _continue.text = "%s   →" % ("조사 시작 · " + str(data.get("title_ko", "")) if unlocked else app.meta.unlock_hint(_selected_case))
     _continue.disabled = not unlocked
+
+func _case_goal_line(case_id: String) -> String:
+    match case_id:
+        "DEAD_AIR":
+            return "서로 다른 목적지 기록의 출처를 확인하세요."
+        "GLASS_GARDEN":
+            return "세나와 준의 서로 다른 근무 기록을 대조하세요."
+        "ECHO_WARD":
+            return "신호 기록을 확인하고, 처음으로 장기수면 격리 판단을 내립니다."
+        "SILENT_ORBIT":
+            return "항법 기록과 오래된 도착 기록을 대조하세요."
+        "RED_SHIFT":
+            return "겹치는 기록과 관계의 변화를 함께 확인하세요."
+        "LAST_LIGHT":
+            return "남은 기록을 연결해 ASTRA의 항해가 왜 반복되는지 확인하세요."
+    return str(AstraCaseCatalog.get_case(case_id).get("card_line", "기록과 기억이 어긋난 이유를 확인하세요."))
 
 func _refresh_protocols() -> void:
     AstraUI.clear(_protocol_row)
