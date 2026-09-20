@@ -147,13 +147,15 @@ jobs:
           grep -q "ASTRA 0.5.4 MEANINGFUL CHOICE TESTS OK" meaningful-054.log
           ./godot --headless --path . --script res://tests/curiosity_pin_tests.gd 2>&1 | tee curiosity-054.log
           grep -q "ASTRA 0.5.4 CURIOSITY PIN TESTS OK" curiosity-054.log
+          ./godot --headless --path . --script res://tests/decision_legibility_054_tests.gd 2>&1 | tee decision-054.log
+          grep -q "ASTRA 0.5.4 DECISION LEGIBILITY TESTS OK" decision-054.log
           ./godot --headless --path . --script res://tests/compatibility_054_tests.gd 2>&1 | tee compatibility-054.log
           grep -q "ASTRA 0.5.4 SAVE COMPATIBILITY TESTS OK" compatibility-054.log
           ./godot --headless --path . --script res://tests/aftermath_054_simulation.gd 2>&1 | tee aftermath-054.log
           grep -q "ASTRA 0.5.4 AFTERMATH SIMULATION OK" aftermath-054.log
           ./godot --headless --path . --script res://tests/editorial_054_report.gd -- --loops=5 2>&1 | tee editorial-054.log
           grep -q "ASTRA 0.5.4 HUMAN EDITING REPORT OK" editorial-054.log
-          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" routine-054.log micro-arc-054.log consequence-054.log meaningful-054.log curiosity-054.log compatibility-054.log aftermath-054.log editorial-054.log; then exit 1; fi
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" routine-054.log micro-arc-054.log consequence-054.log meaningful-054.log curiosity-054.log decision-054.log compatibility-054.log aftermath-054.log editorial-054.log; then exit 1; fi
 
       - name: Story continuity and first-play regression
         run: |
@@ -244,9 +246,11 @@ jobs:
           if (-not (Select-String -Path windows-consequence-054.log -Pattern 'ASTRA 0.5.4 CONSEQUENCE CHAIN TESTS OK')) { throw 'Windows consequence 0.5.4 tests did not pass.' }
           & $env:GODOT --headless --path . --script res://tests/curiosity_pin_tests.gd 2>&1 | Tee-Object -FilePath windows-curiosity-054.log
           if (-not (Select-String -Path windows-curiosity-054.log -Pattern 'ASTRA 0.5.4 CURIOSITY PIN TESTS OK')) { throw 'Windows curiosity 0.5.4 tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/decision_legibility_054_tests.gd 2>&1 | Tee-Object -FilePath windows-decision-054.log
+          if (-not (Select-String -Path windows-decision-054.log -Pattern 'ASTRA 0.5.4 DECISION LEGIBILITY TESTS OK')) { throw 'Windows decision-legibility 0.5.4 tests did not pass.' }
           & $env:GODOT --headless --path . --script res://tests/compatibility_054_tests.gd 2>&1 | Tee-Object -FilePath windows-compatibility-054.log
           if (-not (Select-String -Path windows-compatibility-054.log -Pattern 'ASTRA 0.5.4 SAVE COMPATIBILITY TESTS OK')) { throw 'Windows save compatibility 0.5.4 tests did not pass.' }
-          if (Select-String -Path windows-routine-054.log,windows-micro-arc-054.log,windows-consequence-054.log,windows-curiosity-054.log,windows-compatibility-054.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.5.4 tests reported script errors.' }
+          if (Select-String -Path windows-routine-054.log,windows-micro-arc-054.log,windows-consequence-054.log,windows-curiosity-054.log,windows-decision-054.log,windows-compatibility-054.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.5.4 tests reported script errors.' }
 
       - name: Run UI smoke test on Windows
         shell: pwsh
