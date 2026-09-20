@@ -56,6 +56,7 @@ var _budget_name: Label
 var _budget_pips: RichTextLabel
 var _budget_count: Label
 var _step_labels: Dictionary = {}
+var _step_separators: Dictionary = {}
 var _ready_pulse: bool = false
 
 func setup(app_node, game_session: AstraGameSession, feedback: AstraFeedbackFX) -> void:
@@ -98,7 +99,9 @@ func _build() -> void:
         _stepper.add_child(cell)
         _step_labels[step] = cell
         if index < STEPS.size() - 1:
-            _stepper.add_child(AstraUI.label("›", AstraUI.T_META, AstraUI.DIM))
+            var separator := AstraUI.label("›", AstraUI.T_META, AstraUI.DIM)
+            _stepper.add_child(separator)
+            _step_separators[step] = separator
     top.add_child(AstraUI.spacer())
     # Action points were drawn as a right-aligned grey caption and were the
     # single most missed piece of information in playtesting: people asked
@@ -237,17 +240,32 @@ func _refresh_top() -> void:
 # signal — several times per action — which churned a RichTextLabel and a dozen
 # Controls per refresh and left orphaned nodes behind.
 func _refresh_stepper() -> void:
-    var current := STEPS.find(session.phase)
+    var flow := AstraCaseCatalog.phase_flow(session.case_id)
+    var visible_steps: Array = ["BRIEFING"]
+    for step in STEPS:
+        if step != "BRIEFING" and step in flow:
+            visible_steps.append(step)
+    var current := visible_steps.find(session.phase)
     for index in range(STEPS.size()):
         var step := str(STEPS[index])
-        var here := index == current
-        var done := current >= 0 and index < current
-        var accent: Color = PHASE_COLORS.get(step, AstraUI.CYAN)
         var cell: Label = _step_labels.get(step, null)
         if cell == null:
             continue
+        var visible := step in visible_steps
+        cell.visible = visible
+        if not visible:
+            if _step_separators.has(step):
+                _step_separators[step].visible = false
+            continue
+        var visible_index := visible_steps.find(step)
+        var here := visible_index == current
+        var done := current >= 0 and visible_index < current
+        var accent: Color = PHASE_COLORS.get(step, AstraUI.CYAN)
         cell.add_theme_color_override("font_color", accent if here else (AstraUI.MUTED if done else AstraUI.DIM))
         cell.add_theme_font_size_override("font_size", AstraUI.font_size(AstraUI.T_UI if here else AstraUI.T_META))
+        if _step_separators.has(step):
+            var next_visible := visible_index >= 0 and visible_index + 1 < visible_steps.size()
+            _step_separators[step].visible = next_visible and str(visible_steps[visible_index + 1]) == str(STEPS[index + 1])
 
 # How many actions are left, as pips, in a bordered box. Empty pips are what
 # tell the player the budget existed in the first place.
