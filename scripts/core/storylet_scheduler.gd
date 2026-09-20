@@ -47,8 +47,8 @@ static func weight(scene: Dictionary, seen_ever: Dictionary, recent_families: Ar
             score *= 1.22
         else:
             var speaker := str(scene.get("speaker",""))
-            var target := str(scene.get("target",""))
-            if speaker in related or target in related:
+            var linked_target := str(scene.get("target",""))
+            if speaker in related or linked_target in related:
                 score *= 1.12
     return maxf(0.01,score)
 
