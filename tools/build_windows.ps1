@@ -48,7 +48,10 @@ try {
     Copy-Item -LiteralPath $exe, "$packageDir\START_HERE.md", "$packageDir\LICENSES.md" -Destination $staging -Force
     Compress-Archive -LiteralPath $staging -DestinationPath $zip -Force
     $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+    $zipSize = (Get-Item -LiteralPath $zip).Length
     "$hash  $(Split-Path $zip -Leaf)" | Set-Content -LiteralPath "$zip.sha256" -Encoding ascii
+    Write-Host "ASTRA WINDOWS ZIP SIZE: $zipSize bytes"
+    Write-Host "ASTRA WINDOWS SHA256: $hash"
     Write-Host "ASTRA WINDOWS BUILD OK: $zip"
 } catch {
     Write-Host "[ASTRA] $($_.Exception.Message)" -ForegroundColor Red
