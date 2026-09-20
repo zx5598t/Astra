@@ -37,7 +37,7 @@ func _initialize() -> void:
 
 func _by_speaker() -> Dictionary:
     var out := {}
-    for scene in AstraVoyageContent.SCENES:
+    for scene in AstraVoyageContent.all_scenes():
         var who := str(scene["speaker"])
         if not out.has(who): out[who] = []
         out[who].append(scene)
@@ -80,7 +80,7 @@ func _scene_counts_by_character() -> void:
 func _choice_effect_vocabulary() -> void:
     print("\n-- 3. Choice effect vocabulary --")
     var effects := {}
-    for scene in AstraVoyageContent.SCENES:
+    for scene in AstraVoyageContent.all_scenes():
         for choice in scene.get("choices", []):
             var effect := str(choice.get("effect", ""))
             effects[effect] = int(effects.get(effect, 0)) + 1
@@ -93,7 +93,7 @@ func _choice_effect_vocabulary() -> void:
 func _sentence_openers() -> void:
     print("\n-- 4. Repeated opening words in 'action' lines (possible template smell) --")
     var openers := {}
-    for scene in AstraVoyageContent.SCENES:
+    for scene in AstraVoyageContent.all_scenes():
         var action := str(scene.get("action", ""))
         if action == "": continue
         var first_word := action.split(" ")[0] if " " in action else action.substr(0, mini(4, action.length()))
@@ -109,7 +109,7 @@ func _sentence_openers() -> void:
 func _pair_scene_distribution() -> void:
     print("\n-- 5. NPC-pair ('pair' tag) scene distribution --")
     var pairs := {}
-    for scene in AstraVoyageContent.SCENES:
+    for scene in AstraVoyageContent.all_scenes():
         if str(scene.get("tag","")) != "pair": continue
         var key := AstraCrewCatalog.pair_key(str(scene["speaker"]), str(scene.get("target","")))
         pairs[key] = int(pairs.get(key,0)) + 1
@@ -158,12 +158,12 @@ func _private_event_counts() -> void:
 
 func _authored_scene_volume() -> void:
     print("\n-- 8. Authored voyage scene volume --")
-    var total := AstraVoyageContent.SCENES.size()
+    var total := AstraVoyageContent.all_scenes().size()
     print("  total authored voyage scenes: %d" % total)
-    if total < 260:
-        fails.append("authored voyage scenes %d; 0.5.0 release floor is 260" % total)
-    if total > 300:
-        warns.append("authored voyage scenes %d; verify one-run text exposure is still restrained" % total)
+    if total < 380:
+        fails.append("authored voyage/reactive scenes %d; 0.5.2 release floor is 380" % total)
+    if total > 450:
+        warns.append("authored voyage/reactive scenes %d; verify one-run exposure remains restrained" % total)
 
 func _key_pair_and_trio_depth() -> void:
     print("\n-- 9. Key pair and trio depth --")
@@ -173,7 +173,7 @@ func _key_pair_and_trio_depth() -> void:
     ]
     var counts := {}
     var trios := 0
-    for scene in AstraVoyageContent.SCENES:
+    for scene in AstraVoyageContent.all_scenes():
         var tag := str(scene.get("tag",""))
         if tag == "pair":
             var key := AstraCrewCatalog.pair_key(str(scene.get("speaker","")), str(scene.get("target","")))
