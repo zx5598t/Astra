@@ -5,7 +5,7 @@ extends RefCounted
 # Save v6 keeps every v4/v5 key, so older archives load without loss.
 
 const DEFAULT_SAVE_PATH := "user://astra_meta.cfg"
-const SAVE_VERSION := 8
+const SAVE_VERSION := 9
 const CAMPAIGN_CASES := AstraCaseCatalog.CAMPAIGN
 const RANK_ORDER := ["D", "C", "B", "A", "S"]
 
@@ -41,6 +41,10 @@ var unlocks_announced: Array[String] = []
 var failed_case_count: int = 0
 var loop_summaries: Array = []
 var voyage_memory: Dictionary = {}
+# 0.5.1 onboarding state. Intro is scoped to save slot rather than the PC-wide
+# settings file; feature help is profile-wide and can always be reopened with H.
+var slot_intro_seen: Dictionary = {}
+var seen_help: Array[String] = []
 
 func _init(path: String = DEFAULT_SAVE_PATH) -> void:
     save_path = path
@@ -50,6 +54,8 @@ func load_data() -> void:
     if cfg.load(save_path) != OK:
         return
     voyage_memory = _dict(cfg.get_value("progress","voyage_memory",{}))
+    slot_intro_seen = _dict(cfg.get_value("progress","slot_intro_seen",{}))
+    _load_string_list(seen_help, cfg.get_value("progress","seen_help",[]))
     total_insight = int(cfg.get_value("progress", "total_insight", 0))
     total_cases_completed = int(cfg.get_value("progress", "total_cases_completed", 0))
     correct_isolations = int(cfg.get_value("progress", "correct_isolations", 0))
@@ -86,6 +92,8 @@ func save_data() -> bool:
     var cfg := ConfigFile.new()
     cfg.set_value("meta", "save_version", SAVE_VERSION)
     cfg.set_value("progress","voyage_memory",voyage_memory)
+    cfg.set_value("progress","slot_intro_seen",slot_intro_seen)
+    cfg.set_value("progress","seen_help",seen_help)
     cfg.set_value("progress", "total_insight", total_insight)
     cfg.set_value("progress", "total_cases_completed", total_cases_completed)
     cfg.set_value("progress", "correct_isolations", correct_isolations)
@@ -143,6 +151,8 @@ func reset() -> void:
     failed_case_count = 0
     loop_summaries.clear()
     voyage_memory.clear()
+    slot_intro_seen.clear()
+    seen_help.clear()
 
 # Records a finished case. Returns what changed so the result screen can show it.
 func record_case_result(case_id: String, protocol: String, report: Dictionary, persist: bool = true) -> Dictionary:
@@ -301,6 +311,22 @@ static func _load_string_list(target: Array[String], source) -> void:
         return
     for item in source:
         target.append(str(item))
+
+func intro_seen_for_slot(slot: int) -> bool:
+    return bool(slot_intro_seen.get(str(maxi(0, slot)), false))
+
+func mark_intro_seen_for_slot(slot: int) -> void:
+    slot_intro_seen[str(maxi(0, slot))] = true
+
+func reset_intro_for_slot(slot: int) -> void:
+    slot_intro_seen.erase(str(maxi(0, slot)))
+
+func has_seen_help(feature: String) -> bool:
+    return feature in seen_help
+
+func mark_help_seen(feature: String) -> void:
+    if not (feature in seen_help):
+        seen_help.append(feature)
 
 func past_calibration() -> bool:
     return calibration_completed or campaign_cases_played() > 0
