@@ -23,21 +23,34 @@ func refresh() -> void:
     if session.night_done:
         _report(session)
         return
-    _body.add_child(AstraUI.label("선내 조명이 절반으로 떨어졌다. Null은 오늘 밤 한 명을 노리고, 자신을 가리키는 흔적을 지우려 한다. 한 가지만 할 수 있다.", 16, AstraUI.TEXT, true))
+    var first_night := session.case_id == "ECHO_WARD" and session.day <= 1
+    if first_night:
+        var help := AstraUI.panel(Color(AstraUI.NIGHT, 0.08), Color(AstraUI.CYAN, 0.45), 10, 12)
+        var help_box := AstraUI.vbox(5)
+        help.add_child(help_box)
+        help_box.add_child(AstraUI.label("처음 맞는 밤", 17, AstraUI.CYAN))
+        help_box.add_child(AstraUI.label("밤에는 Null이 움직일 수 있습니다. 탐사요원은 오늘 한 가지 행동만 고릅니다.", 14, AstraUI.TEXT, true))
+        help_box.add_child(AstraUI.label("사람 보호 · 습격을 막습니다.    기록 백업 · 원본이 지워져도 사본을 남깁니다.", 13, AstraUI.MUTED, true))
+        _body.add_child(help)
+    else:
+        _body.add_child(AstraUI.label("밤에는 한 가지 행동만 고를 수 있습니다. 보호·감시·기록 보존 중 현재 필요한 행동을 선택하세요.", 16, AstraUI.TEXT, true))
     var row := AstraUI.hbox(12)
     row.size_flags_vertical = Control.SIZE_EXPAND_FILL
     _body.add_child(row)
     row.add_child(_protect_card(session))
-    row.add_child(_secure_card(session))
+    if not session.night_options().get("secure", []).is_empty():
+        row.add_child(_secure_card(session))
     var options := AstraUI.hbox(10)
     _body.add_child(options)
-    var backup := AstraUI.button("단말 로그를 백업한다…",AstraUI.CYAN,16,48)
+    var backup := AstraUI.button("기록 백업하기…",AstraUI.CYAN,16,48,true)
+    backup.tooltip_text = "오늘 밤 원본이 지워져도 사본이 남습니다."
     backup.pressed.connect(_backup)
     options.add_child(backup)
-    var rest := AstraUI.button("휴식한다",AstraUI.MUTED,16,48)
-    rest.tooltip_text = "밖을 지키지 못하지만 내일 대화를 조금 더 이어 갈 수 있다."
-    rest.pressed.connect(_choose.bind("rest","self"))
-    options.add_child(rest)
+    if not session.night_options().get("rest", []).is_empty():
+        var rest := AstraUI.button("휴식한다",AstraUI.MUTED,16,48)
+        rest.tooltip_text = "밖을 지키지 못하지만 내일 대화를 조금 더 이어 갈 수 있다."
+        rest.pressed.connect(_choose.bind("rest","self"))
+        options.add_child(rest)
     if session.protocol == "AUDITOR":
         _body.add_child(AstraUI.label("감사관 · 오늘 격리된 사람이 있다면 밤사이 생체 기록을 자동으로 감사합니다.", 13, AstraUI.GOLD, true))
     if session.flags.has("patrol"):
@@ -48,8 +61,8 @@ func _protect_card(session: AstraGameSession) -> Control:
     card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     var box := AstraUI.vbox(8)
     card.add_child(box)
-    box.add_child(AstraUI.label("보호", 22, AstraUI.GREEN))
-    box.add_child(AstraUI.label("명단에서 고른 사람을 밤새 곁에서 지킵니다. 습격을 막으면 침입자의 흔적이 새 단서로 남습니다.", 14, AstraUI.MUTED, true))
+    box.add_child(AstraUI.label("사람 보호", 22, AstraUI.GREEN))
+    box.add_child(AstraUI.label("오늘 밤 한 사람의 선실 근처를 지킵니다. 그 사람이 습격 대상이면 공격을 막습니다.", 14, AstraUI.MUTED, true))
     var target: String = screen.selected_id()
     var ok := session.is_alive(target)
     if ok:
