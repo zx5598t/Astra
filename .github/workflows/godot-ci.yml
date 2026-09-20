@@ -92,6 +92,13 @@ jobs:
           grep -q "ASTRA VOYAGE TESTS OK" voyage.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error" voyage.log; then exit 1; fi
 
+      - name: 0.5.0 content depth and invariant audit
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/content_audit.gd 2>&1 | tee content-audit.log
+          grep -q "ASTRA CONTENT AUDIT OK" content-audit.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" content-audit.log; then exit 1; fi
+
       - name: Boot main scene headlessly
         run: |
           set +e
@@ -105,3 +112,51 @@ jobs:
             echo "Main scene boot reported script errors."
             exit 1
           fi
+
+  windows-validate:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot 4.7.2 stable for Windows
+        shell: pwsh
+        run: |
+          $base = 'https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable'
+          Invoke-WebRequest "$base/Godot_v4.7.2-stable_win64.exe.zip" -OutFile "$env:RUNNER_TEMP/godot.zip"
+          Expand-Archive "$env:RUNNER_TEMP/godot.zip" "$env:RUNNER_TEMP/godot"
+          "GODOT=$env:RUNNER_TEMP/godot/Godot_v4.7.2-stable_win64_console.exe" >> $env:GITHUB_ENV
+
+      - name: Import project on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --import 2>&1 | Tee-Object -FilePath windows-import.log
+          if (Select-String -Path windows-import.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows Godot import reported script errors.' }
+
+      - name: Run model and invariant tests on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/run_tests.gd -- --games=40 2>&1 | Tee-Object -FilePath windows-tests.log
+          if (-not (Select-String -Path windows-tests.log -Pattern 'ASTRA TESTS OK')) { throw 'Windows model tests did not pass.' }
+          if (Select-String -Path windows-tests.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows model tests reported script errors.' }
+
+      - name: Run UI smoke test on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/ui_smoke.gd 2>&1 | Tee-Object -FilePath windows-ui.log
+          if (-not (Select-String -Path windows-ui.log -Pattern 'ASTRA UI SMOKE OK')) { throw 'Windows UI smoke test did not pass.' }
+          if (Select-String -Path windows-ui.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows UI smoke reported script errors.' }
+
+      - name: Boot main scene on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --quit-after 120 2>&1 | Tee-Object -FilePath windows-boot.log
+          if (Select-String -Path windows-boot.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows main-scene boot reported script errors.' }
+
+      - name: Preserve Windows diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-validation-logs
+          path: windows-*.log
+          if-no-files-found: ignore
