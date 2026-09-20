@@ -130,6 +130,25 @@ jobs:
           grep -q "ASTRA 0.5.3 HEARTBEAT SIMULATION OK" heartbeat-053.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" mira-053.log scheduler-053.log autonomy-053.log knowledge-053.log callbacks-053.log heartbeat-053.log; then exit 1; fi
 
+      - name: 0.5.4 routines consequences micro-arcs and curiosity
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/routine_model_tests.gd 2>&1 | tee routine-054.log
+          grep -q "ASTRA 0.5.4 ROUTINE MODEL TESTS OK" routine-054.log
+          ./godot --headless --path . --script res://tests/micro_arc_tests.gd 2>&1 | tee micro-arc-054.log
+          grep -q "ASTRA 0.5.4 MICRO ARC TESTS OK" micro-arc-054.log
+          ./godot --headless --path . --script res://tests/consequence_chain_tests.gd 2>&1 | tee consequence-054.log
+          grep -q "ASTRA 0.5.4 CONSEQUENCE CHAIN TESTS OK" consequence-054.log
+          ./godot --headless --path . --script res://tests/meaningful_choice_tests.gd 2>&1 | tee meaningful-054.log
+          grep -q "ASTRA 0.5.4 MEANINGFUL CHOICE TESTS OK" meaningful-054.log
+          ./godot --headless --path . --script res://tests/curiosity_pin_tests.gd 2>&1 | tee curiosity-054.log
+          grep -q "ASTRA 0.5.4 CURIOSITY PIN TESTS OK" curiosity-054.log
+          ./godot --headless --path . --script res://tests/aftermath_054_simulation.gd 2>&1 | tee aftermath-054.log
+          grep -q "ASTRA 0.5.4 AFTERMATH SIMULATION OK" aftermath-054.log
+          ./godot --headless --path . --script res://tests/editorial_054_report.gd -- --loops=5 2>&1 | tee editorial-054.log
+          grep -q "ASTRA 0.5.4 HUMAN EDITING REPORT OK" editorial-054.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" routine-054.log micro-arc-054.log consequence-054.log meaningful-054.log curiosity-054.log aftermath-054.log editorial-054.log; then exit 1; fi
+
       - name: Story continuity and first-play regression
         run: |
           set -o pipefail
@@ -207,6 +226,19 @@ jobs:
           & $env:GODOT --headless --path . --script res://tests/knowledge_propagation_tests.gd 2>&1 | Tee-Object -FilePath windows-knowledge-053.log
           if (-not (Select-String -Path windows-knowledge-053.log -Pattern 'ASTRA 0.5.3 KNOWLEDGE PROPAGATION TESTS OK')) { throw 'Windows knowledge 0.5.3 tests did not pass.' }
           if (Select-String -Path windows-mira-053.log,windows-knowledge-053.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.5.3 tests reported script errors.' }
+
+      - name: Run 0.5.4 routine and consequence invariants on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/routine_model_tests.gd 2>&1 | Tee-Object -FilePath windows-routine-054.log
+          if (-not (Select-String -Path windows-routine-054.log -Pattern 'ASTRA 0.5.4 ROUTINE MODEL TESTS OK')) { throw 'Windows routine 0.5.4 tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/micro_arc_tests.gd 2>&1 | Tee-Object -FilePath windows-micro-arc-054.log
+          if (-not (Select-String -Path windows-micro-arc-054.log -Pattern 'ASTRA 0.5.4 MICRO ARC TESTS OK')) { throw 'Windows micro-arc 0.5.4 tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/consequence_chain_tests.gd 2>&1 | Tee-Object -FilePath windows-consequence-054.log
+          if (-not (Select-String -Path windows-consequence-054.log -Pattern 'ASTRA 0.5.4 CONSEQUENCE CHAIN TESTS OK')) { throw 'Windows consequence 0.5.4 tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/curiosity_pin_tests.gd 2>&1 | Tee-Object -FilePath windows-curiosity-054.log
+          if (-not (Select-String -Path windows-curiosity-054.log -Pattern 'ASTRA 0.5.4 CURIOSITY PIN TESTS OK')) { throw 'Windows curiosity 0.5.4 tests did not pass.' }
+          if (Select-String -Path windows-routine-054.log,windows-micro-arc-054.log,windows-consequence-054.log,windows-curiosity-054.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.5.4 tests reported script errors.' }
 
       - name: Run UI smoke test on Windows
         shell: pwsh
