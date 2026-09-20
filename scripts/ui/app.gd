@@ -338,9 +338,9 @@ func show_help() -> void:
     AstraModal.open(_overlay_root, "기록 보관소 · 도움말", box, [["닫기", AstraUI.CYAN]], Callable(), 860.0)
 
 # The [?] in the corner of a game screen: this screen only.
-func show_screen_help(phase: String, objective: String) -> void:
+func show_screen_help(phase: String, objective: String, budget: Dictionary = {}) -> void:
     AstraModal.open(_overlay_root, AstraGameSession.PHASE_LABELS.get(phase, phase),
-        AstraHelpPanel.screen_help(phase, objective), [["닫기", AstraUI.CYAN]], Callable(), 660.0)
+        AstraHelpPanel.screen_help(phase, objective, budget), [["닫기", AstraUI.CYAN]], Callable(), 660.0)
 
 func show_settings() -> void:
     var box := AstraUI.vbox(14)
@@ -364,8 +364,8 @@ func show_settings() -> void:
     var pace_box := AstraUI.vbox(8)
     pace.add_child(pace_box)
     pace_box.add_child(AstraUI.label("대사", AstraUI.T_HEAD, AstraUI.CYAN))
-    pace_box.add_child(AstraUI.prose("기본은 직접 넘기기입니다. 자동을 켜도 중요한 대사에서는 멈춥니다.", AstraUI.T_META, AstraUI.MUTED))
-    pace_box.add_child(_toggle_row("자동 진행", settings.auto_advance, func(on: bool):
+    pace_box.add_child(AstraUI.prose("회의 발언만 자동으로 넘깁니다. 질문 선택·투표·밤 행동과 탐색 장면은 직접 진행합니다. 중요한 발언에서는 멈춥니다.", AstraUI.T_META, AstraUI.MUTED))
+    pace_box.add_child(_toggle_row("회의 발언 자동 넘김", settings.auto_advance, func(on: bool):
         settings.auto_advance = on
     ))
     pace_box.add_child(_slider_row("자동 대기 시간", settings.auto_delay, 0.5, 3.0, 0.25, func(value: float):
