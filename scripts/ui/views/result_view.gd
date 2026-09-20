@@ -34,6 +34,10 @@ func refresh() -> void:
     hero_text.add_child(AstraUI.label(str(report.get("title", "")), 36, color))
     hero_text.add_child(AstraUI.label(str(report.get("subtitle", "")), 16, AstraUI.TEXT, true))
 
+    if session.case_id == AstraCaseCatalog.CALIBRATION:
+        _calibration_result(session, report)
+        return
+
     # What was different about *this* run, before any score appears. A player
     # who just lost needs the story of the run, not a receipt (§29, §92).
     var summary: Dictionary = report.get("loop_summary", {})
@@ -203,6 +207,37 @@ func refresh() -> void:
         var next := AstraUI.button("다음 사건 · %s →" % str(AstraCaseCatalog.get_case(next_id).get("title", "")), AstraUI.GREEN, 16, 50, true)
         next.pressed.connect(screen.start_other_case.bind(next_id))
         buttons.add_child(next)
+
+func _calibration_result(session: AstraGameSession, report: Dictionary) -> void:
+    var learned := AstraUI.panel(Color(AstraUI.CYAN, 0.07), Color(AstraUI.CYAN, 0.38), 12, 14)
+    _body.add_child(learned)
+    var box := AstraUI.vbox(7)
+    learned.add_child(box)
+    box.add_child(AstraUI.label("이번에 알게 된 것", AstraUI.T_META, AstraUI.CYAN))
+    box.add_child(AstraUI.prose("· 당신은 ASTRA의 탐사요원입니다.\n· 네 명의 동료가 깨어 있고, 네 명은 장기수면 중입니다.\n· 포드 전원 기록에는 실행자 서명이 비어 있습니다.", AstraUI.T_BODY, AstraUI.TEXT))
+    box.add_child(AstraUI.label("첫 기록을 확보했습니다.", AstraUI.T_HEAD, AstraUI.GREEN))
+
+    var next_id := _next_case(session.case_id)
+    if next_id != "":
+        var next_data := AstraCaseCatalog.get_case(next_id)
+        var next_panel := AstraUI.panel(AstraUI.PANEL_2, Color(AstraUI.GOLD, 0.35), 10, 12)
+        _body.add_child(next_panel)
+        var next_box := AstraUI.vbox(5)
+        next_panel.add_child(next_box)
+        next_box.add_child(AstraUI.label("다음 기록", AstraUI.T_META, AstraUI.GOLD))
+        next_box.add_child(AstraUI.prose("서로 다른 목적지 기록이 왜 남았는지 확인합니다.", AstraUI.T_BODY, AstraUI.TEXT))
+        var next := AstraUI.primary_button("다음 사건 · %s →" % str(next_data.get("title", "")), AstraUI.GREEN)
+        next.pressed.connect(screen.start_other_case.bind(next_id))
+        next_box.add_child(next)
+
+    var buttons := AstraUI.hbox(10)
+    _body.add_child(buttons)
+    var archive := AstraUI.button("항해 기록으로", AstraUI.MUTED, 16, 48)
+    archive.pressed.connect(screen.app.show_archive)
+    buttons.add_child(archive)
+    var retry := AstraUI.button("CALIBRATION 다시 보기", AstraUI.CYAN, 16, 48)
+    retry.pressed.connect(screen.restart_case)
+    buttons.add_child(retry)
 
 func _null_card(session: AstraGameSession, npc_id: String) -> Control:
     var member := session.npc(npc_id)
