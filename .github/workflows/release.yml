@@ -39,8 +39,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = "v$env:ASTRA_VERSION"
-          gh release view $tag --repo $env:GITHUB_REPOSITORY --json tagName *> $null
-          if ($LASTEXITCODE -eq 0) {
+          $released = gh release list --repo $env:GITHUB_REPOSITORY --limit 100 --json tagName | ConvertFrom-Json
+          $exists = $null -ne ($released | Where-Object { $_.tagName -eq $tag } | Select-Object -First 1)
+          if ($exists) {
             "RELEASE_EXISTS=true" >> $env:GITHUB_ENV
             Write-Host "$tag already exists; build will verify but publishing will be skipped."
           } else {
