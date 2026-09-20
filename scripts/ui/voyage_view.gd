@@ -54,19 +54,15 @@ func _draw() -> void:
     var goal := str(chapter["goal"])
     var met_count: int = state["met"].size()
     if calibration:
-        # First playthrough: name the exact next click instead of restating
-        # the chapter's whole premise (see the first-play redesign notes).
+        # The first five minutes always pair one context sentence with one exact
+        # action. Only Mira is a required direct conversation; the other three
+        # introduce themselves in the automatic panel scene.
         if not bool(state.get("goal_done",false)):
-            goal = "빛나는 조사 지점을 눌러 전원 문제를 확인하세요."
-        elif met_count < session.roster.size():
-            var next_person := ""
-            for id in session.roster:
-                if id not in state["met"]:
-                    next_person = AstraCrewCatalog.name_ko(str(id))
-                    break
-            goal = "%s와 이야기해 보세요." % next_person if next_person != "" else "남은 동료와 이야기해 보세요."
+            goal = "포드 전원 기록에 실행자 서명이 없다. → [전원 패널 확인하기]"
+        elif "mira" not in state.get("met",[]):
+            goal = "미라가 포드 상태를 확인하고 있다. → [미라에게 상태 확인하기]"
         else:
-            goal = "아래의 ‘기록을 함께 확인한다’를 눌러 마무리하세요."
+            goal = "기록이 모였다. 네 사람과 확인해 보자. → [함께 기록 확인하기]"
     elif bool(state.get("goal_done",false)):
         var still_needed := ""
         for who in session.REQUIRED_PEOPLE.get(session.case_id, []):
@@ -140,6 +136,11 @@ func _draw() -> void:
             words.add_child(item)
         for id in session.voyage_people():
             var who := str(id)
+            # In calibration Jun/Noa/Daren are introduced by the automatic
+            # group scene; keeping four equal talk buttons here recreated the
+            # exact "who am I supposed to click?" problem 0.5.0 removes.
+            if calibration and who != "mira":
+                continue
             var person := AstraUI.hbox(10)
             words.add_child(person)
             person.add_child(AstraUI.thumb(AstraCrewCatalog.dot_path(who),Vector2(64,64)))
@@ -163,11 +164,8 @@ func _draw() -> void:
     var footer := AstraUI.hbox(8)
     _root.add_child(footer)
     var nudge_person := ""
-    if calibration and bool(state.get("goal_done",false)):
-        for id in session.roster:
-            if str(id) not in state["met"]:
-                nudge_person = str(id)
-                break
+    if calibration and bool(state.get("goal_done",false)) and "mira" not in state.get("met",[]):
+        nudge_person = "mira"
     elif bool(state.get("goal_done",false)):
         for who in session.REQUIRED_PEOPLE.get(session.case_id, []):
             if str(who) not in state["met"]:
@@ -181,7 +179,7 @@ func _draw() -> void:
         person.add_theme_constant_override("icon_max_width",44)
         person.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         person.tooltip_text = AstraCrewCatalog.labelled(who)+" · 있는 곳으로 이동"
-        person.disabled = not scene.is_empty()
+        person.disabled = not scene.is_empty() or (calibration and who != "mira")
         person.pressed.connect(func(): session.voyage_visit_person(who))
         AstraUI.set_tutorial_nudge(person, who == nudge_person)
         footer.add_child(person)
@@ -190,7 +188,8 @@ func _draw() -> void:
     bottom.add_child(AstraUI.prose("탐사요원 · 깨어 있는 동료 %d명 · 수면 중 %d명" % [session.roster.size(),8-session.roster.size()],16,AstraUI.MUTED))
     bottom.add_child(AstraUI.spacer())
     if session.voyage_can_finish():
-        var next := AstraUI.primary_button("기록을 함께 확인한다   →")
+        var next := AstraUI.primary_button("함께 기록 확인하기   →")
+        AstraUI.set_tutorial_nudge(next, calibration)
         next.pressed.connect(func():
             if session.finish_voyage() and session.phase != "RESULT": app.show_session_screen()
         )
