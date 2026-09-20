@@ -4446,6 +4446,11 @@ func _scene_eligible_052(scene: Dictionary, who: String) -> bool:
             return false
         if int(voyage.get("micro_arc_state",{}).get(chain_id,0)) != int(scene.get("requires_stage",0)):
             return false
+        # Consequence stages are delivered only by AstraConsequenceModel when
+        # their authored delay/day/loop condition becomes due. Normal dialogue
+        # selection must never jump ahead of the player's choice.
+        if str(scene.get("category","")) == "CONSEQUENCE":
+            return false
     var routine_relevance := str(scene.get("routine_relevance",""))
     if routine_relevance != "":
         var routine_entry: Dictionary = voyage.get("routine_state",{}).get(who,{})
