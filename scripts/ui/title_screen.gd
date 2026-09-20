@@ -153,6 +153,7 @@ func _confirm_erase(slot: int) -> void:
     var handler := func(choice: int) -> void:
         if choice == 1:
             AstraGameSession.delete_snapshot(app.slot_path(slot))
+            app.clear_slot_state(slot)
             app.show_title()
     AstraModal.open(app.overlay_root(), "저장을 지울까요?", body,
         [["취소", AstraUI.MUTED], ["지우기", AstraUI.RED]], handler, 520.0)
@@ -181,7 +182,7 @@ func _progress_strip() -> Control:
     return card
 
 func _begin_first_run() -> void:
-    app.start_case(AstraCaseCatalog.CALIBRATION, app.selected_protocol, app.first_free_slot())
+    app.start_new_campaign(app.first_free_slot())
 
 func _begin_new_case() -> void:
     var free_slot: int = app.first_free_slot()
