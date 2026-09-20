@@ -260,6 +260,12 @@ func _finish_exploration() -> void:
         if not available.is_empty():
             s.voyage_ask_goal(str(available[0]))
             await _close_scene()
+    if s.case_id != AstraCaseCatalog.CALIBRATION and s.voyage.get("visits",[]).size() < 2:
+        for room_id in s.voyage_rooms():
+            if str(room_id) not in s.voyage.get("visits",[]):
+                s.voyage_move(str(room_id),false)
+                await _close_scene()
+                break
     _expect(s.voyage_can_finish(),"exploration has a reachable exit")
     s.finish_voyage()
     await _wait(3)
