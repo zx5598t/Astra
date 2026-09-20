@@ -45,6 +45,21 @@ func test_bounded_queue_and_expiry() -> void:
     check(AstraConsequenceModel.is_expired(event,7,0,1),"small follow-up expires instead of living forever")
 
 func test_runtime_choice_to_followup() -> void:
+    var gate := AstraGameSession.new()
+    gate.setup("LAST_LIGHT",540054)
+    gate.begin_voyage({"loops":3})
+    gate.voyage["scene"] = {}
+    gate.voyage["met"] = gate.roster.duplicate()
+    var chain_id := str(gate.voyage["active_arcs"][0])
+    var actor := AstraStorylets054.arc_actor(chain_id)
+    var stage3 := {}
+    for candidate in AstraStorylets054.scenes():
+        if str(candidate.get("chain_id","")) == chain_id and int(candidate.get("stage",0)) == 3:
+            stage3 = candidate
+            break
+    gate.voyage["micro_arc_state"][chain_id] = 2
+    check(not gate._scene_eligible_052(stage3,actor),"consequence stage cannot leak into ordinary storylet selection before its queue fires")
+
     var s := AstraGameSession.new()
     s.setup("LAST_LIGHT",540055)
     s.begin_voyage({"loops":3})
