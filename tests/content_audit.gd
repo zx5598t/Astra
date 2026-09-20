@@ -96,7 +96,13 @@ func _sentence_openers() -> void:
     for scene in AstraVoyageContent.all_scenes():
         var action := str(scene.get("action", ""))
         if action == "": continue
-        var first_word := action.split(" ")[0] if " " in action else action.substr(0, mini(4, action.length()))
+        var words := action.split(" ")
+        var first_word := words[0] if not words.is_empty() else action.substr(0, mini(4, action.length()))
+        # Most Korean action narration naturally starts with the acting
+        # character's name ("준이", "미라가"). That is not template smell.
+        # Audit the first meaningful verb/object phrase after the subject.
+        if first_word in ["준이","마렌이","노아가","미라가","세나가","다렌이","루칸이","소렌이"] and words.size() > 1:
+            first_word = words[1]
         openers[first_word] = int(openers.get(first_word, 0)) + 1
     var repeated: Array = []
     for word in openers:
