@@ -3003,6 +3003,27 @@ func difficulty_name() -> String:
 func active_roster() -> Array:
     return roster.duplicate()
 
+func status_label(npc_id: String) -> String:
+    var member := npc(npc_id)
+    if member == null:
+        return "알 수 없음"
+    match member.status:
+        AstraCrewMember.STATUS_ACTIVE: return "정상"
+        AstraCrewMember.STATUS_ISOLATED: return "장기수면 격리"
+        AstraCrewMember.STATUS_OFFLINE: return "생체 신호 두절"
+    return str(member.status)
+
+func status_counts() -> Dictionary:
+    var result := {"active":0, "isolated":0, "offline":0}
+    for npc_id in roster:
+        var member := npc(str(npc_id))
+        if member == null: continue
+        match member.status:
+            AstraCrewMember.STATUS_ACTIVE: result["active"] += 1
+            AstraCrewMember.STATUS_ISOLATED: result["isolated"] += 1
+            AstraCrewMember.STATUS_OFFLINE: result["offline"] += 1
+    return result
+
 func null_total() -> int:
     return null_count
 
@@ -3072,16 +3093,18 @@ func phase_exhausted() -> bool:
 func situation_line() -> String:
     var parts: Array = []
     parts.append(time_caption())
-    var alive := living_ids().size()
-    parts.append("남은 승무원 %d명" % alive)
+    var counts := status_counts()
+    parts.append("활동 중 %d명" % int(counts["active"]))
     if max_days > 1:
         var left := max_days - day
         if left <= 0:
             parts.append("오늘이 마지막 날")
         else:
             parts.append("판단할 날 %d일 남음" % (left + 1))
-    if not casualties.is_empty():
-        parts.append("사망·격리 %d명" % (casualties.size() + isolations.size()))
+    if int(counts["isolated"]) > 0:
+        parts.append("장기수면 격리 %d명" % int(counts["isolated"]))
+    if int(counts["offline"]) > 0:
+        parts.append("생체 신호 두절 %d명" % int(counts["offline"]))
     return "  ·  ".join(PackedStringArray(parts))
 
 # ---------------------------------------------------------------- who thinks what
