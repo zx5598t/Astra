@@ -1799,9 +1799,11 @@ func _open_meeting() -> void:
             if mourner != "":
                 _feed_npc(mourner, "m_mourn", {"victim": name_of(victim_id)}, "mourn", victim_id)
 
+    # Put every current alibi on the public ledger without forcing everyone to
+    # recite it. The visible meeting is made of a few connected arguments; the
+    # notebook still retains the complete facts for deduction.
     var speakers := living_ids()
     AstraCaseGenerator._shuffle(speakers,rng)
-    var spoken_claims := 0
     for npc_id in speakers:
         if public_claims.has(npc_id):
             continue
@@ -1809,15 +1811,14 @@ func _open_meeting() -> void:
         var companions: Array = claim.get("companions", [])
         var key := "m_alibi_with" if not companions.is_empty() else "m_alibi_alone"
         var params := {"pos":room_name(str(claim.get("position",""))),"mates":AstraJosa.join_names(_names(companions))}
-        if spoken_claims < 2:
-            _feed_npc(npc_id,key,params,"alibi","")
-            spoken_claims += 1
-        else:
-            _record_claim(npc_id,AstraClaimLedger.KIND_POSITION,AstraClaimLedger.SCOPE_PUBLIC,AstraDialogue.line(npc_id,key,params,0),{"position":claim.get("position",""),"companions":companions})
+        _record_claim(npc_id,AstraClaimLedger.KIND_POSITION,AstraClaimLedger.SCOPE_PUBLIC,AstraDialogue.line(npc_id,key,params,0),{"position":claim.get("position",""),"companions":companions})
         public_claims[npc_id] = true
         known_claims[npc_id] = {"position": str(claim.get("position", "")), "companions": companions.duplicate(), "day": day}
 
-    _run_disputes()
+    var thread_budget := 1 if day <= 1 else 2
+    if case_id in ["RED_SHIFT","LAST_LIGHT"] and day >= 2:
+        thread_budget = 3
+    var dispute_threads := _run_disputes(thread_budget)
 
     if flags.has("noa_public"):
         var key := str(flags["noa_public"])
@@ -1833,8 +1834,9 @@ func _open_meeting() -> void:
                     _crowd_shift(target, 0.18, noa.id)
 
     _recompute_contradictions()
-    _suspicion_round(maxi(2, int(AstraDifficulty.number(difficulty, "meeting_lines", 7.0)) - 4))
-    _log("공개 회의 · 발언 %d건" % meeting_feed.size())
+    if dispute_threads < thread_budget:
+        _suspicion_round(thread_budget - dispute_threads)
+    _log("공개 회의 · 연결 대화 %d건" % meeting_feed.size())
 
 # How many people may contradict each other out loud in one meeting.
 #
