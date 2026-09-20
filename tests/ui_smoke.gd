@@ -248,8 +248,18 @@ func _finish_exploration() -> void:
         s.voyage_visit_person(who)
         await _close_scene()
     if not s.voyage["goal_done"]:
-        s.voyage_ask_goal(str(s.voyage_people()[0]))
-        await _close_scene()
+        var available := s.voyage_people()
+        if available.is_empty():
+            for who in s.roster:
+                if s.voyage_visit_person(str(who)):
+                    await _close_scene()
+                    available = s.voyage_people()
+                    if not available.is_empty():
+                        break
+        _expect(not available.is_empty(),"routine exploration still makes a crewmate reachable for the chapter goal")
+        if not available.is_empty():
+            s.voyage_ask_goal(str(available[0]))
+            await _close_scene()
     _expect(s.voyage_can_finish(),"exploration has a reachable exit")
     s.finish_voyage()
     await _wait(3)
