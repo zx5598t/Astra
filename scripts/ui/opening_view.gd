@@ -27,6 +27,7 @@ const BEATS := [
     {"art":"wake", "system":"ASTRA · 장거리 탐사선", "text":"당신은 이 배의 탐사요원이다.\n당신과 네 명의 승무원이 먼저 깨어났다."},
     {"art":"wake", "who":"mira", "text":"깨어났네요. 괜찮아요?\n나머지 네 명은 아직 장기수면 중이에요."},
     {"art":"wake", "who":"mira", "text":"포드 전원 기록이 이상해요.\n실행자 서명이 비어 있어요. 이것부터 같이 보죠."}
+]
 const ART := {"wake":"res://assets/art031/backgrounds/medical.webp"}
 
 var _app
