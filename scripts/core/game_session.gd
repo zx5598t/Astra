@@ -4022,6 +4022,8 @@ func room_routine_summary(room: String) -> String:
     var lines: Array[String] = []
     var state: Dictionary = voyage.get("routine_state",{})
     for npc_id in AstraCrewRoutineModel.people_in_room(state,room,active_participants(),str(voyage.get("companion",""))):
+        if str(npc_id) not in voyage.get("met",[]):
+            continue
         var entry: Dictionary = state.get(str(npc_id),{})
         if entry.is_empty():
             continue
@@ -4276,10 +4278,16 @@ func _voyage_scene(scene: Dictionary) -> void:
         voyage["micro_arc_state"] = chain_state
     var opinion_change: Dictionary = scene.get("opinion_change",{})
     if not opinion_change.is_empty() and who != "":
+        var opinion_target := str(scene.get("target",""))
+        var relationship_context := ""
+        if opinion_target != "" and crew.has(opinion_target):
+            relationship_context = relationship_status(who,opinion_target)
         voyage["opinion_changes"].append({
-            "actor":who,"target":str(scene.get("target","")),
+            "actor":who,"target":opinion_target,
             "reason_tag":str(opinion_change.get("reason","new_evidence")),
-            "source_scene":id,"visible":true
+            "source_scene":id,"visible":true,
+            "known_facts":AstraKnowledgeModel.known_facts(flags,who),
+            "relationship_context":relationship_context
         })
     if bool(scene.get("optional_exposure",false)) and who != "":
         var exposure: Dictionary = voyage.get("speaker_exposure",{})
@@ -4451,6 +4459,9 @@ func _scene_eligible_052(scene: Dictionary, who: String) -> bool:
         # selection must never jump ahead of the player's choice.
         if str(scene.get("category","")) == "CONSEQUENCE":
             return false
+    var opinion_meta: Dictionary = scene.get("opinion_change",{})
+    if str(opinion_meta.get("reason","")) == "new_evidence" and voyage.get("facts",[]).is_empty():
+        return false
     var routine_relevance := str(scene.get("routine_relevance",""))
     if routine_relevance != "":
         var routine_entry: Dictionary = voyage.get("routine_state",{}).get(who,{})
