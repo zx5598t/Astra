@@ -215,6 +215,12 @@ func _add_entry(entry: Dictionary) -> void:
     var accent: Color = AstraUI.CYAN if is_player else AstraCrewCatalog.accent(speaker)
     if not is_player:
         _seen_speakers[speaker] = true
+    if bool(entry.get("topic_transition", false)):
+        var topic := str(entry.get("topic", ""))
+        var topic_text := session.name_of(topic) if session.crew.has(topic) else str(tag[0])
+        _feed_box.add_child(AstraUI.label("새 논점 · " + topic_text, AstraUI.T_META, AstraUI.GOLD))
+    elif str(entry.get("reply_to", "")) != "":
+        _feed_box.add_child(AstraUI.label("↳ 직전 발언에 대한 답", AstraUI.T_META, AstraUI.DIM))
     var card := AstraUI.speaker_card(
         speaker,
         "탐사요원" if is_player else "%s (%s)" % [session.name_of(speaker), AstraCrewCatalog.role_short(speaker)],
