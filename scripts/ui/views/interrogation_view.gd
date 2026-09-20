@@ -273,4 +273,30 @@ func _do_ask(npc_id: String, intent: String, clue_id: String) -> void:
     elif result.has("clue"):
         screen.fx.play("clue")
         screen.fx.toast("새 단서 · " + str(result["clue"].get("title", "")), AstraUI.PINK)
+    _show_reaction(result)
     screen.request_ai_line(npc_id, intent, result)
+
+func _show_reaction(result: Dictionary) -> void:
+    var reaction: Dictionary = result.get("reaction", {})
+    if reaction.is_empty():
+        return
+    var code := str(reaction.get("code", "UNCERTAIN"))
+    var label := "불확실"
+    var color := AstraUI.MUTED
+    match code:
+        "CONVINCED":
+            label = "납득함"
+            color = AstraUI.GREEN
+        "SHAKEN":
+            label = "흔들림"
+            color = AstraUI.GOLD
+        "RESISTED":
+            label = "아직 저항함"
+            color = AstraUI.VIOLET
+        "ANGERED":
+            label = "화남"
+            color = AstraUI.RED
+        _:
+            label = "불확실"
+            color = AstraUI.MUTED
+    screen.fx.toast("%s · %s" % [label, str(reaction.get("text", ""))], color, 3.4)
