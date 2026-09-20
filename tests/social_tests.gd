@@ -126,7 +126,7 @@ func test_dialogue_pacing_defaults() -> void:
 # H, I — the meeting is a sequence of single speakers, and the first one is short.
 func test_meeting_is_one_voice_at_a_time() -> void:
     for seed_value in [3, 44, 128]:
-        var s := _play_to_meeting("DEAD_AIR", seed_value, "STORY")
+        var s := _play_to_meeting("ECHO_WARD", seed_value, "STORY")
         var feed: Array = s.meeting_feed
         check(not feed.is_empty(), "seed %d meeting produced statements" % seed_value)
         for entry in feed:
@@ -143,7 +143,7 @@ func test_meeting_is_one_voice_at_a_time() -> void:
 
 # J, K — public statements are recorded and can be compared.
 func test_claim_ledger() -> void:
-    var s := _play_to_meeting("DEAD_AIR", 9, "STANDARD")
+    var s := _play_to_meeting("GLASS_GARDEN", 9, "STANDARD")
     check(not s.claim_ledger.is_empty(), "meeting statements reach the ledger")
     var public_found := false
     for entry in s.claim_ledger:
@@ -200,13 +200,13 @@ func test_player_is_on_the_record() -> void:
 # V — Story mode does not take anyone on the first night.
 func test_story_first_night() -> void:
     for seed_value in range(1, 26):
-        var s: AstraGameSession = _play_to_night("DEAD_AIR", seed_value, "STORY")
+        var s: AstraGameSession = _play_to_night("ECHO_WARD", seed_value, "STORY")
         if s == null:
             continue
         check(s.casualties.is_empty(), "story seed %d loses nobody on night one" % seed_value)
     var standard_deaths := 0
     for seed_value in range(1, 26):
-        var s: AstraGameSession = _play_to_night("DEAD_AIR", seed_value, "STANDARD")
+        var s: AstraGameSession = _play_to_night("ECHO_WARD", seed_value, "STANDARD")
         if s != null and not s.casualties.is_empty():
             standard_deaths += 1
     check(standard_deaths > 0, "standard mode still has consequences on night one")
@@ -358,7 +358,13 @@ func _play_to_night(case_id: String, seed_value: int, difficulty: String):
     s.advance()
     if s.phase != "NIGHT":
         return null
-    s.choose_night_action("rest", "self")
+    # ECHO_WARD's first night teaches only protect/backup; complete it with
+    # a valid record-backup action so Story/Standard consequence tests measure
+    # the night model rather than an intentionally locked Rest button.
+    var backup_rooms: Array = s.night_options().get("backup", [])
+    if backup_rooms.is_empty():
+        return null
+    s.choose_night_action("backup", str(backup_rooms[0]))
     return s
 
 # The tutorial is the case people replay the most, so the crime itself has to
