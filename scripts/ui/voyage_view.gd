@@ -85,6 +85,7 @@ func _draw() -> void:
         var button := AstraUI.button(str(AstraVoyageContent.ROOMS[id]["name"]),AstraUI.CYAN if destination == room else AstraUI.MUTED,16,42,destination == room)
         button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         button.disabled = not state["scene"].is_empty()
+        button.tooltip_text = session.room_context(destination)
         button.pressed.connect(func(): session.voyage_move(destination))
         routes.add_child(button)
     var body := AstraUI.hbox(16)
@@ -127,7 +128,8 @@ func _draw() -> void:
     panel.add_child(AstraUI.scroll(words))
     if scene.is_empty():
         words.add_child(AstraUI.label(str(AstraVoyageContent.ROOMS[room]["name"]),28,AstraUI.TEXT))
-        words.add_child(AstraUI.prose("주변을 살펴보거나 여기 있는 동료와 이야기할 수 있다.",18,AstraUI.MUTED))
+        words.add_child(AstraUI.prose(session.room_context(room),16,AstraUI.GOLD))
+        words.add_child(AstraUI.prose(session.room_routine_summary(room),18,AstraUI.MUTED))
         if "recorder" in state.get("inventory",[]) and "recorder" not in state.get("used_items",[]):
             var item := AstraUI.button("휴대 기록기로 신호를 보관한다",AstraUI.GOLD,17,42)
             item.disabled = room != "comms"
@@ -147,6 +149,9 @@ func _draw() -> void:
             var talk := AstraUI.button(AstraCrewCatalog.labelled(who)+" · 대화",AstraUI.CYAN,18,52)
             talk.pressed.connect(func(): session.voyage_talk(who))
             person.add_child(talk)
+            var routine_entry := session.routine_state_for(who)
+            if not routine_entry.is_empty():
+                words.add_child(AstraUI.prose("   "+str(routine_entry.get("activity","")),15,AstraUI.DIM))
             var ask := AstraUI.button("“지금 확인할 기록이 있어?”",AstraUI.MUTED,17,40)
             ask.pressed.connect(func(): session.voyage_ask_goal(who))
             words.add_child(ask)
