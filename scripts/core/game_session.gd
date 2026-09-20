@@ -491,6 +491,40 @@ func story_dispatch() -> String:
 
 # Only visible facts contribute to the live checklist. Hidden roles are never
 # counted here, including when an unaudited suspect has been isolated.
+func chapter_objective_spec() -> Dictionary:
+    var target := int(AstraCaseCatalog.ap_profile(case_id, {}).get("investigation", BASE_INVESTIGATION_AP))
+    var description := "사건의 핵심 기록을 확인하세요."
+    match case_id:
+        AstraCaseCatalog.CALIBRATION:
+            target = 1
+            description = "포드 전원 기록의 실행자 서명을 확인하세요."
+        "DEAD_AIR":
+            target = 1
+            description = "통신실의 수동 종료 기록을 확인하세요."
+        "GLASS_GARDEN":
+            target = 2
+            description = "보안 흔적과 수목 구역 기록을 두 번 확인하세요."
+        "ECHO_WARD":
+            target = 3
+            description = "신호와 생체 기록을 겹쳐 볼 핵심 기록을 확인하세요."
+        "SILENT_ORBIT":
+            target = 3
+            description = "항법 기록과 오래된 도착 기록을 대조할 단서를 확인하세요."
+        "RED_SHIFT":
+            target = 3
+            description = "서로 충돌하는 기록 세 축을 확인하세요."
+        "LAST_LIGHT":
+            target = 3
+            description = "마지막 항해 기록을 연결할 핵심 단서를 확인하세요."
+    return {
+        "id": "story_objective",
+        "label": description,
+        "description": description,
+        "current": mini(found_clues().size(), target),
+        "target": target,
+        "complete": found_clues().size() >= target
+    }
+
 func objectives() -> Array:
     var challenge: Dictionary = case_data.get("challenge", {})
     var challenge_id := str(challenge.get("id", "records"))
@@ -506,7 +540,7 @@ func objectives() -> Array:
         "contradictions": progress = int(stats.get("public_contradictions", 0))
     var target := int(challenge.get("target", 2))
     return [
-        {"id": "evidence", "label": "조사의 실마리 · 단서 5개 확보", "current": mini(found_clues().size(), 5), "target": 5, "complete": found_clues().size() >= 5},
+        chapter_objective_spec(),
         {"id": challenge_id, "label": str(challenge.get("label", "두 조작의 실행 로그 확보")), "current": mini(progress, target), "target": target, "complete": progress >= target},
         {"id": "mission", "label": str(case_data.get("mission", {}).get("title", "함선 복구 임무")), "current": 1 if bool(flags.get("mission_complete", false)) else 0, "target": 1, "complete": bool(flags.get("mission_complete", false))}
     ]
@@ -2999,23 +3033,35 @@ func present_hypothesis(index: int) -> Dictionary:
 func current_objective() -> Dictionary:
     var binding := AstraCaseCatalog.is_calibration(case_id)
     var text := ""
+    var action_label := ""
+    var action_target := ""
     var rooms: Array = []
+    var flow := AstraCaseCatalog.phase_flow(case_id)
+    var next_phase := _next_story_phase()
     match phase:
         "BRIEFING":
-            text = "사건 시각과 조작이 일어난 장소를 확인하세요." if day == 1 else "밤사이 무슨 일이 있었는지 확인하세요."
+            text = "사건 시각과 지금 확인할 기록을 먼저 보세요." if day == 1 else "밤사이 무슨 일이 있었는지 확인하세요."
+            action_label = advance_label()
         "INVESTIGATION":
             rooms = recommended_rooms()
+            var spec := chapter_objective_spec()
             if found_clues().is_empty():
-                text = ("%s 먼저 살펴보세요." % AstraJosa.eul(room_name(str(rooms[0])))) if not rooms.is_empty() else "장소를 골라 조사 지점을 살펴보세요."
+                text = str(spec.get("description", "핵심 기록을 확인하세요."))
+                if not rooms.is_empty():
+                    action_target = str(rooms[0])
             elif investigation_ap > 0:
-                text = "흔적을 하나 더 찾아 명단을 좁히세요." if not rooms.is_empty() else "남은 조사 지점을 살펴보세요."
+                text = str(spec.get("description", "남은 핵심 기록을 확인하세요."))
+                if not rooms.is_empty():
+                    action_target = str(rooms[0])
             else:
-                text = "조사 시간이 끝났습니다. 승무원에게 확인하러 가세요."
+                text = "조사를 마쳤습니다. 이제 동료에게 확인하세요."
+                action_label = advance_label()
         "INTERROGATION":
             if not pending_event.is_empty():
-                text = "%s|i 따로 할 말이 있습니다." % name_of(str(pending_event.get("npc_id", "")))
+                action_target = str(pending_event.get("npc_id", ""))
+                text = "%s|i 따로 할 말이 있습니다." % name_of(action_target)
             elif known_claims.is_empty():
-                text = "먼저 한 사람에게 그 시각 어디에 있었는지 물어보세요."
+                text = "한 사람에게 방금 확인한 기록에 대해 물어보세요."
             else:
                 var unheard := ""
                 for npc_id in living_ids():
@@ -3023,23 +3069,37 @@ func current_objective() -> Dictionary:
                         unheard = npc_id
                         break
                 if unheard != "" and talk_ap > 0:
-                    text = "%s의 진술을 아직 듣지 못했습니다." % name_of(unheard)
+                    action_target = unheard
+                    text = "%s에게 확인한 기록에 대해 물어보세요." % name_of(unheard)
                 elif not contradictions.is_empty() and talk_ap > 0:
-                    text = "%s의 진술이 기록과 어긋납니다. 짚어 보세요." % name_of(str(contradictions[0].get("targets", [""])[0]))
+                    action_target = str(contradictions[0].get("targets", [""])[0])
+                    text = "%s의 말과 기록이 어긋납니다. 그 지점을 짚어 보세요." % name_of(action_target)
                 else:
-                    text = "회의를 소집할 준비가 됐습니다."
+                    text = "기록과 진술 확인을 마쳤습니다." if next_phase == "RESULT" else ("짧은 공개 확인으로 넘어갈 준비가 됐습니다." if next_phase == "MEETING" else "다음 판단 단계로 넘어갈 준비가 됐습니다.")
+                    action_label = advance_label()
         "MEETING":
             if meeting_actions_left > 0:
-                text = "확보한 단서를 공개하거나, 한 사람을 지목하거나 변호할 수 있습니다."
+                text = "현재 논점을 듣고, 필요한 경우에만 증거나 모순으로 개입하세요."
             else:
-                text = "발언 기회를 다 썼습니다. 투표로 넘어가세요."
+                text = "공개 확인을 마쳤습니다. 사건을 정리하세요." if next_phase == "RESULT" else "회의 개입을 마쳤습니다. 장기수면 격리 판단으로 넘어가세요."
+                action_label = advance_label()
         "VOTE":
-            text = "이름을 고르고 투표를 확정하세요." if not vote_cast else "개표 결과를 확인하세요."
+            text = "근거가 충분한 대상을 고르거나 아직 격리하지 않음을 선택하세요." if not vote_cast else "개표 결과와 각 승무원의 이유를 확인하세요."
+            action_label = "투표 확정" if not vote_cast else advance_label()
         "NIGHT":
-            text = "오늘 밤 지킬 것을 하나 고르세요." if not night_done else "아침 보고를 확인하세요."
+            text = "오늘 밤 지킬 사람이나 기록을 하나 선택하세요." if not night_done else "밤 행동을 마쳤습니다. 아침 보고로 넘어가세요."
+            action_label = advance_label() if night_done else ""
         "RESULT":
-            text = "실제로 무슨 일이 있었는지 확인하세요."
-    return {"text": _josa_inline(text), "rooms": rooms, "binding": binding}
+            text = "이번에 알게 된 것과 다음 기록을 확인하세요."
+    return {
+        "text": _josa_inline(text),
+        "description": _josa_inline(text),
+        "action_label": action_label,
+        "action_target": action_target,
+        "rooms": rooms,
+        "binding": binding,
+        "phase_flow": flow
+    }
 
 # Rooms the case actually hinges on. Shown only when the difficulty asks for it
 # — the player is never blocked from going anywhere else (§11).
