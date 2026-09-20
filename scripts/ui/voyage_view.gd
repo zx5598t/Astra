@@ -129,7 +129,8 @@ func _draw() -> void:
     if scene.is_empty():
         words.add_child(AstraUI.label(str(AstraVoyageContent.ROOMS[room]["name"]),28,AstraUI.TEXT))
         words.add_child(AstraUI.prose(session.room_context(room),16,AstraUI.GOLD))
-        words.add_child(AstraUI.prose(session.room_routine_summary(room),18,AstraUI.MUTED))
+        if not calibration:
+            words.add_child(AstraUI.prose(session.room_routine_summary(room),18,AstraUI.MUTED))
         if "recorder" in state.get("inventory",[]) and "recorder" not in state.get("used_items",[]):
             var item := AstraUI.button("휴대 기록기로 신호를 보관한다",AstraUI.GOLD,17,42)
             item.disabled = room != "comms"
