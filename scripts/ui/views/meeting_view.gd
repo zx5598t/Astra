@@ -42,6 +42,7 @@ var _shown: int = 0
 var _queue: Array = []
 var _timer: Timer
 var _seen_speakers: Dictionary = {}
+var _paused_important: bool = false
 
 func setup(game_screen) -> void:
     screen = game_screen
@@ -52,7 +53,7 @@ func setup(game_screen) -> void:
     add_child(head_row)
     _header = AstraUI.rich(AstraUI.T_HEAD)
     head_row.add_child(_header)
-    _auto_toggle = AstraUI.button("자동 진행", AstraUI.MUTED, AstraUI.T_META, 34)
+    _auto_toggle = AstraUI.button("자동 진행 · 꺼짐", AstraUI.MUTED, AstraUI.T_META, 34)
     _auto_toggle.tooltip_text = AstraCodex.tooltip("auto")
     _auto_toggle.pressed.connect(_toggle_auto)
     head_row.add_child(_auto_toggle)
@@ -131,22 +132,34 @@ func _refresh_next_row(_session: AstraGameSession) -> void:
     var waiting := _queue.size()
     _next_row.visible = waiting > 0
     if waiting > 0:
-        _next_button.text = "다음 발언  ▸    (%d건 남음)" % waiting if waiting > 1 else "다음 발언  ▸    (마지막)"
+        if _paused_important:
+            _next_button.text = "계속  ▸   자동 일시정지 · 중요한 발언입니다"
+            AstraUI.set_tutorial_nudge(_next_button, true)
+        else:
+            _next_button.text = "다음 발언  ▸    (%d건 남음)" % waiting if waiting > 1 else "다음 발언  ▸    (마지막)"
+            AstraUI.set_tutorial_nudge(_next_button, false)
 
 func _toggle_auto() -> void:
     var settings = screen.app.settings
     settings.auto_advance = not settings.auto_advance
     settings.save_data()
-    _auto_toggle.text = "자동 진행 · 켬" if settings.auto_advance else "자동 진행"
+    _auto_toggle.text = "자동 진행 · 켬" if settings.auto_advance else "자동 진행 · 꺼짐"
     if settings.auto_advance:
         _schedule_auto()
+    else:
+        _timer.stop()
+        _paused_important = false
+        _refresh_next_row(screen.session)
 
 func _schedule_auto() -> void:
     var settings = screen.app.settings
     if not settings.auto_advance or _queue.is_empty() or not is_inside_tree():
         return
     if settings.pause_on_important and _is_important(_queue[0]):
+        _paused_important = true
+        _refresh_next_row(screen.session)
         return
+    _paused_important = false
     # Longer lines get longer on screen. A fixed interval is what made the old
     # meeting unreadable: a twelve-word accusation and a two-word grunt were
     # given the same time.
@@ -163,14 +176,14 @@ func _is_important(entry: Dictionary) -> bool:
     if str(entry.get("kind", "")) in IMPORTANT_KINDS:
         return true
     var speaker := str(entry.get("speaker", ""))
-    # First time this person speaks in this meeting, or they are standing on a
-    # contradiction the player has already uncovered.
-    if speaker != "player" and not _seen_speakers.has(speaker):
-        return true
-    return session.has_contradiction_on(speaker)
+    # A first hello is not important by itself. 0.4.x treated every person's
+    # first line as important, so enabling auto could pause before anything had
+    # visibly happened and looked broken.
+    return speaker != "player" and session.has_contradiction_on(speaker)
 
 func _reveal_next() -> void:
     _timer.stop()
+    _paused_important = false
     if _queue.is_empty():
         _refresh_next_row(screen.session)
         return
@@ -184,6 +197,7 @@ func _reveal_next() -> void:
 # above and by the automated UI run.
 func _flush() -> void:
     _timer.stop()
+    _paused_important = false
     while not _queue.is_empty():
         _add_entry(_queue.pop_front())
     _refresh_next_row(screen.session)
