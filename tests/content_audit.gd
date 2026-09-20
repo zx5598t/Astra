@@ -117,7 +117,12 @@ func _pair_scene_distribution() -> void:
     var pairs := {}
     for scene in AstraVoyageContent.all_scenes():
         if str(scene.get("tag","")) != "pair": continue
-        var key := AstraCrewCatalog.pair_key(str(scene["speaker"]), str(scene.get("target","")))
+        var speaker := str(scene.get("speaker",""))
+        var target := str(scene.get("target",""))
+        if speaker == "" or target == "" or speaker == target:
+            fails.append("invalid pair scene %s: speaker=%s target=%s" % [str(scene.get("id","")),speaker,target])
+            continue
+        var key := AstraCrewCatalog.pair_key(speaker,target)
         pairs[key] = int(pairs.get(key,0)) + 1
     var total: int = pairs.values().reduce(func(a,b): return a+b, 0)
     print("  %d pair scenes across %d distinct unordered pairings: %s" % [total, pairs.size(), str(pairs)])
