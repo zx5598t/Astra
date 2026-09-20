@@ -316,7 +316,7 @@ func _refresh_roster() -> void:
         var selected: bool = id == _selected
         button.add_theme_stylebox_override("normal",AstraUI.style(Color(0.09,0.16,0.24,0.94) if selected else Color(0.03,0.05,0.08,0.91),AstraUI.CYAN if selected else AstraUI.BORDER,8,1,8))
         button.modulate = Color.WHITE if member.is_alive() else Color(0.55,0.57,0.62)
-        button.tooltip_text = member.job + " · " + (member.mood_label() if member.is_alive() else "격리 또는 신호 두절")
+        button.tooltip_text = member.job + " · " + (member.mood_label() if member.is_alive() else session.status_label(str(id)))
 
 func _refresh_bottom() -> void:
     # The bottom strip is now the "where and when am I" line rather than a fixed
@@ -392,7 +392,7 @@ func _announce_phase(phase: String) -> void:
             fx.banner("공개 회의", "알리바이가 공개되고, 반박이 시작됩니다.", accent)
             fx.play("phase")
         "VOTE":
-            fx.banner("격리 투표", "한 명을 격리합니다. 모두 각자 1표입니다. 동률이면 격리하지 않습니다.", accent)
+            fx.banner("장기수면 격리 투표", "최다 득표자는 사건이 끝날 때까지 포드로 이동합니다. 사망 처리가 아닙니다.", accent)
             fx.play("alert")
         "NIGHT":
             fx.banner("밤", "Null이 움직입니다.", accent, 1.1)
