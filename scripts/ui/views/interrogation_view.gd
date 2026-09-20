@@ -78,8 +78,17 @@ func _event_layout(session: AstraGameSession) -> Control:
     scene.text = "[i][color=#%s]%s[/color][/i]" % [AstraUI.hex(AstraUI.MUTED), AstraUI.escape(str(event.get("scene", "")))]
     box.add_child(scene)
     box.add_child(AstraUI.prose(str(event.get("prompt", "")), AstraUI.T_HEAD, AstraUI.TEXT))
+    var interject: Dictionary = event.get("interject", {})
+    if not interject.is_empty():
+        var interject_id := str(interject.get("speaker", ""))
+        if interject_id in session.active_participants():
+            box.add_child(AstraUI.prose(str(interject.get("text", "")), AstraUI.T_META, AstraUI.MUTED))
     box.add_child(AstraUI.label("이 대화에는 시간이 들지 않습니다.", AstraUI.T_META, AstraUI.DIM))
     var choices: Array = event.get("choices", [])
+    if choices.is_empty():
+        var continue_button := AstraUI.button("계속", AstraUI.CYAN, AstraUI.T_UI, 48, true)
+        continue_button.pressed.connect(_resolve_event.bind(-1))
+        box.add_child(continue_button)
     for index in range(choices.size()):
         var choice: Dictionary = choices[index]
         var button := AstraUI.button(str(choice.get("label", "")), AstraUI.PINK if index == 0 else AstraUI.CYAN, AstraUI.T_UI, 52)
