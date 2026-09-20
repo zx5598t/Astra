@@ -57,14 +57,14 @@ func test_first_play_regression() -> void:
         close_scene(s)
     check(s.voyage["goal_done"], "CALIBRATION: goal found from the single required point")
 
-    # Never required to travel: every crewmate can be met without leaving medbay.
-    for who in s.roster:
-        check(s.voyage_visit_person(who), "CALIBRATION: %s reachable without travel" % who)
-        close_scene(s)
+    # Never required to hunt four talk buttons. The panel scene introduces
+    # Jun/Noa/Daren automatically; only Mira is a direct guided conversation.
+    check(s.voyage_visit_person("mira"), "CALIBRATION: Mira is reachable without travel")
+    close_scene(s)
     check(s.voyage["visits"] == ["medbay"], "CALIBRATION: never left medbay")
-    check(s.voyage["met"].size() == s.roster.size(), "CALIBRATION: everyone met")
+    check("mira" in s.voyage["met"], "CALIBRATION: required direct conversation completed")
 
-    check(s.voyage_can_finish(), "CALIBRATION: can finish without a soft-lock")
+    check(s.voyage_can_finish(), "CALIBRATION: can finish after one guided conversation")
     check(s.finish_voyage(), "CALIBRATION: finishes")
     check(s.phase == "RESULT", "CALIBRATION: routes straight to RESULT")
     check(s.outcome == "CONTINUE", "CALIBRATION: no win/lose judgement")
