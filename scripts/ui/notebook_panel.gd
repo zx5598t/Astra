@@ -63,14 +63,33 @@ func refresh() -> void:
     if not session.voyage.is_empty():
         var questions := session.current_questions()
         if not questions.is_empty():
-            _clue_list.add_child(AstraUI.label("현재 질문",20,AstraUI.GOLD))
+            _clue_list.add_child(AstraUI.label("지금 궁금한 것",20,AstraUI.GOLD))
             for question in questions:
                 var status := str(question.get("status","OPEN"))
-                var prefix := "?" if status == "OPEN" else ("◐" if status == "PARTIAL" else "↻")
+                var prefix := "?" if status == "OPEN" else ("✓" if status == "ANSWERED" else ("◐" if status == "PARTIAL" else "↻"))
                 _clue_list.add_child(AstraUI.prose("%s %s" % [prefix,str(question.get("text",""))],17,AstraUI.TEXT))
-        _clue_list.add_child(AstraUI.label("함께 확인한 것",20,AstraUI.CYAN))
+        _clue_list.add_child(AstraUI.label("확인한 사실",20,AstraUI.CYAN))
         for note in session.voyage.get("notes",[]):
             _clue_list.add_child(AstraUI.prose(str(note),17,AstraUI.TEXT))
+        var ownership: Dictionary = session.voyage.get("evidence_ownership",{})
+        if not ownership.is_empty():
+            _clue_list.add_child(AstraUI.label("정보 공유",18,AstraUI.MUTED))
+            var ownership_keys: Array = ownership.keys()
+            var start := maxi(0,ownership_keys.size()-3)
+            for index in range(start,ownership_keys.size()):
+                var fact_id := str(ownership_keys[index])
+                var entry: Dictionary = ownership[fact_id]
+                var label := fact_id
+                for room_id in AstraVoyageContent.ROOMS:
+                    for point in AstraVoyageContent.ROOMS[room_id].get("points",[]):
+                        if str(point[4]) == fact_id:
+                            label = str(point[1])
+                var names: Array[String] = []
+                for knower_raw in entry.get("knows",[]):
+                    var knower := str(knower_raw)
+                    names.append("나" if knower == "player" else session.name_of(knower))
+                var public_text := "공개됨" if bool(entry.get("public",false)) else "아직 비공개"
+                _clue_list.add_child(AstraUI.prose("%s · 알고 있음: %s · %s" % [label," / ".join(names),public_text],15,AstraUI.DIM))
         if int(session.voyage.get("loop",0)) > 0:
             var differences := session.loop_difference_summary()
             if not differences.is_empty():
