@@ -71,6 +71,7 @@ func setup(app_node, game_session: AstraGameSession, feedback: AstraFeedbackFX) 
     session.notice.connect(_on_notice)
     _on_changed()
     _announce_phase(session.phase)
+    call_deferred("_maybe_show_phase_onboarding", session.phase)
 
 func _build() -> void:
     _background = AstraUI.thumb(AstraArt.chapter(session.case_id), Vector2.ZERO)
@@ -126,7 +127,8 @@ func _build() -> void:
     top.add_child(_note_button)
     # The help button sits beside the objective it explains, in the same spot on
     # every screen, so "where do I look this up" has one answer (§10).
-    _help_button = AstraUI.help_button()
+    var early_help := session.case_id in [AstraCaseCatalog.CALIBRATION, "DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD"]
+    _help_button = AstraUI.help_button(early_help)
     _help_button.pressed.connect(_open_screen_help)
     top.add_child(_help_button)
     var menu := AstraUI.button("메뉴 · Esc", AstraUI.MUTED, AstraUI.T_META, 40)
@@ -197,7 +199,8 @@ func _build() -> void:
 func _on_changed() -> void:
     if session == null:
         return
-    if not session.crew.has(_selected):
+    if _selected not in session.active_participants():
+        session._fallback_selected()
         _selected = session.selected_id
     if session.phase == "INTERROGATION" and not session.pending_event.is_empty():
         _selected = str(session.pending_event.get("npc_id", _selected))
@@ -280,9 +283,11 @@ func _refresh_budget() -> void:
     var accent: Color = AstraUI.DIM if left <= 0 else AstraUI.GOLD
     _budget_panel.add_theme_stylebox_override("panel",
         AstraUI.style(Color(0.04, 0.07, 0.11, 0.95), Color(accent, 0.5), 8, 1, 10))
-    _budget_name.text = str(spec.get("label", ""))
+    var early_budget := session.case_id in [AstraCaseCatalog.CALIBRATION, "DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD"]
+    _budget_name.text = (str(spec.get("label", "")) + " 가능") if early_budget else str(spec.get("label", ""))
+    _budget_pips.visible = not early_budget
     _budget_pips.text = AstraUI.pips(left, maximum, accent)
-    _budget_count.text = "%d / %d" % [left, maximum]
+    _budget_count.text = ("%d회 남음" % left) if early_budget else ("%d / %d" % [left, maximum])
     _budget_count.add_theme_color_override("font_color", accent)
 
 # The one line saying what to do next, plus the hint line under it.
@@ -324,7 +329,40 @@ func refresh_objective() -> void:
         _refresh_bottom()
 
 func _open_screen_help() -> void:
-    app.show_screen_help(session.phase, _objective_text)
+    app.show_screen_help(session.phase, _objective_text, session.action_budget())
+
+func _maybe_show_phase_onboarding(phase: String) -> void:
+    if phase not in ["INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"]:
+        return
+    if app.meta.has_seen_help(phase):
+        return
+    var title := ""
+    var body := ""
+    var button := "시작"
+    match phase:
+        "INVESTIGATION":
+            title = "현장 조사"
+            body = "금색 표시를 누르면 단서를 찾습니다.\n이번 사건에서는 조사 %d회가 기본입니다." % session.investigation_ap_max()
+            button = "조사 시작"
+        "INTERROGATION":
+            title = "동료와 대화"
+            body = "질문을 고르면 그 사람의 진술을 들을 수 있습니다.\n이번 사건에서는 질문 %d회가 기본입니다." % session.talk_ap_max()
+            button = "대화 시작"
+        "MEETING":
+            title = "공개 회의"
+            body = "같은 사건에 대해 승무원들이 서로의 말을 듣고 반응합니다.\n필요할 때만 개입하세요."
+            button = "회의 시작"
+        "VOTE":
+            title = "긴급 장기수면 격리"
+            body = "가장 많은 표를 받은 승무원은 죽지 않습니다.\n사건이 끝날 때까지 장기수면 포드에 격리됩니다."
+            button = "투표 시작"
+        "NIGHT":
+            title = "밤 행동"
+            body = "밤에는 Null이 움직일 수 있습니다.\n탐사요원은 한 가지 행동으로 사람이나 기록을 지킬 수 있습니다."
+            button = "밤 시작"
+    app.meta.mark_help_seen(phase)
+    app.meta.save_data()
+    AstraModal.open(app.overlay_root(), title, AstraUI.prose(body, AstraUI.T_BODY, AstraUI.TEXT), [[button, AstraUI.CYAN]], Callable(), 600.0)
 
 func _refresh_roster() -> void:
     _roster.visible = session.phase in ["INTERROGATION", "MEETING", "VOTE", "NIGHT"]
@@ -334,6 +372,7 @@ func _refresh_roster() -> void:
         var selected: bool = id == _selected
         button.add_theme_stylebox_override("normal",AstraUI.style(Color(0.09,0.16,0.24,0.94) if selected else Color(0.03,0.05,0.08,0.91),AstraUI.CYAN if selected else AstraUI.BORDER,8,1,8))
         button.modulate = Color.WHITE if member.is_alive() else Color(0.55,0.57,0.62)
+        button.disabled = not member.is_alive()
         button.tooltip_text = member.job + " · " + (member.mood_label() if member.is_alive() else session.status_label(str(id)))
 
 func _refresh_bottom() -> void:
@@ -393,6 +432,7 @@ func _swap_view() -> void:
 
 func _on_phase_changed(phase: String) -> void:
     _announce_phase(phase)
+    call_deferred("_maybe_show_phase_onboarding", phase)
 
 func _announce_phase(phase: String) -> void:
     var accent: Color = PHASE_COLORS.get(phase, AstraUI.CYAN)
