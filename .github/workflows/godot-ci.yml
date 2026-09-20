@@ -92,6 +92,13 @@ jobs:
           grep -q "ASTRA VOYAGE TESTS OK" voyage.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error" voyage.log; then exit 1; fi
 
+      - name: 0.5.1 stabilization consistency
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/stabilization_051_tests.gd 2>&1 | tee stabilization-051.log
+          grep -q "ASTRA 0.5.1 STABILIZATION TESTS OK" stabilization-051.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" stabilization-051.log; then exit 1; fi
+
       - name: Story continuity and first-play regression
         run: |
           set -o pipefail
@@ -146,6 +153,13 @@ jobs:
           & $env:GODOT --headless --path . --script res://tests/run_tests.gd -- --games=40 2>&1 | Tee-Object -FilePath windows-tests.log
           if (-not (Select-String -Path windows-tests.log -Pattern 'ASTRA TESTS OK')) { throw 'Windows model tests did not pass.' }
           if (Select-String -Path windows-tests.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows model tests reported script errors.' }
+
+      - name: Run 0.5.1 stabilization tests on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/stabilization_051_tests.gd 2>&1 | Tee-Object -FilePath windows-stabilization.log
+          if (-not (Select-String -Path windows-stabilization.log -Pattern 'ASTRA 0.5.1 STABILIZATION TESTS OK')) { throw 'Windows 0.5.1 stabilization tests did not pass.' }
+          if (Select-String -Path windows-stabilization.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.5.1 stabilization tests reported script errors.' }
 
       - name: Run UI smoke test on Windows
         shell: pwsh
