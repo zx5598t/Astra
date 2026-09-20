@@ -1,7 +1,7 @@
 class_name AstraLivingCrew
 extends RefCounted
 
-# ASTRA 0.5.2: stable personality comes first; loop variation is layered on top.
+# ASTRA 0.5.3: stable personality comes first; loop variation is layered on top.
 # Hidden roles never replace these profiles. A deviation is only valid when it
 # carries a reason that can later be echoed by another authored beat.
 
@@ -20,49 +20,57 @@ const PROFILES := {
         "baseline": ["아픈 사람을 먼저 본다", "질문보다 상태를 먼저 확인한다", "의료 판단에서는 단호하다", "자기 상태는 뒤늦게 확인한다"],
         "stress_response": "말이 짧아지고 환자 상태부터 다시 확인한다.",
         "lie_style": "핵심을 부정하기보다 불편한 부분을 잠깐 생략한다.",
-        "content_weights": {"everyday":1.0,"work":1.25,"observation":1.1,"personal":1.15,"danger":1.2,"pair":1.1}
+        "content_weights": {"everyday":1.0,"work":1.25,"observation":1.1,"personal":1.2,"danger":1.2,"pair":1.15,"player":1.55,"reaction":1.45,"echo":1.35,"medical":1.5},
+        "share_tendency": {"medical":0.3,"life_risk":1.0,"verified":0.65}
     },
     "rho": {
         "baseline": ["문제는 손으로 먼저 확인한다", "고장을 보면 바로 만져 본다", "평소에는 장난을 친다", "위험해지면 농담을 멈춘다"],
         "stress_response": "농담이 사라지고 문장이 짧아진다.",
         "lie_style": "농담이나 옆 이야기로 핵심 질문을 비껴 간다.",
-        "content_weights": {"everyday":1.35,"work":1.55,"observation":1.15,"personal":0.85,"danger":1.5,"pair":1.3}
+        "content_weights": {"everyday":1.35,"work":1.55,"observation":1.15,"personal":0.85,"danger":1.5,"pair":1.3},
+        "share_tendency": {"work":0.9,"unverified":0.45}
     },
     "dax": {
         "baseline": ["바로 결론내리지 않는다", "계산과 기록을 대조한다", "말이 짧다", "틀렸다면 인정한다"],
         "stress_response": "같은 계산을 다시 하고 다른 사람의 관측을 요구한다.",
         "lie_style": "틀리지 않은 사실만 말하고 결론을 말하지 않는다.",
-        "content_weights": {"everyday":0.8,"work":1.55,"observation":1.45,"personal":0.8,"record":1.45,"pair":1.15}
+        "content_weights": {"everyday":0.8,"work":1.55,"observation":1.45,"personal":0.8,"record":1.45,"pair":1.15},
+        "share_tendency": {"system":0.78,"unverified":0.35}
     },
     "noa": {
         "baseline": ["모순을 바로 공격하지 않고 기억한다", "나중에 정확한 문장을 다시 꺼낸다", "문장을 정확히 기억한다", "감정이 강해질수록 말이 차가워진다"],
         "stress_response": "더 정확하고 차가운 문장만 고른다.",
         "lie_style": "질문의 범위를 좁혀 정확한 문장만 답한다.",
-        "content_weights": {"everyday":0.7,"work":1.25,"observation":1.55,"personal":1.0,"record":1.65,"delayed_reaction":1.5}
+        "content_weights": {"everyday":0.7,"work":1.25,"observation":1.55,"personal":1.0,"record":1.65,"delayed_reaction":1.5},
+        "share_tendency": {"verified":0.82,"unverified":0.18}
     },
     "sena": {
         "baseline": ["위험부터 본다", "말보다 먼저 움직인다", "평소 자신감이 있다", "팀원을 지키려 한다"],
         "stress_response": "설명보다 행동과 안전 확보를 먼저 한다.",
         "lie_style": "짧고 정면으로 부정한 뒤 행동으로 화제를 바꾼다.",
-        "content_weights": {"everyday":0.9,"work":1.2,"observation":1.1,"personal":1.0,"danger":1.6,"pair":1.35}
+        "content_weights": {"everyday":0.9,"work":1.2,"observation":1.1,"personal":1.0,"danger":1.6,"pair":1.35},
+        "share_tendency": {"security":0.25,"life_risk":1.0}
     },
     "vale": {
         "baseline": ["사람보다 신호에 먼저 반응한다", "평소 조용하다", "통신 이야기가 나오면 길게 말한다", "반복되는 소리를 오래 듣는다"],
         "stress_response": "평소보다 더 조용해지지만 신호에 대해서는 길게 설명한다.",
         "lie_style": "대답하기 전에 오래 멈추고 확인되지 않은 부분을 남긴다.",
-        "content_weights": {"everyday":0.75,"work":1.35,"observation":1.6,"personal":1.0,"signal":1.8,"pair":1.05}
+        "content_weights": {"everyday":0.75,"work":1.35,"observation":1.6,"personal":1.0,"signal":1.8,"pair":1.05},
+        "share_tendency": {"signal":0.45,"verified":0.65}
     },
     "eli": {
         "baseline": ["한 지점보다 전체 경로를 본다", "먼저 보고 나중에 말한다", "걱정해도 말보다 행동한다", "출구와 이동 방향을 기억한다"],
         "stress_response": "말이 더 줄고 관찰과 이동 확인이 늘어난다.",
         "lie_style": "필요한 부분만 답하고 나머지는 관측이 끝날 때까지 미룬다.",
-        "content_weights": {"everyday":0.8,"work":1.3,"observation":1.55,"personal":0.85,"route":1.6,"pair":1.0}
+        "content_weights": {"everyday":0.8,"work":1.3,"observation":1.55,"personal":0.85,"route":1.6,"pair":1.0},
+        "share_tendency": {"route":0.62,"unverified":0.3}
     },
     "lyra": {
         "baseline": ["평소 가장 밝다", "주변 사람과 쉽게 대화한다", "작은 생명도 챙긴다", "생존과 생태 판단에서는 냉정해질 수 있다"],
         "stress_response": "밝은 말투가 사라지고 살릴 것과 포기할 것을 직접 고른다.",
         "lie_style": "다른 사람을 보호하려고 핵심을 돌려 말한다.",
-        "content_weights": {"everyday":1.45,"work":1.3,"observation":1.2,"personal":1.35,"crisis":1.3,"pair":1.2}
+        "content_weights": {"everyday":1.45,"work":1.3,"observation":1.2,"personal":1.35,"crisis":1.3,"pair":1.2},
+        "share_tendency": {"survival":0.92,"life_risk":1.0}
     }
 }
 
@@ -265,11 +273,28 @@ static func player_remark(npc_id: String, axis: String) -> String:
     var lines := {
         "noa:evidence_first":"또 기록부터 보네요.",
         "rho:evidence_first":"이번에도 파일부터 까볼 생각이지?",
-        "mira:people_first":"이번에도 사람부터 확인하네요.",
+        "mira:evidence_first":"이번에도 기록부터네요. 저는 사람 쪽을 볼게요.",
+        "mira:people_first":"사람 먼저 확인할 줄 알았어요.",
+        "mira:protective":"본인도 보호 대상이라는 건 잊지 말아요.",
+        "mira:skeptical":"한 번 더 확인하는 건 좋아요. 본인 상태도 그렇게 해요.",
+        "mira:secretive":"말하고 싶지 않은 건 알아요. 그런데 상태는 숨기지 마세요.",
+        "mira:confrontational":"정면으로 물을 거면, 대답 들을 준비도 해요.",
+        "mira:patient":"기다려 주는 쪽을 고르는군요. 그게 필요한 사람도 있어요.",
         "sena:protective":"누굴 빼낼지부터 보는구나.",
         "noa:skeptical":"한 번 들은 말은 바로 믿지 않네요.",
         "rho:confrontational":"또 정면으로 묻네. 너답다.",
-        "mira:patient":"기다려 주는 쪽을 고르는군요.",
         "noa:secretive":"이번에도 먼저 공개하지는 않네요."
     }
     return str(lines.get(npc_id + ":" + axis, ""))
+
+
+static func relationship_tone_with_player(bond: float, echo: Dictionary) -> String:
+    if bond <= -0.15 or float(echo.get("conflict",0.0)) >= 0.30:
+        return "STRAINED"
+    if bond >= 0.25 or float(echo.get("trust",0.0)) >= 0.32 or float(echo.get("familiarity",0.0)) >= 0.55:
+        return "WARM"
+    return "PROFESSIONAL"
+
+static func sharing_tendency(npc_id: String, topic: String) -> float:
+    var tendency: Dictionary = PROFILES.get(npc_id,{}).get("share_tendency",{})
+    return float(tendency.get(topic,tendency.get("unverified",0.4)))
