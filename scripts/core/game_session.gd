@@ -2314,6 +2314,19 @@ func _feed_line(speaker_id: String, target_id: String, text: String, kind: Strin
         "thread_role": role, "text": _josa_inline(text), "kind": kind, "day": day
     }
     meeting_feed.append(entry)
+    if speaker_id != "player" and target_id != "" and kind in ["suspect","defense","dispute","react","record"]:
+        var reason_code := "statement_response"
+        if kind == "dispute" or kind == "record":
+            reason_code = "public_statement_conflict"
+        elif kind == "defense":
+            reason_code = "public_verification" if public_verification(target_id) >= 0.5 else "relationship_support"
+        elif kind == "suspect":
+            reason_code = "accumulated_behavior"
+        var meeting_trace := AstraDecisionModel.trace(
+            speaker_id, "meeting_" + kind, target_id,
+            [AstraDecisionModel.reason(reason_code, 0.7, str(entry.get("thread_id","")))], day
+        )
+        AstraDecisionModel.append_trace(flags, meeting_trace)
     if speaker_id != "player" and FEED_KIND_TO_CLAIM.has(kind):
         var claim := current_claim(speaker_id) if kind == "alibi" else {}
         _record_claim(speaker_id, str(FEED_KIND_TO_CLAIM[kind]), AstraClaimLedger.SCOPE_PUBLIC, str(entry["text"]), {
@@ -2656,7 +2669,9 @@ func vote_intentions() -> Dictionary:
         for other in targets:
             if not can_vote_for(npc_id, str(other)):
                 continue
-            var value := member.get_suspicion(other) - member.get_affinity(other) * 0.12 + (_stable_noise(npc_id + other) - 0.5) * VOTE_NOISE + _public_trace_support(other)
+            var relationship_weight := 0.05 if day <= 1 else (0.12 if day == 2 else 0.18)
+            var noise_scale := 0.0 if day <= 1 else VOTE_NOISE
+            var value := member.get_suspicion(other) - member.get_affinity(other) * relationship_weight + (_stable_noise(npc_id + other) - 0.5) * noise_scale + _public_trace_support(other)
             if value > best:
                 best = value
                 target = str(other)
@@ -2664,7 +2679,7 @@ func vote_intentions() -> Dictionary:
         var abstain_threshold := 0.80
         if case_id == "ECHO_WARD": abstain_threshold = 0.72
         elif case_id == "GLASS_GARDEN": abstain_threshold = 0.88
-        if evidence_count == 0 and best < abstain_threshold:
+        if best < abstain_threshold and (evidence_count == 0 or day <= 1):
             target = ""
         target = _sanitize_ballot(npc_id, target)
         result[npc_id] = target
@@ -4075,6 +4090,22 @@ func _voyage_scene(scene: Dictionary) -> void:
     var target := str(scene.get("target",""))
     if target != "":
         memory_state = AstraLivingCrew.remember(memory_state, target, memory_event)
+        if who != "" and crew.has(who) and crew.has(target):
+            var relationships: Dictionary = voyage.get("relationships",{})
+            var pair_key := AstraCrewCatalog.pair_key(who,target)
+            var relation: Dictionary = relationships.get(pair_key,AstraLivingCrew.blank_relationship())
+            match str(scene.get("tag","")):
+                "pair", "trust", "relief":
+                    relation["comfort"] = clampf(float(relation.get("comfort",0.5)) + 0.02,0.0,1.0)
+                    relation["trust"] = clampf(float(relation.get("trust",0.5)) + 0.015,0.0,1.0)
+                "work":
+                    relation["respect"] = clampf(float(relation.get("respect",0.5)) + 0.02,0.0,1.0)
+                "conflict", "suspected":
+                    relation["tension"] = clampf(float(relation.get("tension",0.15)) + 0.035,0.0,1.0)
+                "danger":
+                    relation["protectiveness"] = clampf(float(relation.get("protectiveness",0.2)) + 0.03,0.0,1.0)
+            relationships[pair_key] = relation
+            voyage["relationships"] = relationships
     voyage["dialogue_memory_052"] = memory_state
     var deviation_reason := str(scene.get("deviation_reason",""))
     if deviation_reason != "" and who != "":
