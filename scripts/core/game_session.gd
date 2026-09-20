@@ -2374,10 +2374,16 @@ func _check_end(stage: String) -> void:
 func night_options() -> Dictionary:
     var protect: Array = active_participants()
     var secure: Array = []
-    for room_id in room_ids():
-        if int(room_status(room_id).get("remaining", 0)) > 0:
-            secure.append(room_id)
-    return {"protect": protect, "secure": secure, "backup": room_ids(), "rest": ["self"]}
+    # The first night is a two-choice lesson: protect a person or preserve a
+    # record. Area surveillance is introduced on the next night, while rest is
+    # reserved for the later full social-deduction chapters.
+    var secure_unlocked := not (case_id == "ECHO_WARD" and day <= 1)
+    if secure_unlocked:
+        for room_id in room_ids():
+            if int(room_status(room_id).get("remaining", 0)) > 0:
+                secure.append(room_id)
+    var rest: Array = ["self"] if case_id in ["SILENT_ORBIT", "RED_SHIFT", "LAST_LIGHT"] else []
+    return {"protect": protect, "secure": secure, "backup": room_ids(), "rest": rest}
 
 func choose_night_action(kind: String, target: String) -> Dictionary:
     if phase != "NIGHT" or night_done or outcome != "":
