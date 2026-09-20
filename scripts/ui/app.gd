@@ -2,7 +2,7 @@ extends Control
 
 # Application root: background, screen routing, overlays and persistence.
 
-const VERSION_FALLBACK := "0.4.2"
+const VERSION_FALLBACK := "0.5.1"
 
 var meta := AstraMetaProgress.new()
 var settings := AstraSettings.new()
@@ -62,23 +62,31 @@ func _ready() -> void:
     add_child(ai_client)
     ai_client.action_received.connect(_on_ai_action)
 
-    # A brand new install goes straight into the cold open. Everything else —
-    # difficulty, protocol, case choice — is asked later or not at all, because
-    # none of it means anything to someone who has not seen the ship yet (§8).
-    if not settings.intro_seen:
-        show_opening()
+    # 0.5.1: the cold open belongs to a campaign/save slot, not to this PC.
+    # A truly fresh profile uses the same start_new_campaign() path as the title
+    # screen so the two entry routes cannot drift apart.
+    if not meta.past_calibration() and not has_any_save():
+        start_new_campaign(first_free_slot())
     else:
         show_title()
 
-func show_opening() -> void:
+func _show_campaign_opening() -> void:
     var opening := AstraOpeningView.new()
     _set_screen(opening)
     opening.setup(self)
     opening.finished.connect(func():
-        settings.intro_seen = true
+        meta.mark_intro_seen_for_slot(active_slot)
+        meta.save_data()
+        settings.intro_seen = true # compatibility only; no longer gates play.
         settings.save_data()
-        start_case(AstraCaseCatalog.CALIBRATION, "ANALYST")
+        _enter_prepared_session()
     , CONNECT_ONE_SHOT)
+
+func replay_opening() -> void:
+    var opening := AstraOpeningView.new()
+    _set_screen(opening)
+    opening.setup(self)
+    opening.finished.connect(func(): show_title(), CONNECT_ONE_SHOT)
 
 # The only question asked before play, and it has two answers. 0.3.1 opened on a
 # screen with difficulty, protocol and six cases on it; none of those are
@@ -130,29 +138,50 @@ func show_archive() -> void:
     _set_screen(archive)
     archive.setup(self)
 
+func start_new_campaign(slot: int = -1) -> void:
+    var chosen := slot
+    if chosen < 0:
+        chosen = first_free_slot()
+    if chosen < 0:
+        chosen = 0
+    active_slot = clampi(chosen, 0, SLOT_COUNT - 1)
+    AstraGameSession.delete_snapshot(slot_path(active_slot))
+    meta.reset_intro_for_slot(active_slot)
+    meta.save_data()
+    start_case(AstraCaseCatalog.CALIBRATION, "ANALYST", active_slot)
+
 func start_case(case_id: String, protocol: String, slot: int = -1) -> void:
     if not meta.is_case_unlocked(case_id):
         fx.toast("아직 잠긴 사건입니다. " + meta.unlock_hint(case_id), AstraUI.GOLD)
         return
-    # A new case takes the slot it was asked for, the first free one, or — when
-    # all three are full — whichever the caller already had open.
     if slot >= 0:
         active_slot = clampi(slot, 0, SLOT_COUNT - 1)
-    else:
+    elif session == null:
         var free_slot := first_free_slot()
         if free_slot >= 0:
             active_slot = free_slot
     selected_protocol = protocol
     session = AstraGameSession.new()
     var seed_value := int(Time.get_unix_time_from_system() * 1000.0) % 2147483
-    # The archive's memory of recent Null assignments goes in, so the role does
-    # not settle on one face over a run of cases (§67).
     session.setup(case_id, seed_value, protocol, meta.difficulty_mode, meta.recent_null_history())
     session.features = meta.unlocked_features()
     session.set_tutorial(false)
+    if AstraCaseCatalog.is_calibration(case_id) and not meta.intro_seen_for_slot(active_slot):
+        _show_campaign_opening()
+        return
+    _enter_prepared_session()
+
+func _enter_prepared_session() -> void:
+    if session == null:
+        show_title()
+        return
     session.begin_voyage(meta.voyage_memory)
     _connect_autosave()
     show_session_screen()
+
+func clear_slot_state(slot: int) -> void:
+    meta.reset_intro_for_slot(slot)
+    meta.save_data()
 
 func show_session_screen() -> void:
     if session.phase == "EXPLORE":
@@ -412,6 +441,13 @@ func show_settings() -> void:
     check_row.add_child(status)
     box.add_child(ai_panel)
 
+    var replay_intro := AstraUI.button("오프닝 다시 보기", AstraUI.MUTED, 14, 38)
+    replay_intro.pressed.connect(func():
+        settings.save_data()
+        replay_opening()
+    )
+    box.add_child(replay_intro)
+
     var reset := AstraUI.button("조사 기록 초기화…", AstraUI.RED, 14, 38)
     reset.pressed.connect(_confirm_reset)
     box.add_child(reset)
@@ -444,7 +480,7 @@ func show_pause_menu() -> void:
         ["계속하기", AstraUI.CYAN, Callable()],
         ["플레이 방법", AstraUI.MUTED, show_help],
         ["설정", AstraUI.MUTED, show_settings],
-        ["이 사건 처음부터 (새 배치)", AstraUI.GOLD, func(): start_case(session.case_id, session.protocol)],
+        ["이 사건 처음부터 (새 배치)", AstraUI.GOLD, func(): start_case(session.case_id, session.protocol, active_slot)],
         ["아카이브로 나가기", AstraUI.RED, show_title]
     ]
     var modal_holder := []
