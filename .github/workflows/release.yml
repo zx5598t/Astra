@@ -3,6 +3,10 @@ name: Windows build
 on:
   push:
     tags: ["v*"]
+    branches: ["main"]
+    paths:
+      - "VERSION"
+      - ".github/workflows/release.yml"
   workflow_dispatch:
 
 permissions:
@@ -27,6 +31,22 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'Release commit must already be on main.' }
           }
           "ASTRA_VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Check whether this version is already released
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "v$env:ASTRA_VERSION"
+          gh release view $tag --repo $env:GITHUB_REPOSITORY --json tagName *> $null
+          if ($LASTEXITCODE -eq 0) {
+            "RELEASE_EXISTS=true" >> $env:GITHUB_ENV
+            Write-Host "$tag already exists; build will verify but publishing will be skipped."
+          } else {
+            "RELEASE_EXISTS=false" >> $env:GITHUB_ENV
+            Write-Host "$tag is not published yet; this validated main build will publish it."
+          }
 
       - name: Install Godot 4.7.2 and Windows export template
         shell: pwsh
@@ -68,11 +88,16 @@ jobs:
           if-no-files-found: ignore
 
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || (github.ref == 'refs/heads/main' && env.RELEASE_EXISTS != 'true')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ env.ASTRA_VERSION }}
+          target_commitish: ${{ github.sha }}
           name: ASTRA ${{ env.ASTRA_VERSION }} — HEARTBEAT
           body_path: docs/RELEASE_NOTES.md
+          draft: false
+          prerelease: false
+          make_latest: true
           fail_on_unmatched_files: true
           files: |
             build/ASTRA-*-windows.zip
