@@ -161,7 +161,13 @@ func _play_case(case_id: String, protocol: String) -> void:
         return
     var screen = app._current
     _expect(screen is AstraGameScreen, "%s game screen" % case_id)
+    # The action budget intentionally does not exist during BRIEFING. 0.5.1's
+    # resolution smoke checked it one phase too early and therefore failed on
+    # both 1366x768 and 1080p even though the actual action screen was fine.
     if screen is AstraGameScreen and case_id == "DEAD_AIR":
+        if app.session.phase == "BRIEFING":
+            app.session.advance()
+            await _wait(2)
         await _check_game_layout(screen, Vector2i(1366, 768), "1366x768")
         await _check_game_layout(screen, Vector2i(1920, 1080), "1920x1080")
     var s: AstraGameSession = app.session
