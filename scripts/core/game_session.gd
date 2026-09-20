@@ -3895,8 +3895,35 @@ func _adjust_echo(who: String, tag: String, effect: String, delta: float) -> voi
     entry["tags"] = tags
     voyage["echo"][who] = entry
 
+func _pair_scene_context_ok(scene: Dictionary) -> bool:
+    var who := str(scene.get("speaker", ""))
+    var other := str(scene.get("target", ""))
+    if who not in voyage.get("met", []) or other not in voyage.get("met", []):
+        return false
+    var id := str(scene.get("id", ""))
+    var room := str(voyage.get("room", ""))
+    var facts: Array = voyage.get("facts", [])
+    var stress_high := (crew.has(who) and crew[who].stress >= 0.3) or (crew.has(other) and crew[other].stress >= 0.3)
+    if "rho_sena" in id:
+        return room in ["engine", "security"] or bool(voyage.get("goal_done", false))
+    if "mira_lyra" in id:
+        return room in ["medbay", "garden"] or stress_high
+    if "dax_noa" in id:
+        return not facts.is_empty()
+    if "vale_eli" in id:
+        return room in ["comms", "bridge"] or "signal" in facts or "arrival" in facts or "destination" in facts
+    if "rho_dax" in id:
+        return room == "engine" or "power" in facts
+    if "sena_mira" in id:
+        return room in ["security", "medbay"] or stress_high
+    if "lyra_dax" in id:
+        return room == "garden" or "sample" in facts
+    if "noa_vale" in id:
+        return room in ["archive", "comms"] or "signal" in facts
+    return true
+
 func voyage_talk(who: String, topic: String = "") -> bool:
-    if phase != "EXPLORE" or who not in voyage_people() or not voyage["scene"].is_empty():
+    if phase != "EXPLORE" or who not in voyage_people() or who not in voyage.get("met", []) or not voyage["scene"].is_empty():
         return false
     var eligible: Array = []
     var bond := float(voyage["bonds"].get(who,0.0))
@@ -3921,12 +3948,13 @@ func voyage_talk(who: String, topic: String = "") -> bool:
         if tag == "secret" and bond < 0.1: continue
         if tag in ["personal","echo","secret"]:
             if int(voyage["actions"]) < 5 or int(voyage["seen"].get(scene["id"],0)) > 0: continue
-        if tag == "pair" and scene.get("target", "") not in voyage_people():
-            continue
+        if tag == "pair":
+            if scene.get("target", "") not in voyage_people() or not _pair_scene_context_ok(scene):
+                continue
         if tag == "trio":
             var trio_ok := true
             for participant in scene.get("participants", []):
-                if str(participant) not in roster or not crew.has(str(participant)) or not crew[str(participant)].is_alive():
+                if str(participant) not in roster or str(participant) not in voyage.get("met", []) or not crew.has(str(participant)) or not crew[str(participant)].is_alive():
                     trio_ok = false
                     break
             if not trio_ok:
