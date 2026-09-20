@@ -3903,7 +3903,7 @@ func _pair_scene_context_ok(scene: Dictionary) -> bool:
     var id := str(scene.get("id", ""))
     var room := str(voyage.get("room", ""))
     var facts: Array = voyage.get("facts", [])
-    var stress_high := (crew.has(who) and crew[who].stress >= 0.3) or (crew.has(other) and crew[other].stress >= 0.3)
+    var stress_high: bool = (crew.has(who) and crew[who].stress >= 0.3) or (crew.has(other) and crew[other].stress >= 0.3)
     if "rho_sena" in id:
         return room in ["engine", "security"] or bool(voyage.get("goal_done", false))
     if "mira_lyra" in id:
