@@ -31,6 +31,8 @@ func _initialize() -> void:
     print("\n=== summary: %d FAIL, %d WARN ===" % [fails.size(), warns.size()])
     for f in fails: printerr("FAIL · " + f)
     for w in warns: print("WARN · " + w)
+    if fails.is_empty():
+        print("ASTRA CONTENT AUDIT OK")
     quit(1 if not fails.is_empty() else 0)
 
 func _by_speaker() -> Dictionary:
