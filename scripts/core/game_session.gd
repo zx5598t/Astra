@@ -3438,7 +3438,21 @@ func voyage_inspect(point_id: String) -> bool:
             voyage["notes"].append("정비 로그 옆에서 휴대 기록기를 챙겼다. 통신실에서 신호를 따로 저장할 수 있다.")
         _voyage_tick()
         if voyage["scene"].is_empty():
-            _voyage_scene({"id":"inspect_"+key,"action":str(point[5]),"lines":[],"choices":[]})
+            if case_id == AstraCaseCatalog.CALIBRATION and str(point[4]) == "power":
+                _voyage_scene({
+                    "id":"calibration_crew_join",
+                    "speaker":"",
+                    "tag":"work",
+                    "action":"전원 패널을 열자 세 사람이 자연스럽게 주변으로 모인다.",
+                    "lines":[
+                        ["rho","전원은 살아 있어. 이건 정전이 아니야."],
+                        ["noa","잠금 해제 기록이 하나 있어요. 실행자 칸만 비어 있어요."],
+                        ["dax","자동 해제라면 서명이 남아야 해. 그런데 없어."]
+                    ],
+                    "choices":[]
+                })
+            else:
+                _voyage_scene({"id":"inspect_"+key,"action":str(point[5]),"lines":[],"choices":[]})
         changed.emit()
         return true
     return false
@@ -3674,10 +3688,11 @@ const REQUIRED_PEOPLE := {
 func voyage_can_finish() -> bool:
     if phase != "EXPLORE" or not bool(voyage.get("goal_done",false)) or not voyage.get("scene",{}).is_empty():
         return false
-    # CALIBRATION stays in one room by design (§ voyage_rooms), so it cannot
-    # require a second visited room the way every later chapter does.
+    # CALIBRATION teaches one direct human interaction. Jun/Noa/Daren are
+    # introduced automatically after the power-panel inspection, so completion
+    # must never require the player to hunt down four separate talk buttons.
     if case_id == AstraCaseCatalog.CALIBRATION:
-        return voyage.get("met",[]).size() >= mini(4,roster.size())
+        return "mira" in voyage.get("met",[])
     if REQUIRED_PEOPLE.has(case_id):
         for who in REQUIRED_PEOPLE[case_id]:
             if str(who) not in voyage.get("met",[]):
