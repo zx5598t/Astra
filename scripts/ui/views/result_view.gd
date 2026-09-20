@@ -143,9 +143,9 @@ func refresh() -> void:
         var status := str(row.get("status", ""))
         var status_text := "생존"
         if status == AstraCrewMember.STATUS_ISOLATED:
-            status_text = "격리"
+            status_text = "장기수면 격리"
         elif status == AstraCrewMember.STATUS_OFFLINE:
-            status_text = "습격당함"
+            status_text = "생체 신호 두절"
         grid.add_child(AstraUI.label(status_text, 13, AstraUI.MUTED))
 
     var columns := AstraUI.hbox(18)
@@ -218,7 +218,7 @@ func _null_card(session: AstraGameSession, npc_id: String) -> Control:
     box.add_child(AstraUI.label("담당 조작 · " + session.op_name(str(session.truth["null_ops"].get(npc_id, ""))), 13, AstraUI.TEXT, true))
     var claim: Dictionary = session.truth["claims"].get(npc_id, {})
     box.add_child(AstraUI.label("거짓 진술 · " + session.room_name(str(claim.get("position", ""))), 12, AstraUI.MUTED, true))
-    var fate := "격리됨" if member.status == AstraCrewMember.STATUS_ISOLATED else "끝까지 숨어 있었음"
+    var fate := "장기수면 격리됨" if member.status == AstraCrewMember.STATUS_ISOLATED else "끝까지 숨어 있었음"
     box.add_child(AstraUI.label(fate, 13, AstraUI.GREEN if member.status == AstraCrewMember.STATUS_ISOLATED else AstraUI.RED))
     return card
 
