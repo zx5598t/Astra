@@ -4513,6 +4513,10 @@ func _autonomous_knowledge_share(actors: Array) -> void:
                 var roll := _stable_noise("share:%s:%s:%s:%d" % [source,target,str(fact_id),int(voyage.get("actions",0))])
                 if roll <= tendency:
                     if AstraKnowledgeModel.share_between(flags,str(fact_id),source,target,day,"autonomous_beat"):
+                        AstraDecisionModel.append_trace(flags,AstraDecisionModel.trace(
+                            source,"share",target,
+                            [AstraDecisionModel.reason("operational_need",0.72,str(fact_id))],day
+                        ))
                         var ownership: Dictionary = voyage.get("evidence_ownership",{})
                         if ownership.has(str(fact_id)):
                             var entry: Dictionary = ownership[str(fact_id)]
