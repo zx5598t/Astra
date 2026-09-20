@@ -113,6 +113,21 @@ jobs:
           grep -q "ASTRA 0.5.2 SIMULATION OK" simulation-052.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" simulation-052.log; then exit 1; fi
 
+      - name: 0.5.3 HEARTBEAT Mira, scheduler, autonomy and knowledge tests
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/mira_content_tests.gd 2>&1 | tee mira-053.log
+          grep -q "ASTRA 0.5.3 MIRA CONTENT TESTS OK" mira-053.log
+          ./godot --headless --path . --script res://tests/storylet_scheduler_tests.gd 2>&1 | tee scheduler-053.log
+          grep -q "ASTRA 0.5.3 STORYLET SCHEDULER TESTS OK" scheduler-053.log
+          ./godot --headless --path . --script res://tests/npc_autonomy_tests.gd 2>&1 | tee autonomy-053.log
+          grep -q "ASTRA 0.5.3 AUTONOMY TESTS OK" autonomy-053.log
+          ./godot --headless --path . --script res://tests/knowledge_propagation_tests.gd 2>&1 | tee knowledge-053.log
+          grep -q "ASTRA 0.5.3 KNOWLEDGE PROPAGATION TESTS OK" knowledge-053.log
+          ./godot --headless --path . --script res://tests/relationship_callback_tests.gd 2>&1 | tee callbacks-053.log
+          grep -q "ASTRA 0.5.3 RELATIONSHIP CALLBACK TESTS OK" callbacks-053.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" mira-053.log scheduler-053.log autonomy-053.log knowledge-053.log callbacks-053.log; then exit 1; fi
+
       - name: Story continuity and first-play regression
         run: |
           set -o pipefail
@@ -120,7 +135,7 @@ jobs:
           grep -q "ASTRA STORY CONSISTENCY TESTS OK" story-consistency.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" story-consistency.log; then exit 1; fi
 
-      - name: 0.5.2 content depth and invariant audit
+      - name: 0.5.3 content depth and invariant audit
         run: |
           set -o pipefail
           ./godot --headless --path . --script res://tests/content_audit.gd 2>&1 | tee content-audit.log
@@ -181,6 +196,15 @@ jobs:
           & $env:GODOT --headless --path . --script res://tests/living_crew_052_tests.gd 2>&1 | Tee-Object -FilePath windows-living-052.log
           if (-not (Select-String -Path windows-living-052.log -Pattern 'ASTRA 0.5.2 LIVING CREW TESTS OK')) { throw 'Windows 0.5.2 living crew tests did not pass.' }
           if (Select-String -Path windows-living-052.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.5.2 living crew tests reported script errors.' }
+
+      - name: Run 0.5.3 HEARTBEAT invariants on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/mira_content_tests.gd 2>&1 | Tee-Object -FilePath windows-mira-053.log
+          if (-not (Select-String -Path windows-mira-053.log -Pattern 'ASTRA 0.5.3 MIRA CONTENT TESTS OK')) { throw 'Windows Mira 0.5.3 tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/knowledge_propagation_tests.gd 2>&1 | Tee-Object -FilePath windows-knowledge-053.log
+          if (-not (Select-String -Path windows-knowledge-053.log -Pattern 'ASTRA 0.5.3 KNOWLEDGE PROPAGATION TESTS OK')) { throw 'Windows knowledge 0.5.3 tests did not pass.' }
+          if (Select-String -Path windows-mira-053.log,windows-knowledge-053.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.5.3 tests reported script errors.' }
 
       - name: Run UI smoke test on Windows
         shell: pwsh
