@@ -427,11 +427,34 @@ func is_alive(npc_id: String) -> bool:
     return member != null and member.is_alive()
 
 func living_ids() -> Array:
+    return active_participants()
+
+# 0.5.0 invariant API. "roster" is the awakened roster for this chapter, so an
+# active participant must exist in it and still be ACTIVE. All systems that can
+# speak, vote, be targeted, or be selected build on this one definition.
+func active_participants() -> Array:
     var result: Array = []
     for npc_id in roster:
-        if crew[npc_id].is_alive():
+        if crew.has(npc_id) and crew[npc_id].status == AstraCrewMember.STATUS_ACTIVE:
             result.append(npc_id)
     return result
+
+func eligible_voters() -> Array:
+    return active_participants()
+
+func eligible_vote_targets() -> Array:
+    return active_participants()
+
+func can_vote_for(voter_id: String, target_id: String) -> bool:
+    if voter_id == "" or target_id == "" or voter_id == target_id:
+        return false
+    return voter_id in eligible_voters() and target_id in eligible_vote_targets()
+
+func _fallback_selected() -> void:
+    if selected_id in active_participants():
+        return
+    var valid := active_participants()
+    selected_id = str(valid[0]) if not valid.is_empty() else ""
 
 func living_null_ids() -> Array:
     var result: Array = []
@@ -448,13 +471,15 @@ func living_crew_ids() -> Array:
     return result
 
 func investigation_ap_max() -> int:
-    var mission_bonus := 1 if bool(flags.get("mission_investigation", false)) and day > int(flags.get("mission_day", 0)) else 0
     var base := int(AstraCaseCatalog.ap_profile(case_id, {}).get("investigation", BASE_INVESTIGATION_AP))
-    return base + (1 if protocol == "ANALYST" else 0) + mission_bonus
+    var advanced := case_id in ["ECHO_WARD", "SILENT_ORBIT", "RED_SHIFT", "LAST_LIGHT"]
+    var mission_bonus := 1 if advanced and bool(flags.get("mission_investigation", false)) and day > int(flags.get("mission_day", 0)) else 0
+    return base + (1 if advanced and protocol == "ANALYST" else 0) + mission_bonus
 
 func talk_ap_max() -> int:
     var base := int(AstraCaseCatalog.ap_profile(case_id, {}).get("talk", BASE_TALK_AP))
-    return base + (1 if int(flags.get("rested_day", 0)) == day else 0) + (1 if protocol == "EMPATH" else 0) + (1 if bool(flags.get("mission_talk", false)) else 0) + int(AstraDifficulty.number(difficulty, "extra_talk_ap", 0.0))
+    var advanced := case_id in ["ECHO_WARD", "SILENT_ORBIT", "RED_SHIFT", "LAST_LIGHT"]
+    return base + (1 if advanced and int(flags.get("rested_day", 0)) == day else 0) + (1 if advanced and protocol == "EMPATH" else 0) + (1 if advanced and bool(flags.get("mission_talk", false)) else 0) + (int(AstraDifficulty.number(difficulty, "extra_talk_ap", 0.0)) if advanced else 0)
 
 func meeting_actions_max() -> int:
     var base := int(AstraCaseCatalog.ap_profile(case_id, {}).get("meeting", MEETING_ACTIONS))
@@ -616,9 +641,11 @@ func marked_suspects() -> Array:
     return result
 
 func select(npc_id: String) -> void:
-    if crew.has(npc_id):
+    if npc_id in active_participants():
         selected_id = npc_id
         changed.emit()
+    else:
+        _fallback_selected()
 
 # ---------------------------------------------------------------- phase flow
 
@@ -640,17 +667,28 @@ func tutorial_blocked_reason() -> String:
         "INTERROGATION":
             if not pending_event.is_empty():
                 return "%s|i 먼저 할 말이 있습니다." % name_of(str(pending_event.get("npc_id", "")))
+            var required: Array = ["mira"] if case_id == AstraCaseCatalog.CALIBRATION else living_ids()
             var unheard: Array = []
-            for npc_id in living_ids():
-                if not known_claims.has(npc_id):
+            for npc_id in required:
+                if npc_id in active_participants() and not known_claims.has(npc_id):
                     unheard.append(name_of(npc_id))
             if not unheard.is_empty() and talk_ap > 0:
-                return "아직 %s의 진술을 듣지 못했습니다." % ", ".join(PackedStringArray(unheard))
+                return "먼저 %s의 말을 확인하세요." % ", ".join(PackedStringArray(unheard))
     # The meeting is deliberately not gated. Speaking there can be the wrong
     # move, and a tutorial that forces the player to accuse somebody teaches the
     # opposite of what this game wants. Investigation and interrogation are
     # gated because skipping those leaves nothing to reason with at all.
     return ""
+
+func _chapter_flow() -> Array:
+    return AstraCaseCatalog.phase_flow(case_id)
+
+func _next_story_phase() -> String:
+    var flow := _chapter_flow()
+    var index := flow.find(phase)
+    if index < 0 or index + 1 >= flow.size():
+        return ""
+    return str(flow[index + 1])
 
 func can_advance() -> bool:
     if tutorial_blocked_reason() != "":
@@ -674,29 +712,39 @@ func advance_label() -> String:
     var blocked := tutorial_blocked_reason()
     if blocked != "":
         return _josa_inline(blocked)
-    match phase:
-        "BRIEFING": return "현장으로"
-        "INVESTIGATION": return "승무원에게 확인하기"
-        "INTERROGATION": return "공개 회의 소집" if pending_event.is_empty() else "개인 면담에 먼저 답하세요"
-        "MEETING": return "격리 투표로"
-        "VOTE": return "밤으로" if vote_cast else "투표를 먼저 확정하세요"
-        "NIGHT": return "다음 날 아침으로" if night_done else "밤 행동을 먼저 고르세요"
+    var next := _next_story_phase()
+    if phase == "BRIEFING": return "현장으로 이동"
+    if phase == "INVESTIGATION": return "동료에게 확인하기"
+    if phase == "INTERROGATION":
+        if not pending_event.is_empty(): return "개인 면담에 먼저 답하세요"
+        return "기록을 함께 확인하기" if next == "RESULT" else "공개 회의로 이동"
+    if phase == "MEETING":
+        return "사건 정리하기" if next == "RESULT" else "장기수면 격리 투표 시작"
+    if phase == "VOTE": return "밤 행동 선택" if vote_cast else "장기수면 격리 대상을 먼저 선택하세요"
+    if phase == "NIGHT": return "다음 날 아침으로" if night_done else "밤 행동을 먼저 고르세요"
     return ""
 
 func advance() -> void:
     if not can_advance():
         return
-    match phase:
-        "BRIEFING": _enter("INVESTIGATION")
-        "INVESTIGATION": _enter("INTERROGATION")
-        "INTERROGATION": _enter("MEETING")
-        "MEETING": _enter("VOTE")
-        "VOTE": _enter("RESULT" if outcome != "" else "NIGHT")
-        "NIGHT":
-            if outcome != "":
-                _enter("RESULT")
-            else:
-                _start_next_day()
+    if outcome != "" and phase in ["VOTE", "NIGHT"]:
+        _enter("RESULT")
+        return
+    var next := _next_story_phase()
+    if next == "RESULT":
+        # CALIBRATION/DEAD_AIR/GLASS_GARDEN are authored learning chapters.
+        # They resolve when their taught systems are completed; no fake vote or
+        # night screen is inserted merely to satisfy the old state machine.
+        if outcome == "":
+            outcome = "WIN"
+            _log("사건 정리 · 이번 장의 확인을 마쳤다.")
+        _enter("RESULT")
+        return
+    if phase == "NIGHT":
+        _start_next_day()
+        return
+    if next != "":
+        _enter(next)
 
 func phase_hint() -> String:
     if phase == "VOTE" and vote_cast:
@@ -813,13 +861,19 @@ func question_options(npc_id: String) -> Array:
         options.append({"intent": "ALIBI", "label": "그 시각, 어디에 있었나요?", "hint": "알리바이를 듣습니다. 출입 기록과 대조할 수 있습니다.", "enabled": enabled, "key": true})
     else:
         options.append({"intent": "ALIBI", "label": "진술을 다시 확인한다", "hint": "같은 질문을 다시 합니다. 말이 바뀌면 기록에 남습니다.", "enabled": enabled})
-    options.append({"intent": "WITNESS", "label": "그때 누구를 봤나요?", "hint": "목격한 사람을 묻습니다. 다른 사람의 알리바이를 무너뜨릴 수 있습니다.", "enabled": enabled})
-    options.append({"intent": "TIMELINE", "label": "그 직전엔 무엇을 했죠?", "hint": "앞뒤 행적을 묻습니다. 시간이 비는 구간이 드러납니다.", "enabled": enabled})
+    options.append({"intent": "WITNESS", "label": "그때 누구를 봤나요?", "hint": "목격 확인", "enabled": enabled})
+    if case_id in ["CALIBRATION", "DEAD_AIR"] and day == 1:
+        if not found_clues().is_empty():
+            options.append({"intent": "EVIDENCE", "label": "이 기록을 본 적 있나요?", "hint": "기록에 대한 반응 확인", "enabled": enabled})
+        return options
+    options.append({"intent": "TIMELINE", "label": "그 직전엔 무엇을 했죠?", "hint": "앞뒤 행적 확인", "enabled": enabled})
     if not found_clues().is_empty():
-        options.append({"intent": "EVIDENCE", "label": "증거를 보여 준다…", "hint": "확보한 기록을 보여 주고 반응을 봅니다.", "enabled": enabled})
+        options.append({"intent": "EVIDENCE", "label": "이 기록을 보여 준다", "hint": "기록에 대한 반응 확인", "enabled": enabled})
     if has_contradiction_on(npc_id):
-        options.append({"intent": "CONTRADICTION", "label": "기록과 다른 말을 짚는다", "hint": "어긋난 지점을 추궁합니다. 사정이 있으면 털어놓고, 실행자는 실언할 수 있습니다.", "enabled": enabled, "key": true})
-    options.append({"intent": "SUSPECT", "label": "다른 사람에 대한 생각을 묻는다", "hint": "누구를 의심하는지와 그 이유를 듣습니다.", "enabled": enabled})
+        options.append({"intent": "CONTRADICTION", "label": "말이 달라진 부분을 짚는다", "hint": "모순 확인", "enabled": enabled, "key": true})
+    if case_id == "GLASS_GARDEN" and day == 1:
+        return options
+    options.append({"intent": "SUSPECT", "label": "다른 사람에 대한 생각을 묻는다", "hint": "의심과 이유 확인", "enabled": enabled})
     options.append({"intent": "TRUST", "label": "왜 당신을 믿어야 하죠?", "hint": "스스로를 변호하게 합니다. 성격이 가장 잘 드러납니다.", "enabled": enabled})
     if member.stress >= 0.4 or member.trust < CONFIDE_TRUST:
         options.append({"intent": "REASSURE", "label": "서두르지 말고 기다려 준다", "hint": "신뢰가 오르고 긴장이 내려갑니다.", "enabled": enabled})
@@ -853,13 +907,13 @@ func ask(npc_id: String, intent: String, clue_id: String = "") -> Dictionary:
     var question := str(QUESTION_TEXT.get(intent, "이 배에서 당신이 지키고 싶은 것은 무엇인가요?"))
     if intent == "EVIDENCE":
         question = "이 기록을 보세요. ‘%s’" % str(clue_by_id(clue_id).get("title", ""))
-    _transcript(npc_id, "player", question)
+    _transcript(npc_id, "player", question, intent)
 
     match intent:
         "PERSONAL":
             flags["personal_%s_%d" % [npc_id, day]] = true
             var line := AstraStory.personal(npc_id, seed_value + day)
-            _transcript(npc_id, npc_id, line)
+            _transcript(npc_id, npc_id, line, intent)
             result["lines"].append({"speaker": npc_id, "text": line})
             member.adjust_trust(0.05)
             member.adjust_stress(-0.04)
@@ -915,13 +969,13 @@ func _say(member: AstraCrewMember, key: String, params: Dictionary, result: Dict
     var text := AstraDialogue.line_fresh(member.id, key, params, dialogue_recent, rng.randf())
     if text == "":
         return ""
-    _transcript(member.id, member.id, text)
-    result["lines"].append({"speaker": member.id, "text": text})
+    _transcript(member.id, member.id, text, str(result.get("intent", "")))
+    result["lines"].append({"speaker": member.id, "text": text, "intent": str(result.get("intent", ""))})
     return text
 
 func _narrate(member: AstraCrewMember, text: String, result: Dictionary) -> void:
-    _transcript(member.id, "narration", text)
-    result["lines"].append({"speaker": "narration", "text": text})
+    _transcript(member.id, "narration", text, str(result.get("intent", "")))
+    result["lines"].append({"speaker": "narration", "text": text, "intent": str(result.get("intent", ""))})
 
 func _maybe_tell(member: AstraCrewMember, lying: bool, result: Dictionary) -> void:
     var chance := 0.0
@@ -1495,12 +1549,29 @@ func _log(text: String) -> void:
     if journal.size() > 400:
         journal.pop_front()
 
-func _transcript(npc_id: String, speaker: String, text: String) -> void:
+func _transcript(npc_id: String, speaker: String, text: String, intent: String = "") -> void:
     if not transcripts.has(npc_id):
         transcripts[npc_id] = []
-    transcripts[npc_id].append({"speaker": speaker, "text": _josa_inline(text), "day": day})
-    if transcripts[npc_id].size() > 120:
-        transcripts[npc_id].pop_front()
+    var list: Array = transcripts[npc_id]
+    var entry_id := "dialogue_%s_%d_%03d" % [npc_id, day, list.size()]
+    var reply_to := ""
+    var thread_id := entry_id
+    if not list.is_empty():
+        var previous: Dictionary = list[list.size() - 1]
+        if speaker != "player" and str(previous.get("speaker", "")) == "player":
+            reply_to = str(previous.get("entry_id", ""))
+            thread_id = str(previous.get("thread_id", reply_to))
+        elif speaker == "player":
+            thread_id = entry_id
+        else:
+            thread_id = str(previous.get("thread_id", entry_id))
+    list.append({
+        "entry_id": entry_id, "thread_id": thread_id, "reply_to": reply_to,
+        "speaker": speaker, "text": _josa_inline(text), "day": day,
+        "intent": intent, "topic": intent.to_lower()
+    })
+    if list.size() > 120:
+        list.pop_front()
 
 func _names(ids: Array) -> Array:
     var names: Array = []
@@ -1901,7 +1972,28 @@ const FEED_KIND_TO_CLAIM := {
 }
 
 func _feed_line(speaker_id: String, target_id: String, text: String, kind: String) -> void:
-    var entry := {"speaker": speaker_id, "target": target_id, "text": _josa_inline(text), "kind": kind, "day": day}
+    if speaker_id != "player" and speaker_id not in active_participants():
+        push_error("ASTRA invariant: inactive meeting speaker " + speaker_id)
+        return
+    var entry_id := "meeting_%d_%03d" % [day, meeting_feed.size()]
+    var topic := target_id if target_id != "" else kind
+    var thread_id := entry_id
+    var reply_to := ""
+    var transition := false
+    if not meeting_feed.is_empty():
+        var previous: Dictionary = meeting_feed[meeting_feed.size() - 1]
+        if str(previous.get("topic", "")) == topic or kind in ["react", "defense", "dispute", "record"]:
+            thread_id = str(previous.get("thread_id", entry_id))
+            reply_to = str(previous.get("entry_id", ""))
+            if kind in ["react", "defense", "dispute", "record"] and target_id == "":
+                topic = str(previous.get("topic", topic))
+        else:
+            transition = true
+    var entry := {
+        "entry_id": entry_id, "thread_id": thread_id, "reply_to": reply_to,
+        "speaker": speaker_id, "target": target_id, "topic": topic,
+        "topic_transition": transition, "text": _josa_inline(text), "kind": kind, "day": day
+    }
     meeting_feed.append(entry)
     # Everything said in front of everyone goes on the record. This is what lets
     # a later meeting quote an earlier one instead of starting from nothing.
@@ -2126,28 +2218,65 @@ func _most_suspicious_of(target_id: String) -> String:
 
 # ---------------------------------------------------------------- vote
 
+func _sanitize_ballot(voter_id: String, target_id: String) -> String:
+    if target_id == "":
+        return ""
+    if can_vote_for(voter_id, target_id):
+        return target_id
+    push_error("ASTRA invariant: invalid ballot %s -> %s" % [voter_id, target_id])
+    var alternatives: Array = []
+    for candidate in eligible_vote_targets():
+        if can_vote_for(voter_id, str(candidate)):
+            alternatives.append(str(candidate))
+    if alternatives.is_empty():
+        return ""
+    alternatives.sort_custom(func(a, b): return crew[voter_id].get_suspicion(a) > crew[voter_id].get_suspicion(b))
+    return str(alternatives[0])
+
+func _vote_reason(voter_id: String, target_id: String) -> String:
+    if target_id == "":
+        return "직접 근거가 부족해 기권"
+    var code := reason_for(voter_id, target_id)
+    match code:
+        "log": return "공개된 출입 기록과 진술이 맞지 않음"
+        "dispute": return "회의에서 드러난 진술 모순"
+        "clue": return "공개된 현장 흔적이 겹침"
+        "slip": return "공개 발언에서 드러난 실언"
+        "victim": return "신호 두절 승무원이 남긴 의심"
+        "accused": return "회의에서 제기된 구체적 의혹"
+        "alone": return "사건 시각의 단독 행동이 설명되지 않음"
+        "friction": return "이전 진술과 관계 갈등을 함께 고려함"
+        _: return "확신이 부족한 정황 판단"
+
 func vote_intentions() -> Dictionary:
     var result := {}
     var crew_votes := {}
-    var living := living_ids()
-    for npc_id in living:
+    var voters := eligible_voters()
+    var targets := eligible_vote_targets()
+    for npc_id in voters:
         var member: AstraCrewMember = crew[npc_id]
         if member.is_null():
             continue
         var target := ""
         var best := -9.0
-        for other in living:
-            if other == npc_id:
+        for other in targets:
+            if not can_vote_for(npc_id, str(other)):
                 continue
             var value := member.get_suspicion(other) - member.get_affinity(other) * 0.12 + (_stable_noise(npc_id + other) - 0.5) * VOTE_NOISE + _public_trace_support(other)
             if value > best:
                 best = value
-                target = other
-        if null_count == 1 and clues.filter(func(clue): return bool(clue.get("public",false))).is_empty() and best < 0.8:
+                target = str(other)
+        var evidence_count := clues.filter(func(clue): return bool(clue.get("public", false))).size()
+        var abstain_threshold := 0.80
+        if case_id == "ECHO_WARD": abstain_threshold = 0.72
+        elif case_id == "GLASS_GARDEN": abstain_threshold = 0.88
+        if evidence_count == 0 and best < abstain_threshold:
             target = ""
+        target = _sanitize_ballot(npc_id, target)
         result[npc_id] = target
-        crew_votes[target] = int(crew_votes.get(target, 0)) + 1
-    for npc_id in living:
+        if target != "":
+            crew_votes[target] = int(crew_votes.get(target, 0)) + 1
+    for npc_id in voters:
         var member: AstraCrewMember = crew[npc_id]
         if not member.is_null():
             continue
@@ -2158,29 +2287,40 @@ func vote_intentions() -> Dictionary:
         var target := scapegoat_for(npc_id)
         if partner != "" and float(crew_votes.get(partner, 0)) >= float(living_crew_ids().size()) * 0.5 and _stable_noise("bus" + npc_id) < 0.6:
             target = partner
-        result[npc_id] = target
+        result[npc_id] = _sanitize_ballot(npc_id, target)
     return result
 
 func vote_tally(include_player_target: String = "") -> Dictionary:
     var tally := {}
     var intentions := vote_intentions()
     for voter in intentions.keys():
-        var target := str(intentions[voter])
+        var target := _sanitize_ballot(str(voter), str(intentions[voter]))
         if target != "":
             tally[target] = int(tally.get(target, 0)) + 1
-    if include_player_target != "" and is_alive(include_player_target):
+    if include_player_target != "" and include_player_target in eligible_vote_targets():
         tally[include_player_target] = int(tally.get(include_player_target, 0)) + PLAYER_VOTE_WEIGHT
     return tally
 
 func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int = 60) -> Dictionary:
     if phase != "VOTE" or vote_cast or outcome != "":
         return {"ok": false}
-    if target_id != "" and not is_alive(target_id):
+    if target_id != "" and target_id not in eligible_vote_targets():
         return {"ok": false}
     if theory_suspects.size() >= null_count and (null_count == 1 or str(theory_suspects[0]) != str(theory_suspects[1])):
         theories.append({"day": day, "suspects": theory_suspects.slice(0,null_count), "confidence": clampi(confidence, 0, 100)})
     var intentions := vote_intentions()
-    var tally := vote_tally(target_id)
+    var reasons := {}
+    for voter in intentions.keys():
+        var sanitized := _sanitize_ballot(str(voter), str(intentions[voter]))
+        intentions[voter] = sanitized
+        reasons[voter] = _vote_reason(str(voter), sanitized)
+    var tally := {}
+    for voter in intentions.keys():
+        var target := str(intentions[voter])
+        if target != "":
+            tally[target] = int(tally.get(target, 0)) + 1
+    if target_id != "":
+        tally[target_id] = int(tally.get(target_id, 0)) + PLAYER_VOTE_WEIGHT
     var top := 0
     for candidate in tally.keys():
         top = maxi(top, int(tally[candidate]))
@@ -2189,21 +2329,27 @@ func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int =
         if int(tally[candidate]) == top:
             leaders.append(str(candidate))
     var isolated := ""
-    if leaders.size() == 1:
+    if top > 0 and leaders.size() == 1:
         isolated = str(leaders[0])
     vote_cast = true
-    last_vote = {"tally": tally, "intentions": intentions, "player_target": target_id, "isolated": isolated, "top": top, "tie": leaders.size() > 1 and isolated == ""}
+    last_vote = {
+        "tally": tally, "intentions": intentions, "vote_reasons": reasons,
+        "player_target": target_id, "isolated": isolated, "top": top,
+        "tie": leaders.size() > 1 and isolated == ""
+    }
     if isolated != "":
         var member: AstraCrewMember = crew[isolated]
         member.status = AstraCrewMember.STATUS_ISOLATED
         isolations.append({"day": day, "id": isolated, "votes": top, "role": member.role})
-        _log("격리 · %s (%d표)" % [member.display_name, top])
+        _log("장기수면 격리 · %s (%d표)" % [member.display_name, top])
+        last_vote["isolation_text"] = "보안 절차에 따라 장기수면 포드로 이동합니다. 사건이 끝날 때까지 행동·회의·투표에서 제외됩니다."
         last_vote["last_words"] = str(ISOLATED_LINES.get(isolated, "…"))
         _transcript(isolated, isolated, str(ISOLATED_LINES.get(isolated, "…")))
+        _fallback_selected()
         for observer_id in living_ids():
             crew[observer_id].adjust_stress(0.04)
     else:
-        _log("투표 무산 · 동률로 아무도 격리되지 않았다.")
+        _log("투표 무산 · 충분한 합의가 없어 장기수면 격리를 시행하지 않았다.")
     _check_end("vote")
     notice.emit("vote", last_vote)
     changed.emit()
@@ -2226,7 +2372,7 @@ func _check_end(stage: String) -> void:
 # ---------------------------------------------------------------- night
 
 func night_options() -> Dictionary:
-    var protect: Array = living_ids()
+    var protect: Array = active_participants()
     var secure: Array = []
     for room_id in room_ids():
         if int(room_status(room_id).get("remaining", 0)) > 0:
@@ -2238,6 +2384,7 @@ func choose_night_action(kind: String, target: String) -> Dictionary:
         return {"ok": false}
     var options := night_options()
     if kind not in ["protect", "secure", "backup", "rest"] or target not in options.get(kind, []):
+        push_error("ASTRA invariant: invalid night action %s -> %s" % [kind, target])
         return {"ok": false}
     night_plan = {"kind": kind, "target": target}
     _resolve_night()
@@ -2304,6 +2451,7 @@ func _resolve_night() -> void:
             var member: AstraCrewMember = crew[victim]
             member.status = AstraCrewMember.STATUS_OFFLINE
             casualties.append({"day": day, "id": victim})
+            _fallback_selected()
             result["victim"] = victim
             report.append(_josa_inline("밤사이 %s의 생체 신호가 끊겼다. 선내 의무 시스템은 아무 경보도 울리지 않았다." % member.display_name))
             for observer_id in living_crew_ids():
