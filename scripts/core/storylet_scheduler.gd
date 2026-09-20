@@ -14,7 +14,7 @@ static func rare_threshold(scene: Dictionary, pity: Dictionary) -> float:
     return 1.0
 
 static func weight(scene: Dictionary, seen_ever: Dictionary, recent_families: Array, social_theme: String) -> float:
-    var score := 1.0
+    var score := maxf(0.1,float(scene.get("_content_weight",1.0)))
     var id := str(scene.get("id",""))
     var family := str(scene.get("family",id))
     if int(seen_ever.get(id,0)) == 0:
