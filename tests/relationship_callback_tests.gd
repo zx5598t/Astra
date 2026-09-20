@@ -36,9 +36,11 @@ func test_memory_tag_unlock() -> void:
     s.voyage["actions"] = 8
     var scene := _find_family("mira_secret_kept")
     check(not scene.is_empty(),"Mira privacy callback exists")
-    check(not s._scene_eligible_052(scene,"mira"),"privacy callback stays locked before remembered action")
+    var eligibility_scene := scene.duplicate(true)
+    eligibility_scene.erase("rarity")
+    check(not s._scene_eligible_052(eligibility_scene,"mira"),"privacy callback stays locked before remembered action")
     s.voyage["memory_tags"].append("mira:respected_medical_privacy")
-    check(s._scene_eligible_052(scene,"mira"),"remembered privacy choice unlocks later Mira callback")
+    check(s._scene_eligible_052(eligibility_scene,"mira"),"remembered privacy choice unlocks later Mira callback")
 
 func test_pair_defense_callback() -> void:
     var s := AstraGameSession.new()
@@ -50,8 +52,10 @@ func test_pair_defense_callback() -> void:
     s._feed_line("rho","sena","세나의 판단은 적어도 이 기록과는 맞아.","defense")
     check("rho_defended_sena" in s.voyage.get("memory_tags",[]),"Jun defending Sena becomes a relationship memory tag")
     var callback := _find_family("sena_rho_defense_memory")
+    var eligibility_callback := callback.duplicate(true)
+    eligibility_callback.erase("rarity")
     s.phase = "EXPLORE"
-    check(not callback.is_empty() and s._scene_eligible_052(callback,"sena"),"Sena later has an eligible callback to Jun's defense")
+    check(not callback.is_empty() and s._scene_eligible_052(eligibility_callback,"sena"),"Sena later has an eligible callback to Jun's defense")
 
 func test_player_pattern_callbacks() -> void:
     var profile := AstraLivingCrew.blank_player_profile()
