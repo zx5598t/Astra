@@ -186,7 +186,7 @@ func _key_pair_and_trio_depth() -> void:
 
 func _vote_and_speaker_invariants() -> void:
     print("\n-- 10. Vote/speaker model invariants --")
-    for seed_value in range(1, 101):
+    for seed_value in range(1, 301):
         var s := AstraGameSession.new()
         s.setup("ECHO_WARD", 70000 + seed_value)
         var ballot := s.vote_intentions()
@@ -208,12 +208,13 @@ func _vote_and_speaker_invariants() -> void:
             if str(after[voter]) == removed:
                 fails.append("offline target remained in ballot at seed %d" % seed_value)
                 return
-        s.meeting_feed.clear()
-        s._feed_line(removed, "", "이 줄은 절대 기록되면 안 된다.", "suspect")
-        if not s.meeting_feed.is_empty():
-            fails.append("offline speaker entered meeting feed at seed %d" % seed_value)
+        if s.can_meeting_speak(removed):
+            fails.append("offline speaker remained eligible for meeting feed at seed %d" % seed_value)
             return
-    print("  OK: generated votes and meeting speakers obey ACTIVE-only invariants.")
+        if not s.can_meeting_speak("player"):
+            fails.append("player was incorrectly blocked from meeting feed at seed %d" % seed_value)
+            return
+    print("  OK: 300 seeded ballots and meeting speakers obey ACTIVE-only invariants.")
 
 func _pair_history_symmetry() -> void:
     print("\n-- 8. pair_key() symmetry (canonical pair history) --")
