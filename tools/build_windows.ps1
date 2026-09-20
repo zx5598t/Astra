@@ -25,6 +25,7 @@ try {
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/npc_autonomy_tests.gd') "$logDir\autonomy-053.log" 'ASTRA 0.5.3 AUTONOMY TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/knowledge_propagation_tests.gd') "$logDir\knowledge-053.log" 'ASTRA 0.5.3 KNOWLEDGE PROPAGATION TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/relationship_callback_tests.gd') "$logDir\callbacks-053.log" 'ASTRA 0.5.3 RELATIONSHIP CALLBACK TESTS OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/heartbeat_053_simulation.gd') "$logDir\heartbeat-053.log" 'ASTRA 0.5.3 HEARTBEAT SIMULATION OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/story_consistency_tests.gd') "$logDir\story-consistency.log" 'ASTRA STORY CONSISTENCY TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/content_audit.gd') "$logDir\content-audit.log" 'ASTRA CONTENT AUDIT OK'
     $exe = Join-Path $packageDir 'ASTRA.exe'
