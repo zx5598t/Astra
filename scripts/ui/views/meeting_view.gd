@@ -53,7 +53,7 @@ func setup(game_screen) -> void:
     add_child(head_row)
     _header = AstraUI.rich(AstraUI.T_HEAD)
     head_row.add_child(_header)
-    _auto_toggle = AstraUI.button("자동 진행 · 꺼짐", AstraUI.MUTED, AstraUI.T_META, 34)
+    _auto_toggle = AstraUI.button("회의 자동 넘김 · 꺼짐", AstraUI.MUTED, AstraUI.T_META, 34)
     _auto_toggle.tooltip_text = AstraCodex.tooltip("auto")
     _auto_toggle.pressed.connect(_toggle_auto)
     head_row.add_child(_auto_toggle)
@@ -143,7 +143,7 @@ func _toggle_auto() -> void:
     var settings = screen.app.settings
     settings.auto_advance = not settings.auto_advance
     settings.save_data()
-    _auto_toggle.text = "자동 진행 · 켬" if settings.auto_advance else "자동 진행 · 꺼짐"
+    _auto_toggle.text = "회의 자동 넘김 · 켬" if settings.auto_advance else "회의 자동 넘김 · 꺼짐"
     if settings.auto_advance:
         _schedule_auto()
     else:
@@ -216,11 +216,14 @@ func _add_entry(entry: Dictionary) -> void:
     if not is_player:
         _seen_speakers[speaker] = true
     if bool(entry.get("topic_transition", false)):
-        var topic := str(entry.get("topic", ""))
-        var topic_text := session.name_of(topic) if session.crew.has(topic) else str(tag[0])
-        _feed_box.add_child(AstraUI.label("새 논점 · " + topic_text, AstraUI.T_META, AstraUI.GOLD))
+        var topic_text := str(entry.get("topic_label", str(tag[0])))
+        var divider := AstraUI.label("────  다음 논점 · %s  ────" % topic_text, AstraUI.T_META, AstraUI.GOLD)
+        divider.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        _feed_box.add_child(divider)
     elif str(entry.get("reply_to", "")) != "":
-        _feed_box.add_child(AstraUI.label("↳ 직전 발언에 대한 답", AstraUI.T_META, AstraUI.DIM))
+        var reply_context := str(entry.get("reply_context", ""))
+        if reply_context != "":
+            _feed_box.add_child(AstraUI.label(reply_context, AstraUI.T_META, AstraUI.DIM))
     var card := AstraUI.speaker_card(
         speaker,
         "탐사요원" if is_player else "%s (%s)" % [session.name_of(speaker), AstraCrewCatalog.role_short(speaker)],
