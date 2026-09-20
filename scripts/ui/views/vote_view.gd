@@ -19,7 +19,7 @@ func refresh() -> void:
     var session: AstraGameSession = screen.session
     AstraUI.clear(_body)
     var head := AstraUI.rich(18)
-    head.text = "[b]격리 투표 · DAY %d[/b]   [color=#%s]살아 있는 승무원 %d명이 각 1표, 탐사요원이 %d표. 최다 득표자가 격리됩니다.[/color]" % [session.day, AstraUI.hex(AstraUI.MUTED), session.living_ids().size(), AstraGameSession.PLAYER_VOTE_WEIGHT]
+    head.text = "[b]긴급 장기수면 격리 · DAY %d[/b]   [color=#%s]활동 중인 승무원 %d명이 각 1표, 탐사요원이 %d표입니다.[/color]" % [session.day, AstraUI.hex(AstraUI.MUTED), session.eligible_voters().size(), AstraGameSession.PLAYER_VOTE_WEIGHT]
     _body.add_child(head)
     if session.vote_cast:
         _result(session)
@@ -29,7 +29,10 @@ func refresh() -> void:
 func _ballot(session: AstraGameSession) -> void:
     var target: String = screen.selected_id()
     var target_alive := session.is_alive(target)
-    _body.add_child(AstraUI.prose("누구의 설명이 끝내 맞지 않았는가. 이름을 선택하고 판단을 내려 주세요.", AstraUI.T_BODY, AstraUI.TEXT))
+    var explain := AstraUI.panel(Color(AstraUI.GOLD,0.05),Color(AstraUI.GOLD,0.34),10,12)
+    explain.add_child(AstraUI.prose("가장 많은 표를 받은 승무원은 사망하지 않습니다. 사건이 끝날 때까지 장기수면 포드로 이동해 행동·회의·투표에서 제외됩니다.", AstraUI.T_META, AstraUI.TEXT))
+    _body.add_child(explain)
+    _body.add_child(AstraUI.prose("설명이 끝내 맞지 않는 사람이 있다면 장기수면 격리 대상으로 선택하세요. 직접 근거가 부족하면 기권할 수 있습니다.", AstraUI.T_BODY, AstraUI.TEXT))
 
     # Last words from the two people the room is circling, before anyone votes.
     var statements := session.final_statements()
@@ -59,7 +62,7 @@ func _ballot(session: AstraGameSession) -> void:
         var info := AstraUI.vbox(4)
         info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         row.add_child(info)
-        info.add_child(AstraUI.label("격리 대상", 13, AstraUI.DIM))
+        info.add_child(AstraUI.label("장기수면 격리 대상", 13, AstraUI.DIM))
         info.add_child(AstraUI.label("%s · %s" % [member.display_name, member.job], 22, member.accent))
         info.add_child(AstraUI.label("개표 전에는 다른 승무원의 표를 알 수 없습니다.",14,AstraUI.MUTED))
     else:
@@ -73,7 +76,7 @@ func _ballot(session: AstraGameSession) -> void:
     abstain.pressed.connect(_confirm.bind(""))
     buttons.add_child(abstain)
     buttons.add_child(AstraUI.spacer())
-    var vote := AstraUI.button("%s 격리 투표" % (session.name_of(target) if target_alive else "대상 선택 필요"), AstraUI.RED, 17, 50, true)
+    var vote := AstraUI.button("%s 장기수면 격리 대상으로 선택" % (session.name_of(target) if target_alive else "대상 선택 필요"), AstraUI.RED, 17, 50, true)
     vote.custom_minimum_size = Vector2(300, 50)
     vote.disabled = not target_alive
     vote.pressed.connect(_confirm.bind(target))
@@ -131,7 +134,7 @@ func _confirm(target: String) -> void:
     if target == "":
         body = "기권하면 승무원들의 표만으로 격리가 결정됩니다. 동률이면 아무도 격리되지 않습니다."
     else:
-        body = AstraJosa.eul(session.name_of(target)) + " 격리 대상으로 투표합니다. 실제 격리는 전체 득표로 결정됩니다. 격리된 사람의 정체는 사건이 끝날 때까지 공개되지 않습니다."
+        body = AstraJosa.eul(session.name_of(target)) + " 장기수면 격리 대상으로 선택합니다. 최다 득표자가 포드로 이동하며, 정체는 사건이 끝날 때까지 공개되지 않습니다."
     screen.confirm("투표를 확정할까요?", body, "확정", func():
         _cast(target)
     )
@@ -147,9 +150,9 @@ func _cast(target: String) -> void:
     screen.fx.flash(AstraUI.RED, 0.14)
     var isolated := str(vote.get("isolated", ""))
     if isolated != "":
-        screen.fx.banner("격리 · " + session.name_of(isolated), "%d표로 격리가 결정됐다." % int(vote.get("top", 0)), AstraUI.RED, 1.2)
+        screen.fx.banner("장기수면 격리 · " + session.name_of(isolated), "%d표로 포드 이동이 결정됐다." % int(vote.get("top", 0)), AstraUI.RED, 1.2)
     else:
-        screen.fx.banner("격리 무산", "표가 갈려 아무도 격리되지 않았다.", AstraUI.GOLD, 1.2)
+        screen.fx.banner("장기수면 격리 없음", "충분한 합의가 없어 아무도 포드로 이동하지 않았다.", AstraUI.GOLD, 1.2)
 
 # Ballots are opened one at a time. The tally was already decided when the vote
 # was cast — nothing here changes the outcome — but reading "Noa → Jun" six
@@ -157,6 +160,7 @@ func _cast(target: String) -> void:
 # of comma-separated text (§19).
 func _count_panel(session: AstraGameSession, vote: Dictionary) -> Control:
     var intentions: Dictionary = vote.get("intentions", {})
+    var reasons: Dictionary = vote.get("vote_reasons", {})
     var voters: Array = []
     for voter in session.active_roster():
         if intentions.has(voter):
@@ -203,11 +207,17 @@ func _count_panel(session: AstraGameSession, vote: Dictionary) -> Control:
             who.custom_minimum_size.x = 72
             row.add_child(who)
         row.add_child(AstraUI.label("→", AstraUI.T_BODY, AstraUI.DIM))
-        row.add_child(AstraUI.crew_dot(picked, 26))
-        row.add_child(AstraUI.label(session.name_of(picked), AstraUI.T_BODY, AstraCrewCatalog.accent(picked)))
+        if picked == "":
+            row.add_child(AstraUI.label("기권", AstraUI.T_BODY, AstraUI.MUTED))
+        else:
+            row.add_child(AstraUI.crew_dot(picked, 26))
+            row.add_child(AstraUI.label(session.name_of(picked), AstraUI.T_BODY, AstraCrewCatalog.accent(picked)))
         if int(ballot["weight"]) > 1:
             row.add_child(AstraUI.chip("%d표" % int(ballot["weight"]), AstraUI.CYAN, AstraUI.T_META - 2))
         rows.add_child(row)
+        if voter != "player" and reasons.has(voter):
+            var reason := AstraUI.label("이유 · " + str(reasons[voter]), AstraUI.T_META - 1, AstraUI.DIM, true)
+            rows.add_child(reason)
         AstraUI.fade_in(row, 0.14)
         screen.fx.play("vote")
         if index[0] >= ballots.size():
@@ -234,13 +244,14 @@ func _result(session: AstraGameSession) -> void:
         var info := AstraUI.vbox(4)
         info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         row.add_child(info)
-        info.add_child(AstraUI.label("격리 결정", 13, AstraUI.DIM))
+        info.add_child(AstraUI.label("장기수면 격리 결정", 13, AstraUI.DIM))
         info.add_child(AstraUI.label("%s · %d표" % [member.display_name, int(vote.get("top", 0))], 26, member.accent))
+        info.add_child(AstraUI.label(str(vote.get("isolation_text", "보안 절차에 따라 장기수면 포드로 이동합니다.")), 15, AstraUI.TEXT, true))
         info.add_child(AstraUI.label("“%s”" % str(vote.get("last_words", "")), 16, AstraUI.TEXT, true))
         box.add_child(AstraUI.label("정체는 공개되지 않습니다.%s" % (" 감사관이 오늘 밤 생체 기록을 감사합니다." if session.protocol == "AUDITOR" else ""), 13, AstraUI.MUTED))
     else:
-        box.add_child(AstraUI.label("격리 무산", 26, AstraUI.GOLD))
-        box.add_child(AstraUI.label("표가 동률로 갈려 아무도 격리되지 않았습니다.", 15, AstraUI.TEXT))
+        box.add_child(AstraUI.label("장기수면 격리 없음", 26, AstraUI.GOLD))
+        box.add_child(AstraUI.label("동률이거나 충분한 근거가 없어 아무도 포드로 이동하지 않았습니다.", 15, AstraUI.TEXT))
     _body.add_child(_count_panel(session, vote))
     _body.add_child(AstraUI.section("최종 득표 (탐사요원 표 포함)", AstraUI.GOLD))
     _body.add_child(_tally_bars(session, vote.get("tally", {}), str(vote.get("player_target", ""))))
