@@ -3394,6 +3394,7 @@ static func all_scenes() -> Array:
     var result: Array = SCENES.duplicate(true)
     result.append_array(AstraStorylets052.scenes())
     result.append_array(AstraStorylets053.scenes())
+    result.append_array(AstraStorylets054.scenes())
     return result
 
 static func scene(id: String) -> Dictionary:
