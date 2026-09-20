@@ -217,7 +217,8 @@ func _add_entry(entry: Dictionary) -> void:
         _seen_speakers[speaker] = true
     if bool(entry.get("topic_transition", false)):
         var topic_text := str(entry.get("topic_label", str(tag[0])))
-        var divider := AstraUI.label("────  다음 논점 · %s  ────" % topic_text, AstraUI.T_META, AstraUI.GOLD)
+        var thread_label := str({"FACT_THREAD":"기록","RELATION_THREAD":"관계","DECISION_THREAD":"결정"}.get(str(entry.get("thread_type","")),"논점"))
+        var divider := AstraUI.label("────  %s · %s  ────" % [thread_label,topic_text], AstraUI.T_META, AstraUI.GOLD)
         divider.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         _feed_box.add_child(divider)
     elif str(entry.get("reply_to", "")) != "":
