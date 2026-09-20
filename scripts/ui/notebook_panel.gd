@@ -61,13 +61,22 @@ func cycle_tab() -> void:
 func refresh() -> void:
     AstraUI.clear(_clue_list)
     if not session.voyage.is_empty():
+        var questions := session.current_questions()
+        if not questions.is_empty():
+            _clue_list.add_child(AstraUI.label("현재 질문",20,AstraUI.GOLD))
+            for question in questions:
+                var status := str(question.get("status","OPEN"))
+                var prefix := "?" if status == "OPEN" else ("◐" if status == "PARTIAL" else "↻")
+                _clue_list.add_child(AstraUI.prose("%s %s" % [prefix,str(question.get("text",""))],17,AstraUI.TEXT))
         _clue_list.add_child(AstraUI.label("함께 확인한 것",20,AstraUI.CYAN))
         for note in session.voyage.get("notes",[]):
             _clue_list.add_child(AstraUI.prose(str(note),17,AstraUI.TEXT))
         if int(session.voyage.get("loop",0)) > 0:
-            _clue_list.add_child(AstraUI.label("지난번과 달라진 점",20,AstraUI.CYAN))
-            for note in session.voyage.get("changes",[]):
-                _clue_list.add_child(AstraUI.prose(str(note),16,AstraUI.MUTED))
+            var differences := session.loop_difference_summary()
+            if not differences.is_empty():
+                _clue_list.add_child(AstraUI.label("지난 기록과 달라진 점",20,AstraUI.CYAN))
+                for note in differences:
+                    _clue_list.add_child(AstraUI.prose(str(note),16,AstraUI.MUTED))
     var found := session.found_clues()
     if found.is_empty():
         _clue_list.add_child(AstraUI.label("아직 확보한 단서가 없습니다. 현장의 단말과 흔적을 살펴보세요.",16,AstraUI.MUTED,true))
@@ -176,6 +185,10 @@ func _refresh_people() -> void:
         head.add_child(AstraUI.label(member.job, AstraUI.T_META, AstraUI.DIM))
         if not member.is_alive():
             head.add_child(AstraUI.chip("격리 또는 두절", AstraUI.RED, AstraUI.T_META - 2))
+        if not session.voyage.is_empty():
+            for observation in session.character_observations(npc_id):
+                box.add_child(AstraUI.prose("· " + str(observation), AstraUI.T_META, AstraUI.TEXT))
+            continue
         var claim: Dictionary = session.known_claims.get(npc_id, {})
         if claim.is_empty():
             box.add_child(AstraUI.label("진술 · 아직 듣지 못함", AstraUI.T_META, AstraUI.DIM))
