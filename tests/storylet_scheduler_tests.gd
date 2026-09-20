@@ -47,7 +47,7 @@ func test_multiline_coherence_metadata() -> void:
         var relations: Array = scene.get("line_relations",[])
         check(relations.size() == lines.size(),str(scene.get("id","")) + " has one coherence relation per line")
         for relation in relations:
-            check(str(relation) in ["anchor","reply","clarify","challenge","support","transition","proposal","agreement","accept","followup","inference","mediate","condition","question","answer","deflect","boundary","acknowledge","decision","instruction","resolution","tease"],str(scene.get("id","")) + " uses a meaningful dialogue relation")
+            check(str(relation) in ["anchor","reply","clarify","challenge","support","transition","proposal","agreement","accept","followup","inference","mediate","condition","question","answer","deflect","boundary","acknowledge","decision","instruction","resolution","tease","explain"],str(scene.get("id","")) + " uses a meaningful dialogue relation")
         checked += 1
     check(checked >= 20,"0.5.3 audits many authored multi-line scenes (%d)" % checked)
 
