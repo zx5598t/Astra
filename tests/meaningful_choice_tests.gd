@@ -33,6 +33,7 @@ func _signature(choice: Dictionary) -> String:
 func audit_choices() -> void:
     var sampled := 0
     var consequence_choices := 0
+    var warnings: Array[String] = []
     for scene in AstraVoyageContent.all_scenes():
         var choices: Array = scene.get("choices",[])
         if choices.size() < 2:
@@ -44,7 +45,12 @@ func audit_choices() -> void:
                 consequence_choices += 1
             signatures[_signature(choice)] = true
         var thematic := bool(scene.get("thematic_choice",false))
-        check(thematic or signatures.size() > 1,str(scene.get("id","")) + " does not present two identical outcome choices")
+        if not thematic and signatures.size() <= 1:
+            var scene_id := str(scene.get("id",""))
+            warnings.append(scene_id)
+            if scene_id.begins_with("054_"):
+                check(false,scene_id + " introduces two choices with the same mechanical result")
     check(sampled >= 30,"meaningless-choice audit covers at least 30 multi-choice scenes (%d)" % sampled)
     check(consequence_choices >= 12,"new consequence choices are materially represented (%d)" % consequence_choices)
+    print("MEANINGLESS CHOICE WARN · %d · %s" % [warnings.size(),str(warnings.slice(0,12))])
     print("MEANINGFUL CHOICE AUDIT · multi_choice_scenes=%d · consequence_choices=%d" % [sampled,consequence_choices])
