@@ -70,6 +70,7 @@ static func generate(case_id: String, seed_value: int, null_history: Array = [],
             innocents.append(str(npc_id))
     _shuffle(innocents, rng)
     var herring := str(innocents[0])
+    var herring_reason := str(INNOCENT_SECRET_TYPES[rng.randi_range(0, INNOCENT_SECRET_TYPES.size() - 1)])
 
     # 2. True positions during the incident window
     var positions := {}
@@ -134,7 +135,16 @@ static func generate(case_id: String, seed_value: int, null_history: Array = [],
             if pos != herring_pos:
                 herring_options.append(pos)
     var herring_claim := str(herring_options[rng.randi_range(0, herring_options.size() - 1)])
-    claims[herring] = {"position": herring_claim, "companions": [], "lie": true, "secret": true}
+    if herring_reason == "MISREMEMBERED":
+        claims[herring] = {
+            "position": herring_claim, "companions": [], "lie": false, "secret": false,
+            "misremembered": true, "innocent_reason": herring_reason
+        }
+    else:
+        claims[herring] = {
+            "position": herring_claim, "companions": [], "lie": true, "secret": true,
+            "misremembered": false, "innocent_reason": herring_reason
+        }
 
     # Nulls pick cover stories. Quiet commons first, crowded commons next, logged rooms last.
     var quiet: Array = []
@@ -306,6 +316,7 @@ static func generate(case_id: String, seed_value: int, null_history: Array = [],
         "positions": positions,
         "claims": claims,
         "herring": herring,
+        "herring_reason": herring_reason,
         "mutual_alibi": mutual,
         "sightings": sightings,
         "clues": clues,
