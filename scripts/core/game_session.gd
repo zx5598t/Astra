@@ -3522,6 +3522,10 @@ func _voyage_scene(scene: Dictionary) -> void:
     var who := str(scene.get("speaker",""))
     if who != "" and who not in voyage["met"]:
         voyage["met"].append(who)
+    for participant in scene.get("participants", []):
+        var participant_id := str(participant)
+        if participant_id in roster and participant_id not in voyage["met"]:
+            voyage["met"].append(participant_id)
     var id := str(scene.get("id",""))
     voyage["seen"][id] = int(voyage["seen"].get(id,0)) + 1
     voyage["recent"].append(id)
@@ -3607,6 +3611,14 @@ func voyage_talk(who: String, topic: String = "") -> bool:
             if int(voyage["actions"]) < 5 or int(voyage["seen"].get(scene["id"],0)) > 0: continue
         if tag == "pair" and scene.get("target", "") not in voyage_people():
             continue
+        if tag == "trio":
+            var trio_ok := true
+            for participant in scene.get("participants", []):
+                if str(participant) not in roster or not crew.has(str(participant)) or not crew[str(participant)].is_alive():
+                    trio_ok = false
+                    break
+            if not trio_ok:
+                continue
         if tag == "trust" and bond < 0.25: continue
         if tag == "distant" and bond > -0.15: continue
         if tag == "echo" and (int(voyage["loop"]) < 1 or absf(echo) < 0.1): continue
