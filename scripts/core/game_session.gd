@@ -4340,7 +4340,8 @@ func voyage_talk(who: String, topic: String = "") -> bool:
         if tag in ["personal","echo","secret"]:
             if int(voyage["actions"]) < 5 or int(voyage["seen"].get(scene["id"],0)) > 0: continue
         if tag == "pair":
-            if scene.get("target", "") not in voyage_people() or not _pair_scene_context_ok(scene):
+            var pair_target := str(scene.get("target",""))
+            if pair_target == "" or pair_target not in voyage.get("met",[]) or not crew.has(pair_target) or not crew[pair_target].is_alive() or not _pair_scene_context_ok(scene):
                 continue
         if tag == "trio":
             var trio_ok := true
