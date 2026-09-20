@@ -929,8 +929,49 @@ func ask(npc_id: String, intent: String, clue_id: String = "") -> Dictionary:
     member.refresh_expression()
     member.remember("DAY %d · 탐사요원 질문 %s" % [day, intent])
     _recompute_contradictions()
+    var reaction := _dialogue_reaction(member, intent, result)
+    if not reaction.is_empty():
+        result["reaction"] = reaction
     changed.emit()
     return result
+
+func _dialogue_reaction(member: AstraCrewMember, intent: String, result: Dictionary) -> Dictionary:
+    var code := ""
+    var text := ""
+    if bool(result.get("slip", false)):
+        code = "SHAKEN"
+        text = "%s|eun 잠시 말을 잃었다." % member.display_name
+    elif bool(result.get("secret", false)):
+        code = "CONVINCED"
+        text = "%s|eun 숨기던 사정을 털어놓았다." % member.display_name
+    elif bool(result.get("deflected", false)):
+        code = "RESISTED"
+        text = "%s|eun 질문을 비켜 갔다." % member.display_name
+    elif intent == "REASSURE":
+        code = "CONVINCED"
+        text = "%s의 경계가 조금 풀렸다." % member.display_name
+    elif intent == "PRESSURE":
+        code = "ANGERED" if member.trust < 0.35 else "SHAKEN"
+        text = ("%s|eun 아직 납득하지 않았다." if code == "ANGERED" else "%s|eun 잠시 대답을 고른다.") % member.display_name
+    elif intent == "CONTRADICTION":
+        if member.is_null():
+            code = "RESISTED"
+            text = "%s|eun 설명을 굽히지 않았다." % member.display_name
+        elif member.stress >= 0.55:
+            code = "SHAKEN"
+            text = "%s|eun 기록을 다시 확인하려 한다." % member.display_name
+        else:
+            code = "UNCERTAIN"
+            text = "%s|eun 바로 결론 내리지 못했다." % member.display_name
+    elif intent == "EVIDENCE":
+        code = "SHAKEN" if member.stress >= 0.45 else "UNCERTAIN"
+        text = ("%s|eun 기록을 받아들였지만 표정이 굳었다." if code == "SHAKEN" else "%s|eun 기록을 더 확인하려 한다.") % member.display_name
+    elif intent == "TRUST":
+        code = "RESISTED" if member.trust < 0.25 else "UNCERTAIN"
+        text = ("%s|eun 당신의 판단을 경계한다." if code == "RESISTED" else "%s|eun 자신의 판단을 설명하려 한다.") % member.display_name
+    if code == "":
+        return {}
+    return {"code": code, "text": _josa_inline(text)}
 
 # The open questions added in 0.4.0. They cost the same as any other question
 # and never hand over the answer; what they give is a second and third way to
