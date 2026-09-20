@@ -2796,12 +2796,31 @@ func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int =
             var before := str(previous_intentions.get(voter, ""))
             var after := str(intentions.get(voter, ""))
             if before != after:
-                var change := {"voter":str(voter),"before":before,"after":after,"reason":str(reasons.get(voter,"")),"reason_tag":"new_evidence" if str(reasons.get(voter,"")) != "" else "relationship_change"}
+                var trace: Dictionary = decision_traces.get(voter,{})
+                var strongest := str(trace.get("strongest_reason","accumulated_behavior"))
+                var reason_tag := "new_evidence"
+                if strongest in ["relationship_friction","relationship_support"]:
+                    reason_tag = "relationship_change"
+                elif strongest == "accumulated_behavior":
+                    reason_tag = "memory_change"
+                elif strongest == "insufficient_evidence":
+                    reason_tag = "uncertainty"
+                var change := {
+                    "voter":str(voter),"before":before,"after":after,
+                    "reason":str(reasons.get(voter,"")),"reason_tag":reason_tag,
+                    "strongest_reason":strongest
+                }
                 vote_changes.append(change)
                 if not voyage.is_empty():
+                    var relation_context := ""
+                    if after != "" and crew.has(str(voter)) and crew.has(after):
+                        relation_context = relationship_status(str(voter),after)
                     voyage["opinion_changes"].append({
                         "actor":str(voter),"before":before,"after":after,
-                        "reason_tag":str(change["reason_tag"]),"reason":str(change["reason"]),
+                        "reason_tag":reason_tag,"reason":str(change["reason"]),
+                        "strongest_reason":strongest,
+                        "known_facts":AstraKnowledgeModel.known_facts(flags,str(voter)),
+                        "relationship_context":relation_context,
                         "source":"vote","day":day
                     })
     last_vote["vote_changes"] = vote_changes
