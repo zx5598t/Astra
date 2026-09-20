@@ -2087,7 +2087,7 @@ func _run_disputes(thread_budget: int) -> int:
             # answer from the person who was challenged.
             if spoken >= thread_budget or witness_id == last_speaker:
                 continue
-            var topic := "movement:" + target_id
+            var topic: String = "movement:" + target_id
             if heard:
                 _feed_npc(witness_id, "m_dispute_absent", {"pos": room_name(witness_pos), "target": name_of(target_id)}, "dispute", target_id, "anchor", topic)
             else:
@@ -2118,7 +2118,7 @@ func _run_disputes(thread_budget: int) -> int:
             meeting_pushers[null_id] = float(meeting_pushers.get(null_id, 0.0)) + 1.0
             if spoken >= thread_budget or null_id == last_speaker:
                 continue
-            var topic := "movement:" + crew_id
+            var topic: String = "movement:" + crew_id
             _feed_npc(null_id, "m_dispute_absent", {"pos": room_name(str(null_claim.get("position", ""))), "target": name_of(crew_id)}, "dispute", crew_id, "anchor", topic)
             _mark_dispute_public(null_id, crew_id)
             var target := npc(crew_id)
@@ -2162,7 +2162,7 @@ func _suspicion_round(max_threads: int) -> int:
         var target_id := str(item["target"])
         if speaker_id == last_speaker or target_id == "":
             continue
-        var topic := "suspicion:" + target_id
+        var topic: String = "suspicion:" + target_id
         _feed_npc(speaker_id, "m_suspect", {"target": name_of(target_id), "reason": AstraDialogue.reason_text(str(item["reason"]))}, "suspect", target_id, "anchor", topic)
         var target := npc(target_id)
         if target != null and target.is_alive():
@@ -2225,7 +2225,7 @@ func _feed_line(speaker_id: String, target_id: String, text: String, kind: Strin
         push_error("ASTRA invariant: inactive meeting speaker " + speaker_id)
         return
     var entry_id := "meeting_%d_%03d" % [day, meeting_feed.size()]
-    var topic := topic_override if topic_override != "" else (target_id if target_id != "" else kind)
+    var topic: String = topic_override if topic_override != "" else (target_id if target_id != "" else kind)
     var thread_id := entry_id
     var reply_to := ""
     var transition := false
