@@ -1957,7 +1957,7 @@ const SCENES := [
         "id": "eli_distant",
         "speaker": "eli",
         "tag": "distant",
-        "action": "창가에서돌아와 루칸이 화면을 축소해 전체 항로를 띄운다.",
+        "action": "항법창에서돌아와 루칸이 화면을 축소해 전체 항로를 띄운다.",
         "lines": [
             [
                 "eli",
@@ -2141,7 +2141,7 @@ const SCENES := [
         "id": "eli_grief",
         "speaker": "eli",
         "tag": "grief",
-        "action": "창가에서돌아와 루칸이 항로 화면에서 한 지점을 오래 바라본다.",
+        "action": "항법창에서돌아와 루칸이 항로 화면에서 한 지점을 오래 바라본다.",
         "lines": [
             [
                 "eli",
@@ -3329,7 +3329,7 @@ const SCENES := [
     {"id":"eli_star_fix","speaker":"eli","tag":"observation","action":"항법실앞에서 루칸이 항법 화면의 별 하나를 고정점으로 잠근다.","lines":[["eli","기록이 바뀌어도 저 별 위치까지 같이 바꾸진 못해."]],"choices":[]},
     {"id":"eli_seat_belt","speaker":"eli","tag":"everyday","action":"별지도곁에서 루칸이 앉지도 않으면서 의자 안전벨트를 반듯하게 정리한다.","lines":[["eli","꼬여 있으면 눈에 거슬려. 쓸 일 없어도."]],"choices":[]},
     {"id":"eli_fuel_route","speaker":"eli","tag":"work","action":"좌표를맞추다 루칸이 항로와 연료 소비 그래프를 겹쳐 본다.","lines":[["eli","둘 중 하나가 거짓말해. 같은 여행이면 같은 연료를 먹어야 하거든."]],"choices":[]},
-    {"id":"eli_soren_sound","speaker":"eli","tag":"personal","action":"창가에서돌아와 루칸이 소렌의 신호 좌표를 지도에 찍고 확대를 멈춘다.","lines":[["eli","소리는 못 믿어도 위치는 볼 수 있어. 적어도 나는 그렇게 해야 해."]],"choices":[]},
+    {"id":"eli_soren_sound","speaker":"eli","tag":"personal","action":"항법창에서돌아와 루칸이 소렌의 신호 좌표를 지도에 찍고 확대를 멈춘다.","lines":[["eli","소리는 못 믿어도 위치는 볼 수 있어. 적어도 나는 그렇게 해야 해."]],"choices":[]},
     {"id":"eli_window_sleep","speaker":"eli","tag":"everyday","action":"항로화면앞에서 루칸이 창가에 기대 잠깐 눈을 감았다가 바로 뜬다.","lines":[["eli","잠드는 건 괜찮아. 방향 모른 채 깨는 게 싫지."]],"choices":[]},
     {"id":"eli_drift","speaker":"eli","tag":"observation","action":"보정값을보다 루칸이 자동항법이 보정한 작은 편차를 따로 기록한다.","lines":[["eli","한 번이면 바람 같은 거야. 같은 방향으로 세 번이면 누가 민 거고."]],"choices":[]},
     {"id":"eli_old_map","speaker":"eli","tag":"work","action":"지도를펼치며 루칸이 종이 별지도를 펼쳐 화면 옆에 붙인다.","lines":[["eli","업데이트 안 되는 게 장점일 때도 있어. 적어도 어제랑 말이 달라지진 않으니까."]],"choices":[]},
