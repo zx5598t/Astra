@@ -3390,8 +3390,13 @@ const RESPONSES := {
 static func chapter(id: String) -> Dictionary:
     return CHAPTERS.get(id, CHAPTERS["DEAD_AIR"]).duplicate(true)
 
+static func all_scenes() -> Array:
+    var result: Array = SCENES.duplicate(true)
+    result.append_array(AstraStorylets052.scenes())
+    return result
+
 static func scene(id: String) -> Dictionary:
-    for item in SCENES:
+    for item in all_scenes():
         if item["id"] == id:
             return item.duplicate(true)
     return {}
