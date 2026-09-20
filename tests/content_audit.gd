@@ -124,6 +124,7 @@ func _personal_vs_everyday_ratio() -> void:
     var personal_tags := ["personal","secret","echo","grief","apology"]
     var everyday_tags := ["everyday","work","observation"]
     var ratios := []
+    var ratio_keys := {}
     for who in by_speaker:
         var personal := 0
         var everyday := 0
@@ -131,9 +132,14 @@ func _personal_vs_everyday_ratio() -> void:
             var tag := str(scene["tag"])
             if tag in personal_tags: personal += 1
             elif tag in everyday_tags: everyday += 1
-        ratios.append("%s %d:%d" % [who, personal, everyday])
+        var ratio_key := "%d:%d" % [personal, everyday]
+        ratio_keys[ratio_key] = true
+        ratios.append("%s %s" % [who, ratio_key])
     print("  " + ", ".join(PackedStringArray(ratios)))
-    warns.append("personal:everyday ratio is not yet differentiated per character (§11)")
+    if ratio_keys.size() < 4:
+        warns.append("personal:everyday mix is still too mechanically similar (%d distinct mixes)" % ratio_keys.size())
+    else:
+        print("  OK: character content mixes use %d distinct personal:everyday profiles." % ratio_keys.size())
 
 func _private_event_counts() -> void:
     print("\n-- 7. Private events per character --")
