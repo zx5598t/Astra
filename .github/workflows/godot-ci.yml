@@ -92,6 +92,13 @@ jobs:
           grep -q "ASTRA VOYAGE TESTS OK" voyage.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error" voyage.log; then exit 1; fi
 
+      - name: Story continuity and first-play regression
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/story_consistency_tests.gd 2>&1 | tee story-consistency.log
+          grep -q "ASTRA STORY CONSISTENCY TESTS OK" story-consistency.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" story-consistency.log; then exit 1; fi
+
       - name: 0.5.0 content depth and invariant audit
         run: |
           set -o pipefail
