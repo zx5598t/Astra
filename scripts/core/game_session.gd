@@ -1488,10 +1488,24 @@ func resolve_private_event(choice_index: int) -> Dictionary:
     if pending_event.is_empty():
         return {"ok": false}
     var choices: Array = pending_event.get("choices", [])
-    if choice_index < 0 or choice_index >= choices.size():
+    var passive := choices.is_empty()
+    if not passive and (choice_index < 0 or choice_index >= choices.size()):
         return {"ok": false}
     var npc_id := str(pending_event.get("npc_id", ""))
     var member := npc(npc_id)
+    if member == null:
+        return {"ok": false}
+    if passive:
+        var passive_result := {
+            "ok": true, "npc_id": npc_id, "effect": "observe", "lines": [],
+            "text": _josa_inline(str(pending_event.get("resolution", "잠시 말없이 그 장면을 지켜본다.")))
+        }
+        member.remember("DAY %d · 개인 면담 관찰" % day)
+        _transcript(npc_id, "narration", str(passive_result["text"]))
+        _log("개인 면담 · %s · 관찰" % member.display_name)
+        pending_event.clear()
+        changed.emit()
+        return passive_result
     var choice: Dictionary = choices[choice_index]
     var effect := str(choice.get("effect", ""))
     var result := {"ok": true, "npc_id": npc_id, "effect": effect, "lines": [], "text": ""}
