@@ -167,3 +167,57 @@ jobs:
           name: windows-validation-logs
           path: windows-*.log
           if-no-files-found: ignore
+
+  release-candidate-windows:
+    if: startsWith(github.ref, 'refs/heads/release/')
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read release candidate version
+        shell: pwsh
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          "ASTRA_VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Install Godot 4.7.2 and Windows export template
+        shell: pwsh
+        run: |
+          $base = 'https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable'
+          Invoke-WebRequest "$base/Godot_v4.7.2-stable_win64.exe.zip" -OutFile "$env:RUNNER_TEMP/godot.zip"
+          Expand-Archive "$env:RUNNER_TEMP/godot.zip" "$env:RUNNER_TEMP/godot"
+          Invoke-WebRequest "$base/Godot_v4.7.2-stable_export_templates.tpz" -OutFile "$env:RUNNER_TEMP/templates.zip"
+          $target = "$env:APPDATA/Godot/export_templates/4.7.2.stable"
+          New-Item -ItemType Directory $target -Force | Out-Null
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [IO.Compression.ZipFile]::OpenRead("$env:RUNNER_TEMP/templates.zip")
+          try {
+            foreach ($name in @('windows_release_x86_64.exe', 'version.txt')) {
+              $entry = $archive.GetEntry("templates/$name")
+              [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, "$target/$name", $true)
+            }
+          } finally { $archive.Dispose() }
+          "GODOT=$env:RUNNER_TEMP/godot/Godot_v4.7.2-stable_win64_console.exe" >> $env:GITHUB_ENV
+
+      - name: Run full Windows release-candidate build
+        shell: pwsh
+        run: ./tools/build_windows.ps1 -Godot $env:GODOT
+
+      - name: Upload Windows release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTRA-${{ env.ASTRA_VERSION }}-windows-rc
+          path: |
+            build/ASTRA-*-windows.zip
+            build/ASTRA-*-windows.zip.sha256
+          if-no-files-found: error
+
+      - name: Preserve release-candidate logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release-candidate-logs
+          path: build/logs/*
+          if-no-files-found: ignore
+
