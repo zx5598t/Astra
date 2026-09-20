@@ -101,7 +101,7 @@ func _sentence_openers() -> void:
         # Most Korean action narration naturally starts with the acting
         # character's name ("준이", "미라가"). That is not template smell.
         # Audit the first meaningful verb/object phrase after the subject.
-        if first_word in ["준이","마렌이","노아가","미라가","세나가","다렌이","루칸이","소렌이"] and words.size() > 1:
+        if first_word in ["준이","준은","마렌이","마렌은","노아가","노아는","미라가","미라는","세나가","세나는","다렌이","다렌은","루칸이","루칸은","소렌이","소렌은"] and words.size() > 1:
             first_word = words[1]
         openers[first_word] = int(openers.get(first_word, 0)) + 1
     var repeated: Array = []
@@ -157,10 +157,13 @@ func _private_event_counts() -> void:
     print("  " + str(counts) + " / total " + str(total))
     for npc_id in counts:
         var count := int(counts[npc_id])
-        if count < 4 or count > 7:
-            fails.append("private events for %s: %d (0.5.0 requires 4-7 per character)" % [npc_id, count])
-    if total < 40:
-        fails.append("private event pool only %d; 0.5.0 requires about 40+" % total)
+        if npc_id == "mira":
+            if count < 10 or count > 14:
+                fails.append("private events for Mira: %d (0.5.3 emotional-anchor target is 10-14)" % count)
+        elif count < 4 or count > 7:
+            fails.append("private events for %s: %d (other crew retain the 4-7 range)" % [npc_id, count])
+    if total < 47:
+        fails.append("private event pool only %d; 0.5.3 requires Mira depth without reducing other crew" % total)
 
 func _authored_scene_volume() -> void:
     print("\n-- 8. Authored voyage scene volume --")
@@ -194,7 +197,7 @@ func _key_pair_and_trio_depth() -> void:
             fails.append("key pair %s only has %d authored scenes; need at least 2" % [key,count])
     print("  trio scenes: %d" % trios)
     if trios < 4:
-        fails.append("only %d authored trio scenes; 0.5.0 requires occasional 3-person conversation" % trios)
+        fails.append("only %d authored trio scenes; 0.5.3 retains occasional 3-person conversation" % trios)
 
 func _vote_and_speaker_invariants() -> void:
     print("\n-- 10. Vote/speaker model invariants --")
