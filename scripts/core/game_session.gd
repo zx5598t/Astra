@@ -1849,10 +1849,9 @@ func _dispute_budget() -> int:
         return 1
     return 2 if day <= 1 else 3
 
-func _run_disputes() -> void:
+func _run_disputes(thread_budget: int) -> int:
     var positions: Dictionary = truth.get("positions", {})
     var spoken := 0
-    var budget := _dispute_budget()
     var last_speaker := ""
     for witness_id in living_ids():
         var witness: AstraCrewMember = crew[witness_id]
@@ -1878,18 +1877,24 @@ func _run_disputes() -> void:
             witness.add_suspicion(target_id, 0.2 if heard else 0.22)
             _crowd_shift(target_id, 0.06 if heard else 0.07, witness_id)
             meeting_pushers[witness_id] = float(meeting_pushers.get(witness_id, 0.0)) + 1.0
-            # Over budget, or the same voice twice running: the suspicion still
-            # moves, it simply is not staged as another speech.
-            if spoken >= budget or witness_id == last_speaker:
+            # The model resolves every contradiction, but the visible meeting
+            # stages only a few. Every staged challenge receives an immediate
+            # answer from the person who was challenged.
+            if spoken >= thread_budget or witness_id == last_speaker:
                 continue
-            spoken += 1
-            last_speaker = witness_id
             if heard:
                 _feed_npc(witness_id, "m_dispute_absent", {"pos": room_name(witness_pos), "target": name_of(target_id)}, "dispute", target_id)
             else:
                 _feed_npc(witness_id, "m_dispute_companion", {"target": name_of(target_id)}, "dispute", target_id)
             _mark_dispute_public(witness_id, target_id)
-    # Nulls who share a claimed place with honest crew push back with the same accusation.
+            var target := npc(target_id)
+            if target != null and target.is_alive():
+                _feed_npc(target_id, "m_react_accused_null" if target.is_null() else "m_react_accused_crew", {}, "defense", target_id)
+            spoken += 1
+            last_speaker = target_id
+
+    # Nulls can create a counter-claim, but it is staged under the same thread
+    # budget and the accused crew member answers it immediately.
     for null_id in living_null_ids():
         var null_claim := current_claim(null_id)
         for crew_id in living_crew_ids():
@@ -1904,12 +1909,16 @@ func _run_disputes() -> void:
             disputes_done[key] = true
             _crowd_shift(crew_id, 0.08, null_id)
             meeting_pushers[null_id] = float(meeting_pushers.get(null_id, 0.0)) + 1.0
-            if spoken >= budget + 1 or null_id == last_speaker:
+            if spoken >= thread_budget or null_id == last_speaker:
                 continue
-            spoken += 1
-            last_speaker = null_id
             _feed_npc(null_id, "m_dispute_absent", {"pos": room_name(str(null_claim.get("position", ""))), "target": name_of(crew_id)}, "dispute", crew_id)
             _mark_dispute_public(null_id, crew_id)
+            var target := npc(crew_id)
+            if target != null and target.is_alive():
+                _feed_npc(crew_id, "m_react_accused_crew", {}, "defense", crew_id)
+            spoken += 1
+            last_speaker = crew_id
+    return spoken
 
 func _mark_dispute_public(a: String, b: String) -> void:
     var ids := [a, b]
@@ -1925,7 +1934,7 @@ func _mark_dispute_public(a: String, b: String) -> void:
         public_contradiction_keys[key] = true
         stats["public_contradictions"] = int(stats.get("public_contradictions", 0)) + 1
 
-func _suspicion_round(max_speakers: int) -> void:
+func _suspicion_round(max_threads: int) -> int:
     var speakers: Array = []
     for npc_id in living_ids():
         var top := top_suspect_of(npc_id)
@@ -1936,21 +1945,23 @@ func _suspicion_round(max_speakers: int) -> void:
     var count := 0
     var last_speaker := _last_feed_speaker()
     for item in speakers:
-        if count >= max_speakers:
+        if count >= max_threads:
             break
         if float(item["value"]) < 0.34 and count > 0:
             break
         var speaker_id := str(item["id"])
         var target_id := str(item["target"])
-        # Nobody follows straight on from themselves. Two consecutive cards with
-        # the same face reads as a bug even when the content differs.
-        if speaker_id == last_speaker:
+        if speaker_id == last_speaker or target_id == "":
             continue
-        last_speaker = speaker_id
         _feed_npc(speaker_id, "m_suspect", {"target": name_of(target_id), "reason": AstraDialogue.reason_text(str(item["reason"]))}, "suspect", target_id)
+        var target := npc(target_id)
+        if target != null and target.is_alive():
+            _feed_npc(target_id, "m_react_accused_null" if target.is_null() else "m_react_accused_crew", {}, "defense", target_id)
         _crowd_shift(target_id, 0.05, speaker_id)
         meeting_pushers[speaker_id] = float(meeting_pushers.get(speaker_id, 0.0)) + 0.6
+        last_speaker = target_id
         count += 1
+    return count
 
 func _last_feed_speaker() -> String:
     if meeting_feed.is_empty():
