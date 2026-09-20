@@ -38,7 +38,7 @@ func simulate_500_loops() -> void:
     for run in range(500):
         var seed_value := 1540000 + run * 71
         var loop_index := run % 9
-        var chapter := ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"][run % 4]
+        var chapter: String = str(["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"][run % 4])
         var arcs := AstraStorylets054.select_arcs(seed_value,loop_index,chapter,roster,[],3)
         var routine := AstraCrewRoutineModel.build(seed_value,loop_index,chapter,roster,roster,["rho"] if run % 7 == 0 else [])
         var deviations: Array[String] = []
