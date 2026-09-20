@@ -1,93 +1,222 @@
-# QA REPORT — ASTRA 0.5.0
+# QA REPORT — ASTRA 0.5.3 HEARTBEAT
 
-검증일 2026-09-20 · Godot 4.7.2 stable · Linux + Windows x86_64
+검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64  
+작업 브랜치: `release/0.5.3`  
+기준 브랜치: `release/0.5.2 @ 8f383a2855501a8ab159b0d90805af24ddeec36a`
 
-0.5.0은 `release/0.5.0` 브랜치에서 검증한다. 일반 규칙/저장/UI 테스트뿐 아니라
-첫판 서사, 7개 장 연속 진행, 콘텐츠 수량/관계 구조, Windows 실제 실행과 Windows 배포 ZIP 생성까지
-릴리스 게이트에 포함했다.
+0.5.3은 0.5.2의 Living Crew / Knowledge / Decision 기반을 유지하면서 Mira Emotional Anchor, Living Dialogue, autonomous crew beat, knowledge propagation, storylet pity와 player-visible replay QA를 추가했다.
 
----
-
-## 현재 자동 검증
+## 자동 검증 상태
 
 | 검사 | 결과 |
 |---|---|
 | 프로젝트 import + 전 GDScript parse | OK |
 | 규칙·사건 생성·밸런스 | OK |
-| 캠페인·미션·저장 호환 | OK |
-| UI smoke (타이틀 → 사건 → 결과) | OK |
-| 가설·밤 행동·자산 회귀 | OK |
-| 온보딩·해금·Claim Ledger | OK |
-| 반복 플레이·역할 분포 | OK |
-| voyage 진행·기억·아이템 | OK |
-| 첫판 + 7개 장 연속 서사 정합성 | OK |
-| 0.5.0 content audit | **0 FAIL / 2 WARN** |
-| Windows Godot 4.7.2 import | OK |
-| Windows 모델 테스트 | OK |
+| campaign / mission / save compatibility | OK |
+| UI smoke | OK |
+| 1366×768 layout regression | OK |
+| 1920×1080 layout regression | OK |
+| 0.5.1 stabilization regression | OK |
+| 0.5.2 Living Crew invariants | OK |
+| 1,000 conversation simulation | OK |
+| 1,000 meeting simulation | OK |
+| 0.5.2 structural 500-loop diversity | OK |
+| Mira content / tone / Null / isolation regression | **36 checks OK** |
+| Storylet scheduler / pity / dialogue coherence | **119 checks OK** |
+| Autonomous crew invariant | **260 checks OK** |
+| Knowledge propagation | **12 checks OK** |
+| Relationship / promise / pair callback | **10 checks OK** |
+| 0.5.3 player-visible 500-loop simulation | **7 gates OK** |
+| Story consistency / first-play regression | OK |
+| Content audit | **0 FAIL / 1 WARN** |
+| Windows Godot import | OK |
+| Windows model tests | OK |
 | Windows UI smoke | OK |
-| Windows 메인 장면 부팅 | OK |
-| Windows 실제 release-candidate export | **OK** |
+| Windows main-scene boot | OK |
+| Windows release-candidate export | OK |
+| exported `ASTRA.exe` boot | OK |
 
-GitHub Actions에서 실제로 생성된 Windows 후보 빌드 아티팩트:
-`ASTRA-0.5.0-windows-rc` — 약 92.5 MB.
+## Authored content
 
----
+총 voyage/reactive authored scene: **473**
 
-## 0.5.0 핵심 불변조건
+| 인물 | scene |
+|---|---:|
+| 미라 | **80** |
+| 준 | 65 |
+| 다렌 | 59 |
+| 노아 | 63 |
+| 세나 | 56 |
+| 소렌 | 45 |
+| 루칸 | 43 |
+| 마렌 | 62 |
 
-- 투표자와 투표 대상은 ACTIVE 승무원만 가능하다.
-- 자기 자신에게 투표할 수 없다.
-- 장기수면 격리 또는 생체 신호 두절 상태의 승무원은 발언·투표·밤 행동 대상에서 빠진다.
-- 플레이어는 회의 발언이 가능하지만 비활성 NPC는 회의 feed에 들어갈 수 없다.
-- 위 규칙은 UI가 아니라 `AstraGameSession` 모델에서도 다시 검사한다.
-- content audit은 300개 시드에서 이 규칙을 반복 검증한다.
+0.5.3에서 추가한 authored scene: **81**
+- Mira pack: 27
+- 다른 7인 callback pack: 28
+- pair/trio social scene: 26
 
-## 첫판과 단계별 시스템 노출
+Private event:
+- 미라: **13**
+- 준: 5
+- 다렌: 5
+- 노아: 6
+- 세나: 5
+- 소렌: 4
+- 루칸: 4
+- 마렌: 5
+- 총: **47**
 
-| 장 | 핵심 시스템 |
-|---|---|
-| CALIBRATION | 전원 패널 1회 + 미라와 직접 대화 1회. 회의/투표/밤 없음 |
-| DEAD_AIR | 조사 + 대화 |
-| GLASS_GARDEN | 조사 + 대화 + 짧은 공개 확인 |
-| ECHO_WARD | 장기수면 격리 투표 + 첫 밤 보호/백업 도입 |
-| SILENT_ORBIT 이후 | 감시·휴식 등 밤 선택과 더 긴 회의/추리 구조 확장 |
+Pair / trio:
+- pair scene: **65**
+- distinct valid unordered pair: **16**
+- trio scene: **11**
+- missing target / self-pair: **0** — content audit에서 FAIL 처리
 
-브리핑과 상단 단계 표시도 실제로 해당 장에서 사용하는 단계만 노출한다. 아직 배우지 않은 시스템을
-미리 보여 주지 않는다.
+Autonomous crew beat: **27**
 
-## 캐릭터·관계 콘텐츠
+## Mira Emotional Anchor QA
 
-- 탐색용 authored scene: **280개**
-- 캐릭터별 장면 수: 약 **28~36개**로 서로 다르게 배분
-- 개인 이벤트: **총 40개**, 캐릭터당 4~6개
-- 핵심 관계 8쌍: 쌍마다 최소 2개의 전용 authored scene
-- 3인 대화: 4개
-- `pair_history`: 순서 독립적인 canonical pair key 사용
-- `echo`: familiarity / trust / protection / conflict / grief 5축 유지
+Mira authored speaker scene: **80**
 
-## 회의·대화
+현재 audit:
+- agency metadata scene: 4
+- player-specific scene: 20 / 80
+- private event: 13
+- CARE / DAILY / MEDICAL / PLAYER / RELATIONSHIP / ECHO / CONFLICT: 모두 존재
+- WARM / PROFESSIONAL / STRAINED 동일상황 response: 서로 다른 문장 확인
+- Mira Null seed sweep: Null 가능 확인
+- Mira isolated/offline: 이후 Living Crew scene eligibility 차단 확인
+- CALIBRATION 0.5.3 신규 storylet: 0
+- 중후반 ordinary optional Mira exposure cap: 4
 
-- 회의는 논점 단위로 연결되고 지목된 인물이 바로 답하는 구조를 사용한다.
-- 화면에서 **새 논점 / 직전 발언에 대한 답**을 표시한다.
-- 전체 공개 발언은 Claim Ledger에 남아 나중에 비교할 수 있다.
-- 자동 진행은 기본 OFF이며 중요한 발언에서 실제로 일시정지한다.
-- 심문 반응은 숨은 숫자 대신 **납득함 / 흔들림 / 아직 저항함 / 불확실 / 화남**으로 표시한다.
+Phrase audit:
+- “괜찮아요”: 1
+- “잠깐”: 7
+- “무리하지”: 0
+- “확인할게”: 2
+- “잃고 싶지”: 0
+- “사랑”: 0
 
-## 저장·배포
+강제 romance confession / 항상 플레이어 편 / Null 면역 / 격리 면역은 추가하지 않았다.
 
-- 기존 저장 필드와 내부 캐릭터 ID는 유지한다.
-- pair_history / echo 중첩 데이터는 저장 왕복 검증을 수행한다.
-- Windows 배포 전에 `story_consistency_tests.gd`와 `content_audit.gd`도 다시 실행한다.
-- release 브랜치에서는 GitHub의 Windows 가상 PC가 실제 export template을 설치하고
-  `tools/build_windows.ps1`을 실행해 ZIP과 SHA-256을 만든다.
+## 500-loop player-visible replay simulation
 
-## 남은 WARN
+최신 코드 검증 기준:
 
-`content_audit.gd`의 FAIL은 현재 0개다. 남은 WARN은 두 가지다.
+- loops: **500**
+- player-visible signatures: **500**
+- Mira optional exposure average: **2.50**
+- Mira optional exposure max: **4**
+- autonomous event unique coverage: **27 / 27**
+- relationship pair coverage: **16**
+- 0.5.3 authored scene coverage: **67.9%**
+- rare event immediate repeat: **0**
 
-1. 많은 장면의 행동문이 여전히 "미라가 / 준이 / 노아가 ..."처럼 인물 이름으로 시작한다.
-   기능 문제는 아니지만 장기적으로 문장 시작 리듬을 더 다양화할 수 있다.
-2. personal:everyday 장면 비율이 캐릭터마다 충분히 다르지 않다.
-   총량과 캐릭터별 수는 이미 분화되어 있으나 태그 비율까지 더 개성 있게 조정할 여지가 있다.
+이 signature는 seed 자체가 아니라 social theme + visible loop hook + 실제 노출된 0.5.3 scene + rare event를 기반으로 한다.
 
-두 항목 모두 릴리스 차단 문제는 아니며, 규칙·저장·Windows 실행/배포 검증은 통과한다.
+## Conversation / Meeting
+
+0.5.2에서 도입한 규모 검증을 그대로 유지한다.
+
+Conversation simulation:
+- samples: 1,000
+- topic mismatch: 0
+- empty response: 0
+
+Meeting simulation:
+- meetings: 1,000
+- bad reply: 0
+- inactive speaker: 0
+
+Meeting thread는 FACT_THREAD / RELATION_THREAD / DECISION_THREAD를 사용한다. 0.5.3 multi-line storylet은 line relation metadata를 별도로 audit한다.
+
+## Knowledge invariant
+
+0.5.3 전용 propagation test가 다음 경로를 검증한다.
+
+1. player가 fact 발견
+2. player → Noa 공유
+3. Soren은 아직 모름
+4. Noa → Soren 명시 공유
+5. Lucan은 아직 모름
+6. Soren → Lucan 명시 공유
+7. public 이후 active roster가 앎
+
+각 단계의 provenance가 남는다. private fact가 한 tick에 전원에게 퍼지는 diffusion은 없다.
+
+Autonomous NPC share도 source가 실제로 아는 fact만 전달할 수 있고 DecisionTrace에 share 이유/source fact를 남긴다.
+
+## Relationship / callback
+
+검증 대상:
+- player behavioral profile
+- Mira privacy memory
+- promise memory
+- broken promise tag
+- player accused/defended Mira
+- NPC→NPC public defense memory
+- pair callback eligibility
+
+관계 UI는 숫자를 직접 노출하지 않는다.
+
+## Content audit
+
+최신 결과: **0 FAIL / 1 WARN**
+
+남은 WARN:
+- 행동문 첫 의미 단어 반복: `당신이` 16, `다렌의` 7, `처음` 5, `의료실` 6
+
+이는 기능 오류나 template duplication FAIL은 아니지만 장기적으로 action prose의 문장 시작 리듬을 더 분산할 수 있다는 실제 품질 경고다.
+
+## 첫 30분
+
+회귀 금지:
+- CALIBRATION 필수 흐름 유지
+- CALIBRATION 0.5.3 신규 storylet 0
+- DEAD AIR autonomous beat 0
+- GLASS GARDEN autonomous beat 최대 1
+- 회의/투표/밤의 단계적 해금 유지
+- 금색 CTA와 contextual help 유지
+
+Mira 콘텐츠 총량 증가는 첫판 필수 텍스트 증가로 연결하지 않았다.
+
+## 저장 호환
+
+기존 snapshot/save 필드와 내부 캐릭터 ID를 유지한다.
+
+0.5.3 신규 상태:
+- storylet_pity
+- memory_tags
+- promise_history
+- autonomous_recent
+- visible_signatures
+- evidence_ownership 확장
+- dialogue memory 확장
+
+모두 선택적 nested field이며 오래된 저장에 없을 경우 기본값을 사용한다. 기존 save/campaign compatibility suite는 유지하고 통과한다.
+
+## Windows release gate
+
+`tools/build_windows.ps1`은 다음 순서를 완료해야 성공한다.
+
+1. import
+2. 전체 규칙/캠페인/UI/사회추리/반복 플레이 테스트
+3. 0.5.1 stabilization
+4. 0.5.2 Living Crew + 규모 simulation
+5. 0.5.3 HEARTBEAT 전용 tests + 500-loop
+6. story consistency
+7. content audit
+8. Windows export
+9. `ASTRA.exe` 존재 확인
+10. exported EXE headless boot
+11. ZIP
+12. SHA-256
+
+0.5.3 버전 승격 전 동일 코드 기준 release-candidate build와 exported EXE boot는 이미 통과했다. 최종 `VERSION=0.5.3` 승격 후 같은 pipeline을 다시 실행해 `ASTRA-0.5.3-windows.zip`을 생성한다.
+
+## 남은 실제 문제
+
+1. action prose opener 반복 WARN 1건.
+2. 473개 authored scene 전체를 사람이 직접 수동 플레이로 전부 검수한 것은 아니다. 자동 coverage와 coherence audit은 이를 보완하지만 완전한 인간 편집 검수와 동일하지는 않다.
+3. 공식 GitHub Release는 이 문서 작성 시점까지 과거 공개 버전에 머물러 있다. 0.5.3 release branch의 최종 green/Windows artifact 확인 후 main/tag 단계에서 정리한다.
