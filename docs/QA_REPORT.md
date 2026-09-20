@@ -213,18 +213,15 @@ Mira 콘텐츠 총량 증가는 첫판 필수 텍스트 증가로 연결하지 �
 11. ZIP
 12. SHA-256
 
-최종 `VERSION=0.5.3` 승격 후 GitHub Actions run `35526849292`에서 Linux validate, Windows validate, Windows release-candidate 세 job이 모두 성공했다.
+최종 `VERSION=0.5.3` 승격 후 Linux validate, Windows validate, Windows release-candidate 세 job을 다시 실행하며 모두 성공해야 release branch를 main으로 승격한다.
 
-최종 release-candidate:
-- source HEAD: `18e37062236bdc614f43cfd59c56f1482bf4c45d`
+배포 파일:
 - inner package: `ASTRA-0.5.3-windows.zip`
-- package size: **92,738,748 bytes** (약 88.44 MiB)
-- package SHA-256: `272c20341fef71f723c27fb7e7f8e5d2523c55434447308b81b4eaa8822f5570`
-- accompanying `.sha256` file: 위 값과 일치
-- exported `ASTRA.exe` headless boot: **OK**
-- GitHub Actions RC artifact: `ASTRA-0.5.3-windows-rc` (artifact ID 10609508763)
+- accompanying checksum: `ASTRA-0.5.3-windows.zip.sha256`
+- exported `ASTRA.exe` headless boot: release gate에서 반드시 **OK**
+- GitHub Actions RC artifact: `ASTRA-0.5.3-windows-rc`
 
-GitHub Actions가 업로드를 위해 다시 감싼 artifact ZIP의 크기/해시는 배포용 inner package와 별개이며, 배포 무결성 기준은 위 inner package SHA-256을 사용한다.
+ZIP은 패키징 시각 등 archive metadata 때문에 동일 소스의 재빌드에서도 byte-level SHA-256이 달라질 수 있다. 따라서 특정 빌드의 크기와 SHA-256을 이 소스 문서에 고정하지 않고, 실제 GitHub Release에 함께 첨부되는 `.sha256` 파일을 해당 artifact의 무결성 기준으로 사용한다. GitHub Actions가 업로드를 위해 다시 감싼 artifact ZIP의 digest 역시 배포용 inner package SHA-256과는 별개다.
 
 ## 남은 실제 문제
 
