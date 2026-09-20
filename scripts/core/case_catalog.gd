@@ -301,23 +301,37 @@ const CASES := {
 # does not spend a meeting action at all; only from SILENT_ORBIT on does a
 # chapter use the historical 3/3/2 baseline.
 const AP_PROFILE := {
-    # meeting stayed at a literal 0 in an earlier pass, but the crew's own
-    # votes lean on what the player presents in the meeting (see
-    # game_session.gd's vote/suspicion logic) — with zero meeting actions
-    # nobody ever hears the player's evidence, so votes never converge and
-    # the case becomes close to unsolvable even for a perfect-information
-    # player (§8's "meeting = 0" read too literally). One action keeps the
-    # first meeting light while leaving it solvable.
-    "DEAD_AIR": {"investigation": 2, "talk": 1, "meeting": 1},
-    "GLASS_GARDEN": {"investigation": 2, "talk": 2, "meeting": 1},
-    "ECHO_WARD": {"investigation": 2, "talk": 2, "meeting": 1},
-    "SILENT_ORBIT": {"investigation": 3, "talk": 3, "meeting": 2},
-    "RED_SHIFT": {"investigation": 3, "talk": 3, "meeting": 2},
-    "LAST_LIGHT": {"investigation": 3, "talk": 3, "meeting": 2}
+    # 0.5.0 teaches one system at a time. Difficulty comes from ambiguity and
+    # social consequences, not from forcing more clicks in the opening hour.
+    "CALIBRATION": {"investigation": 1, "talk": 1, "meeting": 0},
+    "DEAD_AIR": {"investigation": 1, "talk": 2, "meeting": 0},
+    "GLASS_GARDEN": {"investigation": 2, "talk": 3, "meeting": 1},
+    "ECHO_WARD": {"investigation": 3, "talk": 3, "meeting": 1},
+    "SILENT_ORBIT": {"investigation": 3, "talk": 4, "meeting": 2},
+    "RED_SHIFT": {"investigation": 3, "talk": 4, "meeting": 2},
+    "LAST_LIGHT": {"investigation": 3, "talk": 4, "meeting": 2}
+}
+
+# Story-driven phase flow. Early chapters deliberately omit systems the player
+# has not learned yet instead of showing disabled/meaningless screens.
+const PHASE_FLOW := {
+    "CALIBRATION": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "RESULT"],
+    "DEAD_AIR": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "RESULT"],
+    "GLASS_GARDEN": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "RESULT"],
+    "ECHO_WARD": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
+    "SILENT_ORBIT": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
+    "RED_SHIFT": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
+    "LAST_LIGHT": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"]
 }
 
 static func ap_profile(case_id: String, fallback: Dictionary) -> Dictionary:
     return AP_PROFILE.get(case_id, fallback)
+
+static func phase_flow(case_id: String) -> Array:
+    return PHASE_FLOW.get(case_id, ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"]).duplicate()
+
+static func has_phase(case_id: String, phase_id: String) -> bool:
+    return phase_id in phase_flow(case_id)
 
 static func has_case(case_id: String) -> bool:
     return CASES.has(case_id)
