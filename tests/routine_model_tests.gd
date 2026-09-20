@@ -25,10 +25,16 @@ func test_profiles() -> void:
     check(AstraCrewRoutineModel.ROUTINES.size() == 8,"all eight crew have routine profiles")
     check(AstraCrewRoutineModel.routine_types() >= 32,"routine library has multiple normal activities (%d)" % AstraCrewRoutineModel.routine_types())
     check(AstraCrewRoutineModel.deviation_reason_count() >= 10,"routine deviation vocabulary stays explicit (%d)" % AstraCrewRoutineModel.deviation_reason_count())
+    var authored_reasons := {}
     for npc_id in AstraCrewCatalog.ORDER:
         var profile: Dictionary = AstraCrewRoutineModel.ROUTINES.get(npc_id,{})
         check(not Array(profile.get("primary",[])).is_empty(),str(npc_id) + " has a primary spatial baseline")
-        check(not Array(AstraCrewRoutineModel.DEVIATIONS.get(npc_id,[])).is_empty(),str(npc_id) + " has authored non-random deviations")
+        var deviations: Array = AstraCrewRoutineModel.DEVIATIONS.get(npc_id,[])
+        check(not deviations.is_empty(),str(npc_id) + " has authored non-random deviations")
+        for raw in deviations:
+            authored_reasons[str(raw[1])] = true
+    for reason in AstraCrewRoutineModel.DEVIATION_REASONS:
+        check(authored_reasons.has(str(reason)),"defined deviation reason has an authored situation: " + str(reason))
 
 func test_early_game_guard() -> void:
     var roster := AstraCrewCatalog.ORDER.duplicate()
@@ -44,6 +50,16 @@ func test_early_game_guard() -> void:
     for npc_id in glass:
         glass_devs += 1 if bool(glass[npc_id].get("is_deviation",false)) else 0
     check(glass_devs <= 1,"GLASS GARDEN has at most one visible routine deviation")
+    var early_echo_seen := false
+    var innocent_null_activity_seen := false
+    for seed_value in range(300):
+        var state := AstraCrewRoutineModel.build(30000+seed_value,0,"LAST_LIGHT",roster,active,[])
+        for npc_id in state:
+            var reason := str(state[npc_id].get("deviation_reason",""))
+            early_echo_seen = early_echo_seen or reason == "ECHO"
+            innocent_null_activity_seen = innocent_null_activity_seen or reason == "NULL_ACTIVITY"
+    check(not early_echo_seen,"ECHO routine deviations do not appear on loop zero")
+    check(not innocent_null_activity_seen,"NULL_ACTIVITY never appears for innocent crew")
 
 func test_determinism() -> void:
     var roster := AstraCrewCatalog.ORDER.duplicate()
