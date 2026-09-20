@@ -1248,7 +1248,10 @@ func _maybe_private_event() -> void:
     var candidates: Array = []
     var weights: Array = []
     for npc_id in living_ids():
-        if events_seen.has(npc_id) or not AstraPrivateEvents.has_event(npc_id):
+        if not AstraPrivateEvents.has_event(npc_id):
+            continue
+        var seen_count := int(events_seen.get(npc_id, 0))
+        if seen_count >= AstraPrivateEvents.count_for(npc_id):
             continue
         candidates.append(npc_id)
         weights.append(0.15 + crew[npc_id].trust)
@@ -1266,8 +1269,12 @@ func _maybe_private_event() -> void:
         if roll <= 0.0:
             chosen = str(candidates[index])
             break
-    pending_event = AstraPrivateEvents.build(chosen, victim_name())
-    events_seen[chosen] = true
+    var seen_count := int(events_seen.get(chosen, 0))
+    pending_event = AstraPrivateEvents.build(chosen, victim_name(), seen_count, {
+        "day": day, "trust": crew[chosen].trust, "stress": crew[chosen].stress,
+        "case_id": case_id
+    })
+    events_seen[chosen] = seen_count + 1
     selected_id = chosen
     _log("개인 면담 요청 · %s" % name_of(chosen))
     notice.emit("private_event", {"npc_id": chosen})
