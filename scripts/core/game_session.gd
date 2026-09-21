@@ -2887,9 +2887,25 @@ func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int =
         _fallback_selected()
         for observer_id in living_ids():
             crew[observer_id].adjust_stress(0.04)
+        if member.role != "NULL":
+            flags["wrong_isolation_060"] = int(flags.get("wrong_isolation_060",0)) + 1
+            flags["restricted_info_until_day"] = day + 1
+            for observer_id in living_ids():
+                crew[observer_id].adjust_trust(-0.05)
+                crew[observer_id].adjust_stress(0.05)
+        last_vote["aftermath"] = _build_containment_aftermath(isolated)
     else:
         _log("격리 없음 · " + vote_result_text())
+        last_vote["aftermath"] = [{"kind":"decision","text":"표결은 끝났지만 누구도 포드로 이동하지 않았다. 현재 인원으로 다음 판단을 이어 간다."}]
     _check_end("vote")
+    var aftermath: Array = last_vote.get("aftermath",[])
+    if outcome == "WIN":
+        aftermath.append({"kind":"ship","text":"격리 절차가 끝난 뒤, 현재 추적 중이던 조작 경보가 더 이상 이어지지 않는다."})
+        if bool(voyage.get("story_resolution_seen",false)):
+            aftermath.append({"kind":"mystery","text":"현재 사건은 멈췄다. 하지만 " + str(AstraVoyageContent.chapter(case_id).get("open_question",""))})
+    elif isolated != "":
+        aftermath.append({"kind":"ship","text":"포드가 잠긴 뒤에도 함선의 경계 상태는 해제되지 않는다. 아직 판단이 끝난 것은 아니다."})
+    last_vote["aftermath"] = aftermath
     notice.emit("vote", last_vote)
     changed.emit()
     return {"ok": true, "result": last_vote}
@@ -6099,6 +6115,33 @@ func vote_result_text() -> String:
     if str(last_vote.get("isolated","")) != "": return "단독 최다 득표로 격리되었습니다. 최소 득표수 조건은 없습니다."
     if last_vote.get("tally",{}).is_empty(): return "전원 기권으로 누구도 격리하지 않았습니다."
     return "최다 득표 동률로 누구도 격리하지 않았습니다."
+
+func _build_containment_aftermath(isolated: String) -> Array:
+    var result: Array = []
+    if isolated == "" or not crew.has(isolated):
+        return result
+    var member: AstraCrewMember = crew[isolated]
+    result.append({"kind":"containment","speaker":isolated,"text":"%s의 장비가 회수되고 장기수면 포드가 잠긴다." % member.display_name})
+    result.append({"kind":"target","speaker":isolated,"text":"“%s”" % str(ISOLATED_LINES.get(isolated,"…"))})
+    var observer := ""
+    for npc_id in active_participants():
+        observer = str(npc_id)
+        break
+    if observer != "":
+        var reaction := {
+            "mira":"생체 상태는 제가 볼게요. 판단이 맞았는지는 아직 단정하지 마세요.",
+            "rho":"문은 잠겼어. 이제 저 사람 없이 남은 기록이 어떻게 움직이는지 보자.",
+            "dax":"한 명을 빼면 조건이 바뀌어. 그 뒤의 변화도 증거로 남겨야 해.",
+            "noa":"격리 결정과 사실 확인은 다른 항목으로 기록할게요.",
+            "sena":"포드는 잠겼어. 나머지 출입은 다시 확인한다.",
+            "vale":"이제 신호가 달라지는지 들어 볼게요.",
+            "eli":"사람 하나를 뺐다고 항로까지 맞아지는 건 아니야.",
+            "lyra":"격리 뒤에도 상태가 달라지는지 제가 기록할게요."
+        }.get(observer,"격리 뒤의 변화를 계속 확인하죠.")
+        result.append({"kind":"observer","speaker":observer,"text":str(reaction)})
+    if member.role != "NULL":
+        result.append({"kind":"consequence","text":"결정 직후 분위기가 굳는다. 일부 동료가 기록 공유에 더 조심스러워진다."})
+    return result
 
 # ---------------------------------------------------------------- 0.6.0 story recap / loop residue
 
