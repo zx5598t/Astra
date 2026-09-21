@@ -101,6 +101,8 @@ func test_resume_lifecycle() -> void:
     var session := AstraGameSession.new()
     session.setup("LAST_LIGHT",560602)
     session.begin_voyage({"loops":3,"codex_entries_unlocked":[]})
+    session.voyage["codex_known"] = []
+    session.voyage["codex_unlocks_pending"] = []
     session._queue_codex_unlock("mira_self_neglect")
     check(session.codex_unlock_events().size() == 1,"runtime Codex unlock is pending before persistence")
     check(meta.unlock_codex_entry("mira_self_neglect"),"runtime Codex unlock persists to meta once")
