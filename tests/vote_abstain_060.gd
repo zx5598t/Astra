@@ -28,6 +28,7 @@ func _initialize() -> void:
     if failures.is_empty():
         print("ASTRA 0.6.0 NPC VOTE REGRESSION OK · %d checks" % checks)
         quit(0)
+        return
     printerr("ASTRA 0.6.0 NPC VOTE REGRESSION FAILED · %d/%d" % [failures.size(),checks])
     quit(1)
 
