@@ -1,4 +1,4 @@
-# ASTRA 0.5.5 인물 — FAULT LINES
+# ASTRA 0.5.6 인물 — ECHOES
 
 | 표시 이름 | 저장 ID / 자산 ID | 역할 | baseline과 말투 |
 |---|---|---|---|
@@ -14,6 +14,12 @@
 첫 각성은 미라·준·다렌·노아다. 이후 세나 → 소렌 → 루칸 → 마렌 순서로 합류한다.
 
 Hidden role은 사람의 기본 성격을 바꾸지 않는다. Null이 된 캐릭터도 말투·직업 습관·baseline은 유지하며, 달라지는 것은 어떤 사실을 숨기고 어떤 판단을 유도하는지다.
+
+## 0.5.6 Observation Codex 편집 원칙
+
+각 인물은 STABLE / OBSERVED / ECHO를 합쳐 4개의 observation을 가진다. 이 기록은 캐릭터의 정답 설명서가 아니라 실제 항해에서 플레이어가 본 모습의 기억이다. OBSERVED/ECHO는 "어떤 항해", "기록", "그 순간"처럼 맥락을 남기며 variable history를 영구 canon으로 고정하지 않는다.
+
+미라는 Emotional Anchor를 유지하지만 Codex에서 설명을 독점하지 않는다. 소렌·루칸을 포함한 8명 모두 같은 수의 관찰 슬롯을 가지며, hidden motive·Null 여부·미표시 scene을 observation의 근거로 사용하지 않는다.
 
 ## 0.5.5 Personal Motive compatibility
 
