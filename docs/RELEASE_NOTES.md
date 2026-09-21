@@ -32,7 +32,7 @@ focus selector가 보는 것은 현재 loop에서 실제로 노출된 family/eve
 
 신규 authored voyage scene은 **0개**, 전체 library는 **608개**, save schema는 **v10** 그대로입니다. 첫 30분의 CALIBRATION/DEAD AIR 학습 구조에도 새 시스템 설명이나 필수 텍스트를 추가하지 않았습니다.
 
-Windows artifact는 최종 0.5.7 CI에서 `ASTRA-0.5.7-windows.zip`과 SHA-256을 생성합니다.
+최종 0.5.7 CI는 `ASTRA-0.5.7-windows.zip`을 생성했고 exported EXE boot까지 통과했습니다. 파일 크기는 **92,844,194 bytes**, SHA-256은 `a9d1bdb0959c9d2dd3a51953daed48e8d146a7e33d17a1de862e1579d0a2f48b`입니다.
 
 ---
 
