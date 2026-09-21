@@ -109,7 +109,7 @@ Cooperative Investigation은 기존 companion을 재사용한다. core fact는 �
 
 ## Authored content
 
-현재 AstraVoyageContent.all_scenes()는 기존 scene + AstraStorylets052 + AstraStorylets053 + AstraStorylets054를 합쳐 **537개**를 제공한다.
+현재 AstraVoyageContent.all_scenes()는 기존 scene + AstraStorylets052 + AstraStorylets053 + AstraStorylets054 + AstraStorylets055를 합쳐 **608개**를 제공한다. 0.5.5 신규 authored/reactive scene은 71개다.
 
 0.5.4 Routine/Micro-Arc/Consequence 콘텐츠도 대부분 ECHO WARD 이후에 배치한다. CALIBRATION의 필수 대사량은 늘리지 않는다.
 
