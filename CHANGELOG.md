@@ -1,3 +1,17 @@
+# 0.5.6 · ECHOES · 2026-09-21
+
+0.5.5 FAULT LINES까지 축적된 관계·DecisionTrace·Consequence·Living Crew를 다시 만들지 않고, **플레이어가 실제로 본 변화만 짧고 읽을 수 있게 되돌려 주는 피드백**과 **Observation Codex**를 완성했다.
+
+Crew Archive의 observation은 총 **32개**다(STABLE 14 / OBSERVED 10 / ECHO 8, 8명 각 4개). 실제 awakening/authored scene/visible relationship milestone을 경험했을 때만 해금되며, hidden relationship float·motive·Null state·미표시 storylet을 근거로 자동 추론하지 않는다. Notebook은 현재 항해의 working memory, Archive는 항해를 넘어 남는 실제 목격 기록으로 역할을 분리했다.
+
+관계 feedback은 같은 pair/day/axis의 작은 변화를 aggregate하고 미세 변화는 숨긴다. 밤은 즉시 consequence, 다음 날 briefing은 지속되는 relationship/opinion aftermath를 담당하도록 분리해 같은 문장을 연속 화면에서 반복하지 않는다. CALIBRATION의 Codex unlock은 저장하되 연속 toast는 생략한다.
+
+save schema는 **v10**을 유지한다. v9/legacy hydrate는 known_people과 실제 seen scene처럼 안전하게 복원 가능한 근거만 사용하고, snapshot resume 뒤 이미 meta에 저장된 Codex pending을 정리해 result의 "새 기록" 중복을 막는다.
+
+신규 authored voyage scene은 **0개**이며 전체 library는 **608개**를 유지한다. 최종 측정 캐릭터별 authored scene은 미라 98 / 준 81 / 다렌 74 / 노아 79 / 세나 71 / 소렌 64 / 루칸 62 / 마렌 79다.
+
+0.5.6 전용 release gate는 Codex **95 checks**, ECHOES **33 checks**이며 Linux/Windows validation과 Windows release-candidate pre-build에 모두 연결했다. 기존 0.5.1~0.5.5 regression threshold는 낮추지 않았다.
+
 # 0.5.5 · FAULT LINES · 2026-09-21
 
 0.5.4 AFTERMATH의 Routine / Knowledge / Decision / Consequence 기반을 유지하면서 **Personal Motive → Dynamic Incident → Cooperative Investigation → Delegation → Loop Foreknowledge → Familiar Scene Compression → Narrative Momentum**을 연결했다.
