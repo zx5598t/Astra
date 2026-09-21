@@ -1,3 +1,41 @@
+# ASTRA 0.5.7 — CLEAR SIGNAL
+
+## 덜 많이, 더 선명하게
+
+CLEAR SIGNAL은 콘텐츠를 줄이는 업데이트가 아닙니다. 608개의 authored voyage/reactive scene은 그대로 두고, 한 loop에서 서로 상관없는 중요한 이야기가 동시에 너무 많이 열리지 않도록 선택 흐름을 정리했습니다.
+
+이미 시작된 이야기는 이어지기 쉬워집니다. 실제 follow-up과 consequence, mandatory progression, 현재 보이는 continuation은 새 이야기 하나로 다시 세지 않습니다. 플레이어가 topic을 직접 고르거나 Notebook에서 질문을 pin한 경우도 계속 따라갈 수 있습니다.
+
+반대로 이미 두 개의 high-salience thread가 보이는 상태에서 관련 없는 세 번째·네 번째 이야기는 soft weight가 낮아집니다. 완전 차단이 아니기 때문에 플레이 패턴과 조건에 따라 드물게 더 많은 스레드가 나타날 수 있습니다.
+
+## Player-safe focus
+
+focus selector가 보는 것은 현재 loop에서 실제로 노출된 family/event, 최근 focus, 화자 노출 횟수, explicit topic과 pinned question뿐입니다. Null 정체, hidden motive, raw relationship 수치처럼 플레이어가 모르는 정보로 서사 선택을 조종하지 않습니다.
+
+미라의 optional exposure max 4는 유지합니다. 같은 화자에게 optional scene이 몰릴 때는 speaker exposure로 완화하고, dense loop의 두 번째 autonomous beat는 삭제하지 않고 뒤로 미룹니다.
+
+## 500-loop release gate
+
+최종 구현 검증 결과:
+
+- high-salience distinct families: 평균 **2.22** / P95 **3** / 최대 **4**
+- unrelated new-thread 4+: **11 / 500**
+- visible continuation: **10**
+- zero-meaningful consecutive: **0**
+- visible signatures: **500 / 500**
+- autonomous unique: **23**
+- 0.5.3 authored coverage: **59.3%**
+- rare immediate repeats: **0**
+- Mira optional exposure max: **4**
+- CLEAR SIGNAL invariants: **47 checks PASS**
+- runtime exposure simulation: **10 checks PASS**
+
+신규 authored voyage scene은 **0개**, 전체 library는 **608개**, save schema는 **v10** 그대로입니다. 첫 30분의 CALIBRATION/DEAD AIR 학습 구조에도 새 시스템 설명이나 필수 텍스트를 추가하지 않았습니다.
+
+Windows artifact는 최종 0.5.7 CI에서 `ASTRA-0.5.7-windows.zip`과 SHA-256을 생성합니다.
+
+---
+
 # ASTRA 0.5.6 — ECHOES
 
 ## 선택과 관계의 변화가 읽힌다

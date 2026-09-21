@@ -1,3 +1,17 @@
+# 0.5.7 · CLEAR SIGNAL · 2026-09-21
+
+0.5.6 ECHOES까지 축적된 608개의 authored voyage/reactive scene과 Living Crew, Routine, Micro-Arc, Consequence, Motive, Incident, Codex를 삭제하거나 다시 만들지 않고 **한 loop에서 보이는 고중요도 서사의 밀도와 연결 순서**를 정리했다. 신규 authored voyage scene은 **0개**이며 save schema는 **v10**을 유지한다.
+
+새 focus context는 플레이어가 실제로 본 loop focus family/event, 최근 visible focus, speaker exposure, explicit topic만 사용한다. hidden Null assignment, motive assignment, raw relationship float는 selector에 넣지 않는다. 실제 continuation과 authored FOLLOWUP/consequence, mandatory/progression은 새 스레드 예산을 소비하지 않으며 explicit topic과 direct pinned-question match도 계속 찾아갈 수 있다.
+
+관련 없는 새 FOCUS family는 두 개까지 자연스럽게 열리고, 세 번째부터 soft weight가 낮아지며 네 번째 이후는 예외적으로만 나타난다. hard cap은 두지 않았다. 이미 보인 continuation에는 가중치를 주고, 한 화자에게 optional scene이 몰리면 speaker exposure로 완화한다. 미라의 ECHO WARD 이후 optional exposure 최대 **4회**는 유지된다. dense loop에서는 두 번째 autonomous beat를 삭제하지 않고 defer한다.
+
+현실적인 public voyage path로 500 loop를 실행한 최종 기준은 high-salience distinct family 평균 **2.22**, P95 **3**, 최대 **4**, unrelated 4+ loop **11/500**, continuation **10회**, zero-meaningful consecutive **0**, visible signatures **500/500**, autonomous unique **23**, 0.5.3 authored coverage **59.3%**, rare immediate repeat **0**, Mira optional max **4**다. CLEAR SIGNAL invariant **47 checks**와 runtime exposure **10 checks**가 Linux validation과 Windows release-candidate gate에 연결됐다.
+
+content audit은 608개 library 자체를 경고하지 않고 위 runtime gate로 노출 밀도를 검증한다. 반복 opener가 5회 이상이면 단순 단어 목록 대신 scene ID·speaker·action preview를 출력해 실제 편집 대상으로 바로 연결한다.
+
+구현 기준 commit `dc3755eeac2b3420418daf1acac4d777cd8df05c`, GitHub Actions run `35572924051`에서 Linux validation / Windows validation / Windows release-candidate가 모두 GREEN이었다. VERSION 0.5.7 승격 후 최종 artifact와 SHA-256을 다시 생성한다.
+
 # 0.5.6 · ECHOES · 2026-09-21
 
 0.5.5 FAULT LINES까지 축적된 관계·DecisionTrace·Consequence·Living Crew를 다시 만들지 않고, **플레이어가 실제로 본 변화만 짧고 읽을 수 있게 되돌려 주는 피드백**과 **Observation Codex**를 완성했다.

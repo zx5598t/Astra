@@ -1,3 +1,53 @@
+# QA REPORT — ASTRA 0.5.7 CLEAR SIGNAL
+
+검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64  
+작업 브랜치: `release/0.5.7`  
+구현 검증 기준 commit: `dc3755eeac2b3420418daf1acac4d777cd8df05c`  
+구현 검증 GitHub Actions: run `35572924051`
+
+## 구현 검증 결과
+
+- Linux import / 전체 GDScript parse: **PASS**
+- Linux validation: **PASS**
+- Windows import / validation: **PASS**
+- Windows release-candidate build + exported EXE boot: **PASS**
+- 전체 core model: **45,301 checks PASS**
+- --games=40 TOTAL: smart **68%** / random **0%** / passive **0%**
+- 0.5.6 Codex regression: **95 checks PASS**
+- 0.5.6 ECHOES regression: **33 checks PASS**
+- CLEAR SIGNAL invariant: **47 checks PASS**
+- CLEAR SIGNAL runtime exposure: **10 checks PASS**
+- save schema: **10**
+- authored voyage/reactive scene: **608** (신규 **0**)
+
+## CLEAR SIGNAL 500-loop
+
+- optional authored scene: 평균 **4.15** / P95 **6** / 최대 **7**
+- high-salience distinct family: 평균 **2.22** / P95 **3** / 최대 **4**
+- unrelated new-thread: 평균 **2.22** / P95 **3** / 최대 **4**
+- 4+ unrelated loop: **11 / 500**
+- visible continuation: **10**
+- zero-meaningful: **0** / max consecutive **0**
+- visible signatures: **500 / 500**
+- autonomous: 평균 **0.50** / 최대 **2** / unique **23**
+- 0.5.3 authored coverage: **59.3%**
+- rare immediate repeat: **0**
+- Mira optional exposure: 평균 **0.62** / P95 **1** / 최대 **4**
+
+프로필별 distinct family 평균/P95는 EXPLORER 2.13/3, LOYALIST 1.95/3, INVESTIGATOR 2.40/3, MINIMAL 2.04/3, SOCIAL 2.56/4다.
+
+## 회귀와 content audit
+
+기존 0.5.1~0.5.6 회귀 threshold를 낮추지 않았다. Mandatory/progression, 실제 FOLLOWUP/consequence, current-loop continuation, explicit topic, direct pinned question은 새-thread budget에서 보호된다. selector input에는 hidden Null, hidden motive, raw relationship float를 사용하지 않는다.
+
+608개 library 크기 자체의 non-fatal warning은 CLEAR SIGNAL 500-loop runtime gate로 대체했다. opener 반복 경고는 단어 수만 출력하지 않고 해당 scene ID / speaker / action preview를 함께 출력한다.
+
+## 정식 빌드 상태
+
+위 구현 검증 run은 repository VERSION이 아직 0.5.6이던 단계라 생성된 ZIP을 0.5.7 정식 artifact로 인정하지 않는다. 이 문서와 VERSION/project.godot을 0.5.7로 맞춘 뒤 최종 CI에서 `ASTRA-0.5.7-windows.zip`, 파일 크기와 SHA-256을 다시 기록한다.
+
+---
+
 # QA REPORT — ASTRA 0.5.6 ECHOES
 
 검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64  
