@@ -2841,8 +2841,22 @@ func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int =
         "player_state":"abstain" if target_id == "" else "target","ballots":[]
     }
     for voter in voter_snapshot:
-        last_vote["ballots"].append({"voter":voter,"target":str(intentions.get(voter,"")),"state":"target" if str(intentions.get(voter,"")) != "" else "abstain","weight":1,"reason":str(reasons.get(voter,""))})
-    last_vote["ballots"].append({"voter":"player","target":target_id,"state":last_vote["player_state"],"weight":PLAYER_VOTE_WEIGHT,"reason":"탐사요원이 직접 확정한 선택"})
+        var ballot_target := str(intentions.get(voter,""))
+        var ballot_trace: Dictionary = decision_traces.get(voter,{})
+        last_vote["ballots"].append({
+            "voter":voter,"target":ballot_target,
+            "state":"target" if ballot_target != "" else "abstain",
+            "abstain":ballot_target == "","weight":1,
+            "reason_code":str(ballot_trace.get("strongest_reason","")),
+            "reason":str(reasons.get(voter,"")),
+            "decision_trace":ballot_trace.duplicate(true)
+        })
+    last_vote["ballots"].append({
+        "voter":"player","target":target_id,"state":last_vote["player_state"],
+        "abstain":target_id == "","weight":PLAYER_VOTE_WEIGHT,
+        "reason_code":"player_abstain" if target_id == "" else "player_target",
+        "reason":"탐사요원이 직접 확정한 선택"
+    })
     guide_completed("vote")
     if target_id == "": guide_completed("abstain")
     var vote_history: Array = Array(flags.get("vote_history_052", [])).duplicate(true)
