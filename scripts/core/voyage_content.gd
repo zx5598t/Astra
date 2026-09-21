@@ -163,6 +163,29 @@ static func hook_thread(case_id: String) -> Dictionary:
         "compressible":false,"story_hook":true
     }
 
+# 0.6.0 foreshadow registry. A mystery object is not allowed to be a one-line
+# disposable shock: each entry records where it returns and what is actually
+# answered by the end of this chapter set.
+const FORESHADOW_LEDGER := {
+    "wrist": {"introduced":"CALIBRATION","repeated":"GLASS_GARDEN","deepened":"ECHO_WARD","partial_answer":"RESET residue changes with history","final_status":"OPEN"},
+    "mira_bandage": {"introduced":"CALIBRATION","repeated":"CALIBRATION_RESET","deepened":"ECHO_WARD","partial_answer":"player memory survives a world-state change","final_status":"OPEN"},
+    "warm_cup": {"introduced":"CALIBRATION","repeated":"GLASS_GARDEN","deepened":"SILENT_ORBIT","partial_answer":"ordinary life continued around impossible records","final_status":"PARTIAL"},
+    "pod_signature": {"introduced":"CALIBRATION","repeated":"DEAD_AIR","deepened":"LAST_LIGHT","partial_answer":"pod was deliberately unlocked; executor signature alone is absent","final_status":"PARTIAL"},
+    "noa_date": {"introduced":"CALIBRATION","repeated":"DEAD_AIR","deepened":"SILENT_ORBIT","partial_answer":"the offset belongs to a broader timestamp contradiction","final_status":"PARTIAL"},
+    "two_destinations": {"introduced":"DEAD_AIR","repeated":"SILENT_ORBIT","deepened":"LAST_LIGHT","partial_answer":"both documents are valid originals from internally valid histories","final_status":"PARTIAL"},
+    "unsaid_words": {"introduced":"DEAD_AIR","repeated":"ECHO_WARD","deepened":"ECHO_WARD_RESET","partial_answer":"recorded sequence can precede lived sequence","final_status":"PARTIAL"},
+    "inside_opened_door": {"introduced":"GLASS_GARDEN","repeated":"ECHO_WARD","deepened":"LAST_LIGHT","partial_answer":"physical traces can belong to a conflicting valid record","final_status":"OPEN"},
+    "soren_voice": {"introduced":"ECHO_WARD","repeated":"ECHO_WARD_RESET","deepened":"SILENT_ORBIT","partial_answer":"the voice is genuine, but its time ordering is wrong","final_status":"PARTIAL"},
+    "still_stars": {"introduced":"SILENT_ORBIT","repeated":"SILENT_ORBIT_RESET","deepened":"LAST_LIGHT","partial_answer":"displayed voyage motion and physical sky do not share one history","final_status":"PARTIAL"},
+    "arrival_19y": {"introduced":"SILENT_ORBIT","repeated":"RED_SHIFT","deepened":"LAST_LIGHT","partial_answer":"ASTRA has a valid arrival-complete record from about 19 years ago","final_status":"CONFIRMED"},
+    "post_arrival_work": {"introduced":"SILENT_ORBIT","repeated":"RED_SHIFT","deepened":"LAST_LIGHT","partial_answer":"normal work continued after recorded arrival","final_status":"CONFIRMED"},
+    "old_sample_player_hand": {"introduced":"RED_SHIFT","repeated":"LAST_LIGHT","deepened":"LAST_LIGHT","partial_answer":"independent sample records belong to a pre-departure/post-arrival contradiction","final_status":"PARTIAL"},
+    "blank_coordinates": {"introduced":"LAST_LIGHT","repeated":"LAST_LIGHT_RESET","deepened":"NEXT_ARC","partial_answer":"the damaged next line survives while destination coordinate remains unrecovered","final_status":"OPEN"}
+}
+
+static func foreshadow_ledger() -> Dictionary:
+    return FORESHADOW_LEDGER.duplicate(true)
+
 # How each chapter's loop-reset screen frames itself. Every chapter ending the
 # same way ("same wrapper, different outro line") is the fastest way to make a
 # seven-chapter game feel like one screen repeated seven times, so the title
