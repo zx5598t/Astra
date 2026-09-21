@@ -5,6 +5,8 @@ var failures: Array[String] = []
 const V9_PATH := "user://astra_056_v9.cfg"
 const V5_PATH := "user://astra_056_v5.cfg"
 const PERSIST_PATH := "user://astra_056_codex_persist.cfg"
+const RESUME_META_PATH := "user://astra_056_resume_meta.cfg"
+const RESUME_SNAPSHOT_PATH := "user://astra_056_resume.session"
 
 func check(ok: bool, label: String) -> void:
     checks += 1
@@ -16,9 +18,11 @@ func _initialize() -> void:
     test_catalog_shape()
     test_v9_to_v10_migration()
     test_duplicate_and_persistence()
+    test_resume_lifecycle()
     test_older_meta_save()
-    for path in [V9_PATH,V5_PATH,PERSIST_PATH]:
+    for path in [V9_PATH,V5_PATH,PERSIST_PATH,RESUME_META_PATH]:
         DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+    AstraGameSession.delete_snapshot(RESUME_SNAPSHOT_PATH)
     if failures.is_empty():
         print("ASTRA 0.5.6 CODEX TESTS OK · %d checks" % checks)
         quit(0)
@@ -89,6 +93,31 @@ func test_duplicate_and_persistence() -> void:
     check(restored.has_codex_entry("mira_self_neglect"),"Codex entry persists across reload")
     check(restored.has_codex_entry("vale_silence"),"bulk Codex entry persists across reload")
     check(restored.codex_entries_for("mira").size() == 1,"character Codex API returns only unlocked entries")
+
+func test_resume_lifecycle() -> void:
+    AstraGameSession.delete_snapshot(RESUME_SNAPSHOT_PATH)
+    DirAccess.remove_absolute(ProjectSettings.globalize_path(RESUME_META_PATH))
+    var meta := AstraMetaProgress.new(RESUME_META_PATH)
+    var session := AstraGameSession.new()
+    session.setup("LAST_LIGHT",560602)
+    session.begin_voyage({"loops":3,"codex_entries_unlocked":[]})
+    session._queue_codex_unlock("mira_self_neglect")
+    check(session.codex_unlock_events().size() == 1,"runtime Codex unlock is pending before persistence")
+    check(meta.unlock_codex_entry("mira_self_neglect"),"runtime Codex unlock persists to meta once")
+    check(meta.save_data(),"resume lifecycle meta saves")
+    check(session.save_snapshot(RESUME_SNAPSHOT_PATH),"resume lifecycle snapshot saves")
+
+    var restored_meta := AstraMetaProgress.new(RESUME_META_PATH)
+    restored_meta.load_data()
+    var restored := AstraGameSession.new()
+    check(restored.load_snapshot(RESUME_SNAPSHOT_PATH),"resume lifecycle snapshot reloads")
+    restored.reconcile_codex_after_resume(restored_meta.codex_entries_unlocked)
+    check(restored.codex_unlock_events().is_empty(),"already persisted Codex is not reported new after resume")
+    restored._queue_codex_unlock("mira_self_neglect")
+    check(restored.codex_unlock_events().is_empty(),"same Codex trigger stays a no-op after resume")
+    restored._queue_codex_unlock("noa_copy")
+    var resumed_ids: Array = restored.codex_unlock_events().map(func(x): return str(x.get("id","")))
+    check(resumed_ids == ["noa_copy"],"first different Codex trigger still unlocks after resume")
 
 func test_older_meta_save() -> void:
     var cfg := ConfigFile.new()
