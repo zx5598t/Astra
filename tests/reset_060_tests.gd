@@ -34,6 +34,8 @@ func test_slot_isolation() -> void:
     meta.case_counts = {"DEAD_AIR":9,"GLASS_GARDEN":8,"ECHO_WARD":7}
     check(not meta.is_case_unlocked_for_slot("DEAD_AIR",1),
         "global archive progress cannot unlock a fresh campaign slot")
+    check(meta.recommended_case_id_for_slot(1) == "CALIBRATION",
+        "fresh slot recommendation starts from CALIBRATION")
 
     meta.set_voyage_memory_for_slot(0,{
         "loops":7,
