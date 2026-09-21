@@ -34,7 +34,7 @@ static func salience(scene: Dictionary) -> String:
         return "MANDATORY"
     if category in ["CONSEQUENCE","INCIDENT_AFTER"] or intent in ["followup","aftermath","resolution","callback","player_callback","foreknowledge"]:
         return "FOLLOWUP"
-    if str(scene.get("chain_id","")) != "" or intent == "micro_arc" or category in ["CANON","MOTIVE","RELATIONSHIP","CONFLICT"]:
+    if str(scene.get("chain_id","")) != "" or intent == "micro_arc" or category in ["INCIDENT","CANON","MOTIVE","RELATIONSHIP","CONFLICT"]:
         return "FOCUS"
     if tag in ["pair","trio","trust","conflict","suspected","danger","personal","echo","secret"]:
         return "FOCUS"
