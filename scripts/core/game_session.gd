@@ -547,7 +547,12 @@ func investigation_ap_max() -> int:
 func talk_ap_max() -> int:
     var base := int(AstraCaseCatalog.ap_profile(case_id, {}).get("talk", BASE_TALK_AP))
     var advanced := case_id in ["ECHO_WARD", "SILENT_ORBIT", "RED_SHIFT", "LAST_LIGHT"]
-    return base + (1 if advanced and int(flags.get("rested_day", 0)) == day else 0) + (1 if advanced and protocol == "EMPATH" else 0) + (1 if advanced and bool(flags.get("mission_talk", false)) else 0) + (int(AstraDifficulty.number(difficulty, "extra_talk_ap", 0.0)) if advanced else 0)
+    var value := base + (1 if advanced and int(flags.get("rested_day", 0)) == day else 0) + (1 if advanced and protocol == "EMPATH" else 0) + (1 if advanced and bool(flags.get("mission_talk", false)) else 0) + (int(AstraDifficulty.number(difficulty, "extra_talk_ap", 0.0)) if advanced else 0)
+    # A wrongful isolation has a concrete next-day information cost: shaken
+    # crewmates are less willing to spend time in formal questioning.
+    if int(flags.get("restricted_info_until_day", 0)) >= day:
+        value -= 1
+    return maxi(1, value)
 
 func meeting_actions_max() -> int:
     var base := int(AstraCaseCatalog.ap_profile(case_id, {}).get("meeting", MEETING_ACTIONS))
