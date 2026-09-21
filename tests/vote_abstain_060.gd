@@ -42,6 +42,7 @@ func _record_session(s: AstraGameSession) -> void:
                 empty_reasons += 1
             check(legal.is_empty(), "abstain only when no legal candidate exists: %s/%s" % [s.case_id,voter])
             check(why.strip_edges() != "", "abstain has human-readable reason")
+            check(str(trace.get("strongest_reason","")) == "no_legal_vote_target", "abstain has explicit no-legal-target reason code")
         else:
             if target not in legal or not s.can_vote_for(str(voter),target):
                 invalid_targets += 1
