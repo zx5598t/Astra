@@ -319,7 +319,7 @@ func resume_case(slot: int = -1) -> void:
         return
     session = restored
     session.features = meta.unlocked_features()
-    session.set_known_codex_entries(meta.codex_entries_unlocked)
+    session.reconcile_codex_after_resume(meta.codex_entries_unlocked)
     selected_protocol = session.protocol
     _connect_codex_events()
     _connect_autosave()
