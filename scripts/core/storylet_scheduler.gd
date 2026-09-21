@@ -89,7 +89,7 @@ static func is_continuation(scene: Dictionary, focus_context: Dictionary = {}) -
     return false
 
 static func keep_fresh_candidate(scene: Dictionary, recent_ids: Array, recent_families: Array, focus_context: Dictionary = {}) -> bool:
-    if is_continuation(scene,focus_context):
+    if is_continuation(scene,focus_context) or bool(focus_context.get("explicit_topic",false)):
         return true
     var id := str(scene.get("id",""))
     var family := family_key(scene)
