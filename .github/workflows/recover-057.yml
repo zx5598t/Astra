@@ -1,4 +1,4 @@
-name: Recover ASTRA 0.5.7 release
+name: Verify ASTRA 0.5.7 release asset
 
 on:
   push:
@@ -8,65 +8,31 @@ on:
       - ".github/workflows/recover-057.yml"
 
 permissions:
-  contents: write
-  actions: read
+  contents: read
 
 jobs:
-  recover:
+  verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Recover exact validated release artifact
+      - name: Download and verify published assets
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-          EXPECTED_TAG_COMMIT: e4b20a77e7295ff4afa4c4ed086f738272d9409e
           EXPECTED_ZIP_SHA256: 5ea10cb171ce3d42e66da54c3c14d2adff6f9648a3d86e8166146c016a0846ec
         run: |
           $ErrorActionPreference = 'Stop'
-          $tag = 'v0.5.7'
-          $assetDir = 'build/release-0.5.7-recovery'
-          $zip = Join-Path $assetDir 'ASTRA-0.5.7-windows.zip'
-          $shaFile = Join-Path $assetDir 'ASTRA-0.5.7-windows.zip.sha256'
+          New-Item -ItemType Directory -Path release-check -Force | Out-Null
+          gh release download v0.5.7 --repo $env:GITHUB_REPOSITORY -D release-check -p 'ASTRA-0.5.7-windows.zip' -p 'ASTRA-0.5.7-windows.zip.sha256'
 
-          git fetch --tags --force
-          if (-not (git tag -l $tag)) { throw "$tag does not exist." }
-          $tagCommit = (git rev-list -n 1 $tag).Trim()
-          if ($tagCommit -ne $env:EXPECTED_TAG_COMMIT) {
-            throw "$tag resolves to $tagCommit, expected $env:EXPECTED_TAG_COMMIT. Refusing to move the tag."
-          }
-
-          New-Item -ItemType Directory -Path $assetDir -Force | Out-Null
-          gh run download 35575857561 --repo $env:GITHUB_REPOSITORY -n ASTRA-0.5.7-windows -D $assetDir
-
-          if (-not (Test-Path -LiteralPath $zip)) { throw "Missing $zip" }
-          if (-not (Test-Path -LiteralPath $shaFile)) { throw "Missing $shaFile" }
-
+          $zip = 'release-check/ASTRA-0.5.7-windows.zip'
+          $shaFile = 'release-check/ASTRA-0.5.7-windows.zip.sha256'
           $actual = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($actual -ne $env:EXPECTED_ZIP_SHA256) {
-            throw "ZIP SHA mismatch: $actual != $env:EXPECTED_ZIP_SHA256"
-          }
           $declared = ((Get-Content -LiteralPath $shaFile -Raw).Trim() -split '\s+')[0].ToLowerInvariant()
-          if ($declared -ne $actual) {
-            throw "SHA file mismatch: $declared != $actual"
-          }
+          if ($actual -ne $env:EXPECTED_ZIP_SHA256) { throw "Published ZIP SHA mismatch: $actual" }
+          if ($declared -ne $actual) { throw "Published SHA file mismatch: $declared != $actual" }
 
-          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
-          if ($LASTEXITCODE -eq 0) {
-            Write-Host "$tag release already exists; not creating a duplicate."
-            exit 0
-          }
-
-          gh release create $tag $zip $shaFile --repo $env:GITHUB_REPOSITORY --verify-tag --title 'ASTRA 0.5.7 — CLEAR SIGNAL' --notes-file docs/RELEASE_NOTES.md --latest
-
-          $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$tag" | ConvertFrom-Json
-          if ($release.name -ne 'ASTRA 0.5.7 — CLEAR SIGNAL') { throw "Unexpected release name: $($release.name)" }
-          if ($release.draft -or $release.prerelease) { throw 'Release must be final, not draft/prerelease.' }
-          $names = @($release.assets | ForEach-Object { $_.name })
-          foreach ($required in @('ASTRA-0.5.7-windows.zip','ASTRA-0.5.7-windows.zip.sha256')) {
-            if ($names -notcontains $required) { throw "Missing release asset: $required" }
-          }
-          Write-Host "ASTRA 0.5.7 RELEASE RECOVERY OK"
+          Expand-Archive -LiteralPath $zip -DestinationPath unpacked -Force
+          if (-not (Test-Path -LiteralPath 'unpacked/ASTRA/ASTRA.exe')) { throw 'Published package is missing ASTRA/ASTRA.exe' }
+          if (-not (Test-Path -LiteralPath 'unpacked/ASTRA/START_HERE.md')) { throw 'Published package is missing ASTRA/START_HERE.md' }
+          if (-not (Test-Path -LiteralPath 'unpacked/ASTRA/LICENSES.md')) { throw 'Published package is missing ASTRA/LICENSES.md' }
+          Write-Host "PUBLISHED RELEASE ASSET VERIFIED: $actual"
