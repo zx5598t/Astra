@@ -290,6 +290,11 @@ func _on_session_notice_056(kind: String, payload: Dictionary) -> void:
     var entry_id := str(payload.get("id",""))
     if not record_codex_unlock(entry_id):
         return
+    # CALIBRATION can introduce several people in a short span. Preserve every
+    # witnessed observation, but do not turn the first playable minutes into a
+    # stack of archive notifications.
+    if session != null and AstraCaseCatalog.is_calibration(session.case_id):
+        return
     var who := AstraCrewCatalog.display_name(str(payload.get("character","")))
     fx.toast("승무원 기록 갱신 · " + who, AstraUI.CYAN, 1.8)
 
