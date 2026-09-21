@@ -264,6 +264,20 @@ func record_case_result(case_id: String, protocol: String, report: Dictionary, p
         save_data()
     return {"insight_gain": gain, "new_best": new_best, "unlocked": unlocked, "new_badge": new_badge}
 
+func is_case_unlocked_for_slot(case_id: String, slot: int) -> bool:
+    if AstraCaseCatalog.is_calibration(case_id):
+        return true
+    var index := CAMPAIGN_CASES.find(case_id)
+    if index < 0:
+        return false
+    var memory := voyage_memory_for_slot(slot)
+    var chapters: Array = memory.get("chapters",[])
+    # A campaign slot advances only from chapters completed in that slot.
+    # Global archive/history can never unlock a fresh slot.
+    if index == 0:
+        return AstraCaseCatalog.CALIBRATION in chapters
+    return str(CAMPAIGN_CASES[index - 1]) in chapters
+
 func is_case_unlocked(case_id: String) -> bool:
     if AstraCaseCatalog.is_calibration(case_id):
         return true
