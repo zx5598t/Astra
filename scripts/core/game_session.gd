@@ -5310,6 +5310,17 @@ func set_known_codex_entries(entry_ids: Array) -> void:
         return
     voyage["codex_known"] = entry_ids.duplicate()
 
+func reconcile_codex_after_resume(entry_ids: Array) -> void:
+    if voyage.is_empty():
+        return
+    voyage["codex_known"] = entry_ids.duplicate()
+    var remaining: Array = []
+    for raw_id in voyage.get("codex_unlocks_pending",[]):
+        var entry_id: String = str(raw_id)
+        if entry_id not in entry_ids:
+            remaining.append(entry_id)
+    voyage["codex_unlocks_pending"] = remaining
+
 func _queue_codex_unlock(entry_id: String) -> void:
     if voyage.is_empty() or entry_id == "":
         return
