@@ -3433,8 +3433,104 @@ static func scene(id: String) -> Dictionary:
     return {}
 
 static func awake_roster(id: String) -> Array:
-    var count := maxi(0, AstraCaseCatalog.CAMPAIGN.find(id))
-    return AstraCrewCatalog.INITIAL + AstraCrewCatalog.AWAKENING_ORDER.slice(0, mini(count,4))
+    return AstraCrewCatalog.joined_on_day(campaign_day(id))
+
+# Calendar contract is authored explicitly, independently of CAMPAIGN indices.
+# A case has its own local days; replays return to the chapter's campaign date.
+const CAMPAIGN_DATES := {"CALIBRATION":1,"DEAD_AIR":2,"GLASS_GARDEN":3,"ECHO_WARD":4,"SILENT_ORBIT":5,"RED_SHIFT":6,"LAST_LIGHT":7}
+static func campaign_day(id: String) -> int:
+    return int(CAMPAIGN_DATES.get(id,1))
+
+const FIRST_RECORD := "포드 전원 공급은 정상이다. 장기수면 중인 동료는 네 명이다. 잠금 해제 이력의 실행자 칸이 비어 있다."
+const FIRST_CONTRIBUTIONS := {
+    "mira":"의무관 미라. 장기수면 후 당신의 상태를 살피고 생명유지 신호의 해석 범위를 설명한다.",
+    "rho":"기관 담당 준. 공구를 챙겨 각성 점검을 돕는다. 전원 고장과 정비 가능성을 구분한다.",
+    "dax":"시스템 설계자 다렌. 상태 기록과 실행자 기록을 구분하고, 빈칸을 고의 조작으로 단정하지 않는다.",
+    "noa":"기록관 노아. 확정된 사실과 아직 확인하지 못한 항목을 나눠 적는다."
+}
+const FIRST_THREADS := {
+    "first_wake": {
+        "action":"수면에서 깨어난 당신을 미라가 의료실에서 살핀다. 옆에서 세 동료가 각성 점검을 돕고 있다.",
+        "lines":[["mira","저는 의무관 미라예요. 장기수면 뒤에는 여기서 상태를 확인해요. 당신은 ASTRA의 탐사요원이고요."],
+            ["rho","기관 담당 준이야. 손은 천천히 움직여. 공구는 내가 들게."],
+            ["dax","다렌. 시스템 설계자야. 남은 포드를 열기 전에 전원 상태를 확인해야 해."],
+            ["noa","기록관 노아예요. 확인한 것만 적을게요. 먼저 포드 제어 패널을 눌러 주세요."]],"choices":[]},
+    "first_panel": {
+        "requires_fact":"power","action":"당신이 연 포드 제어 패널을 네 동료가 함께 본다. 전원 표시와 잠금 이력은 서로 다른 칸이다.",
+        "lines":[["rho","공급 전원은 정상이야. 지금 포드가 닫혀 있는 걸 정전 탓으로 볼 수는 없어."],
+            ["mira","생명유지 신호도 안정적이에요. 그럼 왜 해제 이력에 이름이 없을까요?"],
+            ["dax","상태 기록은 무엇이 일어났는지, 실행자 칸은 누가 요청했는지야. 빈칸만으로 고의 조작이라고 할 수는 없어."],
+            ["noa","전원 정상, 실행자 칸 공백. 여기까지가 사실이에요. 원인은 아직 빈칸으로 둘게요."]],
+        "choices":[{"label":"잠금 이력의 원본과 복사본부터 비교한다 · 공동 확인","effect":"check_source"},
+            {"label":"정비 중 남은 기록인지 준에게 묻는다 · 질문","effect":"check_maintenance"}]},
+    "first_source": {
+        "requires_fact":"power","action":"다렌이 원본 보기와 읽기 전용 사본을 나란히 연다. 노아가 비교 기준을 적는다.",
+        "lines":[["dax","지금 볼 수 있는 두 화면에는 같은 빈칸이 있어. 복사 과정만 문제였는지는 이전 백업이 있어야 알 수 있어."],
+            ["noa","현재 원본에도 공백. 이전 백업은 미확인. 두 문장을 나눠 남길게요."],
+            ["mira","상태 확인은 끝났어요. 오늘은 누구도 격리하지 않고 다음 포드의 각성을 준비해요."]],"choices":[]},
+    "first_maintenance": {
+        "requires_fact":"power","action":"준이 공구를 내려놓고 패널의 상태 항목을 다시 읽는다.",
+        "lines":[["rho","정비 중에도 잠금 상태는 달라질 수 있어. 하지만 누가 어떤 작업을 했는지는 이 화면만으로 몰라."],
+            ["dax","맞아. 전원 고장과 작업 이력은 따로 확인하자. 내일 출입 기록을 붙이면 범위를 줄일 수 있어."],
+            ["mira","지금 생명유지는 안정적이에요. 오늘은 누구도 격리하지 않고 다음 포드의 각성을 준비해요."]],"choices":[]}
+}
+const ARRIVALS := {
+    "sena": {"action":"전날 확인한 전원으로 보안 담당 포드의 순차 각성이 끝난다. 세나가 일어나 출입문부터 살핀다.",
+        "lines":[["sena","보안 책임자 세나야. 문이 열리는 쪽부터 확인할게. 준, 뒤쪽 봐 줘."],["rho","알았어. 잠깐만, 공구부터 챙기고."],
+            ["sena","통신실까지 통로는 안전해. 기록을 가져올 수 있어. 잠금 이력은 사용자 칸과 열림 상태를 나눠 봐야 해."],
+            ["noa","통로 확인은 세나의 관찰로 남길게요. 빈 서명의 이유는 아직 몰라요."],
+            ["sena","이상하네. 준이랑 같이 근무한 기억이 있는데… 그 기록은 일 끝나고 같이 보자."]]},
+    "vale": {"action":"확인된 통로를 통해 다음 포드 점검이 끝난다. 소렌은 눈을 뜨자 경보음과 수신음을 따로 줄인다.",
+        "lines":[["vale","통신관 소렌이에요. 지금 나는 소리는 경보예요. 누군가 말하는 신호와는 달라요."],
+            ["sena","좋아. 보안 구역의 알림이 어디서 오는지 같이 확인하자."],
+            ["vale","발신 장치와 재생 장치를 따로 적어 둘게요. 같은 소리라고 같은 출처는 아니니까요."],
+            ["noa","오늘 구역 점검 기록에 그 기준을 붙일게요."],
+            ["vale","수면 중에 제 이름을 들은 것 같아요. 기억뿐이라, 녹음이 있는지부터 찾아볼게요."]]},
+    "eli": {"action":"순차 각성 점검이 항법 담당 포드에 도달한다. 루칸은 난간을 잡고 창과 항로 화면을 번갈아 본다.",
+        "lines":[["eli","항법사 루칸이야. 서두르지 마. 화면 시각부터 맞추자."],
+            ["vale","신호 기록과 포드 기록을 대조하려고 해요. 시각 기준을 봐 줄래요?"],
+            ["eli","두 장치의 시계를 따로 적어. 가까운 시각을 같다고 합치면 없던 모순도 생겨."],
+            ["noa","각 장치의 출처도 붙여 둘게요."],
+            ["eli","내가 만든 항로 사본이 있을 거야. 원본과 왜 따로 뒀는지는 직접 확인하고 말할게."]]},
+    "lyra": {"action":"마지막 순차 각성 포드가 열린다. 마렌이 물컵을 받아 들고 생태 구역 상태표부터 찾는다.",
+        "lines":[["lyra","생태학자 마렌이에요. 물은 조금이면 돼요. 시료 보관 상태도 같이 볼까요?"],
+            ["mira","먼저 한 모금 마셔요. 상태표는 가져다 드릴게요."],
+            ["lyra","고마워요. 오래된 도착 기록을 볼 때 보관 기간도 대조해요. 시료가 지낸 시간은 문장과 별도로 확인할 수 있어요."],
+            ["eli","좋아. 오늘 항로 기록 옆에 그 기준을 남기자."],
+            ["lyra","폐기 목록에 있던 작은 모종이 마음에 걸려요. 아직 남아 있는지는 가서 봐야겠어요."]]}
+}
+
+static func linked_thread(id: String, data: Dictionary, participants: Array, requires_fact: String = "") -> Dictionary:
+    var result := data.duplicate(true)
+    result.merge({"id":id,"speaker":str(participants[0]),"participants":participants.duplicate(),"category":"MANDATORY","tag":"work","choices":[],"thread":true,"compressible":false},false)
+    result["requires_fact"] = str(data.get("requires_fact",requires_fact))
+    result["scope"] = "present_participants"
+    result["reuse"] = "once_per_case"
+    result["location"] = "medbay"
+    result["forbids"] = {"absent_participant":true}
+    var intentions: Array = {
+        "first_wake":["introduce","offer_help","explain_goal","request_action"],
+        "first_panel":["observation","source_question","limit_claim","separate_fact_hypothesis"],
+        "first_source":["compare_sources","record_uncertainty","safe_next_step"],
+        "first_maintenance":["alternative_hypothesis","agree_and_limit","safe_next_step"]
+    }.get(id,["introduce","respond","contribute","record","personal_question"])
+    var beats: Array = []
+    for i in range(result.get("lines",[]).size()):
+        beats.append({"id":id+":"+str(i),"speaker":result["lines"][i][0],"response_to":"" if i == 0 else id+":"+str(i-1),
+            "intent":str(intentions[mini(i,intentions.size()-1)]),"source":result["requires_fact"] if result["requires_fact"] != "" else "current_observation_or_own_role",
+            "requires_fact":result["requires_fact"],"expression":"determined" if i == 0 and id != "first_wake" else "neutral"})
+    result["beats"] = beats
+    return result
+
+static func first_thread(id: String) -> Dictionary:
+    return linked_thread(id,FIRST_THREADS.get(id,{}),AstraCrewCatalog.INITIAL)
+
+static func arrival_thread(who: String) -> Dictionary:
+    if not ARRIVALS.has(who): return {}
+    var participants: Array = []
+    for line in ARRIVALS[who]["lines"]:
+        if line[0] not in participants: participants.append(line[0])
+    return linked_thread("arrival_"+who,ARRIVALS[who],participants)
 
 # The first two chapters are one-to-three rooms on purpose: a new player
 # should never have to guess which of several doors leads somewhere useful
