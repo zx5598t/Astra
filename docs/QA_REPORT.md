@@ -1,7 +1,7 @@
 # QA REPORT — ASTRA 0.6.0 FIRST CONTACT / STORY LOOP
 
 검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64  
-작업 브랜치: `story-framing-20260922`  
+작업 브랜치: `story-framing-20260922` → release candidate `release/0.6.0`  
 release-recovery 검증 GitHub Actions: run **#518**  
 검증 commit: `2373d96e0c58f88e0c7e7a8f8c6a36cb54ed9075`
 
