@@ -1,14 +1,14 @@
-# ASTRA 0.5.5 — FAULT LINES
+# ASTRA 0.5.6 — ECHOES
 
 같은 배에서 깨어났지만, 우리는 서로 다른 목적지를 기억한다.  
 ASTRA의 탐사요원으로서 기록과 현장을 확인하고, 반복될 때마다 조금씩 달라지는 여덟 동료의 관계와 행동을 읽는 싱글플레이 SF 사회추리 미스터리입니다.
 
-0.5.5는 0.5.4 AFTERMATH를 다시 만들지 않고 **“평소와 다른 행동을 왜 했는가?”**를 실제 플레이로 확장합니다. 일부 동료에게만 개인적인 이유가 생기며, 그 이유는 Null 여부와 독립입니다. 중후반에는 작은 함선 사건, 동행 조사, 제한적 위임, 이전 loop에서 실제 본 사건에 대한 선행 대응, 반복 장면 압축, 정보 출처 표시가 서로 연결됩니다.
+0.5.6은 새 대형 시스템을 더하는 버전이 아니라, 0.5.3~0.5.5에서 이미 생긴 관계·선택·consequence를 **플레이어가 읽을 수 있는 짧은 여파**로 돌려주고, 여러 항해에서 **실제로 목격한 인물의 모습만** 승무원 기록에 남기는 완성/안정화 업데이트입니다.
 
-신규 authored/reactive scene은 **71개**, 전체 voyage/reactive library는 **608개**입니다. 추가분은 미라 10 / 준 9 / 다렌 8 / 노아 9 / 세나 8 / 소렌 9 / 루칸 9 / 마렌 9이며, 미라만 과도하게 늘리지 않고 소렌·루칸도 계속 보강했습니다.
+관계 수치, hidden motive, Null 확률이나 내부 source id는 공개하지 않습니다. Notebook은 현재 항해의 working memory로 남고, Crew Archive의 Observation Codex는 실제 경험으로 해금된 authored observation만 항해를 넘어 보존합니다. 신규 authored voyage scene은 **0개**이며 전체 library는 **608개**를 유지합니다.
 
 - [플레이 안내](START_HERE.md)
-- [0.5.5 변경 사항](docs/RELEASE_NOTES.md)
+- [0.5.6 변경 사항](docs/RELEASE_NOTES.md)
 - [설계와 저장 호환](docs/GAME_DESIGN.md)
 - [인물 설정](docs/CHARACTERS.md)
 - [이미지 출처와 변환](docs/ASSET_AUDIT.md)
@@ -26,7 +26,7 @@ ASTRA의 탐사요원으로서 기록과 현장을 확인하고, 반복될 때�
 - RED SHIFT — 마렌과 출항보다 오래된 시료.
 - LAST LIGHT — 기록과 사람에 대한 판단이 합쳐지는 후반.
 
-아직 배우지 않은 시스템은 미리 전부 보여 주지 않습니다. 0.5.5의 Routine/Consequence/Micro-Arc도 본격 노출을 ECHO WARD 이후에 두며, CALIBRATION에는 routine narration을 추가하지 않아 첫 30분의 필수 텍스트량을 늘리지 않습니다.
+아직 배우지 않은 시스템은 미리 전부 보여 주지 않습니다. 0.5.6에서도 기존 Routine/Consequence/Micro-Arc는 본격 노출을 ECHO WARD 이후에 두며, CALIBRATION에는 routine narration을 추가하지 않아 첫 30분의 필수 텍스트량을 늘리지 않습니다.
 
 ## Living Crew
 
@@ -39,7 +39,14 @@ NPC의 중요한 행동은 가능한 한 “왜”가 남습니다.
 - 무고한 진술 차이는 EMBARRASSMENT / PROTECT_OTHER / HIDE_MISTAKE / KEEP_PROMISE / PERSONAL_SECRET / FEAR / MISREMEMBERED 등으로 나뉩니다. MISREMEMBERED는 거짓말 판정이 아닙니다.
 - 루프마다 social theme, 작은 hook, 관계/기억 변화가 일부 달라집니다. RNG가 대사를 쓰지는 않습니다.
 
-## FAULT LINES 콘텐츠
+## ECHOES — 읽히는 여파와 승무원 기록
+
+- 같은 pair/day/axis의 작은 관계 변화는 합쳐서 보여 주고, 의미 없는 미세 변화는 숨깁니다.
+- 밤은 즉시 consequence, 다음 날 briefing은 관계/판단의 지속 여파를 맡아 같은 문장을 연속 화면에서 반복하지 않습니다.
+- Crew Archive에는 STABLE 14 / OBSERVED 10 / ECHO 8, 총 **32개** observation이 있으며 8명 모두 4개씩입니다.
+- OBSERVED/ECHO는 실제 scene 또는 visible relationship milestone을 본 경우에만 해금합니다.
+- CALIBRATION에서는 observation을 정상 저장하되 연속 Codex 토스트는 띄우지 않습니다.
+- save schema는 **v10**이며 v9/legacy 저장은 안전하게 hydrate하고, resume 뒤 동일 Codex를 새 기록으로 다시 보고하지 않습니다.
 
 현재 authored voyage/reactive scene library는 **608개**입니다.
 
@@ -84,27 +91,24 @@ Notebook은 정답표가 아니라 기억 보조입니다.
 
 ## 검증
 
-0.5.5 release branch는 Godot **4.7.2 stable**에서 Linux/Windows를 함께 검증합니다.
+0.5.6 구현 코드 기준 검증은 Godot **4.7.2 stable**에서 Linux/Windows 모두 GREEN입니다.
 
-주요 0.5.5 전용 게이트:
+- Linux import / 전체 GDScript parse clean
+- 전체 모델: **45,301 checks**, 40 games 기준 TOTAL smart **68%** / random **0%** / passive **0%**
+- 기존 0.5.1~0.5.5 regression 유지
+- Codex 0.5.6: **95 checks**
+- ECHOES 0.5.6: **33 checks**
+- Windows UI smoke / main-scene boot 성공
+- 1366×768 / 1920×1080 핵심 UI 접근성 smoke 유지
+- authored scene audit: **608개**, 캐릭터별 98 / 81 / 74 / 79 / 71 / 64 / 62 / 79
 
-- Mira content / agency / phrase audit
-- storylet unseen weighting / rare-event pity / multi-line coherence
-- autonomous crew active-state invariant
-- explicit NPC knowledge propagation
-- player/NPC relationship callback
-- 기존 1,000 conversation + 1,000 meeting + 500-loop simulation
-- 새 player-visible 500-loop HEARTBEAT simulation
-- 첫판/전체 캠페인/저장 호환/UI smoke
-- Windows export + 실제 exported `ASTRA.exe` boot
-
-최근 검증 기준 player-visible 500-loop 결과는 visible signature **500/500**, Mira optional exposure 평균 **2.50** / 최대 **4**, autonomous event **27종**, 0.5.3 scene coverage **65.4%**, rare event 즉시 반복 **0회**였습니다.
+정식 0.5.6 ZIP/SHA-256은 VERSION을 0.5.6으로 맞춘 최종 CI에서 다시 생성해 검증합니다.
 
 ## 실행과 빌드
 
-정식 0.5.5 Windows 후보의 파일명은 다음과 같습니다.
+정식 0.5.6 Windows 후보의 파일명은 다음과 같습니다.
 
-`ASTRA-0.5.5-windows.zip`
+`ASTRA-0.5.6-windows.zip`
 
 압축을 풀고 `ASTRA/ASTRA.exe`를 실행합니다. 리소스는 실행 파일에 포함되며 선택형 AI를 켜지 않으면 네트워크 연결이 필요하지 않습니다.
 
@@ -113,8 +117,8 @@ Notebook은 정답표가 아니라 기억 보조입니다.
 ```powershell
 godot --headless --path . --import
 godot --headless --path . --script res://tests/run_tests.gd -- --games=40
-godot --headless --path . --script res://tests/mira_content_tests.gd
-godot --headless --path . --script res://tests/heartbeat_053_simulation.gd
+godot --headless --path . --script res://tests/codex_056_tests.gd
+godot --headless --path . --script res://tests/echoes_056_tests.gd
 godot --headless --path . --script res://tests/content_audit.gd
 powershell -File tools/build_windows.ps1 -Godot "C:\path\to\godot.exe"
 ```

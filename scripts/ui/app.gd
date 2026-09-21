@@ -2,7 +2,7 @@ extends Control
 
 # Application root: background, screen routing, overlays and persistence.
 
-const VERSION_FALLBACK := "0.5.1"
+const VERSION_FALLBACK := "0.5.6"
 
 var meta := AstraMetaProgress.new()
 var settings := AstraSettings.new()
@@ -175,7 +175,10 @@ func _enter_prepared_session() -> void:
     if session == null:
         show_title()
         return
-    session.begin_voyage(meta.voyage_memory)
+    var memory: Dictionary = meta.voyage_memory.duplicate(true)
+    memory["codex_entries_unlocked"] = meta.codex_entries_unlocked.duplicate()
+    _connect_codex_events()
+    session.begin_voyage(memory)
     _connect_autosave()
     show_session_screen()
 
@@ -274,6 +277,35 @@ func _migrate_legacy_slot() -> void:
     DirAccess.copy_absolute(ProjectSettings.globalize_path(legacy), ProjectSettings.globalize_path(target))
     AstraGameSession.delete_snapshot(legacy)
 
+func _connect_codex_events() -> void:
+    if session == null:
+        return
+    var callback := Callable(self,"_on_session_notice_056")
+    if not session.notice.is_connected(callback):
+        session.notice.connect(callback)
+
+func _on_session_notice_056(kind: String, payload: Dictionary) -> void:
+    if kind != "codex_unlock":
+        return
+    var entry_id := str(payload.get("id",""))
+    if not record_codex_unlock(entry_id):
+        return
+    # CALIBRATION can introduce several people in a short span. Preserve every
+    # witnessed observation, but do not turn the first playable minutes into a
+    # stack of archive notifications.
+    if session != null and AstraCaseCatalog.is_calibration(session.case_id):
+        return
+    var who := AstraCrewCatalog.display_name(str(payload.get("character","")))
+    fx.toast("승무원 기록 갱신 · " + who, AstraUI.CYAN, 1.8)
+
+func record_codex_unlock(entry_id: String) -> bool:
+    if not meta.unlock_codex_entry(entry_id):
+        return false
+    meta.save_data()
+    if session != null:
+        session.set_known_codex_entries(meta.codex_entries_unlocked)
+    return true
+
 func _connect_autosave() -> void:
     session.changed.connect(_save_session, CONNECT_DEFERRED)
     _save_session()
@@ -292,7 +324,9 @@ func resume_case(slot: int = -1) -> void:
         return
     session = restored
     session.features = meta.unlocked_features()
+    session.reconcile_codex_after_resume(meta.codex_entries_unlocked)
     selected_protocol = session.protocol
+    _connect_codex_events()
     _connect_autosave()
     show_session_screen()
 
@@ -300,10 +334,14 @@ func record_result(finished: AstraGameSession) -> Dictionary:
     var memory := finished.voyage_memory()
     if not memory.is_empty():
         meta.voyage_memory = memory
+    var codex_events := finished.codex_unlock_events()
+    for event in codex_events:
+        meta.unlock_codex_entry(str(event.get("id","")))
     var before := meta.unlocked_features()
     var result := meta.record_case_result(finished.case_id, finished.protocol, finished.final_report, true)
     AstraGameSession.delete_snapshot(snapshot_path())
     result["new_features"] = AstraUnlocks.newly_unlocked(before, meta.unlocked_features())
+    result["new_codex"] = codex_events
     return result
 
 # Shown after the result screen, one card each. A feature that appears with no

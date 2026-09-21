@@ -1,3 +1,36 @@
+# ASTRA 0.5.6 — ECHOES
+
+## 선택과 관계의 변화가 읽힌다
+
+기존 시스템의 내부 수치를 더 공개하는 대신, 플레이어가 실제로 목격했거나 플레이어 행동으로 생긴 변화만 짧은 인간 언어로 보여 줍니다. trust +0.05, hidden motive, Null probability 같은 내부 값은 표시하지 않습니다.
+
+밤과 다음 날 브리핑의 역할도 나눴습니다. 밤은 즉시 consequence, briefing은 계속 남은 관계/판단의 여파를 담당해 같은 social feedback을 연속 화면에서 되풀이하지 않습니다.
+
+## Observation Codex
+
+Crew Archive에는 32개의 authored observation이 있습니다: STABLE 14 / OBSERVED 10 / ECHO 8. 8명 모두 4개씩이지만 수치보다 실제 경험 기반 해금이 우선입니다.
+
+Codex는 정답지가 아닙니다. 실제 awakening, 실제 authored scene, 실제 visible relationship milestone처럼 플레이어가 본 근거만 기록합니다. hidden relationship score, motive, Null state, candidate storylet만으로는 해금하지 않습니다.
+
+Notebook은 현재 항해의 질문·사실·관계 관찰을 위한 working memory이고, Crew Archive는 여러 항해를 거쳐 실제 목격한 모습이 남는 장기 기억입니다.
+
+## 첫 플레이와 저장
+
+CALIBRATION의 필수 흐름은 전원 패널 확인 → 미라와 직접 대화 그대로입니다. 첫판에서 여러 observation이 생겨도 연속 Codex toast를 띄우지 않고 조용히 archive에 기록합니다.
+
+save schema는 v10을 유지하며 v9와 더 오래된 저장을 destructive reset 없이 읽습니다. resume 시 이미 meta에 저장된 Codex 항목은 pending에서 제거해 같은 scene을 다시 만나도 toast/result의 "새 기록"이 중복되지 않습니다.
+
+## Content & QA
+
+신규 authored voyage scene: **0**  
+전체 authored voyage/reactive library: **608**  
+캐릭터별 scene: 미라 98 / 준 81 / 다렌 74 / 노아 79 / 세나 71 / 소렌 64 / 루칸 62 / 마렌 79  
+Codex: **32** (STABLE 14 / OBSERVED 10 / ECHO 8)
+
+전용 테스트: Codex **95 checks**, ECHOES **33 checks**. Linux/Windows validation과 Windows release-candidate pre-build에서 모두 실행합니다.
+
+---
+
 # ASTRA 0.5.5 — FAULT LINES
 
 ## Why did they do that?

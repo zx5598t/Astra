@@ -185,13 +185,23 @@ func refresh() -> void:
     var change: Dictionary = screen.archive_change
     if not change.is_empty():
         side.add_child(AstraUI.section("아카이브", AstraUI.CYAN))
-        side.add_child(AstraUI.label("항해 기록에 이번 조사을 보관했습니다.", 14, AstraUI.TEXT))
+        side.add_child(AstraUI.label("항해 기록에 이번 조사를 보관했습니다.", 14, AstraUI.TEXT))
         if bool(change.get("new_best", false)):
             side.add_child(AstraUI.chip("이 사건 최고 기록 갱신", AstraUI.GOLD, 13))
         for case_id in change.get("unlocked", []):
             side.add_child(AstraUI.chip("새 사건 해금 · " + screen.app.meta.case_display_name(str(case_id)), AstraUI.GREEN, 13))
         for feature in change.get("new_features", []):
             side.add_child(AstraUI.chip("새 기능 · " + AstraUnlocks.title_of(str(feature)), AstraUI.GOLD, 13))
+        var new_codex: Array = change.get("new_codex",[])
+        if not new_codex.is_empty():
+            side.add_child(AstraUI.label("새로 기록한 승무원 정보",AstraUI.T_META,AstraUI.CYAN))
+            var visible_count := mini(3,new_codex.size())
+            for index in range(visible_count):
+                var entry: Dictionary = new_codex[index]
+                var who := AstraCrewCatalog.display_name(str(entry.get("character","")))
+                side.add_child(AstraUI.prose("· %s — %s" % [who,str(entry.get("title",""))],AstraUI.T_META,AstraUI.TEXT))
+            if new_codex.size() > visible_count:
+                side.add_child(AstraUI.label("외 %d개 · 승무원 기록에서 확인" % (new_codex.size()-visible_count),AstraUI.T_META,AstraUI.MUTED))
 
     var buttons := AstraUI.hbox(10)
     _body.add_child(buttons)
