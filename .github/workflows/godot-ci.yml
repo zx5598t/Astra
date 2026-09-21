@@ -157,6 +157,17 @@ jobs:
           grep -q "ASTRA 0.5.4 HUMAN EDITING REPORT OK" editorial-054.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" routine-054.log micro-arc-054.log consequence-054.log meaningful-054.log curiosity-054.log decision-054.log compatibility-054.log aftermath-054.log editorial-054.log; then exit 1; fi
 
+      - name: 0.5.5 motives incidents cooperation foreknowledge and momentum
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/fault_lines_055_tests.gd 2>&1 | tee fault-lines-055.log
+          grep -q "ASTRA 0.5.5 FAULT LINES TESTS OK" fault-lines-055.log
+          ./godot --headless --path . --script res://tests/fault_lines_055_simulation.gd 2>&1 | tee fault-lines-sim-055.log
+          grep -q "ASTRA 0.5.5 FAULT LINES SIMULATION OK" fault-lines-sim-055.log
+          ./godot --headless --path . --script res://tests/editorial_055_report.gd 2>&1 | tee editorial-055.log
+          grep -q "ASTRA 0.5.5 HUMAN EDITING REPORT OK" editorial-055.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" fault-lines-055.log fault-lines-sim-055.log editorial-055.log; then exit 1; fi
+
       - name: Story continuity and first-play regression
         run: |
           set -o pipefail
