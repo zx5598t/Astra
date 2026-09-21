@@ -234,7 +234,7 @@ func _add_story_closure(session: AstraGameSession, outcome: String) -> void:
         var question: Dictionary = recap.get("question",{})
         if not question.is_empty():
             var qstatus := str(question.get("status","OPEN"))
-            var status_text := {"ANSWERED":"확인됨","PARTIAL":"부분 확인","REFUTED":"반증","CHANGED":"기록이 바뀜"}.get(qstatus,"아직 부족")
+            var status_text: String = str({"ANSWERED":"확인됨","PARTIAL":"부분 확인","REFUTED":"반증","CHANGED":"기록이 바뀜"}.get(qstatus,"아직 부족"))
             box.add_child(AstraUI.label("Notebook 질문 상태 · " + status_text, AstraUI.T_META, AstraUI.MUTED))
     else:
         box.add_child(AstraUI.label("이번 기록은 여기서 끊겼다", AstraUI.T_META, AstraUI.GOLD))
