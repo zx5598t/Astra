@@ -4341,6 +4341,9 @@ func voyage_delegate(who: String) -> bool:
     return false
 
 func voyage_points() -> Array:
+    if first_day_flow():
+        return [["pod","포드 제어 패널 · 핵심 기록",0.30,0.46,"power",AstraVoyageContent.FIRST_RECORD],
+            ["status","생체 모니터 · 선택 확인",0.63,0.70,"vitals","직접 확인: 네 수면 포드의 생명유지 신호는 안정적이다. 잠금 이력의 공백 원인은 이 검사로 알 수 없다."]]
     var points: Array = AstraVoyageContent.ROOMS.get(voyage.get("room","medbay"),{}).get("points",[])
     var result: Array = []
     var stage := AstraCaseCatalog.CAMPAIGN.find(case_id)
@@ -5969,11 +5972,11 @@ func arrival_recap() -> String:
 func _first_inspect(point_id: String) -> bool:
     if phase != "EXPLORE" or not voyage.get("scene",{}).is_empty(): return false
     if str(flags["contact_058"]["step"]) not in ["inspect","ready"]: return false
-    if point_id not in ["pod","monitor"]: return false
+    if point_id not in ["pod","status"]: return false
     var key := "medbay:"+point_id
     if key in voyage["inspected"]: return false
     voyage["inspected"].append(key)
-    if point_id == "monitor":
+    if point_id == "status":
         _voyage_fact("vitals",str(voyage_points()[1][5]))
         _voyage_scene({"id":"first_optional","speaker":"mira","action":str(voyage_points()[1][5]),"lines":[["mira","생명유지 상태도 직접 확인했네요. 이 검사는 무료예요. 잠금 이력은 제어 패널에서 따로 봐요."]],"choices":[]})
     else:
