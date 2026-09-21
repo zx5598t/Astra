@@ -345,6 +345,9 @@ func _hydrate_054_voyage_defaults() -> void:
     if not voyage.has("consequence_queue"): voyage["consequence_queue"] = []
     if not voyage.has("consequence_history"): voyage["consequence_history"] = []
     if not voyage.has("consequence_stats"): voyage["consequence_stats"] = {"IMMEDIATE":0,"DELAYED":0,"NEXT_DAY":0,"NEXT_LOOP":0}
+    if not voyage.has("relationship_feedback"): voyage["relationship_feedback"] = []
+    if not voyage.has("codex_known"): voyage["codex_known"] = []
+    if not voyage.has("codex_unlocks_pending"): voyage["codex_unlocks_pending"] = []
     if not voyage.has("pinned_question"): voyage["pinned_question"] = ""
     if not voyage.has("opinion_changes"): voyage["opinion_changes"] = []
     if not voyage.has("motives"): voyage["motives"] = {}
@@ -3887,6 +3890,9 @@ func begin_voyage(memory: Dictionary = {}) -> void:
         "micro_arc_pity":memory.get("micro_arc_pity",{}).duplicate(true),
         "consequence_queue":memory.get("consequence_carry",[]).duplicate(true),
         "consequence_history":[], "consequence_stats":{"IMMEDIATE":0,"DELAYED":0,"NEXT_DAY":0,"NEXT_LOOP":0},
+        "relationship_feedback":[],
+        "codex_known":memory.get("codex_entries_unlocked",[]).duplicate(),
+        "codex_unlocks_pending":[],
         "pinned_question":str(memory.get("pinned_question","")),
         "opinion_changes":[],
         "motives":{}, "motive_observations":[],
@@ -4386,6 +4392,7 @@ func _voyage_scene(scene: Dictionary) -> void:
     var seen_ever: Dictionary = voyage.get("seen_ever",{})
     seen_ever[id] = int(seen_ever.get(id,0)) + 1
     voyage["seen_ever"] = seen_ever
+    _unlock_codex_from_scene(id)
     voyage["recent"].append(id)
     while voyage["recent"].size() > 18:
         voyage["recent"].pop_front()
@@ -4424,7 +4431,7 @@ func _voyage_scene(scene: Dictionary) -> void:
         voyage["opinion_changes"].append({
             "actor":who,"target":opinion_target,
             "reason_tag":str(opinion_change.get("reason","new_evidence")),
-            "source_scene":id,"visible":true,
+            "source_scene":id,"visible":true,"day":day,
             "known_facts":AstraKnowledgeModel.known_facts(flags,who),
             "relationship_context":relationship_context
         })
@@ -4445,21 +4452,18 @@ func _voyage_scene(scene: Dictionary) -> void:
     if target != "":
         memory_state = AstraLivingCrew.remember(memory_state, target, memory_event)
         if who != "" and crew.has(who) and crew.has(target):
-            var relationships: Dictionary = voyage.get("relationships",{})
-            var pair_key := AstraCrewCatalog.pair_key(who,target)
-            var relation: Dictionary = relationships.get(pair_key,AstraLivingCrew.blank_relationship())
-            match str(scene.get("tag","")):
+            var scene_tag := str(scene.get("tag",""))
+            var authored_social := scene_tag in ["pair","trust","relief","conflict","suspected","danger"] or str(scene.get("category","")) in ["RELATIONSHIP","CONFLICT"]
+            match scene_tag:
                 "pair", "trust", "relief":
-                    relation["comfort"] = clampf(float(relation.get("comfort",0.5)) + 0.02,0.0,1.0)
-                    relation["trust"] = clampf(float(relation.get("trust",0.5)) + 0.015,0.0,1.0)
+                    _adjust_relationship(who,target,"comfort",0.02,id,true,authored_social)
+                    _adjust_relationship(who,target,"trust",0.015,id,true,authored_social)
                 "work":
-                    relation["respect"] = clampf(float(relation.get("respect",0.5)) + 0.02,0.0,1.0)
+                    _adjust_relationship(who,target,"respect",0.02,id,true,authored_social)
                 "conflict", "suspected":
-                    relation["tension"] = clampf(float(relation.get("tension",0.15)) + 0.035,0.0,1.0)
+                    _adjust_relationship(who,target,"tension",0.035,id,true,true)
                 "danger":
-                    relation["protectiveness"] = clampf(float(relation.get("protectiveness",0.2)) + 0.03,0.0,1.0)
-            relationships[pair_key] = relation
-            voyage["relationships"] = relationships
+                    _adjust_relationship(who,target,"protectiveness",0.03,id,true,true)
     voyage["dialogue_memory_052"] = memory_state
     var deviation_reason := str(scene.get("deviation_reason",""))
     if deviation_reason != "" and who != "":
@@ -4937,7 +4941,10 @@ func _apply_consequence_event(event: Dictionary, allow_scene: bool = true) -> bo
     var stats_054: Dictionary = voyage.get("consequence_stats",{})
     stats_054[timing] = int(stats_054.get(timing,0)) + 1
     voyage["consequence_stats"] = stats_054
-    voyage["consequence_history"].append(event.duplicate(true))
+    var history_event: Dictionary = event.duplicate(true)
+    history_event["applied_day"] = day
+    history_event["visible_feedback"] = str(event.get("note","")) != "" and str(event.get("source_scene","")) != ""
+    voyage["consequence_history"].append(history_event)
     var note := str(event.get("note",""))
     if note != "" and note not in voyage.get("notes",[]):
         voyage["notes"].append(note)
@@ -5282,13 +5289,204 @@ func character_observations(npc_id: String) -> Array:
             continue
         var key := AstraCrewCatalog.pair_key(npc_id,str(other))
         if voyage.get("relationships",{}).has(key):
-            pairs.append("%s와(과) %s" % [name_of(str(other)), relationship_status(npc_id,str(other))])
+            pairs.append("%s %s" % [AstraJosa.wa(name_of(str(other))), relationship_status(npc_id,str(other))])
     if not pairs.is_empty():
         result.append("[현재 기록] " + str(pairs[0]))
     return result
 
 func character_baseline(npc_id: String) -> Array:
     return AstraLivingCrew.baseline(npc_id)
+
+
+# ---------------------------------------------------------------- 0.5.6 visible social feedback / observation Codex
+
+func set_known_codex_entries(entry_ids: Array) -> void:
+    if voyage.is_empty():
+        return
+    voyage["codex_known"] = entry_ids.duplicate()
+
+func _queue_codex_unlock(entry_id: String) -> void:
+    if voyage.is_empty() or entry_id == "":
+        return
+    var known: Array = voyage.get("codex_known",[])
+    var pending: Array = voyage.get("codex_unlocks_pending",[])
+    if entry_id in known or entry_id in pending:
+        return
+    var entry := AstraCodex.character_entry(entry_id)
+    if entry.is_empty():
+        return
+    pending.append(entry_id)
+    voyage["codex_unlocks_pending"] = pending
+    notice.emit("codex_unlock", {
+        "id":entry_id,
+        "character":str(entry.get("character","")),
+        "scope":str(entry.get("scope","")),
+        "title":str(entry.get("title",""))
+    })
+
+func _unlock_codex_from_scene(scene_id: String) -> void:
+    for entry_id in AstraCodex.unlocks_for_scene(scene_id):
+        _queue_codex_unlock(str(entry_id))
+
+func codex_unlock_events() -> Array:
+    var result: Array = []
+    if voyage.is_empty():
+        return result
+    for entry_id in voyage.get("codex_unlocks_pending",[]):
+        var entry := AstraCodex.character_entry(str(entry_id))
+        if entry.is_empty():
+            continue
+        result.append({
+            "id":str(entry.get("id","")),
+            "character":str(entry.get("character","")),
+            "scope":str(entry.get("scope","")),
+            "title":str(entry.get("title",""))
+        })
+    return result
+
+func _adjust_relationship(a_id: String, b_id: String, axis: String, amount: float, source_id: String, player_visible: bool, authored_social: bool = false) -> void:
+    if voyage.is_empty() or a_id == "" or b_id == "" or a_id == b_id or axis not in AstraLivingCrew.AXES:
+        return
+    var key := AstraCrewCatalog.pair_key(a_id,b_id)
+    var relationships: Dictionary = voyage.get("relationships",{})
+    var relation: Dictionary = relationships.get(key,AstraLivingCrew.blank_relationship())
+    var before := float(relation.get(axis,0.5))
+    var after := clampf(before + amount,0.0,1.0)
+    if is_equal_approx(before,after):
+        return
+    relation[axis] = after
+    relationships[key] = relation
+    voyage["relationships"] = relationships
+    if not player_visible:
+        return
+    var feedback: Array = voyage.get("relationship_feedback",[])
+    var direction := "UP" if after > before else "DOWN"
+    feedback.append({
+        "day":day,"a":a_id,"b":b_id,"axis":axis,"direction":direction,
+        "magnitude":absf(after-before),"source":source_id,"visible":true,
+        "authored_social":authored_social
+    })
+    while feedback.size() > 64:
+        feedback.pop_front()
+    voyage["relationship_feedback"] = feedback
+    for entry_id in AstraCodex.relationship_unlocks(a_id,b_id,axis,direction):
+        _queue_codex_unlock(str(entry_id))
+
+func _relationship_feedback_text(axis: String, direction: String) -> String:
+    match axis:
+        "trust":
+            return "서로의 판단을 조금 더 믿게 됐다." if direction == "UP" else "서로의 설명을 바로 믿지 못한다."
+        "comfort":
+            return "함께 있어도 전보다 편해 보인다." if direction == "UP" else "함께 있을 때 전보다 조심스러워 보인다."
+        "tension":
+            return "대화 뒤에도 긴장이 남았다." if direction == "UP" else "남아 있던 긴장이 조금 누그러졌다."
+        "respect":
+            return "업무 판단은 서로 인정한 것 같다." if direction == "UP" else "서로의 업무 판단에 의문이 남았다."
+        "protectiveness":
+            return "위험할 때 서로를 먼저 살피기 시작했다." if direction == "UP" else "서로를 먼저 감싸던 태도가 옅어졌다."
+    return "서로를 대하는 태도가 달라졌다."
+
+func _opinion_feedback_text(change: Dictionary) -> String:
+    var actor := name_of(str(change.get("actor",change.get("voter",""))))
+    var target_id := str(change.get("after",change.get("target","")))
+    var target := name_of(target_id) if target_id != "" else ""
+    var reason_tag := str(change.get("reason_tag","new_evidence"))
+    if str(change.get("reason","")) != "":
+        if target != "":
+            return "%s · %s에 대한 판단을 바꿨다. %s" % [actor,target,str(change.get("reason",""))]
+        return "%s · %s" % [actor,str(change.get("reason",""))]
+    match reason_tag:
+        "relationship_change":
+            return "%s · 관계가 달라진 뒤 판단도 달라졌다." % actor
+        "memory_change":
+            return "%s · 앞선 행동을 다시 떠올린 뒤 판단을 바꿨다." % actor
+        "uncertainty":
+            return "%s · 확신이 줄어 판단을 다시 보게 됐다." % actor
+        _:
+            if target != "":
+                return "%s · 새 기록을 본 뒤 %s에 대한 판단을 바꿨다." % [actor,target]
+            return "%s · 새 기록을 본 뒤 판단을 바꿨다." % actor
+
+func daily_social_summary(day_index: int = -1) -> Dictionary:
+    var target_day := day if day_index < 0 else day_index
+    var buckets := {}
+    for raw in voyage.get("relationship_feedback",[]):
+        var event: Dictionary = raw
+        if not bool(event.get("visible",false)) or int(event.get("day",-1)) != target_day:
+            continue
+        var a := str(event.get("a",""))
+        var b := str(event.get("b",""))
+        var axis := str(event.get("axis",""))
+        var pair_key := AstraCrewCatalog.pair_key(a,b)
+        var key := pair_key + "|" + axis
+        var bucket: Dictionary = buckets.get(key,{"a":a,"b":b,"axis":axis,"net":0.0,"authored":false})
+        var sign := 1.0 if str(event.get("direction","UP")) == "UP" else -1.0
+        bucket["net"] = float(bucket.get("net",0.0)) + float(event.get("magnitude",0.0)) * sign
+        bucket["authored"] = bool(bucket.get("authored",false)) or bool(event.get("authored_social",false))
+        buckets[key] = bucket
+    var per_pair := {}
+    for key in buckets:
+        var bucket: Dictionary = buckets[key]
+        var net := float(bucket.get("net",0.0))
+        if absf(net) < 0.03 and not bool(bucket.get("authored",false)):
+            continue
+        var a := str(bucket.get("a",""))
+        var b := str(bucket.get("b",""))
+        var axis := str(bucket.get("axis",""))
+        var direction := "UP" if net >= 0.0 else "DOWN"
+        var pair_key := AstraCrewCatalog.pair_key(a,b)
+        var score := absf(net) + (0.04 if bool(bucket.get("authored",false)) else 0.0)
+        var candidate := {
+            "a":a,"b":b,"pair":"%s ↔ %s" % [name_of(a),name_of(b)],
+            "kind":axis,"direction":direction,
+            "text":_relationship_feedback_text(axis,direction),
+            "_score":score
+        }
+        if not per_pair.has(pair_key) or score > float(per_pair[pair_key].get("_score",0.0)):
+            per_pair[pair_key] = candidate
+    var relationship_changes: Array = per_pair.values()
+    relationship_changes.sort_custom(func(a,b): return float(a.get("_score",0.0)) > float(b.get("_score",0.0)))
+    for entry in relationship_changes:
+        entry.erase("_score")
+    relationship_changes = relationship_changes.slice(0,mini(3,relationship_changes.size()))
+    var active_tensions: Array = []
+    for entry in relationship_changes:
+        if str(entry.get("kind","")) == "tension" and str(entry.get("direction","")) == "UP":
+            active_tensions.append(entry.duplicate(true))
+    var consequences: Array = []
+    for raw in voyage.get("consequence_history",[]):
+        var event: Dictionary = raw
+        if int(event.get("applied_day",-1)) != target_day or not bool(event.get("visible_feedback",false)):
+            continue
+        var note := str(event.get("note",""))
+        if note == "":
+            continue
+        var who := str(event.get("who",""))
+        consequences.append({"character":name_of(who) if who != "" else "승무원","text":note})
+        if consequences.size() >= 2:
+            break
+    var opinion_changes: Array = []
+    for raw in voyage.get("opinion_changes",[]):
+        var change: Dictionary = raw
+        if int(change.get("day",-1)) != target_day or ("visible" in change and not bool(change.get("visible",true))):
+            continue
+        opinion_changes.append({"text":_opinion_feedback_text(change)})
+        if opinion_changes.size() >= 2:
+            break
+    return {
+        "day":target_day,
+        "relationship_changes":relationship_changes,
+        "active_tensions":active_tensions,
+        "consequences":consequences,
+        "opinion_changes":opinion_changes
+    }
+
+func night_feedback_summary() -> Dictionary:
+    var summary := daily_social_summary(day)
+    summary["relationship_changes"] = Array(summary.get("relationship_changes",[])).slice(0,mini(2,Array(summary.get("relationship_changes",[])).size()))
+    summary["consequences"] = Array(summary.get("consequences",[])).slice(0,mini(2,Array(summary.get("consequences",[])).size()))
+    summary["opinion_changes"] = Array(summary.get("opinion_changes",[])).slice(0,mini(1,Array(summary.get("opinion_changes",[])).size()))
+    return summary
 
 func relationship_between(a_id: String, b_id: String) -> Dictionary:
     if voyage.is_empty():
