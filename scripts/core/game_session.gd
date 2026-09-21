@@ -4832,7 +4832,10 @@ func voyage_talk(who: String, topic: String = "") -> bool:
         )
         if not continuation_candidates_057.is_empty():
             eligible = continuation_candidates_057
-        elif int(voyage.get("speaker_exposure",{}).get(who,0)) >= 1 and voyage.get("loop_focus_families",[]).size() < 2:
+        elif int(voyage.get("speaker_exposure",{}).get(who,0)) >= 2 and voyage.get("loop_focus_families",[]).size() < 2:
+            # Starting a fresh micro-arc is stronger than merely continuing one.
+            # Reserve that preference for a player who has deliberately returned
+            # to the same person multiple times in this loop.
             var arc_starts_057: Array = eligible.filter(func(item):
                 return str(item.get("chain_id","")) != "" and int(item.get("requires_stage",-1)) == 0
             )
