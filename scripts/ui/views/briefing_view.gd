@@ -147,11 +147,10 @@ func _later_day(s: AstraGameSession) -> void:
 
 
 func _add_previous_day_feedback(s: AstraGameSession) -> void:
-    var summary := s.daily_social_summary(s.day - 1)
+    var summary := s.briefing_social_summary(s.day - 1)
     var relationships: Array = summary.get("relationship_changes",[])
     var opinions: Array = summary.get("opinion_changes",[])
-    var consequences: Array = summary.get("consequences",[])
-    if relationships.is_empty() and opinions.is_empty() and consequences.is_empty():
+    if relationships.is_empty() and opinions.is_empty():
         return
     var panel := AstraUI.panel(Color(AstraUI.CYAN,0.025),Color(AstraUI.CYAN,0.20),9,11)
     _body.add_child(panel)
@@ -163,8 +162,6 @@ func _add_previous_day_feedback(s: AstraGameSession) -> void:
         box.add_child(AstraUI.prose(str(entry.get("text","")),AstraUI.T_META,AstraUI.MUTED))
     if not opinions.is_empty():
         box.add_child(AstraUI.prose("· " + str(opinions[0].get("text","")),AstraUI.T_META,AstraUI.MUTED))
-    elif not consequences.is_empty():
-        box.add_child(AstraUI.prose("· " + str(consequences[0].get("text","")),AstraUI.T_META,AstraUI.MUTED))
 
 # Why the case needs a culprit rather than a repair crew, derived from the case
 # rather than written per case, so every incident explains itself the same way.
