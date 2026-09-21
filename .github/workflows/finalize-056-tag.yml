@@ -1,0 +1,63 @@
+name: Finalize ASTRA 0.5.6 tag
+
+on:
+  push:
+    branches: ["release/0.5.6"]
+    paths:
+      - ".github/workflows/finalize-056-tag.yml"
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify final main release commit and green workflows
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: add90d968447e6fe76be08cf6a5e6cd40801ca1d
+          TAG: v0.5.6
+        run: |
+          set -euo pipefail
+          git fetch origin main --tags
+          main_sha=$(git rev-parse origin/main)
+          test "$main_sha" = "$TARGET_SHA"
+
+          runs=$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$TARGET_SHA&per_page=20")
+          godot_ok=$(echo "$runs" | jq '[.workflow_runs[] | select(.name == "Godot CI" and .event == "push" and .head_branch == "main" and .conclusion == "success")] | length')
+          windows_ok=$(echo "$runs" | jq '[.workflow_runs[] | select(.name == "Windows build" and .event == "push" and .head_branch == "main" and .conclusion == "success")] | length')
+          test "$godot_ok" -ge 1
+          test "$windows_ok" -ge 1
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "$TAG already exists; refusing to retag."
+            exit 1
+          fi
+
+      - name: Create v0.5.6 on verified main SHA
+        shell: bash
+        env:
+          TARGET_SHA: add90d968447e6fe76be08cf6a5e6cd40801ca1d
+          TAG: v0.5.6
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG" "$TARGET_SHA"
+          git push origin "refs/tags/$TAG"
+
+      - name: Run Windows release workflow from tag ref
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v0.5.6
+        run: |
+          set -euo pipefail
+          gh workflow run release.yml --ref "$TAG"
