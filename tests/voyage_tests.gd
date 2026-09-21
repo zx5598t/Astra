@@ -25,7 +25,7 @@ func close_scene(s: AstraGameSession) -> void:
             s.voyage_next()
 func _initialize() -> void:
     test_exploration_consequences()
-    var expected := [4,4,5,6,7,8,8]
+    # 0.6.0 authored calendar: one crewmate joins on Days 2-5.\n    var expected := [4,5,6,7,8,8,8]
     var ids := ["CALIBRATION"] + AstraCaseCatalog.CAMPAIGN
     var memory := {}
     for i in range(ids.size()):
@@ -33,7 +33,7 @@ func _initialize() -> void:
         s.setup(ids[i],9143+i)
         s.begin_voyage(memory)
         check(s.roster.size()==expected[i],"progressive roster "+ids[i])
-        check(s.null_count==(1 if expected[i]<7 else 2),"influence count "+ids[i])
+        check(s.null_count==AstraCaseCatalog.null_count(AstraCaseCatalog.get_case(ids[i])),"influence count "+ids[i])
         check(s.roster.slice(0,4)==AstraCrewCatalog.INITIAL,"initial four")
         close_scene(s)
         for who in s.roster:
@@ -133,14 +133,7 @@ func test_exploration_consequences() -> void:
     pity.setup("CALIBRATION",8)
     pity.begin_voyage()
     close_scene(pity)
-    # CALIBRATION is one room by design, so the pity clock (which only ticks
-    # on a "deliver" action such as a move) is exercised by re-entering the
-    # same room rather than room-hopping.
-    for i in range(12):
-        pity.voyage_move("medbay")
-        close_scene(pity)
-    check(pity.voyage["goal_done"],"main discovery offered even without inspecting")
-    var last := ""
+    # 0.6.0 FIRST CONTACT deliberately requires one direct investigation.\n    # Re-entering the room must not auto-complete the core discovery.\n    for i in range(12):\n        pity.voyage_move("medbay")\n        close_scene(pity)\n    check(not pity.voyage["goal_done"],"FIRST CONTACT core discovery still requires direct inspection")\n    check(pity.voyage_inspect("pod"),"FIRST CONTACT direct panel inspection works")\n    close_scene(pity)\n    check(pity.voyage["goal_done"],"direct inspection completes the FIRST CONTACT discovery")\n    var last := ""
     var variants := {}
     pity.voyage_visit_person("mira")
     close_scene(pity)
