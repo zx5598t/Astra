@@ -309,7 +309,7 @@ func _next_case(current: String) -> String:
     var index := AstraCaseCatalog.CAMPAIGN.find(current)
     for offset in range(1, AstraCaseCatalog.CAMPAIGN.size()):
         var candidate := str(AstraCaseCatalog.CAMPAIGN[(index + offset) % AstraCaseCatalog.CAMPAIGN.size()])
-        if meta.is_case_unlocked(candidate) and candidate != current:
+        if meta.is_case_unlocked_for_slot(candidate, screen.app.active_slot) and candidate != current:
             return candidate
     return ""
 
