@@ -94,6 +94,75 @@ const CHAPTERS := {
         "room": "archive"
     }
 }
+# Local answers are delivered in play, not invented by the Result screen.
+# Each beat names the people whose expertise can support the conclusion.
+const RESOLUTION_BEATS := {
+    "DEAD_AIR": {
+        "payoff_type":"FACTUAL","participants":["noa","dax"],
+        "action":"당신이 두 목적지 문서를 같은 화면에 띄운다. 노아는 승인 번호를, 다렌은 파일 서명을 따로 대조한다.",
+        "lines":[["noa","둘 다 같은 날 ASTRA 승인 체계에서 접수된 원본이에요. 조잡한 위조본을 하나 섞은 게 아니에요."],
+            ["dax","그러면 쉬운 답 하나는 지워도 돼. 문제는 가짜 문서가 아니라, 유효한 기록이 둘이라는 거야."]]
+    },
+    "GLASS_GARDEN": {
+        "payoff_type":"HUMAN","participants":["sena","rho"],
+        "action":"세나가 자신의 순찰 기록을, 준이 당시 배치 기록을 나란히 놓는다.",
+        "lines":[["sena","여기. 나는 이 날 준이랑 같이 돌았어. 시간하고 문 번호까지 기억해."],
+            ["rho","내 배치표에는 그 하루가 없어. 그런데 네 기록의 형식도 서명도 멀쩡해."],
+            ["sena","그럼 누가 거짓말하는 걸로 끝낼 수는 없겠네. 우리 둘 다 가진 근거에서는 맞아."]]
+    },
+    "ECHO_WARD": {
+        "payoff_type":"REALITY_CONTRADICTION","participants":["vale","mira"],
+        "action":"소렌이 수면 중 녹음과 지금 자신의 목소리를 같은 분석기에 넣는다.",
+        "lines":[["vale","합성 흔적은 없어요. 호흡 간격까지 제 목소리와 같아요."],
+            ["mira","그 시각의 포드 생체 기록도 실제예요. 목소리도 기록도 버릴 수 없다면, 시간 순서를 다시 봐야 해요."]]
+    },
+    "SILENT_ORBIT": {
+        "payoff_type":"FACTUAL","participants":["eli","dax"],
+        "action":"루칸이 항법 기록과 관측창의 별 위치를 고정하고, 다렌이 시스템 시각과 서명을 대조한다.",
+        "lines":[["eli","도착 완료 기록은 항법 화면 장식이 아니야. 별 위치와 끝점이 같이 맞아."],
+            ["dax","시스템 시각과 서명도 같은 결론이야. 이 기록은 지금보다 약 19년 전의 정식 선내 기록이야."],
+            ["eli","그럼 우리가 기억하는 출항부터 다시 물어야겠네."]]
+    },
+    "RED_SHIFT": {
+        "payoff_type":"HUMAN","participants":["lyra","noa"],
+        "action":"마렌이 시료 라벨과 생장 기록을 펼치고, 노아가 독립된 보관 기록의 날짜를 맞춘다.",
+        "lines":[["lyra","채집 장소와 생장 시간은 따로 잰 값인데 둘 다 목적지를 가리켜요. 출항 전 날짜도 같고요."],
+            ["noa","보관 기록까지 일치해요. 한 사람이 날짜를 잘못 적은 걸로는 설명이 안 돼요."],
+            ["lyra","이게 정말 우리가 다녀온 흔적이라면… 저는 그 시간을 왜 기억하지 못하죠?"]]
+    },
+    "LAST_LIGHT": {
+        "payoff_type":"FACTUAL","participants":["noa","dax"],
+        "action":"남은 전력으로 노아와 다렌이 지금까지 보존한 기록 사본을 한 번만 더 교차 검증한다.",
+        "lines":[["noa","목적지 이름은 서로 달라요. 그런데 서로 다른 사본 모두에 ‘도착 완료’가 남아 있어요."],
+            ["dax","체크섬과 서명 체계도 각 사본 안에서는 유효해. 단순 손상된 한 과거가 아니야."],
+            ["noa","그리고 가장 오래된 차이는 이번 Null 사건보다 앞서 있어요. Null 하나로 전부 설명할 수 없어요."],
+            ["dax","그럼 남는 질문은 하나네. 우리는 어느 history에서 깨어난 거지?"]]
+    }
+}
+
+static func resolution_thread(case_id: String) -> Dictionary:
+    if not RESOLUTION_BEATS.has(case_id):
+        return {}
+    var data: Dictionary = RESOLUTION_BEATS[case_id].duplicate(true)
+    var participants: Array = data.get("participants",[]).duplicate()
+    data.merge({
+        "id":"story_resolution_" + case_id.to_lower(),
+        "speaker":str(participants[0]) if not participants.is_empty() else "",
+        "category":"MANDATORY","tag":"story_resolution","thread":true,
+        "choices":[],"compressible":false,"story_resolution":true,
+        "requires_fact":str(chapter(case_id).get("fact",""))
+    },false)
+    return data
+
+static func hook_thread(case_id: String) -> Dictionary:
+    var data := chapter(case_id)
+    return {
+        "id":"story_hook_" + case_id.to_lower(),
+        "speaker":"","participants":[],"category":"MANDATORY","tag":"story_hook",
+        "action":str(data.get("next_hook","")),"lines":[],"choices":[],
+        "compressible":false,"story_hook":true
+    }
+
 # How each chapter's loop-reset screen frames itself. Every chapter ending the
 # same way ("same wrapper, different outro line") is the fastest way to make a
 # seven-chapter game feel like one screen repeated seven times, so the title
