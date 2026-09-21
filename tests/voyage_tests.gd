@@ -89,7 +89,11 @@ func _initialize() -> void:
         s.setup("DEAD_AIR",seed)
         s.begin_voyage(memory)
         close_scene(s)
-        s.voyage_talk("mira")
+        # DEAD_AIR now wakes Sena. Mira therefore has to be met through the
+        # normal visit flow before ordinary dialogue can be sampled.
+        check(s.voyage_visit_person("mira"),"seed variety meets mira")
+        close_scene(s)
+        check(s.voyage_talk("mira"),"seed variety starts mira dialogue")
         variants[str(s.voyage["scene"].get("id",""))]=true
     check(variants.size()>=3,"100 seed scene variety")
     var meta := AstraMetaProgress.new("user://astra_050_meta.cfg")
@@ -127,8 +131,20 @@ func test_exploration_consequences() -> void:
         s.voyage_visit_person(who)
         close_scene(s)
     if not s.voyage["goal_done"]:
-        s.voyage_ask_goal(str(s.voyage_people()[0]))
-        close_scene(s)
+        # FIRST CONTACT/contact-flow guidance no longer grants the chapter fact:
+        # finish the real ECHO_WARD investigation by inspecting its authored
+        # signal point, exactly as the player must do at runtime.
+        var goal_fact := str(AstraVoyageContent.chapter("ECHO_WARD").get("fact",""))
+        for room_id in s.voyage_rooms():
+            if str(s.voyage.get("room","")) != str(room_id):
+                s.voyage_move(str(room_id),false)
+                close_scene(s)
+            for point in s.voyage_points():
+                if str(point[4]) == goal_fact and s.voyage_inspect(str(point[0])):
+                    close_scene(s)
+                    break
+            if s.voyage["goal_done"]:
+                break
     check(s.finish_voyage() and s.flags.get("mission_backup",false),"exploration choice enables actual night backup")
     var pity := AstraGameSession.new()
     pity.setup("CALIBRATION",8)
