@@ -116,11 +116,11 @@ Notebook은 정답표가 아니라 기억 보조입니다.
 - 1366×768 / 1920×1080 핵심 UI 접근성 smoke 유지
 - authored scene audit: **608개**, 캐릭터별 98 / 81 / 74 / 79 / 71 / 64 / 62 / 79
 
-정식 0.5.7 Windows CI artifact는 `ASTRA-0.5.7-windows.zip`이며 최종 검증 SHA-256은 `a9d1bdb0959c9d2dd3a51953daed48e8d146a7e33d17a1de862e1579d0a2f48b`입니다.
+공식 0.5.7 Windows Release asset은 `ASTRA-0.5.7-windows.zip`이며 tag-source Windows run `35575857561`에서 검증된 SHA-256은 `5ea10cb171ce3d42e66da54c3c14d2adff6f9648a3d86e8166146c016a0846ec`입니다.
 
 ## 실행과 빌드
 
-정식 0.5.7 Windows 후보의 파일명은 다음과 같습니다.
+공식 0.5.7 Windows Release의 파일명은 다음과 같습니다.
 
 `ASTRA-0.5.7-windows.zip`
 

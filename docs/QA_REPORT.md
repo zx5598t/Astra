@@ -42,7 +42,25 @@
 
 608개 library 크기 자체의 non-fatal warning은 CLEAR SIGNAL 500-loop runtime gate로 대체했다. opener 반복 경고는 단어 수만 출력하지 않고 해당 scene ID / speaker / action preview를 함께 출력한다.
 
-## 정식 빌드 상태
+## 공식 v0.5.7 Release 완료
+
+- VERSION / project.godot: **0.5.7 / ASTRA 0.5.7 — CLEAR SIGNAL**
+- annotated tag: `v0.5.7` → `e4b20a77e7295ff4afa4c4ed086f738272d9409e`
+- main Godot CI: run `35575857582` — **completed / success**
+- tag-source Windows build: run `35575857561` — **completed / success**
+- source workflow artifact: `10627638550` (`ASTRA-0.5.7-windows`)
+- GitHub Release: `v0.5.7` / ID `392806018` / **ASTRA 0.5.7 — CLEAR SIGNAL**
+- published_at: `2026-09-21T08:46:43Z`
+- Windows ZIP: `ASTRA-0.5.7-windows.zip`
+- 파일 크기: **92,844,194 bytes**
+- 공식 Release SHA-256: `5ea10cb171ce3d42e66da54c3c14d2adff6f9648a3d86e8166146c016a0846ec`
+- `.sha256` 파일과 실제 ZIP hash: **일치**
+- exported `ASTRA.exe` boot: **PASS** (run `35575857561`의 `build_windows.ps1` gate)
+- published Release asset 재다운로드/구조/SHA 재검증: run `35579855349` — **PASS**
+
+아래의 `35573583450` / `a9d1...` 값은 0.5.7 VERSION 승격 직후의 사전 RC 기록으로 보존한다. 이후 tag provenance를 직접 가진 main run `35575857561`은 같은 크기의 ZIP을 만들었지만 Godot export의 생성 cache/hash 영역과 archive metadata 때문에 byte-level SHA가 달라졌고, 공식 Release에는 tag commit `e4b20a77...`에서 직접 검증된 artifact `10627638550`을 사용했다. `dc4292...`에서 `e4b20...` 사이 변경 파일은 release workflow와 README / CHANGELOG / QA / RELEASE_NOTES뿐이며 gameplay 파일 변경은 없다.
+
+## 0.5.7 사전 RC 기록
 
 VERSION / project.godot을 0.5.7로 맞춘 최종 commit `dc4292bcd53c64fa2128593a6e35c788f2c8f7c7`, GitHub Actions run `35573583450`에서 Linux validation / Windows validation / Windows release-candidate가 모두 **PASS**했다.
 
