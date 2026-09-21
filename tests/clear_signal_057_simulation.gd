@@ -155,7 +155,8 @@ func _unrelated_and_continuations(events: Array) -> Dictionary:
             "category":str(event.get("category","")),
             "intent":str(event.get("intent","")),
             "tag":str(event.get("tag","")),
-            "speaker":str(event.get("speaker",""))
+            "speaker":str(event.get("speaker","")),
+            "continuation":bool(event.get("continuation",false))
         }
         var level := str(event.get("salience",""))
         var continuation := AstraStoryletScheduler.is_continuation(synthetic,context)
