@@ -207,7 +207,9 @@ jobs:
           grep -q "ASTRA 0.5.8 FIRST CONTACT TESTS OK" first-contact-058.log
           ./godot --headless --path . --script res://tests/reset_060_tests.gd 2>&1 | tee reset-060.log
           grep -q "ASTRA 0.6.0 RESET TESTS OK" reset-060.log
-          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" story-consistency.log first-contact-058.log reset-060.log; then exit 1; fi
+          ./godot --headless --path . --script res://tests/vote_abstain_060.gd 2>&1 | tee vote-abstain-060.log
+          grep -q "ASTRA 0.6.0 NPC VOTE REGRESSION OK" vote-abstain-060.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" story-consistency.log first-contact-058.log reset-060.log vote-abstain-060.log; then exit 1; fi
 
       - name: 0.5.3 content depth and invariant audit
         run: |
@@ -276,7 +278,9 @@ jobs:
           if (-not (Select-String -Path windows-first-contact-058.log -Pattern 'ASTRA 0.5.8 FIRST CONTACT TESTS OK')) { throw 'Windows FIRST CONTACT tests did not pass.' }
           & $env:GODOT --headless --path . --script res://tests/reset_060_tests.gd 2>&1 | Tee-Object -FilePath windows-reset-060.log
           if (-not (Select-String -Path windows-reset-060.log -Pattern 'ASTRA 0.6.0 RESET TESTS OK')) { throw 'Windows reset tests did not pass.' }
-          if (Select-String -Path windows-story-consistency.log,windows-first-contact-058.log,windows-reset-060.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows story/reset gates reported script errors.' }
+          & $env:GODOT --headless --path . --script res://tests/vote_abstain_060.gd 2>&1 | Tee-Object -FilePath windows-vote-abstain-060.log
+          if (-not (Select-String -Path windows-vote-abstain-060.log -Pattern 'ASTRA 0.6.0 NPC VOTE REGRESSION OK')) { throw 'Windows vote/abstain regression did not pass.' }
+          if (Select-String -Path windows-story-consistency.log,windows-first-contact-058.log,windows-reset-060.log,windows-vote-abstain-060.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows story/reset gates reported script errors.' }
 
       - name: Run 0.5.1 stabilization tests on Windows
         shell: pwsh
