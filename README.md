@@ -54,7 +54,7 @@ NPC의 중요한 행동은 가능한 한 “왜”가 남습니다.
 | 루칸 | 62 |
 | 마렌 | 79 |
 
-0.5.5 신규 authored scene은 **64개**입니다. 8명 × 4-beat micro-arc 32개와 routine/reaction/pair/opinion 장면 32개로 구성되며, 소렌과 루칸은 각각 10개의 신규 장면으로 더 보강했습니다.
+0.5.5 신규 authored/reactive scene은 **71개**입니다. Personal Motive 25 / Cooperative Investigation 18 / Foreknowledge reaction 8 / post-arrival canon record 4 / incident follow-up 8 / delegation report 8로 구성됩니다. 소렌과 루칸은 cooperative observation을 한 개씩 더 받아 중후반 전문성을 보강했습니다.
 
 Routine baseline은 **36개의 정상 활동**, **27개의 authored deviation 상황**, **10개의 reason tag**를 사용합니다. 한 loop/day의 눈에 띄는 deviation은 최대 3개로 제한하고, ECHO는 loop 0에서 나오지 않으며 NULL_ACTIVITY는 실제 Null에게만 허용합니다.
 
