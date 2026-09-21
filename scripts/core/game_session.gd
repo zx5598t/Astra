@@ -5278,7 +5278,7 @@ func _voyage_tick(deliver: bool = true) -> void:
     for event in voyage["deferred"]:
         if int(event["due"]) > int(voyage["actions"]): continue
         var who := str(event["who"])
-        var reaction: String = str({
+        var reactions := {
             "share":"앞서 건넨 기록 옆에 새로운 메모가 붙어 있다. 혼자서는 놓쳤던 시각이다.",
             "hide":"감춰 둔 사본을 동료가 발견했다. 질문 대신 두 파일을 나란히 놓는다.",
             "help":"동료가 다음 작업의 자리를 미리 비워 둔다. 이번에는 당신의 도움이 필요하다.",
@@ -5286,9 +5286,9 @@ func _voyage_tick(deliver: bool = true) -> void:
             "confront":"동료가 그때 그 질문을 다시 꺼낸다. 이번에는 더 짧게 답한다.",
             "withhold":"동료가 그 이야기는 꺼내지 않는다. 대신 다른 화제로 먼저 말을 건다.",
             "keep_copy":"동료가 자신도 따로 사본을 남겼다고 조용히 알려 준다.",
-            "promise":"동료가 그때 약속한 것을 들고 돌아온다.",
+            "promise":"동료가 그때 약속한 것을 들고 돌아온다."
         }
-        var action_text := str(reaction[event["effect"]])
+        var action_text := str(reactions.get(str(event["effect"]),"동료가 앞선 선택에 반응해 다시 말을 건다."))
         if who == "mira":
             action_text = str({
                 "share":"미라가 앞서 본 기록에서 사람 상태와 직접 연결되는 시각만 따로 표시해 둔다.",
