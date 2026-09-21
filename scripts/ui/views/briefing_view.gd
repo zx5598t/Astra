@@ -131,6 +131,7 @@ func _later_day(s: AstraGameSession) -> void:
     for line in s.morning_report:
         box.add_child(AstraUI.prose(str(line), AstraUI.T_BODY, AstraUI.TEXT))
     box.add_child(AstraUI.prose(s.story_dispatch(), AstraUI.T_META, AstraUI.MUTED))
+    _add_previous_day_feedback(s)
     var status := AstraUI.hbox(10)
     _body.add_child(status)
     var counts := s.status_counts()
@@ -143,6 +144,27 @@ func _later_day(s: AstraGameSession) -> void:
     status.add_child(AstraUI.chip("판단할 날 %d일 남음" % (left + 1), AstraUI.GOLD if left <= 1 else AstraUI.MUTED, AstraUI.T_UI))
     if s.day == s.max_days:
         _body.add_child(AstraUI.prose("오늘이 마지막 판단 기회입니다. 저녁 투표가 끝나면 이번 기록을 마무리합니다.", AstraUI.T_BODY, AstraUI.GOLD))
+
+
+func _add_previous_day_feedback(s: AstraGameSession) -> void:
+    var summary := s.daily_social_summary(s.day - 1)
+    var relationships: Array = summary.get("relationship_changes",[])
+    var opinions: Array = summary.get("opinion_changes",[])
+    var consequences: Array = summary.get("consequences",[])
+    if relationships.is_empty() and opinions.is_empty() and consequences.is_empty():
+        return
+    var panel := AstraUI.panel(Color(AstraUI.CYAN,0.025),Color(AstraUI.CYAN,0.20),9,11)
+    _body.add_child(panel)
+    var box := AstraUI.vbox(5)
+    panel.add_child(box)
+    box.add_child(AstraUI.label("지난 날의 여파",AstraUI.T_META,AstraUI.CYAN))
+    for entry in relationships.slice(0,mini(2,relationships.size())):
+        box.add_child(AstraUI.label(str(entry.get("pair","")),AstraUI.T_UI,AstraUI.TEXT))
+        box.add_child(AstraUI.prose(str(entry.get("text","")),AstraUI.T_META,AstraUI.MUTED))
+    if not opinions.is_empty():
+        box.add_child(AstraUI.prose("· " + str(opinions[0].get("text","")),AstraUI.T_META,AstraUI.MUTED))
+    elif not consequences.is_empty():
+        box.add_child(AstraUI.prose("· " + str(consequences[0].get("text","")),AstraUI.T_META,AstraUI.MUTED))
 
 # Why the case needs a culprit rather than a repair crew, derived from the case
 # rather than written per case, so every incident explains itself the same way.
