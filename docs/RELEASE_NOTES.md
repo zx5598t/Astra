@@ -1,3 +1,47 @@
+# ASTRA 0.5.5 — FAULT LINES
+
+## Why did they do that?
+
+0.5.4에서 “이 사람이 평소와 다르다”를 만들었다면 0.5.5의 중심 질문은 **“왜?”**다. 준이 기록을 숨겼다면 sabotage일 수도 있지만 자기 실수를 감추려는 것일 수도 있다. 노아의 비공개 사본은 조작일 수도 있고 원본 보존일 수도 있다. 미라가 의료 기록을 공개하지 않는 행동도 누군가를 보호하는 이유와 Null 여부를 분리해서 읽어야 한다.
+
+## Personal Motives
+
+11종 motive vocabulary를 사용하고 캐릭터별 compatible motive를 제한한다. 한 loop에서 1~3명의 일부 NPC에게만 배정되며 Null과 독립이다. UI에는 시스템명·상태·확률을 보여 주지 않는다. 직접 목격 / 기록 / 진술처럼 여러 작은 흔적을 겹쳐 이유를 좁힌다.
+
+## Dynamic Ship Incidents
+
+중후반에 **8종**의 작은 함선 incident가 기존 action economy 안에서 발생한다. 전투/미니게임/실시간 타이머가 아니라 안전·정보·시간·사람 중 무엇을 먼저 둘지 선택하게 한다. 한 loop에 최대 1건이다.
+
+## Cooperative Investigation & Delegation
+
+기존 “같이 갈래?” companion 기능을 실제 조사 결과에 연결했다. core fact는 누구와 가도 같고 secondary observation만 전문성에 따라 달라진다. SILENT ORBIT 이후에는 optional 조사 하나를 동료에게 맡길 수 있으며, 보고는 그 NPC의 관점으로 요약되고 TESTIMONY source로 남는다.
+
+## Loop Foreknowledge
+
+loop > 0이면서 과거에 실제 같은 incident를 겪었을 때만 선행 대응 선택이 열린다. 먼저 막으면 위험을 줄일 수 있지만 원래 발생했을 기록을 잃을 수 있다. NPC도 플레이어가 미래를 아는 듯 움직인 사실에 반응한다.
+
+## Repeat Compression & Momentum
+
+seen count가 2 이상이고 새 fact/choice/consequence/motive/relationship 변화가 없는 compressible 장면만 짧게 줄인다. **장면 전체 보기**를 항상 제공한다. 의미 있는 신규 콘텐츠를 오래 못 본 memory는 다음 loop의 unseen meaningful storylet 가중치에 반영한다.
+
+## Information Source Quality
+
+Notebook에 확률 대신 **직접 확인 / 기록 / 진술 / 전해 들음**을 표시한다. source type은 truth가 아니다. 기록도 틀릴 수 있고 목격도 불완전할 수 있다.
+
+## Story hook
+
+SILENT ORBIT 이후 평범한 post-arrival 업무 기록을 최대 1~2개 발견할 수 있다. 새 canon은 “ASTRA가 도착한 뒤에도 한동안 정상적인 활동이 있었다”까지다. 목적지 정체, loop 원인, ASTRA AI, Null 본질은 확정하지 않는다.
+
+## Content & release
+
+0.5.5 신규 authored/reactive scene: **71**  
+전체 voyage/reactive library: **608**  
+신규 분배: 미라 10 / 준 9 / 다렌 8 / 노아 9 / 세나 8 / 소렌 9 / 루칸 9 / 마렌 9
+
+Windows artifact: `ASTRA-0.5.5-windows.zip` + `.sha256`.
+
+---
+
 # ASTRA 0.5.4 — AFTERMATH
 
 ## Routines & Consequences
