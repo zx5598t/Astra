@@ -1,3 +1,49 @@
+# QA REPORT — ASTRA 0.5.6 ECHOES
+
+검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64  
+작업 브랜치: release/0.5.6  
+구현 검증 기준 commit: 990ae1809d856e6f344ce9e1b981f5cfccae74e9  
+GitHub Actions: run 35561855287
+
+## 구현 검증 결과
+
+- Linux import: **PASS**
+- 전체 GDScript parse: **PASS**
+- Windows import: **PASS**
+- Linux validation: **PASS**
+- Windows validation: **PASS**
+- 0.5.6 release-candidate pre-build gate: **PASS**
+- Codex: **95 checks PASS**
+- ECHOES: **33 checks PASS**
+- 전체 core model: **45,301 checks PASS**
+- --games=40 TOTAL: smart **68%** / random **0%** / passive **0%**
+- UI smoke: Linux/Windows **PASS**
+- main scene boot: Linux/Windows **PASS**
+- save schema: **10**
+- v9 → v10 / legacy fixtures: Codex test에서 **PASS**
+- authored voyage/reactive scene: **608**
+- character scene: Mira 98 / Jun 81 / Daren 74 / Noa 79 / Sena 71 / Soren 64 / Lucan 62 / Maren 79
+- Codex entries: TOTAL 32 / STABLE 14 / OBSERVED 10 / ECHO 8
+- 신규 authored voyage scene: **0**
+
+## 회귀와 편집 경고
+
+기존 0.5.1~0.5.5 회귀, 1,000 conversation / 1,000 meeting / 500-loop Living Crew 계열 simulation, story continuity, first-play regression, content audit를 기존 threshold 그대로 통과했다.
+
+현재 자동 리포트의 실제 non-fatal content WARN은 2개다.
+- opener 반복: 같은(6), 자기(5), 당신이(6), 의료(5)
+- 전체 authored scene 608개이므로 one-run exposure가 과해지지 않는지 계속 확인
+
+Meaningful Choice audit의 warning count는 **0**이다. 실제 FAIL은 **0**이다.
+
+## 버전/빌드 상태
+
+위 run의 Windows RC build 자체는 성공했지만 검증 당시 repository VERSION이 아직 0.5.5였으므로 산출물은 **0.5.6 정식 artifact로 인정하지 않는다**.
+
+VERSION / project.godot를 0.5.6으로 맞춘 최종 CI에서 Windows export, exported ASTRA.exe boot, ASTRA-0.5.6-windows.zip, SHA256을 다시 생성한 뒤 이 섹션을 실제 값으로 갱신한다.
+
+---
+
 # QA REPORT — ASTRA 0.5.5 FAULT LINES
 
 검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64  
