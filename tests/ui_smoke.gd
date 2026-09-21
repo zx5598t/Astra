@@ -215,7 +215,8 @@ func _play_case(case_id: String, protocol: String) -> void:
                     s.set_mark(str(ranked[1]), "null")
                 screen.select(str(ranked[0]))
                 await _wait(1)
-                screen._view._cast(str(ranked[0]))
+                s.select_ballot("target",str(ranked[0]))
+                screen._view._confirm()
                 await _wait(2)
             "NIGHT":
                 screen.select(str(s.living_ids()[0]))
@@ -244,9 +245,6 @@ func _finish_exploration() -> void:
     var s: AstraGameSession = app.session
     if s.phase != "EXPLORE": return
     await _close_scene()
-    for who in s.roster:
-        s.voyage_visit_person(who)
-        await _close_scene()
     if not s.voyage["goal_done"]:
         # 0.6.0 makes the chapter fact a direct player investigation. Do not
         # rely on the old ask-a-crewmate shortcut, especially in CALIBRATION
@@ -265,6 +263,12 @@ func _finish_exploration() -> void:
             if found_goal:
                 break
         _expect(found_goal,"routine exploration exposes the chapter goal as a direct investigation")
+    # Optional conversations come after the mandatory fact so autonomous
+    # chatter cannot consume or obscure the direct-investigation smoke path.
+    if s.case_id != AstraCaseCatalog.CALIBRATION:
+        for who in s.roster:
+            s.voyage_visit_person(who)
+            await _close_scene()
     if s.case_id != AstraCaseCatalog.CALIBRATION and s.voyage.get("visits",[]).size() < 2:
         for room_id in s.voyage_rooms():
             if str(room_id) not in s.voyage.get("visits",[]):
