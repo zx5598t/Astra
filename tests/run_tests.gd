@@ -170,7 +170,10 @@ func test_protocols() -> void:
                 break
             check(s.investigation_ap == (4 if protocol == "ANALYST" else 3), "%s investigation AP on day %d" % [protocol, s.day])
             s.advance()
-            check(s.talk_ap == (5 if protocol == "EMPATH" else 4), "%s talk AP on day %d" % [protocol, s.day])
+            var expected_talk := (5 if protocol == "EMPATH" else 4)
+            if int(s.flags.get("restricted_info_until_day", 0)) == s.day:
+                expected_talk -= 1
+            check(s.talk_ap == expected_talk, "%s talk AP on day %d respects next-day information cost" % [protocol, s.day])
             _auto_step(s)
         if protocol == "AUDITOR":
             var t := AstraGameSession.new()
