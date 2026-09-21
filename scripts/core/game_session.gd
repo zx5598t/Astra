@@ -2737,7 +2737,7 @@ func vote_intentions() -> Dictionary:
         for other in targets:
             if not can_vote_for(npc_id, str(other)):
                 continue
-            var relationship_weight := 0.05 if day <= 1 else (0.12 if day == 2 else 0.18)
+            var relationship_weight := 0.18 if day <= 1 else (0.28 if day == 2 else 0.36)
             var noise_scale := 0.0 if day <= 1 else VOTE_NOISE
             var value := member.get_suspicion(other) - member.get_affinity(other) * relationship_weight + (_stable_noise(npc_id + other) - 0.5) * noise_scale + _public_trace_support(other)
             if value > best:
