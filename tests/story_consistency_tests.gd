@@ -42,6 +42,7 @@ func inspect_goal(s: AstraGameSession) -> bool:
 func _initialize() -> void:
     test_first_contact()
     test_story_contract()
+    test_foreshadow_registry()
     test_player_experienced_recap()
     test_narrative_continuity()
     if failures.is_empty():
@@ -118,6 +119,16 @@ func test_story_contract() -> void:
         check(discoverable,"%s: resolved fact starts from a discoverable world fact" % case_id)
 
     check(payoff_types.size() >= 3,"story rhythm: at least three payoff styles are used")
+
+func test_foreshadow_registry() -> void:
+    var ledger := AstraVoyageContent.foreshadow_ledger()
+    check(ledger.size() >= 14,"foreshadow registry covers current recurring mystery objects")
+    for key in ledger:
+        var entry: Dictionary = ledger[key]
+        for field in ["introduced","repeated","deepened","partial_answer","final_status"]:
+            check(str(entry.get(field,"")).strip_edges() != "","foreshadow %s has %s" % [key,field])
+        check(str(entry.get("introduced","")) != str(entry.get("repeated","")),
+            "foreshadow %s returns after its introduction" % key)
 
 func test_player_experienced_recap() -> void:
     for i in range(IDS.size()):
