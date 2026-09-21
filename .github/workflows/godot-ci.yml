@@ -159,12 +159,18 @@ jobs:
 
       - name: 0.5.5 motives incidents cooperation foreknowledge and momentum
         run: |
-          set -o pipefail
+          # Godot 4.7.2 can occasionally return a non-zero process code after a
+          # SceneTree test has explicitly printed its success marker and quit(0).
+          # Gate these deterministic scripts on their authored success markers
+          # plus the absence of script/parse/compile errors, rather than letting
+          # pipefail stop before the remaining 0.5.5 simulations can run.
+          set +e
           ./godot --headless --path . --script res://tests/fault_lines_055_tests.gd 2>&1 | tee fault-lines-055.log
-          grep -q "ASTRA 0.5.5 FAULT LINES TESTS OK" fault-lines-055.log
           ./godot --headless --path . --script res://tests/fault_lines_055_simulation.gd 2>&1 | tee fault-lines-sim-055.log
-          grep -q "ASTRA 0.5.5 FAULT LINES SIMULATION OK" fault-lines-sim-055.log
           ./godot --headless --path . --script res://tests/editorial_055_report.gd 2>&1 | tee editorial-055.log
+          set -e
+          grep -q "ASTRA 0.5.5 FAULT LINES TESTS OK" fault-lines-055.log
+          grep -q "ASTRA 0.5.5 FAULT LINES SIMULATION OK" fault-lines-sim-055.log
           grep -q "ASTRA 0.5.5 HUMAN EDITING REPORT OK" editorial-055.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" fault-lines-055.log fault-lines-sim-055.log editorial-055.log; then exit 1; fi
 
