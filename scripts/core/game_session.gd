@@ -5087,6 +5087,20 @@ func voyage_choose(index: int) -> bool:
                 voyage["foreknowledge_reactions"].append({"loop":int(voyage.get("loop",0)),"observer":observer,"incident":incident_id})
             voyage["active_incident"] = {}
     voyage["scene"] = {}
+    # Choice-bearing story beats must advance the same mandatory story chain as
+    # choice-free beats. Otherwise selecting a response can silently discard
+    # the resolution/hook and leave EXPLORE impossible to finish.
+    if bool(scene.get("story_resolution",false)):
+        voyage["story_resolution_seen"] = true
+        var story_hook := AstraVoyageContent.hook_thread(case_id)
+        if not story_hook.is_empty():
+            _voyage_scene(story_hook)
+    elif bool(scene.get("story_hook",false)):
+        voyage["story_hook_seen"] = true
+    if voyage.get("scene",{}).is_empty() and not first_day_flow() and bool(voyage.get("goal_done",false)) and not bool(voyage.get("story_resolution_seen",false)):
+        var pending_resolution := AstraVoyageContent.resolution_thread(case_id)
+        if not pending_resolution.is_empty():
+            _voyage_scene(pending_resolution)
     if not foreknowledge_reaction.is_empty():
         _voyage_scene(foreknowledge_reaction)
     elif not incident_result.is_empty():
