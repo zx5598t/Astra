@@ -1,11 +1,13 @@
 class_name AstraMetaProgress
 extends RefCounted
 
-# Persistent archive: campaign unlocks, per-case records, lifetime stats.
-# Save v6 keeps every v4/v5 key, so older archives load without loss.
+# Persistent archive: campaign unlocks, per-case records, lifetime stats and
+# player-observed crew notes. Save v10 adds Codex observation ids without
+# removing any v4-v9 field; missing fields are hydrated instead of migrated
+# destructively.
 
 const DEFAULT_SAVE_PATH := "user://astra_meta.cfg"
-const SAVE_VERSION := 9
+const SAVE_VERSION := 10
 const CAMPAIGN_CASES := AstraCaseCatalog.CAMPAIGN
 const RANK_ORDER := ["D", "C", "B", "A", "S"]
 
@@ -45,6 +47,8 @@ var voyage_memory: Dictionary = {}
 # settings file; feature help is profile-wide and can always be reopened with H.
 var slot_intro_seen: Dictionary = {}
 var seen_help: Array[String] = []
+# 0.5.6 permanent observation Codex. IDs only; entry text remains authored in AstraCodex.
+var codex_entries_unlocked: Array[String] = []
 
 func _init(path: String = DEFAULT_SAVE_PATH) -> void:
     save_path = path
@@ -87,6 +91,8 @@ func load_data() -> void:
     _load_string_list(known_people, cfg.get_value("progress", "known_people", []))
     _load_string_list(introduced_locations, cfg.get_value("progress", "introduced_locations", []))
     _load_string_list(unlocks_announced, cfg.get_value("progress", "unlocks_announced", []))
+    _load_string_list(codex_entries_unlocked, cfg.get_value("progress", "codex_entries_unlocked", []))
+    _migrate_codex_from_existing_progress()
 
 func save_data() -> bool:
     var cfg := ConfigFile.new()
@@ -94,6 +100,7 @@ func save_data() -> bool:
     cfg.set_value("progress","voyage_memory",voyage_memory)
     cfg.set_value("progress","slot_intro_seen",slot_intro_seen)
     cfg.set_value("progress","seen_help",seen_help)
+    cfg.set_value("progress","codex_entries_unlocked",codex_entries_unlocked)
     cfg.set_value("progress", "total_insight", total_insight)
     cfg.set_value("progress", "total_cases_completed", total_cases_completed)
     cfg.set_value("progress", "correct_isolations", correct_isolations)
@@ -153,6 +160,51 @@ func reset() -> void:
     voyage_memory.clear()
     slot_intro_seen.clear()
     seen_help.clear()
+    codex_entries_unlocked.clear()
+
+
+# ---------------------------------------------------------------- 0.5.6 observation Codex
+
+func unlock_codex_entry(entry_id: String) -> bool:
+    if entry_id == "" or entry_id in codex_entries_unlocked:
+        return false
+    if AstraCodex.character_entry(entry_id).is_empty():
+        return false
+    codex_entries_unlocked.append(entry_id)
+    return true
+
+func unlock_codex_entries(entry_ids: Array) -> Array:
+    var added: Array = []
+    for raw_id in entry_ids:
+        var entry_id := str(raw_id)
+        if unlock_codex_entry(entry_id):
+            added.append(entry_id)
+    return added
+
+func has_codex_entry(entry_id: String) -> bool:
+    return entry_id in codex_entries_unlocked
+
+func codex_entries_for(character_id: String) -> Array:
+    var result: Array = []
+    for entry_id in codex_entries_unlocked:
+        var entry := AstraCodex.character_entry(str(entry_id))
+        if not entry.is_empty() and str(entry.get("character","")) == character_id:
+            result.append(entry)
+    return result
+
+func _migrate_codex_from_existing_progress() -> void:
+    # Recover only observations for which old saves contain direct evidence.
+    # Knowing a person proves their awakening was seen. seen_ever proves a
+    # specific authored scene was actually displayed. We deliberately do not
+    # infer lore from relationship floats, candidate storylets or hidden state.
+    var recovered: Array = []
+    for npc_id in known_people:
+        recovered.append_array(AstraCodex.unlocks_for_scene(str(npc_id) + "_awakening"))
+    var seen_ever: Dictionary = _dict(voyage_memory.get("seen_ever",{}))
+    for scene_id in seen_ever:
+        if int(seen_ever.get(scene_id,0)) > 0:
+            recovered.append_array(AstraCodex.unlocks_for_scene(str(scene_id)))
+    unlock_codex_entries(recovered)
 
 # Records a finished case. Returns what changed so the result screen can show it.
 func record_case_result(case_id: String, protocol: String, report: Dictionary, persist: bool = true) -> Dictionary:
