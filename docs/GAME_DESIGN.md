@@ -1,4 +1,4 @@
-# ASTRA 0.5.4 설계 — AFTERMATH
+# ASTRA 0.5.5 설계 — FAULT LINES
 
 ## 핵심 판타지
 
@@ -69,6 +69,20 @@ Hidden role은 personality를 교체하지 않는다. Null Mira도 의무관이�
 - 캐릭터별 information sharing tendency
 
 중요 deviation에는 reason / source_event / possible_followup을 남긴다. 이유 없이 랜덤하게 이상한 대사를 출력하지 않는다.
+
+## FAULT LINES: 이유를 추리하는 층
+
+0.5.5의 Personal Motive는 Hidden Role의 보조 이름이 아니다. motive assignment는 Null과 독립이고 일부 NPC에게만 주어진다. 플레이어는 “거짓말했다 → Null”이 아니라 “거짓말한 이유가 무엇인가 → 그 이유가 사건과 연결되는가” 순서로 판단한다.
+
+`AstraPersonalMotiveModel`은 compatible motive, 1~3명 deterministic assignment, multi-source progress, DEV truth report를 담당한다. 플레이어 UI는 motive enum/상태명을 직접 보여 주지 않고 관찰 문장만 남긴다.
+
+`AstraIncidentModel`은 chapter eligibility, deterministic selection, 선택/결과를 담당한다. 한 loop의 visible incident는 최대 1개이며 Consequence/Knowledge의 기존 구조와 함께 사용한다.
+
+`AstraForeknowledgeModel`은 실제 과거 incident history가 있을 때만 foreknowledge를 허용하고, 정보 source label, 안전한 반복 scene compression, momentum drought state를 담당한다.
+
+Cooperative Investigation은 기존 companion을 재사용한다. core fact는 보존하고 secondary observation만 달라져 특정 동행자를 고르지 않았다는 이유로 canon이 막히지 않는다. Delegation도 optional investigation에만 적용한다.
+
+신규 save state는 기존 `voyage` 안의 optional nested field로 들어간다: motives / incident_history / active_incident / foreknowledge_used / scene_seen_counts / momentum_state / delegation_history. 0.5.4 저장에 필드가 없어도 기본값으로 hydrate한다.
 
 ## Mira Emotional Anchor
 
