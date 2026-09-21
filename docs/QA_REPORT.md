@@ -1,3 +1,51 @@
+# QA REPORT — ASTRA 0.6.0 FIRST CONTACT / STORY LOOP
+
+검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64  
+작업 브랜치: `story-framing-20260922`  
+release-recovery 검증 GitHub Actions: run **#518**  
+검증 commit: `2373d96e0c58f88e0c7e7a8f8c6a36cb54ed9075`
+
+## 구현 검증 결과
+
+- Linux import / 전체 GDScript parse: **PASS**
+- Linux validation: **PASS**
+- Windows import / validation: **PASS**
+- Windows UI smoke / main-scene boot: **PASS**
+- voyage regression: **649 checks PASS**
+- story consistency: **407 checks PASS**
+- FIRST CONTACT: **259 checks PASS**
+- reset safety: **22 checks PASS**
+- NPC vote regression: **19,086 checks PASS**
+- NPC ballot simulation: total **4,200** / abstain **0** / invalid **0** / self **0** / empty-reason **0**
+- `--games=40` TOTAL: smart **79%** / random **19%** / passive **0%**
+- deduction release gate: smart - random **60%p** / passive < 20% — **PASS**
+- 0.5.4 save compatibility: **10 checks PASS**
+- authored voyage/reactive scene: **608**
+- content audit: **0 FAIL / 1 WARN**
+- WARN: opener repeated 5+ — 같은(6), 자기(5), 당신이(6), 의료(5)
+
+## CI #516 회귀 원인과 복구
+
+1. **exploration choice enables actual night backup**  
+   recorder runtime 연결 자체는 유지되어 있었습니다. `voyage_use_recorder()` → `voyage_backup` → 정상 exploration 완료 → `finish_voyage()` → `mission_backup` 경로입니다. 실패 원인은 0.6 contact-flow에서 `voyage_ask_goal()`이 더 이상 chapter fact를 지급하지 않고 안내만 하도록 바뀌었는데 voyage test가 과거의 자동 goal-completion 순서를 사용한 것입니다. 테스트를 실제 ECHO_WARD `signal` 조사 지점 검사로 바꿔 런타임 순서를 검증했습니다.
+
+2. **100 seed scene variety**  
+   DEAD_AIR의 첫 각성자가 Mira에서 Sena로 바뀌었는데 테스트는 Mira를 만나기 전에 `voyage_talk("mira")`를 직접 호출했습니다. 호출은 정상적으로 거부되어 빈 scene ID 하나만 수집됐습니다. 실제 플레이와 동일하게 Mira visit → awakening 종료 → ordinary talk 순서로 수정했고 기존 최소 3개 scene ID 기준은 유지했습니다.
+
+## FIRST CONTACT / story 회귀
+
+CALIBRATION 4인, 직접 조사 필수, first_panel 전용 choice routing, 순차 합류, ballot 상태, story resolution/hook, LAST_LIGHT canon, Player != Null 조건을 전용 gate에서 통과했습니다. assertion/threshold 삭제나 완화는 없습니다.
+
+## Save compatibility
+
+snapshot 지원 버전과 기존 hydrate 경로를 유지했고 destructive migration을 추가하지 않았습니다. 기존 0.5.4 compatibility fixture **10 checks PASS**입니다.
+
+## 남은 release 단계
+
+run #518은 PR 검증 GREEN입니다. main 병합 후 main CI, Windows 정식 build, EXE boot, ZIP/SHA256, tag `v0.6.0`, GitHub Release와 asset 재다운로드 검증 값을 이 섹션에 최종 기록해야 합니다.
+
+---
+
 # QA REPORT — ASTRA 0.5.7 CLEAR SIGNAL
 
 검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64  
