@@ -34,7 +34,7 @@ static func trace(actor: String, action: String, target: String, reasons: Array,
     for item in reasons:
         if float(item.get("weight",0.0)) > float(strongest.get("weight",0.0)):
             strongest = Dictionary(item).duplicate(true)
-    if target == "":
+    if target == "" and reasons.is_empty():
         strongest = reason("insufficient_evidence", 1.0)
     return {
         "actor":actor, "action":action, "target":target, "day":day,
