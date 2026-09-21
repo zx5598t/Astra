@@ -89,7 +89,7 @@ jobs:
       - name: Replay variety and role distribution
         run: |
           set -o pipefail
-          ./godot --headless --path . --script res://tests/replay_variety.gd -- --seeds=200 2>&1 | tee replay.log
+          ./godot --headless --path . --script res://tests/replay_variety.gd -- --seeds=500 2>&1 | tee replay.log
           grep -q "ASTRA REPLAY VARIETY OK" replay.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error" replay.log; then exit 1; fi
 
