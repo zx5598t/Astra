@@ -12,13 +12,13 @@ const LATE := ["SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"]
 const ARC_PACKS := {
     "mira":[
         [1,"routine","PERSONAL","mira_self_neglect","모두의 검사표는 채워져 있는데 미라 이름 옆 칸만 비어 있다.","마지막 한 명 남았네요. 저니까 나중에 해도 돼요.",{}],
-        [2,"player","PLAYER","mira_self_neglect","미라는 자기 센서를 다시 서랍에 넣으려 한다.","지금 꼭 해야 해요?",{"choices":[
+        [2,"player","PLAYER","mira_self_neglect","미라는 센서를 다시 서랍에 넣으려 한다.","지금 꼭 해야 해요?",{"choices":[
             {"label":"센서를 미라에게 건넨다.","effect":"help","memory_tag":"054_mira_checked","consequences":[{"id":"mira-check-delay","timing":"DELAYED","followup_scene":"054_mira_self_neglect_3","delay":2}]},
             {"label":"마렌에게 대신 확인해 달라고 한다.","effect":"share","memory_tag":"054_mira_delegated","consequences":[{"id":"mira-check-day","timing":"NEXT_DAY","note":"마렌이 아침 배급 확인 전에 미라의 상태를 먼저 살폈다."}]},
             {"label":"지금은 미라 판단에 맡긴다.","effect":"wait","memory_tag":"054_mira_unresolved","consequences":[{"id":"mira-check-loop","timing":"NEXT_LOOP","memory_tag":"mira_self_neglect_echo","note":"다음 기록에서도 미라의 자기 검사 순서는 이상하게 늦다."}]}
         ]}],
         [3,"consequence","CONSEQUENCE","mira_self_neglect","약품 라벨을 읽던 미라가 같은 줄을 두 번 확인한다. 손이 느린 건 아니지만 평소보다 한 박자 늦다.","…잠깐. 이건 다시 볼게요.",{"deviation_reason":"RECOVERY","source_event":"self_neglect","possible_followup":"mira_self_neglect_resolution"}],
-        [4,"personal","RELATIONSHIP","mira_self_neglect","미라는 자기 검사표를 마지막 칸에 끼워 넣고 파일을 닫는다.","",{"tone_lines":{"WARM":"이번엔 제가 먼저 했어요. 확인해 볼래요?","PROFESSIONAL":"자기 검사까지 끝냈어요. 다음 기록 보죠.","STRAINED":"검사는 했어요. 그 문제로 더 다투진 말아요."}}]
+        [4,"personal","RELATIONSHIP","mira_self_neglect","미라는 검사표를 마지막 칸에 끼워 넣고 파일을 닫는다.","",{"tone_lines":{"WARM":"이번엔 제가 먼저 했어요. 확인해 볼래요?","PROFESSIONAL":"자기 검사까지 끝냈어요. 다음 기록 보죠.","STRAINED":"검사는 했어요. 그 문제로 더 다투진 말아요."}}]
     ],
     "rho":[
         [1,"routine","WORK","rho_mistake","준이 뜯어낸 패널 안쪽에 방향이 반대로 끼워진 작은 커넥터 하나가 보인다.","…이건 내가 했을 가능성이 높아.",{}],
@@ -32,11 +32,11 @@ const ARC_PACKS := {
     ],
     "dax":[
         [1,"routine","WORK","dax_failed_model","다렌의 계산표는 안전하다고 나오는데 실제 펌프 진동은 기준을 넘는다.","수치는 맞아. 그래서 모델 쪽이 틀렸을 가능성이 커.",{}],
-        [2,"conflict","CONFLICT","dax_failed_model","다렌은 같은 식을 다시 계산하다가 손을 멈춘다.","준이 들었다는 진동값이 필요해. 내가 가진 입력만으로는 안 맞아.",{"choices":[
+        [2,"conflict","CONFLICT","dax_failed_model","다렌은 계산식을 처음부터 다시 풀다가 손을 멈춘다.","준이 들었다는 진동값이 필요해. 내가 가진 입력만으로는 안 맞아.",{"choices":[
             {"label":"준의 현장값을 먼저 가져온다.","effect":"help","memory_tag":"054_dax_accepts_field","consequences":[{"id":"dax-model-delay","timing":"DELAYED","followup_scene":"054_dax_failed_model_3","delay":2}]},
             {"label":"노아의 원본 로그부터 대조한다.","effect":"record","memory_tag":"054_dax_accepts_record","consequences":[{"id":"dax-model-day","timing":"NEXT_DAY","note":"다렌은 다음 계산부터 원본 로그와 현장값을 같은 입력 표에 넣었다."}]}
         ]}],
-        [3,"consequence","CONSEQUENCE","dax_failed_model","다렌은 자기 계산식 옆에 준의 진동값과 노아의 로그 시각을 같은 크기로 적는다.","내 식이 틀렸다는 뜻보다, 입력을 혼자 정하면 안 된다는 뜻에 가깝네.",{}],
+        [3,"consequence","CONSEQUENCE","dax_failed_model","다렌은 계산식 옆에 준의 진동값과 노아의 로그 시각을 같은 크기로 적는다.","내 식이 틀렸다는 뜻보다, 입력을 혼자 정하면 안 된다는 뜻에 가깝네.",{}],
         [4,"personal","RELATIONSHIP","dax_failed_model","검증이 끝난 표에서 다렌은 틀린 계산을 지우지 않는다.","남겨 둬. 다음에 맞는 답이 나와도 왜 틀렸는지는 필요하니까.",{}]
     ],
     "noa":[
@@ -91,7 +91,7 @@ const ARC_PACKS := {
 # Four extra scenes each, plus extra depth for Soren/Lucan.
 const EXTRA_PACKS := {
     "mira":[
-        ["routine","DAILY","mira_routine_break","빈 의자와 펼쳐진 차트만 의료실에 남아 있다. 잠시 뒤 통신실 쪽에서 미라가 돌아온다.","소렌이 너무 오래 듣고 있었어요. 확인만 하고 왔어요.",{"routine_relevance":"CHECKING_CREW"}],
+        ["routine","DAILY","mira_routine_break","의료실에는 빈 의자와 펼쳐진 차트만 남아 있다. 잠시 뒤 통신실 쪽에서 미라가 돌아온다.","소렌이 너무 오래 듣고 있었어요. 확인만 하고 왔어요.",{"routine_relevance":"CHECKING_CREW"}],
         ["reaction","RELATIONSHIP","mira_people_request","미라는 새 기록을 들고 왔지만 바로 내밀지 않고 당신이 하던 대화를 끝낼 때까지 기다린다.","사람부터 볼 거라고 생각했어요. 이건 끝나면 같이 봐요.",{"requires":{"player_axis":"people_first"}}],
         ["work","WORK","mira_medical_delegate","미라는 준에게 센서 수리를 맡기고 자신은 환자 기록을 계속 본다.","고치는 사람 따로, 보는 사람 따로면 둘 다 덜 놓쳐요.",{}],
         ["opinion","RELATIONSHIP","mira_opinion_softens","미라는 앞서 경계하던 사람의 새 검사표를 확인한 뒤 질문 수를 줄인다.","이 부분은 설명이 맞아요. 다른 문제와 섞지 않을게요.",{"opinion_change":{"reason":"new_evidence"}}]
