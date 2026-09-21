@@ -2719,6 +2719,8 @@ func _vote_reason_items(voter_id: String, target_id: String) -> Array:
     return result
 
 func _vote_decision_trace(voter_id: String, target_id: String) -> Dictionary:
+    if target_id == "":
+        return AstraDecisionModel.trace(voter_id, "vote", target_id, [AstraDecisionModel.reason("no_legal_vote_target", 1.0)], day)
     return AstraDecisionModel.trace(voter_id, "vote", target_id, _vote_reason_items(voter_id, target_id), day)
 
 func _vote_reason(voter_id: String, target_id: String) -> String:
