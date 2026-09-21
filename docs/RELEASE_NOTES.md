@@ -1,3 +1,39 @@
+# ASTRA 0.6.0 — FIRST CONTACT / STORY LOOP
+
+## 첫 접촉에서 다음 질문까지
+
+0.6.0은 새 버전을 더 올리는 업데이트가 아니라, FIRST CONTACT와 story/loop integration을 배포 가능한 상태로 완성한 릴리스입니다. CALIBRATION은 미라·준·다렌·노아 4인으로 시작하며 포드 제어 패널을 직접 조사해야 핵심 발견이 완료됩니다. 방을 반복 이동하는 것만으로 discovery가 끝나지 않습니다.
+
+FIRST CONTACT 전용 choice routing은 `first_panel`에만 적용되고, 이후 authored choice는 일반 voyage pipeline을 사용합니다. 승무원은 항해 Day 2~5에 순차 합류하며 ballot은 unselected / abstain / target을 구분합니다.
+
+각 장은 situation과 직접 발견 뒤 local resolution/reaction을 실제 플레이에서 경험하고, resolved fact / open question / next hook을 남깁니다. LAST_LIGHT는 서로 다른 유효 history가 공존하며 현재 Null 사건만으로 전체 모순을 설명할 수 없다는 canon을 유지합니다. Player != Null입니다.
+
+## 회귀 복구
+
+CI #516의 voyage regression 두 실패는 기능 삭제나 assertion 완화 없이 현재 런타임 순서에 맞춰 복구했습니다.
+
+- ECHO_WARD recorder: `voyage_use_recorder()`가 `voyage_backup`을 남기고 실제 chapter investigation 완료 후 `finish_voyage()`가 `mission_backup`으로 전달하는 경로를 검증합니다. contact-flow에서 goal hint가 더 이상 fact를 자동 지급하지 않으므로 테스트도 실제 `signal` 조사 지점을 검사합니다.
+- DEAD_AIR + Mira 100-seed variety: DEAD_AIR의 첫 각성자가 Sena로 바뀐 뒤 Mira를 만나지 않은 상태에서 `voyage_talk("mira")`를 호출하던 오래된 테스트 흐름을 실제 visit → awakening close → ordinary talk 순서로 정합화했습니다. 최소 3개 scene ID 요구는 그대로 유지합니다.
+
+## 0.6.0 release gate
+
+GitHub Actions run **#518** / Godot 4.7.2 stable:
+
+- Linux import / parse: PASS
+- Windows validation / UI smoke / main boot: PASS
+- voyage: **649 checks PASS**
+- story consistency: **407 checks PASS**
+- FIRST CONTACT: **259 checks PASS**
+- reset safety: **22 checks PASS**
+- NPC vote regression: **19,086 checks PASS**, 4,200 ballots, invalid/self/empty-reason 0
+- `--games=40`: smart **79%** / random **19%** / passive **0%**
+- content audit: **0 FAIL / 1 WARN**
+- authored voyage/reactive scenes: **608**
+
+정식 Windows ZIP/SHA256과 GitHub Release provenance는 main 병합 및 tag-source 빌드 완료 후 QA_REPORT에 최종 기록합니다.
+
+---
+
 # ASTRA 0.5.7 — CLEAR SIGNAL
 
 ## 덜 많이, 더 선명하게
