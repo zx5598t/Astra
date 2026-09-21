@@ -94,7 +94,7 @@ jobs:
         with:
           tag_name: v${{ env.ASTRA_VERSION }}
           target_commitish: ${{ github.sha }}
-          name: ASTRA ${{ env.ASTRA_VERSION }} — AFTERMATH
+          name: ASTRA ${{ env.ASTRA_VERSION }} — FAULT LINES
           body_path: docs/RELEASE_NOTES.md
           draft: false
           prerelease: false

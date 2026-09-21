@@ -160,6 +160,10 @@ func _draw() -> void:
                 var memory := AstraUI.button("“어디로 가던 중이었어?”",AstraUI.MUTED,16,36)
                 memory.pressed.connect(func(): session.voyage_memory_talk(who))
                 words.add_child(memory)
+                if session.voyage_can_delegate(who):
+                    var delegate := AstraUI.button("이 방의 조사를 맡긴다",AstraUI.MUTED,16,36)
+                    delegate.pressed.connect(func(): session.voyage_delegate(who))
+                    words.add_child(delegate)
         if session.voyage_people().is_empty():
             words.add_child(AstraUI.prose("지금은 아무도 없다. 조사 지점을 누르면 발견한 내용이 기록에 남는다.",18,AstraUI.MUTED))
     else:
@@ -223,6 +227,10 @@ func _dialogue(words: VBoxContainer, scene: Dictionary, state: Dictionary) -> vo
     if speaker != "":
         words.add_child(AstraUI.label(AstraCrewCatalog.labelled(speaker),22,AstraCrewCatalog.accent(speaker)))
     words.add_child(AstraUI.prose(str(scene.get("action","")),18,AstraUI.MUTED))
+    if bool(scene.get("compressed",false)):
+        var expand := AstraUI.button("장면 전체 보기",AstraUI.MUTED,15,36)
+        expand.pressed.connect(func(): session.voyage_expand_scene())
+        words.add_child(expand)
     if line_index >= 0 and line_index < lines.size():
         words.add_child(AstraUI.prose(str(lines[line_index][1]),24,AstraUI.TEXT))
     words.add_child(AstraUI.spacer(false))

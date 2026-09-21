@@ -1,4 +1,4 @@
-# ASTRA 0.5.4 인물 — AFTERMATH
+# ASTRA 0.5.5 인물 — FAULT LINES
 
 | 표시 이름 | 저장 ID / 자산 ID | 역할 | baseline과 말투 |
 |---|---|---|---|
@@ -14,6 +14,21 @@
 첫 각성은 미라·준·다렌·노아다. 이후 세나 → 소렌 → 루칸 → 마렌 순서로 합류한다.
 
 Hidden role은 사람의 기본 성격을 바꾸지 않는다. Null이 된 캐릭터도 말투·직업 습관·baseline은 유지하며, 달라지는 것은 어떤 사실을 숨기고 어떤 판단을 유도하는지다.
+
+## 0.5.5 Personal Motive compatibility
+
+| 인물 | 가능한 개인적 이유 |
+|---|---|
+| 미라 | PROTECT_PERSON · KEEP_PRIVACY · FINISH_DUTY · FEAR_REPEAT |
+| 준 | HIDE_MISTAKE · FINISH_DUTY · PROTECT_PERSON |
+| 다렌 | PROTECT_REPUTATION · VERIFY_ALONE · FINISH_DUTY |
+| 노아 | PRESERVE_EVIDENCE · VERIFY_ALONE · KEEP_PROMISE |
+| 세나 | PROTECT_PERSON · AVOID_ISOLATION · FINISH_DUTY |
+| 소렌 | VERIFY_ALONE · KEEP_PRIVACY · FEAR_REPEAT |
+| 루칸 | FINISH_DUTY · PROTECT_PERSON · VERIFY_ALONE |
+| 마렌 | SAVE_RESOURCE · PROTECT_PERSON · KEEP_PROMISE |
+
+이 표는 구현/편집 기준이며 게임 UI에는 enum 이름을 직접 표시하지 않는다. 같은 motive가 Null 판별 공식이 되지 않도록 assignment는 Hidden Role과 독립적으로 처리한다.
 
 ## 미라 — Emotional Anchor
 
@@ -35,7 +50,7 @@ Hidden role은 사람의 기본 성격을 바꾸지 않는다. Null이 된 캐�
 - 강제 romance confession
 - 다른 chapter spotlight 독점
 
-0.5.4 authored speaker scene은 **88개**, private event는 **13개**다. 하지만 ECHO WARD 이후 일반 loop의 optional Mira scene은 최대 4개로 제한한다.
+0.5.5 authored speaker scene은 **98개**, private event는 **13개**다. 하지만 ECHO WARD 이후 일반 loop의 optional Mira scene은 최대 4개로 제한한다.
 
 ### 미라의 관계 tone
 

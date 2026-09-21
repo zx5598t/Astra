@@ -1,3 +1,53 @@
+# QA REPORT — ASTRA 0.5.5 FAULT LINES
+
+검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64  
+작업 브랜치: `release/0.5.5`  
+기준 commit: `44567f7fc9fe1aa413b81f15e68eacdd97b7f6d0` (ASTRA 0.5.4 AFTERMATH)
+
+## 0.5.5 콘텐츠 / 시스템 기준
+
+- 기존 authored voyage/reactive scene: **537**
+- 0.5.5 신규 authored/reactive scene: **71**
+- 전체 library: **608**
+- 신규 scene 분배: 미라 10 / 준 9 / 다렌 8 / 노아 9 / 세나 8 / 소렌 9 / 루칸 9 / 마렌 9
+- Personal Motive vocabulary: **11종**
+- 한 loop motive NPC: **1~3명 / 최대 3**
+- Dynamic Ship Incident: **8종**
+- Incident: 한 loop 최대 1, CALIBRATION/DEAD AIR/GLASS GARDEN 0
+- Cooperative Investigation: core fact 보존 + 인물별 secondary observation
+- Delegation: SILENT ORBIT 이후 optional 조사 1회
+- Foreknowledge: loop > 0 + 실제 과거 동일 incident 경험 필요, 사용 최대 2
+- information source: DIRECT / RECORD / TESTIMONY / RUMOR
+- familiar scene compression: seen >= 2 + safe metadata 조건, 전체 장면 다시 보기 가능
+- post-arrival canon: 후보 4개, campaign visible 최대 2
+
+## 0.5.5 자동 검증 게이트
+
+`fault_lines_055_tests.gd`:
+- 1,000 seed motive assignment / Null 독립성
+- inactive / incompatible motive 금지
+- motive multi-source progress
+- incident chapter gate / deterministic selection / valid outcome
+- foreknowledge loop/unseen/cap invariant
+- source label
+- repeat compression safety
+- 71 authored scene ID / first-30-min protection
+- specialist observation differentiation
+- Mira expansion cap / Soren·Lucan depth
+
+`fault_lines_055_simulation.gd`:
+- 500-loop motive coverage / max / innocent suspicious behavior
+- 1,000 incident selection + resolution coverage
+
+`editorial_055_report.gd`:
+- motive / cooperative / foreknowledge / canon / delegation human-readable sample
+
+기존 0.5.1~0.5.4 regression, 1,000 conversation, 1,000 meeting, 500-loop replay, content audit, UI smoke, Linux/Windows import/parse, Windows export, exported ASTRA.exe boot, ZIP/SHA-256 gate를 그대로 유지한다.
+
+> 이 문서의 “통과” 상태는 GitHub Actions의 동일 release HEAD가 green인 경우에만 정식 release 근거로 사용한다.
+
+---
+
 # QA REPORT — ASTRA 0.5.4 AFTERMATH
 
 검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64

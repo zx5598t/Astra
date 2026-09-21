@@ -347,6 +347,23 @@ func _hydrate_054_voyage_defaults() -> void:
     if not voyage.has("consequence_stats"): voyage["consequence_stats"] = {"IMMEDIATE":0,"DELAYED":0,"NEXT_DAY":0,"NEXT_LOOP":0}
     if not voyage.has("pinned_question"): voyage["pinned_question"] = ""
     if not voyage.has("opinion_changes"): voyage["opinion_changes"] = []
+    if not voyage.has("motives"): voyage["motives"] = {}
+    if not voyage.has("motive_observations"): voyage["motive_observations"] = []
+    if not voyage.has("incident_history"): voyage["incident_history"] = []
+    if not voyage.has("active_incident"): voyage["active_incident"] = {}
+    if not voyage.has("foreknowledge_used"): voyage["foreknowledge_used"] = []
+    if not voyage.has("foreknowledge_reactions"): voyage["foreknowledge_reactions"] = []
+    if not voyage.has("scene_seen_counts"): voyage["scene_seen_counts"] = voyage.get("seen_ever",{}).duplicate(true)
+    if not voyage.has("momentum_state"): voyage["momentum_state"] = {"drought":0,"force_meaningful":false}
+    if not voyage.has("delegation_history"): voyage["delegation_history"] = []
+    if not voyage.has("delegation_used"): voyage["delegation_used"] = false
+    if not voyage.has("cooperative_history"): voyage["cooperative_history"] = []
+    if not voyage.has("information_sources"): voyage["information_sources"] = {}
+    if not voyage.has("canon_post_arrival_seen"): voyage["canon_post_arrival_seen"] = []
+    if Dictionary(voyage.get("motives",{})).is_empty():
+        voyage["motives"] = AstraPersonalMotiveModel.assign(
+            seed_value,int(voyage.get("loop",0)),case_id,roster,active_participants(),truth.get("nulls",[])
+        )
     if not voyage.has("active_arcs"):
         voyage["active_arcs"] = AstraStorylets054.select_arcs(
             seed_value,int(voyage.get("loop",0)),case_id,roster,Array(voyage.get("micro_arc_recent",[])),3,
@@ -3871,7 +3888,15 @@ func begin_voyage(memory: Dictionary = {}) -> void:
         "consequence_queue":memory.get("consequence_carry",[]).duplicate(true),
         "consequence_history":[], "consequence_stats":{"IMMEDIATE":0,"DELAYED":0,"NEXT_DAY":0,"NEXT_LOOP":0},
         "pinned_question":str(memory.get("pinned_question","")),
-        "opinion_changes":[]}
+        "opinion_changes":[],
+        "motives":{}, "motive_observations":[],
+        "incident_history":memory.get("incident_history",[]).duplicate(true), "active_incident":{},
+        "foreknowledge_used":[], "foreknowledge_reactions":[],
+        "scene_seen_counts":memory.get("scene_seen_counts",memory.get("seen_ever",{})).duplicate(true),
+        "momentum_state":memory.get("momentum_state",{"drought":0,"force_meaningful":false}).duplicate(true),
+        "delegation_history":memory.get("delegation_history",[]).duplicate(true), "delegation_used":false,
+        "cooperative_history":[], "information_sources":{},
+        "canon_post_arrival_seen":memory.get("canon_post_arrival_seen",[]).duplicate()}
     voyage["chapters"] = memory.get("chapters",[]).duplicate()
     var previous: Dictionary = memory.get("memories", {})
     var previous_past: Dictionary = memory.get("past", {})
@@ -3901,6 +3926,9 @@ func begin_voyage(memory: Dictionary = {}) -> void:
     )
     voyage["micro_arc_pity"] = AstraStorylets054.update_arc_pity(
         voyage.get("micro_arc_pity",{}),roster,voyage.get("active_arcs",[])
+    )
+    voyage["motives"] = AstraPersonalMotiveModel.assign(
+        seed_value,loop_count,case_id,roster,active_participants(),truth.get("nulls",[])
     )
     voyage["routine_state"] = AstraCrewRoutineModel.build(
         seed_value, loop_count, case_id, roster, active_participants(), truth.get("nulls",[])
@@ -4031,6 +4059,21 @@ func _roll_pair_histories(previous_past: Dictionary) -> void:
             var prior_summary := str(AstraCrewCatalog.pair_history_info(prior_type).get("summary", ""))
             voyage["changes"].append("%s / %s: %s → %s" % [name_of(a), name_of(b), prior_summary, str(entry["summary"])])
 
+func _observe_personal_reason(who: String, source_key: String, detail: String = "") -> void:
+    var before := AstraPersonalMotiveModel.progress_for(voyage.get("motives",{}),who)
+    voyage["motives"] = AstraPersonalMotiveModel.observe(voyage.get("motives",{}),who,source_key,detail)
+    var after := AstraPersonalMotiveModel.progress_for(voyage.get("motives",{}),who)
+    if after <= before:
+        return
+    var hint := AstraPersonalMotiveModel.player_hint(voyage.get("motives",{}),who)
+    if hint != "":
+        var note := "%s · %s" % [name_of(who),hint]
+        if note not in voyage["motive_observations"]:
+            voyage["motive_observations"].append(note)
+
+func motive_dev_report() -> Array:
+    return AstraPersonalMotiveModel.dev_report(voyage.get("motives",{}))
+
 func voyage_rooms() -> Array:
     return AstraVoyageContent.room_ids(roster, case_id)
 
@@ -4101,6 +4144,7 @@ func _observe_routine_room(room: String) -> void:
         var home := AstraVoyageContent.home_room(str(npc_id),case_id)
         var home_name := str(AstraVoyageContent.ROOMS.get(home,{}).get("name",home))
         var room_name_now := str(AstraVoyageContent.ROOMS.get(room,{}).get("name",room))
+        _observe_personal_reason(str(npc_id),"routine:%s:%s" % [room,str(entry.get("deviation_reason",""))],str(entry.get("deviation_reason","")))
         observations.append("%s · 평소에는 %s에서 자주 보였지만 이번에는 %s에서 %s" % [
             name_of(str(npc_id)),home_name,room_name_now,str(entry.get("activity",""))
         ])
@@ -4180,6 +4224,47 @@ func voyage_move(room: String, greet: bool = true) -> bool:
     changed.emit()
     return true
 
+func voyage_can_delegate(who: String) -> bool:
+    if case_id not in ["SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"] or phase != "EXPLORE":
+        return false
+    if bool(voyage.get("delegation_used",false)) or not voyage.get("scene",{}).is_empty():
+        return false
+    if who not in voyage_people() or who not in active_participants():
+        return false
+    var room := str(voyage.get("room",""))
+    for point in voyage_points():
+        var key := room + ":" + str(point[0])
+        if key not in voyage.get("inspected",[]):
+            return true
+    return false
+
+func voyage_delegate(who: String) -> bool:
+    if not voyage_can_delegate(who):
+        return false
+    var room := str(voyage.get("room",""))
+    for point in voyage_points():
+        var key := room + ":" + str(point[0])
+        if key in voyage.get("inspected",[]):
+            continue
+        voyage["inspected"].append(key)
+        var fact_id := str(point[4])
+        var note := str(point[5])
+        AstraKnowledgeModel.share_with(flags,fact_id,who,day,"delegation")
+        _voyage_fact(fact_id,note,"TESTIMONY")
+        voyage["delegation_used"] = true
+        voyage["delegation_history"].append({"loop":int(voyage.get("loop",0)),"who":who,"fact":fact_id})
+        var routine: Dictionary = voyage.get("routine_state",{})
+        if routine.has(who):
+            routine[who]["activity"] = "당신이 맡긴 조사를 정리하고 있다."
+            routine[who]["routine_reason"] = "DELEGATED_INVESTIGATION"
+            voyage["routine_state"] = routine
+        _observe_personal_reason(who,"delegation:" + fact_id,fact_id)
+        _voyage_tick(false)
+        _voyage_scene(AstraStorylets055.delegation_scene(who,fact_id,note))
+        changed.emit()
+        return true
+    return false
+
 func voyage_points() -> Array:
     var points: Array = AstraVoyageContent.ROOMS.get(voyage.get("room","medbay"),{}).get("points",[])
     var result: Array = []
@@ -4214,7 +4299,16 @@ func voyage_inspect(point_id: String) -> bool:
         if key in voyage["inspected"]:
             return false
         voyage["inspected"].append(key)
-        _voyage_fact(str(point[4]),str(point[5]))
+        var fact_id := str(point[4])
+        _voyage_fact(fact_id,str(point[5]),"DIRECT")
+        var companion := str(voyage.get("companion",""))
+        var cooperative_scene: Dictionary = {}
+        if companion != "" and companion in active_participants():
+            cooperative_scene = AstraStorylets055.cooperative_scene(fact_id,companion)
+            if not cooperative_scene.is_empty():
+                AstraKnowledgeModel.share_with(flags,fact_id,companion,day,"cooperative_investigation")
+                voyage["cooperative_history"].append({"loop":int(voyage.get("loop",0)),"who":companion,"fact":fact_id,"scene":str(cooperative_scene.get("id",""))})
+                _observe_personal_reason(companion,"cooperative:" + fact_id,fact_id)
         if key == "engine:worklog" and int(voyage["loop"]) > 0 and "recorder" not in voyage["inventory"]:
             voyage["inventory"].append("recorder")
             voyage["notes"].append("정비 로그 옆에서 휴대 기록기를 챙겼다. 통신실에서 신호를 따로 저장할 수 있다.")
@@ -4233,18 +4327,23 @@ func voyage_inspect(point_id: String) -> bool:
                     ],
                     "choices":[]
                 })
+            elif not cooperative_scene.is_empty():
+                _voyage_scene(cooperative_scene)
             else:
-                _voyage_scene({"id":"inspect_"+key,"action":str(point[5]),"lines":[],"choices":[]})
+                _voyage_scene({"id":"inspect_"+key,"action":str(point[5]),"lines":[],"choices":[],"compressible":true})
         changed.emit()
         return true
     return false
 
-func _voyage_fact(id: String, note: String) -> void:
+func _voyage_fact(id: String, note: String, source_type: String = "DIRECT") -> void:
     if id not in voyage["facts"]:
         voyage["facts"].append(id)
     if note not in voyage["notes"]:
         voyage["notes"].append(note)
     voyage["last_fact"] = id
+    var source_types: Dictionary = voyage.get("information_sources",{})
+    source_types[id] = source_type
+    voyage["information_sources"] = source_types
     var ownership: Dictionary = voyage.get("evidence_ownership",{})
     var entry: Dictionary = ownership.get(id,{"found_by":"player","knows":["player"],"public":false})
     var knowers: Array = entry.get("knows",[])
@@ -4260,8 +4359,21 @@ func _voyage_fact(id: String, note: String) -> void:
 func _voyage_scene(scene: Dictionary) -> void:
     if scene.is_empty():
         return
-    voyage["scene"] = scene.duplicate(true)
+    var incoming: Dictionary = scene.duplicate(true)
+    var incoming_id := str(incoming.get("id",""))
+    var seen_counts: Dictionary = voyage.get("scene_seen_counts",{})
+    var prior_seen := int(seen_counts.get(incoming_id,0))
+    if AstraForeknowledgeModel.can_compress(incoming,prior_seen):
+        incoming["_full_action"] = str(incoming.get("action",""))
+        incoming["_full_lines"] = Array(incoming.get("lines",[])).duplicate(true)
+        incoming["action"] = AstraForeknowledgeModel.compressed_action(incoming)
+        incoming["lines"] = []
+        incoming["compressed"] = true
+    seen_counts[incoming_id] = prior_seen + 1
+    voyage["scene_seen_counts"] = seen_counts
+    voyage["scene"] = incoming
     voyage["line"] = -1
+    scene = incoming
     var who := str(scene.get("speaker",""))
     if who != "" and who not in voyage["met"]:
         voyage["met"].append(who)
@@ -4288,8 +4400,16 @@ func _voyage_scene(scene: Dictionary) -> void:
             voyage["rare_recent"].pop_front()
         if id not in voyage["visible_rare_ids"]:
             voyage["visible_rare_ids"].append(id)
-    if (id.begins_with("053_") or id.begins_with("054_")) and id not in voyage["visible_scene_ids"]:
+    if (id.begins_with("053_") or id.begins_with("054_") or id.begins_with("055_")) and id not in voyage["visible_scene_ids"]:
         voyage["visible_scene_ids"].append(id)
+    if scene.has("motive_progress") and who != "":
+        _observe_personal_reason(who,"scene:" + id,str(scene.get("requires_motive","")))
+    if bool(scene.get("canon_post_arrival",false)):
+        var canon_seen: Array = voyage.get("canon_post_arrival_seen",[])
+        if id not in canon_seen:
+            canon_seen.append(id)
+        voyage["canon_post_arrival_seen"] = canon_seen
+        _voyage_fact("post_arrival_activity","도착 이후에도 한동안 평범한 업무 기록이 이어졌다.","RECORD")
     var chain_id := str(scene.get("chain_id",""))
     if chain_id != "":
         var chain_state: Dictionary = voyage.get("micro_arc_state",{})
@@ -4434,6 +4554,27 @@ func _apply_scene_variants(scene: Dictionary, who: String) -> Dictionary:
 
 func _scene_eligible_052(scene: Dictionary, who: String) -> bool:
     if scene.has("chapters") and case_id not in Array(scene.get("chapters",[])):
+        return false
+    if bool(scene.get("cooperative_only",false)) or bool(scene.get("delegation_only",false)):
+        return false
+    if bool(scene.get("foreknowledge_reaction",false)):
+        return false
+    var required_motive := str(scene.get("requires_motive",""))
+    if required_motive != "":
+        if AstraPersonalMotiveModel.motive_for(voyage.get("motives",{}),who) != required_motive:
+            return false
+        if AstraPersonalMotiveModel.progress_for(voyage.get("motives",{}),who) < int(scene.get("requires_motive_progress",0)):
+            return false
+    var required_incident := str(scene.get("requires_incident",""))
+    if required_incident != "":
+        var found_incident := false
+        for event in voyage.get("incident_history",[]):
+            if str(event.get("id","")) == required_incident:
+                found_incident = true
+                break
+        if not found_incident:
+            return false
+    if bool(scene.get("canon_post_arrival",false)) and voyage.get("canon_post_arrival_seen",[]).size() >= 2:
         return false
     if crew.has(who) and not crew[who].is_alive():
         return false
@@ -4581,6 +4722,9 @@ func voyage_talk(who: String, topic: String = "") -> bool:
         var weight := AstraLivingCrew.content_weight(who, tag)
         if tag in ["everyday","work","observation"]:
             weight += 0.35
+        if bool(voyage.get("momentum_state",{}).get("force_meaningful",false)) and int(voyage.get("seen_ever",{}).get(str(candidate.get("id","")),0)) == 0 and str(candidate.get("category","")) in ["MOTIVE","CANON","INCIDENT_AFTER"]:
+            weight += 1.4
+            candidate["_meaningful_055"] = true
         candidate["_content_weight"] = maxf(0.25,weight)
         eligible.append(candidate)
     # Explicit topics always remain seekable, but normal conversations never
@@ -4588,6 +4732,10 @@ func voyage_talk(who: String, topic: String = "") -> bool:
     if eligible.is_empty():
         _voyage_scene({"id":who+"_busy","speaker":who,"action":AstraJosa.eun(name_of(who))+" 하던 일을 마무리한다. 잠시 조용히 곁에 선다.","lines":[],"choices":[]})
     else:
+        if bool(voyage.get("momentum_state",{}).get("force_meaningful",false)):
+            var meaningful_055: Array = eligible.filter(func(item): return bool(item.get("_meaningful_055",false)))
+            if not meaningful_055.is_empty():
+                eligible = meaningful_055
         # Prefer scenes not seen in the last few conversations. Fall back only
         # when the eligible pool is genuinely small; never block progression.
         var recent_families: Array = voyage.get("recent_families",[])
@@ -4627,6 +4775,20 @@ func voyage_ask_goal(who: String) -> bool:
     var id := "goal_"+who
     _voyage_scene({"id":id,"speaker":who,"tag":"work","action":AstraJosa.wa(name_of(who))+" 함께 기록을 펼친다.","lines":[[who,str(directions[who])],["",str(chapter["discovery"])]],"choices":[{"label":"함께 확인한 내용을 남긴다.","effect":"record"},{"label":"다른 동료에게도 가져간다.","effect":"share"}]})
     _voyage_tick(false)
+    changed.emit()
+    return true
+
+func voyage_expand_scene() -> bool:
+    if phase != "EXPLORE" or voyage.get("scene",{}).is_empty():
+        return false
+    var current: Dictionary = voyage["scene"]
+    if not bool(current.get("compressed",false)):
+        return false
+    current["action"] = str(current.get("_full_action",""))
+    current["lines"] = Array(current.get("_full_lines",[])).duplicate(true)
+    current["compressed"] = false
+    voyage["scene"] = current
+    voyage["line"] = -1
     changed.emit()
     return true
 
@@ -4705,7 +4867,35 @@ func voyage_choose(index: int) -> bool:
         )
     elif effect in ["share","hide","help","defend","confront","withhold","keep_copy","promise"]:
         voyage["deferred"].append({"who":who,"effect":effect,"due":int(voyage["actions"])+2})
+    var incident_result: Dictionary = {}
+    var foreknowledge_reaction: Dictionary = {}
+    if str(scene.get("category","")) == "INCIDENT":
+        incident_result = AstraIncidentModel.resolve(
+            voyage.get("active_incident",{}),choice,int(voyage.get("loop",0)),int(voyage.get("actions",0))
+        )
+        if not incident_result.is_empty():
+            voyage["incident_history"].append(incident_result)
+            var incident_fact := "incident_" + str(incident_result.get("id","")).to_lower()
+            _voyage_fact(incident_fact,str(incident_result.get("note","")),str(incident_result.get("source_type","DIRECT")))
+            var actor := str(scene.get("speaker",""))
+            _observe_personal_reason(actor,"incident:" + str(incident_result.get("id","")),str(incident_result.get("outcome","")))
+            if bool(incident_result.get("foreknowledge",false)):
+                var incident_id := str(incident_result.get("id",""))
+                var used: Array = voyage.get("foreknowledge_used",[])
+                if incident_id not in used:
+                    used.append(incident_id)
+                voyage["foreknowledge_used"] = used
+                var observer := "noa" if "noa" in active_participants() else actor
+                foreknowledge_reaction = AstraForeknowledgeModel.reaction_scene(observer,incident_id,int(voyage.get("loop",0)))
+                voyage["foreknowledge_reactions"].append({"loop":int(voyage.get("loop",0)),"observer":observer,"incident":incident_id})
+            voyage["active_incident"] = {}
     voyage["scene"] = {}
+    if not foreknowledge_reaction.is_empty():
+        _voyage_scene(foreknowledge_reaction)
+    elif not incident_result.is_empty():
+        var after_scene := AstraStorylets055.incident_after_scene(str(incident_result.get("id","")),str(scene.get("speaker","")))
+        if not after_scene.is_empty():
+            _voyage_scene(after_scene)
     _deliver_due_consequence("IMMEDIATE")
     changed.emit()
     return true
@@ -4862,6 +5052,20 @@ func _maybe_autonomous_beat(room: String) -> bool:
     })
     return true
 
+func _maybe_trigger_incident() -> bool:
+    var loop_index := int(voyage.get("loop",0))
+    var actions := int(voyage.get("actions",0))
+    if not AstraIncidentModel.should_trigger(seed_value,loop_index,case_id,actions,voyage.get("incident_history",[]),voyage.get("active_incident",{})):
+        return false
+    var incident := AstraIncidentModel.select(seed_value,loop_index,case_id,voyage.get("incident_history",[]),active_participants())
+    if incident.is_empty():
+        return false
+    voyage["active_incident"] = incident
+    var incident_id := str(incident.get("id",""))
+    var can_foreknow := AstraForeknowledgeModel.can_use(loop_index,incident_id,voyage.get("incident_history",[]),voyage.get("foreknowledge_used",[]))
+    _voyage_scene(AstraIncidentModel.scene(incident,loop_index,can_foreknow))
+    return true
+
 func _voyage_tick(deliver: bool = true) -> void:
     voyage["actions"] = int(voyage["actions"])+1
     voyage["routine_state"] = AstraCrewRoutineModel.advance(
@@ -4869,6 +5073,8 @@ func _voyage_tick(deliver: bool = true) -> void:
     )
     if not deliver or not voyage["scene"].is_empty(): return
     if _deliver_due_consequence():
+        return
+    if _maybe_trigger_incident():
         return
     for event in voyage["deferred"]:
         if int(event["due"]) > int(voyage["actions"]): continue
@@ -5175,6 +5381,8 @@ func _updated_micro_arc_recent() -> Array:
 
 func voyage_memory() -> Dictionary:
     if voyage.is_empty(): return {}
+    var meaningful: bool = (not voyage.get("motive_observations",[]).is_empty()) or (not voyage.get("foreknowledge_reactions",[]).is_empty()) or (not voyage.get("cooperative_history",[]).is_empty())
+    var next_momentum := AstraForeknowledgeModel.update_momentum(voyage.get("momentum_state",{}),meaningful)
     var echo: Dictionary = {}
     var bonds: Dictionary = voyage.get("bonds",{}).duplicate(true)
     for id in roster:
@@ -5220,6 +5428,11 @@ func voyage_memory() -> Dictionary:
             voyage.get("consequence_queue",[]),int(voyage.get("loop",0))
         ),
         "pinned_question":str(voyage.get("pinned_question","")),
+        "incident_history":voyage.get("incident_history",[]).duplicate(true),
+        "scene_seen_counts":voyage.get("scene_seen_counts",{}).duplicate(true),
+        "momentum_state":next_momentum,
+        "delegation_history":voyage.get("delegation_history",[]).duplicate(true),
+        "canon_post_arrival_seen":voyage.get("canon_post_arrival_seen",[]).duplicate(),
         "changes":voyage.get("changes",[]).duplicate(),
         "choices":choices,
         "losses":casualties.duplicate(),

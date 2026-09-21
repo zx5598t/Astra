@@ -1,7 +1,7 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **0.5.3** (HEARTBEAT). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- Version **0.5.5** (FAULT LINES). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
 - GitHub-first, CI-validated. Every release branch must pass `Godot CI` before it is promoted to `main`.
 
 ## Architecture rules (why 0.2.0 was a rebuild)
@@ -15,7 +15,7 @@ walking the node tree. Do not reintroduce that pattern.
    UI never edits session fields directly.
 2. **Content is data.** Cases live in `case_catalog.gd`, crew in `crew_catalog.gd`, lines in
    `dialogue_bank.gd`, private scenes in `private_events.gd`, authored voyage/storylets in
-   `voyage_content.gd` + `storylets_052.gd` + `storylets_053.gd`, and autonomous beats in
+   `voyage_content.gd` + `storylets_052.gd` + `storylets_053.gd` + `storylets_054.gd` + `storylets_055.gd`, and autonomous beats in
    `crew_activity_model.gd`. Add content to registries/models, not UI code.
 3. **Truth is generated, never hand-placed.** `case_generator.gd` builds positions, claims and clues from
    a seed. Invariants (checked by tests):
