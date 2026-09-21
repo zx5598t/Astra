@@ -8,7 +8,7 @@ ASTRA의 탐사요원으로서 기록과 현장을 확인하고, 반복될 때�
 Mandatory/progression, 실제 FOLLOWUP·consequence, 현재 보이는 continuation, 명시적으로 고른 topic과 pinned question은 이 예산을 우회합니다. 숨은 Null 정보나 motive, raw relationship 수치는 selector에 넣지 않으며 save schema는 v10을 그대로 유지합니다. 신규 authored voyage scene은 **0개**이고 전체 library는 **608개**를 유지합니다.
 
 - [플레이 안내](START_HERE.md)
-- [0.5.6 변경 사항](docs/RELEASE_NOTES.md)
+- [0.5.7 변경 사항](docs/RELEASE_NOTES.md)
 - [설계와 저장 호환](docs/GAME_DESIGN.md)
 - [인물 설정](docs/CHARACTERS.md)
 - [이미지 출처와 변환](docs/ASSET_AUDIT.md)
@@ -26,7 +26,7 @@ Mandatory/progression, 실제 FOLLOWUP·consequence, 현재 보이는 continuati
 - RED SHIFT — 마렌과 출항보다 오래된 시료.
 - LAST LIGHT — 기록과 사람에 대한 판단이 합쳐지는 후반.
 
-아직 배우지 않은 시스템은 미리 전부 보여 주지 않습니다. 0.5.6에서도 기존 Routine/Consequence/Micro-Arc는 본격 노출을 ECHO WARD 이후에 두며, CALIBRATION에는 routine narration을 추가하지 않아 첫 30분의 필수 텍스트량을 늘리지 않습니다.
+아직 배우지 않은 시스템은 미리 전부 보여 주지 않습니다. 0.5.7에서도 기존 Routine/Consequence/Micro-Arc는 본격 노출을 ECHO WARD 이후에 두며, CALIBRATION에는 routine narration을 추가하지 않아 첫 30분의 필수 텍스트량을 늘리지 않습니다.
 
 ## CLEAR SIGNAL — 서사 초점 회복
 
@@ -116,7 +116,7 @@ Notebook은 정답표가 아니라 기억 보조입니다.
 - 1366×768 / 1920×1080 핵심 UI 접근성 smoke 유지
 - authored scene audit: **608개**, 캐릭터별 98 / 81 / 74 / 79 / 71 / 64 / 62 / 79
 
-정식 0.5.7 ZIP/SHA-256은 VERSION과 project.godot을 0.5.7로 맞춘 최종 CI에서 생성해 검증합니다.
+정식 0.5.7 Windows CI artifact는 `ASTRA-0.5.7-windows.zip`이며 최종 검증 SHA-256은 `a9d1bdb0959c9d2dd3a51953daed48e8d146a7e33d17a1de862e1579d0a2f48b`입니다.
 
 ## 실행과 빌드
 
