@@ -219,40 +219,50 @@ func refresh() -> void:
 
 func _add_story_closure(session: AstraGameSession, outcome: String) -> void:
     var chapter := AstraVoyageContent.chapter(session.case_id)
+    var recap := session.story_recap()
     var panel := AstraUI.panel(Color(AstraUI.CYAN, 0.055), Color(AstraUI.CYAN, 0.36), 12, 14)
     _body.add_child(panel)
     var box := AstraUI.vbox(7)
     panel.add_child(box)
 
-    if outcome == "WIN":
-        box.add_child(AstraUI.label("이번에 풀린 것", AstraUI.T_META, AstraUI.GREEN))
-        box.add_child(AstraUI.prose(str(chapter.get("resolved", chapter.get("discovery", ""))), AstraUI.T_BODY, AstraUI.TEXT))
-        box.add_child(AstraUI.label("그래도 남은 질문", AstraUI.T_META, AstraUI.GOLD))
-        box.add_child(AstraUI.prose(str(chapter.get("open_question", "")), AstraUI.T_BODY, AstraUI.TEXT))
-        box.add_child(AstraUI.label("마지막 장면", AstraUI.T_META, AstraUI.VIOLET))
-        box.add_child(AstraUI.prose(str(chapter.get("outro", "")), AstraUI.T_BODY, AstraUI.TEXT))
-        box.add_child(AstraUI.label("다음에 이어지는 단서", AstraUI.T_META, AstraUI.CYAN))
-        box.add_child(AstraUI.prose(str(chapter.get("next_hook", "")), AstraUI.T_BODY, AstraUI.TEXT))
+    if str(recap.get("resolved","")) != "":
+        box.add_child(AstraUI.label("이번에 확인한 사실", AstraUI.T_META, AstraUI.GREEN))
+        box.add_child(AstraUI.prose(str(recap["resolved"]), AstraUI.T_BODY, AstraUI.TEXT))
+        if str(recap.get("open_question","")) != "":
+            box.add_child(AstraUI.label("그래도 남은 질문", AstraUI.T_META, AstraUI.GOLD))
+            box.add_child(AstraUI.prose(str(recap["open_question"]), AstraUI.T_BODY, AstraUI.TEXT))
+        var question: Dictionary = recap.get("question",{})
+        if not question.is_empty():
+            var qstatus := str(question.get("status","OPEN"))
+            var status_text := {"ANSWERED":"확인됨","PARTIAL":"부분 확인","REFUTED":"반증","CHANGED":"기록이 바뀜"}.get(qstatus,"아직 부족")
+            box.add_child(AstraUI.label("Notebook 질문 상태 · " + status_text, AstraUI.T_META, AstraUI.MUTED))
     else:
-        # A failed loop should preserve the mystery. Do not grant the chapter's
-        # local answer just because the result screen opened.
         box.add_child(AstraUI.label("이번 기록은 여기서 끊겼다", AstraUI.T_META, AstraUI.GOLD))
-        box.add_child(AstraUI.prose(str(chapter.get("outro", "")), AstraUI.T_BODY, AstraUI.TEXT))
+        box.add_child(AstraUI.prose("이번 loop에서 핵심 사실을 직접 확인하지 못했습니다. Result가 보지 않은 답을 대신 공개하지 않습니다.", AstraUI.T_BODY, AstraUI.MUTED))
         box.add_child(AstraUI.label("아직 확인해야 할 것", AstraUI.T_META, AstraUI.CYAN))
-        box.add_child(AstraUI.prose(str(chapter.get("goal", "")), AstraUI.T_BODY, AstraUI.TEXT))
+        box.add_child(AstraUI.prose(str(chapter.get("goal","")), AstraUI.T_BODY, AstraUI.TEXT))
+
+    if str(recap.get("outro","")) != "":
+        box.add_child(AstraUI.label("직접 본 마지막 장면", AstraUI.T_META, AstraUI.VIOLET))
+        box.add_child(AstraUI.prose(str(recap["outro"]), AstraUI.T_BODY, AstraUI.TEXT))
+    if str(recap.get("next_hook","")) != "":
+        box.add_child(AstraUI.label("다음에 이어지는 단서", AstraUI.T_META, AstraUI.CYAN))
+        box.add_child(AstraUI.prose(str(recap["next_hook"]), AstraUI.T_BODY, AstraUI.TEXT))
 
 func _calibration_result(session: AstraGameSession, report: Dictionary) -> void:
     var chapter := AstraVoyageContent.chapter(session.case_id)
+    var recap := session.story_recap()
     var learned := AstraUI.panel(Color(AstraUI.CYAN, 0.07), Color(AstraUI.CYAN, 0.38), 12, 14)
     _body.add_child(learned)
     var box := AstraUI.vbox(7)
     learned.add_child(box)
-    box.add_child(AstraUI.label("이번에 풀린 것", AstraUI.T_META, AstraUI.GREEN))
-    box.add_child(AstraUI.prose(str(chapter.get("resolved", "")), AstraUI.T_BODY, AstraUI.TEXT))
+    box.add_child(AstraUI.label("이번에 확인한 사실", AstraUI.T_META, AstraUI.GREEN))
+    box.add_child(AstraUI.prose(str(recap.get("resolved","직접 확인한 사실이 아직 없습니다.")), AstraUI.T_BODY, AstraUI.TEXT))
     box.add_child(AstraUI.label("그래도 남은 질문", AstraUI.T_META, AstraUI.GOLD))
-    box.add_child(AstraUI.prose(str(chapter.get("open_question", "")), AstraUI.T_BODY, AstraUI.TEXT))
-    box.add_child(AstraUI.label("마지막 장면", AstraUI.T_META, AstraUI.VIOLET))
-    box.add_child(AstraUI.prose(str(chapter.get("outro", "")), AstraUI.T_BODY, AstraUI.TEXT))
+    box.add_child(AstraUI.prose(str(recap.get("open_question",chapter.get("goal",""))), AstraUI.T_BODY, AstraUI.TEXT))
+    if str(recap.get("outro","")) != "":
+        box.add_child(AstraUI.label("직접 본 마지막 장면", AstraUI.T_META, AstraUI.VIOLET))
+        box.add_child(AstraUI.prose(str(recap["outro"]), AstraUI.T_BODY, AstraUI.TEXT))
 
     var next_id := _next_case(session.case_id)
     if next_id != "":
@@ -262,7 +272,7 @@ func _calibration_result(session: AstraGameSession, report: Dictionary) -> void:
         var next_box := AstraUI.vbox(5)
         next_panel.add_child(next_box)
         next_box.add_child(AstraUI.label("다음에 이어지는 단서", AstraUI.T_META, AstraUI.GOLD))
-        next_box.add_child(AstraUI.prose(str(chapter.get("next_hook", "")), AstraUI.T_BODY, AstraUI.TEXT))
+        next_box.add_child(AstraUI.prose(str(recap.get("next_hook", chapter.get("goal",""))), AstraUI.T_BODY, AstraUI.TEXT))
         var next := AstraUI.primary_button("다음 사건 · %s →" % str(next_data.get("title", "")), AstraUI.GREEN)
         next.pressed.connect(screen.start_other_case.bind(next_id))
         next_box.add_child(next)
