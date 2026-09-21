@@ -1,4 +1,70 @@
-# QA REPORT — ASTRA 0.5.3 HEARTBEAT
+# QA REPORT — ASTRA 0.5.4 AFTERMATH
+
+검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64
+작업 브랜치: release/0.5.4
+기준: ASTRA 0.5.3 HEARTBEAT / 71f3c4f16ed41ca5564ad1b83e698fa9ac809f59
+
+## 콘텐츠 수치
+
+총 voyage/reactive authored scene: **537**
+
+| 인물 | scene |
+|---|---:|
+| 미라 | **88** |
+| 준 | 72 |
+| 다렌 | 66 |
+| 노아 | 70 |
+| 세나 | 63 |
+| 소렌 | 55 |
+| 루칸 | 53 |
+| 마렌 | 70 |
+
+0.5.4 신규 scene: **64** (Mira 8 / Jun 7 / Daren 7 / Noa 7 / Sena 7 / Soren 10 / Lucan 10 / Maren 8)
+Private event: **47**
+Autonomous crew beat: **27**
+pair-tag scene: **69**
+trio scene: **11**
+
+## Routine / Micro-Arc / Consequence
+
+- 정상 activity: **36**
+- authored deviation situation: **27**
+- deviation reason: **10**
+- Routine 1,000 simulated days: **17,916 checks**, sampled deviations **1,296**, max visible deviation **3**
+- 대표 micro-arc: **8**, 각 4 beat
+- authored consequence event: **23** — IMMEDIATE 4 / DELAYED 8 / NEXT_DAY 7 / NEXT_LOOP 4
+- queue max: 12 + timing별 expiry
+- NEXT_LOOP: consequence_carry로 voyage memory에 전달
+
+## Decision / Knowledge
+
+- non-abstain vote human-readable reason invariant 유지
+- private clue를 모르는 NPC가 vote source로 사용하지 않음
+- vote change는 strongest reason 기반으로 new_evidence / relationship_change / memory_change / uncertainty 분류
+- 개표 UI에 이전 표 → 현재 표 + 이유 표시
+- opinion trace에 known facts + qualitative relationship context 기록
+- NPC→NPC knowledge propagation은 실제 share 경로가 있을 때만 발생
+
+## Curiosity / Save
+
+- pinned question 최대 1
+- 관련 optional content weight만 소폭 증가
+- 0.5.3 저장에 없는 routine/micro-arc/consequence/pinned-question/opinion 필드는 optional/default hydrate
+- 기존 저장 강제 reset 없음
+
+## Release gate
+
+동일 HEAD에서 import+parse, 기존 전체 회귀, 1366×768/1920×1080, 0.5.1 stabilization, 0.5.2 Living Crew 규모 simulation, 0.5.3 HEARTBEAT 회귀, 0.5.4 전용 tests, AFTERMATH 500-loop, content audit, human-readable editorial report, Windows export, exported ASTRA.exe boot, ZIP+SHA-256이 모두 성공한 뒤 main으로 승격한다.
+
+배포 파일: ASTRA-0.5.4-windows.zip / ASTRA-0.5.4-windows.zip.sha256
+
+## 알려진 실제 한계
+
+0.5.3의 action-prose opener WARN은 0.5.4 편집 패스에서 정리했다. 전체 537 scene의 모든 조합을 사람이 직접 플레이한 것은 아니므로 human-readable sample report와 simulation을 계속 보조 검증으로 유지한다.
+
+---
+
+## Historical QA — 0.5.3
 
 검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64  
 작업 브랜치: `release/0.5.3`  
