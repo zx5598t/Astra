@@ -219,7 +219,7 @@ static func cooperative_scene(fact_id: String, who: String) -> Dictionary:
     for scene in actor_scenes:
         if str(scene.get("cooperative_fact","")) == fact_id:
             return Dictionary(scene).duplicate(true)
-    var index := abs(hash("055:coop:%s:%s" % [who,fact_id])) % actor_scenes.size()
+    var index: int = abs(hash("055:coop:%s:%s" % [who,fact_id])) % actor_scenes.size()
     return Dictionary(actor_scenes[index]).duplicate(true)
 
 static func delegation_scene(who: String, fact_id: String, fact_note: String) -> Dictionary:
