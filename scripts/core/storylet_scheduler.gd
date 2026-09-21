@@ -112,13 +112,13 @@ static func _focus_budget_multiplier(scene: Dictionary, pinned_question: Diction
     if distinct < 2:
         return 1.0
     if distinct == 2:
-        # Once two high-salience threads are already visible, opening a third
-        # should be uncommon unless the player explicitly pinned it.
-        return 0.78 if direct_pin else 0.28
-    # Four-or-more unrelated focus threads are allowed, but should be rare.
-    # Continuations, FOLLOWUP, mandatory content and explicit topics bypass
-    # this branch above, so this only suppresses genuinely new threads.
-    return 0.55 if direct_pin else 0.10
+        # A third thread can still surface, especially when pinned, but normal
+        # browsing should usually stay with the two threads already in view.
+        return 0.65 if direct_pin else 0.20
+    # A fourth unrelated thread is an exceptional branch, not ordinary pacing.
+    # This remains a soft probability weight: continuations, FOLLOWUP,
+    # mandatory content and explicit topics still bypass above.
+    return 0.18 if direct_pin else 0.012
 
 static func _speaker_multiplier(scene: Dictionary, pinned_question: Dictionary, focus_context: Dictionary) -> float:
     var who := str(scene.get("speaker",""))
