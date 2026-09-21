@@ -5281,7 +5281,7 @@ func _voyage_tick(deliver: bool = true) -> void:
     for event in voyage["deferred"]:
         if int(event["due"]) > int(voyage["actions"]): continue
         var who := str(event["who"])
-        var reaction := {
+        var reaction: String = str({
             "share":"앞서 건넨 기록 옆에 새로운 메모가 붙어 있다. 혼자서는 놓쳤던 시각이다.",
             "hide":"감춰 둔 사본을 동료가 발견했다. 질문 대신 두 파일을 나란히 놓는다.",
             "help":"동료가 다음 작업의 자리를 미리 비워 둔다. 이번에는 당신의 도움이 필요하다.",
@@ -6153,8 +6153,8 @@ func _build_containment_aftermath(isolated: String) -> Array:
             "vale":"이제 신호가 달라지는지 들어 볼게요.",
             "eli":"사람 하나를 뺐다고 항로까지 맞아지는 건 아니야.",
             "lyra":"격리 뒤에도 상태가 달라지는지 제가 기록할게요."
-        }.get(observer,"격리 뒤의 변화를 계속 확인하죠.")
-        result.append({"kind":"observer","speaker":observer,"text":str(reaction)})
+        }.get(observer,"격리 뒤의 변화를 계속 확인하죠."))
+        result.append({"kind":"observer","speaker":observer,"text":reaction})
     if member.role != "NULL":
         result.append({"kind":"consequence","text":"결정 직후 분위기가 굳는다. 일부 동료가 기록 공유에 더 조심스러워진다."})
     return result
