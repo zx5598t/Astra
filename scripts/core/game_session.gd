@@ -905,6 +905,15 @@ func _enter(next_phase: String) -> void:
     changed.emit()
 
 func _start_next_day() -> void:
+    # A surviving case that reaches its authored day limit must resolve instead
+    # of rolling into an unbounded extra day. Vote-stage WIN/LOSE/TIMEOUT is
+    # handled earlier; this covers the no-isolation path after the final night.
+    if day >= max_days:
+        if outcome == "":
+            outcome = "TIMEOUT"
+            _log("사건 판정 · TIMEOUT")
+        _enter("RESULT")
+        return
     day += 1
     _apply_next_day_consequences()
     flags.erase("patrol")
