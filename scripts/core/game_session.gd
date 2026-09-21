@@ -2743,12 +2743,9 @@ func vote_intentions() -> Dictionary:
             if value > best:
                 best = value
                 target = str(other)
-        var evidence_count := clues.filter(func(clue): return bool(clue.get("public", false))).size()
-        var abstain_threshold := 0.80
-        if case_id == "ECHO_WARD": abstain_threshold = 0.72
-        elif case_id == "GLASS_GARDEN": abstain_threshold = 0.88
-        if best < abstain_threshold and (evidence_count == 0 or day <= 1):
-            target = ""
+        # Low confidence is not an abstention. If a legal candidate exists, the
+        # crew member makes the best decision available from their current
+        # suspicion, relationship and public-evidence context.
         target = _sanitize_ballot(npc_id, target)
         result[npc_id] = target
         if target != "":
@@ -6144,7 +6141,7 @@ func _build_containment_aftermath(isolated: String) -> Array:
         observer = str(npc_id)
         break
     if observer != "":
-        var reaction := {
+        var reactions := {
             "mira":"생체 상태는 제가 볼게요. 판단이 맞았는지는 아직 단정하지 마세요.",
             "rho":"문은 잠겼어. 이제 저 사람 없이 남은 기록이 어떻게 움직이는지 보자.",
             "dax":"한 명을 빼면 조건이 바뀌어. 그 뒤의 변화도 증거로 남겨야 해.",
@@ -6153,7 +6150,8 @@ func _build_containment_aftermath(isolated: String) -> Array:
             "vale":"이제 신호가 달라지는지 들어 볼게요.",
             "eli":"사람 하나를 뺐다고 항로까지 맞아지는 건 아니야.",
             "lyra":"격리 뒤에도 상태가 달라지는지 제가 기록할게요."
-        }.get(observer,"격리 뒤의 변화를 계속 확인하죠."))
+        }
+        var reaction: String = str(reactions.get(observer,"격리 뒤의 변화를 계속 확인하죠."))
         result.append({"kind":"observer","speaker":observer,"text":reaction})
     if member.role != "NULL":
         result.append({"kind":"consequence","text":"결정 직후 분위기가 굳는다. 일부 동료가 기록 공유에 더 조심스러워진다."})
