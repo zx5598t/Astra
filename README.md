@@ -1,14 +1,14 @@
-# ASTRA 0.5.7 — CLEAR SIGNAL
+# ASTRA 0.6.0 — FIRST CONTACT / STORY LOOP
 
 같은 배에서 깨어났지만, 우리는 서로 다른 목적지를 기억한다.  
 ASTRA의 탐사요원으로서 기록과 현장을 확인하고, 반복될 때마다 조금씩 달라지는 여덟 동료의 관계와 행동을 읽는 싱글플레이 SF 사회추리 미스터리입니다.
 
-0.5.7 CLEAR SIGNAL은 새 시스템과 새 장면을 더 쌓는 대신, 이미 있는 608개의 authored voyage/reactive scene이 **한 번의 loop에서 덜 겹치고 더 선명하게 이어지도록** 선택 흐름을 정리한 업데이트입니다. 플레이어가 이미 본 중요한 스레드는 이어지기 쉬워지고, 관련 없는 새 고중요도 스레드는 한꺼번에 여러 개 열리지 않도록 soft weight로 억제합니다.
+0.6.0은 미완성 상태였던 FIRST CONTACT와 장별 story loop를 실제 런타임에 연결해 완성한 릴리스입니다. CALIBRATION의 4인 첫날과 직접 조사 1회, 순차 합류, 명시적 ballot 상태를 유지하면서 각 장의 situation → 직접 발견 → resolution/reaction → open question → next hook이 Result 요약 전에 실제 플레이로 이어집니다.
 
-Mandatory/progression, 실제 FOLLOWUP·consequence, 현재 보이는 continuation, 명시적으로 고른 topic과 pinned question은 이 예산을 우회합니다. 숨은 Null 정보나 motive, raw relationship 수치는 selector에 넣지 않으며 save schema는 v10을 그대로 유지합니다. 신규 authored voyage scene은 **0개**이고 전체 library는 **608개**를 유지합니다.
+기존 Living Crew / Knowledge / DecisionTrace / Routine / Consequence / Motive / Incident / CLEAR SIGNAL 선택기는 다시 만들지 않았습니다. Player != Null이며 Null을 전체 사건의 최종 원인으로 확정하지 않습니다. LAST_LIGHT는 서로 다른 내부적으로 유효한 history가 공존하고 현재 Null 사건만으로 그 모순을 설명할 수 없다는 기존 canon을 유지합니다.
 
 - [플레이 안내](START_HERE.md)
-- [0.5.7 변경 사항](docs/RELEASE_NOTES.md)
+- [0.6.0 변경 사항](docs/RELEASE_NOTES.md)
 - [설계와 저장 호환](docs/GAME_DESIGN.md)
 - [인물 설정](docs/CHARACTERS.md)
 - [이미지 출처와 변환](docs/ASSET_AUDIT.md)
@@ -103,20 +103,21 @@ Notebook은 정답표가 아니라 기억 보조입니다.
 
 ## 검증
 
-0.5.7 CLEAR SIGNAL 구현 기준 검증은 Godot **4.7.2 stable**에서 Linux/Windows 모두 GREEN입니다.
+0.6.0 release-recovery 기준 GitHub Actions run **#518**은 Godot **4.7.2 stable**에서 Linux/Windows validation 모두 GREEN입니다.
 
 - Linux import / 전체 GDScript parse clean
-- 전체 모델: **45,301 checks**, 40 games 기준 TOTAL smart **68%** / random **0%** / passive **0%**
-- 기존 0.5.1~0.5.5 regression 유지
-- Codex 0.5.6: **95 checks**
-- ECHOES 0.5.6: **33 checks**
-- CLEAR SIGNAL 0.5.7 invariants: **47 checks**
-- CLEAR SIGNAL 500-loop runtime exposure: **10 checks**
-- Windows UI smoke / main-scene boot 성공
-- 1366×768 / 1920×1080 핵심 UI 접근성 smoke 유지
-- authored scene audit: **608개**, 캐릭터별 98 / 81 / 74 / 79 / 71 / 64 / 62 / 79
+- voyage regression: **649 checks PASS**
+- story consistency: **407 checks PASS**
+- FIRST CONTACT: **259 checks PASS**
+- reset safety: **22 checks PASS**
+- NPC vote regression: **19,086 checks PASS** / 4,200 ballots / invalid 0 / self 0 / empty reason 0
+- --games=40 TOTAL: smart **79%** / random **19%** / passive **0%**
+- deduction gate: smart - random **60%p**, passive < 20% 유지
+- UI smoke: **PASS**
+- content audit: **0 FAIL / 1 WARN** (반복 opener 편집 경고)
+- authored voyage/reactive scene library: **608개**
 
-공식 0.5.7 Windows Release asset은 `ASTRA-0.5.7-windows.zip`이며 tag-source Windows run `35575857561`에서 검증된 SHA-256은 `5ea10cb171ce3d42e66da54c3c14d2adff6f9648a3d86e8166146c016a0846ec`입니다.
+Windows 정식 ZIP/SHA256과 v0.6.0 Release 값은 main 병합 후 tag-source 빌드 결과를 기준으로 기록합니다.
 
 ## 실행과 빌드
 
