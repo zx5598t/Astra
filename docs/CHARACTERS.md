@@ -1,4 +1,4 @@
-# ASTRA 0.5.3 인물 — HEARTBEAT
+# ASTRA 0.5.4 인물 — AFTERMATH
 
 | 표시 이름 | 저장 ID / 자산 ID | 역할 | baseline과 말투 |
 |---|---|---|---|
@@ -35,7 +35,7 @@ Hidden role은 사람의 기본 성격을 바꾸지 않는다. Null이 된 캐�
 - 강제 romance confession
 - 다른 chapter spotlight 독점
 
-0.5.3 authored speaker scene은 **80개**, private event는 **13개**다. 하지만 ECHO WARD 이후 일반 loop의 optional Mira scene은 최대 4개로 제한한다.
+0.5.4 authored speaker scene은 **88개**, private event는 **13개**다. 하지만 ECHO WARD 이후 일반 loop의 optional Mira scene은 최대 4개로 제한한다.
 
 ### 미라의 관계 tone
 
@@ -135,3 +135,18 @@ Character Note는 객관적 encyclopedia가 아니다. 플레이어가 직접 �
 - “[현재 기록] 세나와 준은 예전부터 함께 일했던 것처럼 보인다.”
 
 loop가 바뀌면 일부 관계 관찰은 현재 기록에만 해당할 수 있다.
+
+## 0.5.4 Micro-Arcs
+
+대표 micro-arc는 캐릭터의 핵심 성격을 무작위로 바꾸는 성장 트리가 아니라, 한 loop에서 볼 수도 놓칠 수도 있는 짧은 인간적 사건이다.
+
+- 미라: Self Neglect — 자기 상태를 계속 뒤로 미룸
+- 준: Mistake — Null과 무관한 작은 정비 실수
+- 다렌: Failed Model — 맞는 계산이 틀린 결과를 낼 때 입력을 다시 받음
+- 노아: Private Copy — 확인되지 않은 사본을 공개 기록과 분리
+- 세나: Overprotection — 안전을 위해 통제를 너무 강하게 검
+- 소렌: Listening Fatigue — 신호를 너무 오래 들음
+- 루칸: Risk Route — 짧고 위험한 길과 길고 안정적인 길 사이의 책임
+- 마렌: Save One Sample — 자원을 쓰면서도 표본 하나를 더 살려 둠
+
+한 loop에 모두 등장하지 않으며 Null 여부와 무관하게 인간적인 baseline을 먼저 보여 주는 데 사용한다.
