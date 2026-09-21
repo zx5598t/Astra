@@ -162,12 +162,12 @@ func _unrelated_and_continuations(events: Array) -> Dictionary:
         var continuation := AstraStoryletScheduler.is_continuation(synthetic,context)
         if continuation:
             continuations += 1
-        elif level in ["FOCUS","FOLLOWUP"]:
+        elif level == "FOCUS":
             var family := str(event.get("family",""))
             if family != "" and family not in context["loop_focus_families"]:
                 unrelated += 1
         var family := str(event.get("family",""))
-        if level in ["FOCUS","FOLLOWUP"] and family != "" and family not in context["loop_focus_families"]:
+        if level == "FOCUS" and not continuation and family != "" and family not in context["loop_focus_families"]:
             context["loop_focus_families"].append(family)
         context["loop_focus_events"].append(event)
     return {"unrelated":unrelated,"continuations":continuations}
