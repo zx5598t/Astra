@@ -1,3 +1,21 @@
+# 0.5.5 · FAULT LINES · 2026-09-21
+
+0.5.4 AFTERMATH의 Routine / Knowledge / Decision / Consequence 기반을 유지하면서 **Personal Motive → Dynamic Incident → Cooperative Investigation → Delegation → Loop Foreknowledge → Familiar Scene Compression → Narrative Momentum**을 연결했다.
+
+Personal Motive는 ECHO WARD 이후 loop마다 일부 활동 중 NPC에게만 1~3개 배정되며 최대 3명이다. motive assignment는 Null 목록을 입력받아도 결과 계산에 사용하지 않아 **motive != Null**을 보장한다. 행동 목격·동행 조사·위임·incident 같은 서로 다른 source가 쌓일 때 HIDDEN → SUSPECTED → PARTIAL → REVEALED 내부 상태가 진행되지만 상태명/수치는 UI에 노출하지 않는다.
+
+함선 Incident는 **8종**(COMMS_SPIKE / POWER_RELAY / DOOR_LOCK / NAV_DRIFT / OXYGEN_BALANCE / SAMPLE_CONTAINMENT / ARCHIVE_CORRUPTION / MEDICAL_SHORTAGE)이다. CALIBRATION/DEAD AIR/GLASS GARDEN에는 발생하지 않으며 한 loop 최대 1건, 실시간 카운트다운 없이 기존 action economy를 사용한다.
+
+기존 companion을 Cooperative Investigation으로 확장했다. 핵심 fact는 동일하고 secondary observation만 인물 전문성에 따라 달라진다. SILENT ORBIT 이후에는 한 loop에 optional investigation 하나를 위임할 수 있으며 보고는 TESTIMONY 출처로 기록된다.
+
+이전 loop에서 실제로 본 incident만 foreknowledge 선택이 열리며 사용은 loop당 최대 2회다. 선행 대응은 항상 이득이 아니라 원래 생성될 기록을 잃는 trade-off를 가진다. NPC는 플레이어가 경보보다 먼저 움직인 사실에 반응한다.
+
+Notebook 정보에는 DIRECT / RECORD / TESTIMONY / RUMOR를 확률 대신 자연어 출처로 표시한다. 반복 장면은 seen count와 안전 조건을 모두 만족할 때만 압축하며 언제든 전체 장면을 펼칠 수 있다.
+
+0.5.5 authored/reactive scene **71개**를 추가해 전체 library는 **608개**가 됐다. 신규 분배는 미라 10 / 준 9 / 다렌 8 / 노아 9 / 세나 8 / 소렌 9 / 루칸 9 / 마렌 9다. 19년 전 도착 뒤에도 일정 기간 정상 업무가 이어졌다는 평범한 post-arrival record 후보 4개를 추가하되 한 캠페인에서 최대 2개만 보이게 했다.
+
+0.5.4 save의 신규 필드 부재는 optional nested default로 hydrate하며 강제 reset하지 않는다. 신규 CI는 motive/Null 독립성, chapter incident gate, foreknowledge 조건, 71 scene ID/초반 보호, specialist observation, 500-loop motive simulation, 1,000 incident simulation, human-readable editorial sample을 검증한다.
+
 # 0.5.4 · AFTERMATH · 2026-09-21
 
 0.5.3 HEARTBEAT의 Living Crew를 다시 만들지 않고 관계·기억·KnowledgeModel·DecisionModel·storylet scheduler를 **Crew Routine → Routine Deviation → Micro-Arc → Consequence** 흐름으로 실제 플레이에 연결했다.
