@@ -219,6 +219,7 @@ func setup(case_id_in: String, seed_in: int, protocol_in: String = "ANALYST", di
     night_result.clear()
     outcome = ""
     flags.clear()
+    flags["contact_058"] = {"version":1,"day":AstraVoyageContent.campaign_day(case_id),"joined":roster.duplicate(),"arrivals":[],"introduced":[],"step":"awake","learning":{},"ballot":{"state":"unselected","target":""}}
     flags["knowledge_052"] = {"facts":{}, "propagation":[]}
     flags["decision_traces_052"] = []
     flags["vote_history_052"] = []
@@ -2777,9 +2778,23 @@ func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int =
         return {"ok": false}
     if target_id != "" and target_id not in eligible_vote_targets():
         return {"ok": false}
-    if theory_suspects.size() >= null_count and (null_count == 1 or str(theory_suspects[0]) != str(theory_suspects[1])):
-        theories.append({"day": day, "suspects": theory_suspects.slice(0,null_count), "confidence": clampi(confidence, 0, 100)})
+    var voter_snapshot := eligible_voters().duplicate()
+    var target_snapshot := eligible_vote_targets().duplicate()
     var intentions := vote_intentions()
+    var errors: Array = []
+    for voter in voter_snapshot:
+        if not intentions.has(voter): errors.append({"voter":voter,"state":"unselected"})
+        elif str(intentions[voter]) != "" and not can_vote_for(str(voter),str(intentions[voter])):
+            errors.append({"voter":voter,"state":"error","target":intentions[voter]})
+    for voter in intentions:
+        if voter not in voter_snapshot: errors.append({"voter":voter,"state":"ineligible"})
+    if not errors.is_empty():
+        flags["ballot_error_058"] = errors
+        notice.emit("hint",{"text":"투표 기록에 입력 오류가 있습니다. 투표는 확정되지 않았습니다."})
+        changed.emit()
+        return {"ok":false,"reason":"invalid_ballots","errors":errors}
+    flags.erase("ballot_error_058")
+    if not theory_suspects.is_empty(): submit_theory(theory_suspects,confidence)
     var reasons := {}
     var decision_traces := {}
     for voter in intentions.keys():
@@ -2810,8 +2825,16 @@ func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int =
     last_vote = {
         "tally": tally, "intentions": intentions, "vote_reasons": reasons, "decision_traces": decision_traces,
         "player_target": target_id, "isolated": isolated, "top": top,
-        "tie": leaders.size() > 1 and isolated == ""
+        "tie": leaders.size() > 1 and isolated == "",
+        "voters":voter_snapshot,"eligible_targets":target_snapshot,
+        "result_reason":"unique_highest" if isolated != "" else ("all_abstained" if tally.is_empty() else "tie"),
+        "player_state":"abstain" if target_id == "" else "target","ballots":[]
     }
+    for voter in voter_snapshot:
+        last_vote["ballots"].append({"voter":voter,"target":str(intentions.get(voter,"")),"state":"target" if str(intentions.get(voter,"")) != "" else "abstain","weight":1,"reason":str(reasons.get(voter,""))})
+    last_vote["ballots"].append({"voter":"player","target":target_id,"state":last_vote["player_state"],"weight":PLAYER_VOTE_WEIGHT,"reason":"탐사요원이 직접 확정한 선택"})
+    guide_completed("vote")
+    if target_id == "": guide_completed("abstain")
     var vote_history: Array = Array(flags.get("vote_history_052", [])).duplicate(true)
     var vote_changes: Array = []
     if not vote_history.is_empty():
@@ -2865,7 +2888,7 @@ func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int =
         for observer_id in living_ids():
             crew[observer_id].adjust_stress(0.04)
     else:
-        _log("투표 무산 · 충분한 합의가 없어 장기수면 격리를 시행하지 않았다.")
+        _log("격리 없음 · " + vote_result_text())
     _check_end("vote")
     notice.emit("vote", last_vote)
     changed.emit()
@@ -3864,7 +3887,11 @@ func confront_candidates(a_id: String) -> Array:
 # ---------------------------------------------------------------- 0.4.x voyage
 # Snapshot-safe state; UI only invokes the public methods below.
 func begin_voyage(memory: Dictionary = {}) -> void:
+    if not voyage.is_empty():
+        return
     var loop_count := int(memory.get("loops", 0))
+    if contact_flow():
+        flags["contact_058"]["mastered"] = Array(memory.get("mastered_guides",[])).duplicate()
     voyage = {"loop":loop_count, "room":"medbay", "visits":["medbay"], "facts":[], "notes":[],
         "inspected":[], "met":[], "recent":memory.get("recent", []).duplicate(), "seen":{},
         "seen_ever":memory.get("seen_ever",{}).duplicate(true),
@@ -3909,8 +3936,10 @@ func begin_voyage(memory: Dictionary = {}) -> void:
         "momentum_state":memory.get("momentum_state",{"drought":0,"force_meaningful":false}).duplicate(true),
         "delegation_history":memory.get("delegation_history",[]).duplicate(true), "delegation_used":false,
         "cooperative_history":[], "information_sources":{},
+        "story_resolution_seen":false, "story_hook_seen":false,
         "canon_post_arrival_seen":memory.get("canon_post_arrival_seen",[]).duplicate()}
     voyage["chapters"] = memory.get("chapters",[]).duplicate()
+    voyage["previous_review"] = str(memory.get("first_review",""))
     var previous: Dictionary = memory.get("memories", {})
     var previous_past: Dictionary = memory.get("past", {})
     for id in roster:
@@ -3952,8 +3981,25 @@ func begin_voyage(memory: Dictionary = {}) -> void:
     )
     _align_activity_queue_to_routine()
     phase = "EXPLORE"
-    var waking := str(AstraVoyageContent.chapter(case_id)["awake"])
-    _voyage_scene(AstraVoyageContent.scene((waking if waking != "" else "mira") + "_awakening"))
+    if contact_flow():
+        if case_id == AstraCaseCatalog.CALIBRATION:
+            _voyage_scene(AstraVoyageContent.first_thread("first_wake"))
+        else:
+            var newcomer := ""
+            for id in roster:
+                if int(AstraCrewCatalog.JOIN_DAY.get(id,1)) == campaign_day() and campaign_day() > 1:
+                    newcomer = str(id)
+            if newcomer != "":
+                flags["contact_058"]["arrivals"].append({"id":newcomer,"day":campaign_day()})
+                _voyage_scene(AstraVoyageContent.arrival_thread(newcomer))
+                guide_exposed("arrival")
+            else:
+                var waking := str(AstraVoyageContent.chapter(case_id)["awake"])
+                _voyage_scene(AstraVoyageContent.scene((waking if waking != "" else "mira") + "_awakening"))
+        guide_exposed("investigate")
+    else:
+        var waking := str(AstraVoyageContent.chapter(case_id)["awake"])
+        _voyage_scene(AstraVoyageContent.scene((waking if waking != "" else "mira") + "_awakening"))
     phase_changed.emit(phase)
     changed.emit()
 
@@ -4303,6 +4349,8 @@ func voyage_points() -> Array:
     return result
 
 func voyage_inspect(point_id: String) -> bool:
+    if first_day_flow():
+        return _first_inspect(point_id)
     if phase != "EXPLORE" or not voyage.get("scene",{}).is_empty():
         return false
     for point in voyage_points():
@@ -4327,17 +4375,18 @@ func voyage_inspect(point_id: String) -> bool:
             voyage["notes"].append("정비 로그 옆에서 휴대 기록기를 챙겼다. 통신실에서 신호를 따로 저장할 수 있다.")
         _voyage_tick()
         if voyage["scene"].is_empty():
-            if case_id == AstraCaseCatalog.CALIBRATION and str(point[4]) == "power":
+            if fact_id == str(AstraVoyageContent.chapter(case_id).get("fact","")) and case_id != AstraCaseCatalog.CALIBRATION:
+                var resolution := AstraVoyageContent.resolution_thread(case_id)
+                if not resolution.is_empty():
+                    _voyage_scene(resolution)
+                else:
+                    _voyage_scene({"id":"inspect_"+key,"action":str(point[5]),"lines":[],"choices":[],"compressible":true})
+            elif case_id == AstraCaseCatalog.CALIBRATION and str(point[4]) == "power":
+                # Compatibility for pre-FIRST-CONTACT snapshots.
                 _voyage_scene({
-                    "id":"calibration_crew_join",
-                    "speaker":"",
-                    "tag":"work",
+                    "id":"calibration_crew_join","speaker":"","tag":"work",
                     "action":"전원 패널을 열자 세 사람이 자연스럽게 주변으로 모인다.",
-                    "lines":[
-                        ["rho","전원은 살아 있어. 이건 정전이 아니야."],
-                        ["noa","잠금 해제 기록이 하나 있어요. 실행자 칸만 비어 있어요."],
-                        ["dax","자동 해제라면 서명이 남아야 해. 그런데 없어."]
-                    ],
+                    "lines":[["rho","전원은 살아 있어. 이건 정전이 아니야."],["noa","잠금 해제 기록이 하나 있어요. 실행자 칸만 비어 있어요."],["dax","자동 해제라면 서명이 남아야 해. 그런데 없어."]],
                     "choices":[]
                 })
             elif not cooperative_scene.is_empty():
@@ -4893,7 +4942,15 @@ func voyage_next() -> void:
         voyage["line"] = int(voyage["line"])+1
     elif scene.get("choices",[]).is_empty():
         voyage["scene"] = {}
-        if not bool(voyage.get("hook_shown",false)) and not Dictionary(voyage.get("loop_hook",{})).is_empty():
+        _complete_contact_scene(scene)
+        if bool(scene.get("story_resolution",false)):
+            voyage["story_resolution_seen"] = true
+            var hook := AstraVoyageContent.hook_thread(case_id)
+            if not hook.is_empty():
+                _voyage_scene(hook)
+        elif bool(scene.get("story_hook",false)):
+            voyage["story_hook_seen"] = true
+        if voyage.get("scene",{}).is_empty() and not first_day_flow() and not bool(voyage.get("hook_shown",false)) and not Dictionary(voyage.get("loop_hook",{})).is_empty():
             voyage["hook_shown"] = true
             _voyage_scene(voyage["loop_hook"])
     changed.emit()
@@ -4903,6 +4960,8 @@ func voyage_choose(index: int) -> bool:
     var choices: Array = scene.get("choices",[])
     if int(voyage["line"]) < scene.get("lines",[]).size()-1 or index < 0 or index >= choices.size(): return false
     var choice: Dictionary = choices[index]
+    if first_day_flow():
+        return _first_choice(str(scene.get("id","")),str(choice.get("effect","")))
     var effect := str(choice["effect"])
     var who := str(scene.get("speaker",""))
     var previous_count := int(voyage["choices"].get(effect,0))
@@ -5303,8 +5362,9 @@ func _ensure_curiosity_questions() -> void:
 
 func _advance_curiosity_question(_fact_id: String) -> void:
     var pair: Array = CURIOSITY_QUESTIONS.get(case_id,[])
+    var chapter := AstraVoyageContent.chapter(case_id)
     if pair.is_empty():
-        return
+        pair = [str(chapter.get("goal","")),str(chapter.get("open_question",""))]
     var questions: Dictionary = voyage.get("questions",{})
     var base_id := case_id.to_lower() + "_question"
     if questions.has(base_id):
@@ -5312,12 +5372,12 @@ func _advance_curiosity_question(_fact_id: String) -> void:
         base["status"] = "ANSWERED"
         questions[base_id] = base
     var next_id := base_id + "_after"
-    if not questions.has(next_id):
-        questions[next_id] = {"id":next_id,"case_id":case_id,"text":str(pair[1]),"status":"OPEN","related":Array(CURIOSITY_RELATED.get(next_id,[])).duplicate()}
-    if str(voyage.get("pinned_question","")) == base_id:
+    var next_text := str(chapter.get("open_question",pair[1] if pair.size() > 1 else ""))
+    if next_text != "" and not questions.has(next_id):
+        questions[next_id] = {"id":next_id,"case_id":case_id,"text":next_text,"status":"OPEN","related":Array(CURIOSITY_RELATED.get(next_id,[])).duplicate()}
+    if str(voyage.get("pinned_question","")) == base_id and questions.has(next_id):
         voyage["pinned_question"] = next_id
     voyage["questions"] = questions
-
 
 func pin_question(question_id: String) -> bool:
     if voyage.is_empty():
@@ -5628,6 +5688,12 @@ func player_behavior_profile() -> Dictionary:
     return Dictionary(voyage.get("player_profile",AstraLivingCrew.blank_player_profile())).duplicate(true) if not voyage.is_empty() else AstraLivingCrew.blank_player_profile()
 
 func voyage_can_finish() -> bool:
+    if contact_flow():
+        if phase != "EXPLORE" or not voyage.get("scene",{}).is_empty():
+            return false
+        if first_day_flow():
+            return str(flags["contact_058"]["step"]) == "ready"
+        return bool(voyage.get("goal_done",false)) and bool(voyage.get("story_resolution_seen",false)) and bool(voyage.get("story_hook_seen",false))
     if phase != "EXPLORE" or not bool(voyage.get("goal_done",false)) or not voyage.get("scene",{}).is_empty():
         return false
     # CALIBRATION teaches one direct human interaction. Jun/Noa/Daren are
@@ -5649,6 +5715,10 @@ func voyage_summary() -> Array:
 
 func finish_voyage() -> bool:
     if not voyage_can_finish(): return false
+    if first_day_flow():
+        flags["contact_058"]["step"] = "done"
+        voyage["story_resolution_seen"] = true
+        voyage["story_hook_seen"] = true
     if case_id == AstraCaseCatalog.CALIBRATION:
         outcome = "CONTINUE"
         phase = "RESULT"
@@ -5739,6 +5809,8 @@ func voyage_memory() -> Dictionary:
     var chapters: Array = voyage.get("chapters",[]).duplicate()
     if case_id not in chapters: chapters.append(case_id)
     return {
+        "mastered_guides":mastered_guides(),
+        "first_review":str(flags.get("contact_058",{}).get("review_choice",voyage.get("previous_review",""))),
         "loops":int(voyage.get("loop",0))+1,
         "echo":echo,
         "bonds":bonds,
@@ -5820,3 +5892,239 @@ func _public_trace_support(target: String) -> float:
                 if intersection.size()==1 and intersection[0]==target: return 0.85
     return 0.0
 
+
+
+# ---------------------------------------------------------------- 0.5.8 FIRST CONTACT compatibility
+func contact_flow() -> bool:
+    return flags.has("contact_058")
+
+func first_day_flow() -> bool:
+    return contact_flow() and case_id == AstraCaseCatalog.CALIBRATION
+
+func campaign_day() -> int:
+    return int(flags.get("contact_058",{}).get("day",AstraVoyageContent.campaign_day(case_id)))
+
+func calendar_caption() -> String:
+    return "항해 Day %d · 사건 %d일차 · 회차 %d" % [campaign_day(),day,int(voyage.get("loop",0))+1]
+
+func crew_state(who: String) -> Dictionary:
+    if who not in roster: return {"joined":false,"can_speak":false,"can_vote":false,"name_known":false}
+    return {"joined":true,"join_day":int(AstraCrewCatalog.JOIN_DAY.get(who,1)),
+        "arrival_processed":int(AstraCrewCatalog.JOIN_DAY.get(who,1)) < campaign_day() or flags.get("contact_058",{}).get("arrivals",[]).any(func(event): return str(event.get("id","")) == who),
+        "introduced":who in flags.get("contact_058",{}).get("introduced",voyage.get("met",[])),"status":status_label(who),
+        "location":str(routine_state_for(who).get("location",AstraVoyageContent.home_room(who,case_id))),
+        "can_speak":who in active_participants(),"can_vote":who in eligible_voters(),"name_known":true}
+
+func crew_count_caption() -> String:
+    return "합류 동료 %d명 · 활동 %d명 · 탐사요원 1명" % [roster.size(),active_participants().size()]
+
+func can_play_thread(scene: Dictionary) -> bool:
+    var participants: Array = Array(scene.get("participants",[])).duplicate()
+    for key in ["speaker","target"]:
+        var who := str(scene.get(key,""))
+        if who != "" and who not in participants: participants.append(who)
+    for line in scene.get("lines",[]):
+        if str(line[0]) != "" and str(line[0]) not in participants: participants.append(str(line[0]))
+    for who in participants:
+        if who not in active_participants(): return false
+        var fact := str(scene.get("requires_fact",""))
+        if fact != "" and not npc_knows_fact(str(who),fact): return false
+    var visible := str(scene.get("action",""))+str(scene.get("lines",[]))+str(scene.get("choices",[]))
+    for who in AstraCrewCatalog.ORDER:
+        if who not in roster and (AstraCrewCatalog.name_ko(who) in visible or AstraCrewCatalog.latin_name(who) in visible): return false
+    var seen_beats: Array = []
+    for beat in scene.get("beats",[]):
+        if str(beat.get("response_to","")) != "" and str(beat["response_to"]) not in seen_beats: return false
+        var fact := str(beat.get("requires_fact",""))
+        if fact != "" and not npc_knows_fact(str(beat.get("speaker","")),fact): return false
+        seen_beats.append(str(beat.get("id","")))
+    return true
+
+func arrival_recap() -> String:
+    if not contact_flow(): return ""
+    var previous := str(voyage.get("previous_review",""))
+    if case_id == "DEAD_AIR" and previous != "":
+        var choice := "원본과 사본을 비교했고 이전 백업은 확인하지 못했습니다." if previous == "check_source" else "정비 가능성을 검토했고 작업자는 확인하지 못했습니다."
+        return "탐사요원의 지난 기록: "+choice+" 실행자 칸 공백은 미해결입니다. 오늘은 세나가 확인한 통로를 따라 목적지 문서의 출처를 찾습니다."
+    if int(voyage.get("loop",0)) > 0:
+        return "이 화면의 항해 진행일에서 시작합니다. 지난 기록과 배운 조작은 보존됩니다. 동료의 현장 지식·행동 상태는 이번 사건에서 새로 확인합니다."
+    return ""
+
+func _first_inspect(point_id: String) -> bool:
+    if phase != "EXPLORE" or not voyage.get("scene",{}).is_empty(): return false
+    if str(flags["contact_058"]["step"]) not in ["inspect","ready"]: return false
+    if point_id not in ["pod","monitor"]: return false
+    var key := "medbay:"+point_id
+    if key in voyage["inspected"]: return false
+    voyage["inspected"].append(key)
+    if point_id == "monitor":
+        _voyage_fact("vitals",str(voyage_points()[1][5]))
+        _voyage_scene({"id":"first_optional","speaker":"mira","action":str(voyage_points()[1][5]),"lines":[["mira","생명유지 상태도 직접 확인했네요. 이 검사는 무료예요. 잠금 이력은 제어 패널에서 따로 봐요."]],"choices":[]})
+    else:
+        _voyage_fact("power",AstraVoyageContent.FIRST_RECORD)
+        AstraKnowledgeModel.make_public(flags,"power",active_participants(),day,"shared_panel")
+        voyage["evidence_ownership"]["power"] = {"found_by":"player","knows":["player"]+active_participants(),"public":true}
+        flags["contact_058"]["step"] = "discuss"
+        guide_completed("investigate")
+        guide_exposed("evidence")
+        guide_exposed("choice")
+        _voyage_scene(AstraVoyageContent.first_thread("first_panel"))
+    changed.emit()
+    return true
+
+func _first_choice(scene_id: String, effect: String) -> bool:
+    if scene_id != "first_panel" or effect not in ["check_source","check_maintenance"]: return false
+    if flags["contact_058"].has("review_choice"): return false
+    flags["contact_058"]["review_choice"] = effect
+    flags["contact_058"]["step"] = "review"
+    guide_completed("choice")
+    guide_completed("evidence")
+    voyage["scene"] = {}
+    _voyage_scene(AstraVoyageContent.first_thread("first_source" if effect == "check_source" else "first_maintenance"))
+    changed.emit()
+    return true
+
+func _complete_contact_scene(scene: Dictionary) -> void:
+    if not contact_flow(): return
+    var id := str(scene.get("id",""))
+    if id == "first_wake":
+        flags["contact_058"]["step"] = "inspect"
+        flags["contact_058"]["introduced"] = roster.duplicate()
+    elif id in ["first_source","first_maintenance"]:
+        flags["contact_058"]["step"] = "ready"
+        voyage["notes"].append("확인 방향: " + ("원본과 사본의 공백 비교. 이전 백업은 미확인." if id == "first_source" else "정비 가능성 확인. 작업자와 작업 이유는 미확인."))
+        voyage["notes"].append("오늘의 결과: 생명유지 상태를 확인하고 다음 포드의 순차 각성을 준비했다. 강제 격리는 하지 않았다.")
+    elif id.begins_with("arrival_"):
+        guide_completed("arrival")
+        flags["contact_058"]["introduced"] = Array(voyage.get("met",[])).duplicate()
+
+func skip_contact_intro() -> bool:
+    if not first_day_flow() or str(voyage.get("scene",{}).get("id","")) != "first_wake": return false
+    var scene: Dictionary = voyage["scene"]
+    voyage["scene"] = {}
+    _complete_contact_scene(scene)
+    changed.emit()
+    return true
+
+func contact_objective() -> Dictionary:
+    if first_day_flow():
+        match str(flags["contact_058"].get("step","awake")):
+            "awake": return {"target":"continue","text":"장기수면 후 상태 점검 중입니다. 네 동료의 도움을 받아 포드 전원을 확인합니다."}
+            "inspect": return {"target":"pod","text":"포드 제어 패널을 확인하세요. 남은 포드를 안전하게 열 수 있는지 알아봅니다. 핵심 기록 %d/1 · 이동·대화 무료" % (1 if "medbay:pod" in voyage.get("inspected",[]) else 0)}
+            "discuss": return {"target":"choice","text":"확인한 사실과 원인 가설을 구별하세요. 두 질문 중 하나로 확인 방향을 정합니다."}
+            "review": return {"target":"continue","text":"선택한 확인 방법의 답을 듣고, 오늘 해결한 것과 남은 질문을 정리합니다."}
+            _: return {"target":"finish","text":"생명유지 상태 확인 완료. 실행자 칸 공백은 미해결입니다. 항해 Day 2에 다음 포드를 엽니다."}
+    var chapter := AstraVoyageContent.chapter(case_id)
+    if bool(voyage.get("goal_done",false)): return {"target":"finish","text":"핵심 기록을 확보했습니다. 함께 검토하거나 선택 대화를 이어 갈 수 있습니다."}
+    var fact := str(chapter["fact"])
+    for room in voyage_rooms():
+        for point in AstraVoyageContent.ROOMS[room].get("points",[]):
+            if str(point[4]) == fact:
+                return {"target":str(point[0]),"room":room,"text":str(chapter["goal"])+" → "+str(AstraVoyageContent.ROOMS[room]["name"])+" · "+str(point[1])+" 확인 (이동·대화 무료)"}
+    return {"target":"","text":str(chapter["goal"])}
+
+func guide_exposed(id: String) -> void:
+    if not contact_flow(): return
+    var learning: Dictionary = flags["contact_058"]["learning"]
+    if not learning.has(id): learning[id] = "exposed"
+
+func guide_completed(id: String) -> void:
+    if contact_flow(): flags["contact_058"]["learning"][id] = "completed"
+
+func mastered_guides() -> Array:
+    var result: Array = Array(flags.get("contact_058",{}).get("mastered",[])).duplicate()
+    for id in flags.get("contact_058",{}).get("learning",{}):
+        if flags["contact_058"]["learning"][id] == "completed" and id not in result: result.append(id)
+    return result
+
+func ballot_choice() -> Dictionary:
+    return flags.get("contact_058",{}).get("ballot",flags.get("ballot_choice",{"state":"unselected","target":""})).duplicate()
+
+func select_ballot(state: String, target: String = "") -> bool:
+    if phase != "VOTE" or vote_cast or state not in ["target","abstain"]: return false
+    if state == "target" and target not in eligible_vote_targets(): return false
+    var choice := {"state":state,"target":target if state == "target" else ""}
+    if contact_flow(): flags["contact_058"]["ballot"] = choice
+    else: flags["ballot_choice"] = choice
+    guide_exposed("abstain" if state == "abstain" else "vote")
+    changed.emit()
+    return true
+
+func confirm_ballot() -> Dictionary:
+    var choice := ballot_choice()
+    if str(choice.get("state","")) not in ["target","abstain"]: return {"ok":false,"reason":"미선택"}
+    return cast_vote(str(choice.get("target","")))
+
+func submit_theory(suspects: Array, confidence: int = 60) -> bool:
+    if phase != "VOTE" or vote_cast or suspects.size() != null_count: return false
+    var unique: Array = []
+    for id in suspects:
+        if id not in roster or id in unique: return false
+        unique.append(id)
+    if theories.any(func(report): return int(report.get("day",0)) == day): return false
+    theories.append({"day":day,"suspects":unique,"confidence":clampi(confidence,0,100),"explicit":true})
+    guide_completed("report")
+    changed.emit()
+    return true
+
+func vote_ballots() -> Array:
+    if last_vote.has("ballots"): return Array(last_vote["ballots"]).duplicate(true)
+    var rows: Array = []
+    # Legacy recovery uses recorded voters, never the post-isolation living roster.
+    for voter in last_vote.get("intentions",{}):
+        var target := str(last_vote["intentions"][voter])
+        rows.append({"voter":voter,"target":target,"state":"abstain" if target == "" else ("target" if target in roster else "error"),"weight":1})
+    if vote_cast:
+        var target := str(last_vote.get("player_target",""))
+        rows.append({"voter":"player","target":target,"state":"abstain" if target == "" else "target","weight":PLAYER_VOTE_WEIGHT})
+    return rows
+
+func vote_counts() -> Dictionary:
+    var result := {"eligible":0,"submitted":0,"targets":0,"abstained":0,"missing":0,"errors":0,"valid_weight":0}
+    for ballot in vote_ballots():
+        result["eligible"] += 1
+        match str(ballot.get("state","error")):
+            "target":
+                result["targets"] += 1
+                result["submitted"] += 1
+                result["valid_weight"] += int(ballot.get("weight",1))
+            "abstain":
+                result["abstained"] += 1
+                result["submitted"] += 1
+            "unselected": result["missing"] += 1
+            _: result["errors"] += 1
+    return result
+
+func vote_result_text() -> String:
+    if str(last_vote.get("isolated","")) != "": return "단독 최다 득표로 격리되었습니다. 최소 득표수 조건은 없습니다."
+    if last_vote.get("tally",{}).is_empty(): return "전원 기권으로 누구도 격리하지 않았습니다."
+    return "최다 득표 동률로 누구도 격리하지 않았습니다."
+
+# ---------------------------------------------------------------- 0.6.0 story recap / loop residue
+
+func story_recap() -> Dictionary:
+    var chapter := AstraVoyageContent.chapter(case_id)
+    var resolution_seen := bool(voyage.get("story_resolution_seen",false)) if not voyage.is_empty() else false
+    var hook_seen := bool(voyage.get("story_hook_seen",false)) if not voyage.is_empty() else false
+    if first_day_flow() and str(flags.get("contact_058",{}).get("step","")) in ["ready","done"]:
+        resolution_seen = true
+        hook_seen = true
+    var question := {}
+    var qid := case_id.to_lower() + "_question_after"
+    if not voyage.is_empty():
+        question = Dictionary(voyage.get("questions",{}).get(qid,{})).duplicate(true)
+    return {
+        "resolution_seen":resolution_seen,
+        "hook_seen":hook_seen,
+        "resolved":str(chapter.get("resolved","")) if resolution_seen else "",
+        "open_question":str(chapter.get("open_question","")) if resolution_seen else "",
+        "outro":str(chapter.get("outro","")) if hook_seen else "",
+        "next_hook":str(chapter.get("next_hook","")) if hook_seen else "",
+        "question":question
+    }
+
+func loop_reset_framing() -> Dictionary:
+    var framing := AstraVoyageContent.reset_framing(case_id).duplicate(true)
+    framing["remembered"] = true
+    framing["loop"] = int(voyage.get("loop",0)) + 1 if not voyage.is_empty() else 1
+    return framing
