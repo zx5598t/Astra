@@ -130,10 +130,31 @@ func _report(session: AstraGameSession) -> void:
         var card := AstraClueCard.new()
         card.setup(session, clue, false)
         _body.add_child(card)
+    _add_social_feedback(session)
     if session.outcome != "":
         _body.add_child(AstraUI.label("사건의 결말이 정해졌습니다. 아래 버튼으로 결과를 확인하세요.", 16, AstraUI.GOLD, true))
     else:
         _body.add_child(AstraUI.label("아래 버튼을 눌러 다음 날 아침으로 넘어가세요.", 15, AstraUI.MUTED))
+
+
+func _add_social_feedback(session: AstraGameSession) -> void:
+    var summary := session.night_feedback_summary()
+    var relationships: Array = summary.get("relationship_changes",[])
+    var consequences: Array = summary.get("consequences",[])
+    if relationships.is_empty() and consequences.is_empty():
+        return
+    var panel := AstraUI.panel(Color(AstraUI.CYAN,0.035),Color(AstraUI.CYAN,0.24),10,12)
+    _body.add_child(panel)
+    var box := AstraUI.vbox(5)
+    panel.add_child(box)
+    box.add_child(AstraUI.label("오늘 남은 여파",AstraUI.T_META,AstraUI.CYAN))
+    for entry in relationships:
+        box.add_child(AstraUI.label(str(entry.get("pair","")),AstraUI.T_UI,AstraUI.TEXT))
+        box.add_child(AstraUI.prose("· " + str(entry.get("text","")),AstraUI.T_META,AstraUI.MUTED))
+    for entry in consequences:
+        var who := str(entry.get("character",""))
+        var prefix := (who + " · ") if who != "" else ""
+        box.add_child(AstraUI.prose("· " + prefix + str(entry.get("text","")),AstraUI.T_META,AstraUI.MUTED))
 
 func _backup() -> void:
     var box := AstraUI.vbox(8)
