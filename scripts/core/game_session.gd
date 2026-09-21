@@ -4821,27 +4821,6 @@ func voyage_talk(who: String, topic: String = "") -> bool:
                 eligible = canon_followup_057
             elif not meaningful_055.is_empty():
                 eligible = meaningful_055
-        # If the player returns to a person whose authored thread is already
-        # visible, continue that thread before opening another unrelated one.
-        # If no thread is visible yet, a repeated conversation with an actor
-        # whose active micro-arc can start is treated as deliberate player focus.
-        # This uses only player-visible exposure plus authored scheduler state;
-        # hidden truth/Null/motive data never enters this decision.
-        var continuation_candidates_057: Array = eligible.filter(func(item):
-            return AstraStoryletScheduler.is_continuation(item,focus_context)
-        )
-        if not continuation_candidates_057.is_empty():
-            eligible = continuation_candidates_057
-        elif int(voyage.get("speaker_exposure",{}).get(who,0)) >= 2 and voyage.get("loop_focus_families",[]).size() < 2:
-            # Starting a fresh micro-arc is stronger than merely continuing one.
-            # Reserve that preference for a player who has deliberately returned
-            # to the same person multiple times in this loop.
-            var arc_starts_057: Array = eligible.filter(func(item):
-                return str(item.get("chain_id","")) != "" and int(item.get("requires_stage",-1)) == 0
-            )
-            if not arc_starts_057.is_empty():
-                eligible = arc_starts_057
-
         # Ordinary recent-family repetition is still suppressed, but an actual
         # current-loop continuation and an explicit topic survive this prefilter
         # so the scheduler can make the final weighted decision.
