@@ -248,18 +248,23 @@ func _finish_exploration() -> void:
         s.voyage_visit_person(who)
         await _close_scene()
     if not s.voyage["goal_done"]:
-        var available := s.voyage_people()
-        if available.is_empty():
-            for who in s.roster:
-                if s.voyage_visit_person(str(who)):
+        # 0.6.0 makes the chapter fact a direct player investigation. Do not
+        # rely on the old ask-a-crewmate shortcut, especially in CALIBRATION
+        # where direct panel inspection is an explicit release gate.
+        var fact := str(AstraVoyageContent.chapter(s.case_id).get("fact",""))
+        var found_goal := false
+        for room_id in s.voyage_rooms():
+            if str(s.voyage.get("room","")) != str(room_id):
+                s.voyage_move(str(room_id),false)
+                await _close_scene()
+            for point in s.voyage_points():
+                if str(point[4]) == fact and s.voyage_inspect(str(point[0])):
+                    found_goal = true
                     await _close_scene()
-                    available = s.voyage_people()
-                    if not available.is_empty():
-                        break
-        _expect(not available.is_empty(),"routine exploration still makes a crewmate reachable for the chapter goal")
-        if not available.is_empty():
-            s.voyage_ask_goal(str(available[0]))
-            await _close_scene()
+                    break
+            if found_goal:
+                break
+        _expect(found_goal,"routine exploration exposes the chapter goal as a direct investigation")
     if s.case_id != AstraCaseCatalog.CALIBRATION and s.voyage.get("visits",[]).size() < 2:
         for room_id in s.voyage_rooms():
             if str(room_id) not in s.voyage.get("visits",[]):
