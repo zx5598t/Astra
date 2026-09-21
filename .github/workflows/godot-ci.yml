@@ -184,6 +184,16 @@ jobs:
           grep -q "ASTRA 0.5.6 ECHOES TESTS OK" echoes-056.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" codex-056.log echoes-056.log; then exit 1; fi
 
+      - name: 0.5.7 CLEAR SIGNAL invariants and 500-loop runtime exposure
+        run: |
+          set +e
+          ./godot --headless --path . --script res://tests/clear_signal_057_tests.gd 2>&1 | tee clear-signal-057.log
+          ./godot --headless --path . --script res://tests/clear_signal_057_simulation.gd 2>&1 | tee clear-signal-sim-057.log
+          set -e
+          grep -q "ASTRA 0.5.7 CLEAR SIGNAL TESTS OK" clear-signal-057.log
+          grep -q "ASTRA 0.5.7 CLEAR SIGNAL SIMULATION OK" clear-signal-sim-057.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" clear-signal-057.log clear-signal-sim-057.log; then exit 1; fi
+
       - name: Story continuity and first-play regression
         run: |
           set -o pipefail
@@ -288,6 +298,13 @@ jobs:
           if (-not (Select-String -Path windows-echoes-056.log -Pattern 'ASTRA 0.5.6 ECHOES TESTS OK')) { throw 'Windows 0.5.6 ECHOES tests did not pass.' }
           if (Select-String -Path windows-codex-056.log,windows-echoes-056.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.5.6 tests reported script errors.' }
 
+      - name: Run 0.5.7 CLEAR SIGNAL invariants on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/clear_signal_057_tests.gd 2>&1 | Tee-Object -FilePath windows-clear-signal-057.log
+          if (-not (Select-String -Path windows-clear-signal-057.log -Pattern 'ASTRA 0.5.7 CLEAR SIGNAL TESTS OK')) { throw 'Windows CLEAR SIGNAL 0.5.7 tests did not pass.' }
+          if (Select-String -Path windows-clear-signal-057.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows CLEAR SIGNAL 0.5.7 tests reported script errors.' }
+
       - name: Run UI smoke test on Windows
         shell: pwsh
         run: |
@@ -341,7 +358,7 @@ jobs:
           } finally { $archive.Dispose() }
           "GODOT=$env:RUNNER_TEMP/godot/Godot_v4.7.2-stable_win64_console.exe" >> $env:GITHUB_ENV
 
-      - name: Validate 0.5.6 release candidate before build
+      - name: Validate 0.5.7 release candidate before build
         shell: pwsh
         run: |
           & $env:GODOT --headless --path . --import 2>&1 | Tee-Object -FilePath build-rc-import.log
@@ -350,7 +367,9 @@ jobs:
           if (-not (Select-String -Path build-rc-codex-056.log -Pattern 'ASTRA 0.5.6 CODEX TESTS OK')) { throw 'Release candidate Codex tests did not pass.' }
           & $env:GODOT --headless --path . --script res://tests/echoes_056_tests.gd 2>&1 | Tee-Object -FilePath build-rc-echoes-056.log
           if (-not (Select-String -Path build-rc-echoes-056.log -Pattern 'ASTRA 0.5.6 ECHOES TESTS OK')) { throw 'Release candidate ECHOES tests did not pass.' }
-          if (Select-String -Path build-rc-codex-056.log,build-rc-echoes-056.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Release candidate 0.5.6 tests reported script errors.' }
+          & $env:GODOT --headless --path . --script res://tests/clear_signal_057_tests.gd 2>&1 | Tee-Object -FilePath build-rc-clear-signal-057.log
+          if (-not (Select-String -Path build-rc-clear-signal-057.log -Pattern 'ASTRA 0.5.7 CLEAR SIGNAL TESTS OK')) { throw 'Release candidate CLEAR SIGNAL tests did not pass.' }
+          if (Select-String -Path build-rc-codex-056.log,build-rc-echoes-056.log,build-rc-clear-signal-057.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Release candidate invariant tests reported script errors.' }
 
       - name: Run full Windows release-candidate build
         shell: pwsh
