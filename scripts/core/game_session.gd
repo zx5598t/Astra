@@ -4731,7 +4731,7 @@ func _pair_scene_context_ok(scene: Dictionary) -> bool:
 func voyage_talk(who: String, topic: String = "") -> bool:
     if phase != "EXPLORE" or who not in voyage_people() or who not in voyage.get("met", []) or not voyage["scene"].is_empty():
         return false
-    if who == "mira" and topic == "" and case_id in ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"] and int(voyage.get("mira_optional_exposure",0)) >= 4:
+    if who == "mira" and case_id in ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"] and int(voyage.get("mira_optional_exposure",0)) >= 4:
         _voyage_scene({"id":"053_mira_exposure_cap","speaker":"mira","tag":"silence","action":"미라는 하던 검사를 마무리하며 짧게 손을 들어 보인다. 지금은 자기 일에 집중하는 편이 좋아 보인다.","lines":[],"choices":[]})
         _voyage_tick(false)
         changed.emit()
