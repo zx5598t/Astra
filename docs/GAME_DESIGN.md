@@ -1,4 +1,4 @@
-# ASTRA 0.5.5 설계 — FAULT LINES
+# ASTRA 0.5.6 설계 — ECHOES
 
 ## 핵심 판타지
 
@@ -25,6 +25,20 @@ ASTRA는 “AI NPC 8명이 랜덤 문장을 말하는 마피아 게임”이 아
 | LAST_LIGHT | 서로 다른 사본 보존 | 전체 관계 + main mystery |
 
 미라는 Emotional Anchor이지만 다른 chapter의 주인공 자리를 빼앗지 않는다. 메인 미스터리의 해답 담당자가 아니라 “이 상황 속 사람들이 어떻게 버티는가”를 가장 자주 보여 주는 인물이다.
+
+## ECHOES: 보이는 결과와 실제 경험의 장기 기억
+
+0.5.6은 authoritative social model을 바꾸지 않는다. UI는 기존 KnowledgeModel / DecisionTrace / relationship / consequence state를 읽고, 플레이어가 실제로 알 수 있는 부분만 qualitative feedback으로 변환한다.
+
+- raw relationship 수치, magnitude, internal source id, motive enum, hidden role, Null list/probability는 player-facing summary에서 제외한다.
+- 같은 pair/day/axis 변화는 aggregate하고 작은 변화는 숨긴다.
+- night feedback은 즉시 consequence, briefing은 relationship/opinion aftermath로 역할을 분리한다.
+- Notebook은 current-voyage working memory다.
+- Crew Archive / Observation Codex는 cross-voyage authored observation이며 실제 경험 근거가 있어야 unlock된다.
+- STABLE/OBSERVED/ECHO 32개는 정답 canon이 아니라 플레이어가 목격한 성격·상황·잔향 기록이다.
+- CALIBRATION은 Codex 시스템 설명이나 연속 toast를 추가하지 않는다.
+
+save v10의 codex_entries_unlocked와 snapshot의 codex_known/codex_unlocks_pending을 재사용한다. resume에서는 meta에 이미 영구 저장된 pending만 제거해 동일 unlock을 새 기록으로 재보고하지 않으며, 현재 run에서 처음 얻은 다른 observation은 정상적으로 이어진다.
 
 ## Stable personality → variable history → rare residue
 
