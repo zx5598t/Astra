@@ -1,4 +1,4 @@
-# ASTRA 0.5.6 플레이 안내
+# ASTRA 0.5.7 플레이 안내
 
 `ASTRA.exe`를 실행하세요. 오프닝은 클릭으로 진행하며 처음부터 건너뛰기도 가능합니다.
 
@@ -52,6 +52,12 @@ ECHO WARD 이후에는 일부 동료가 평소와 다른 행동을 할 때 사�
 **Notebook**은 지금 항해의 사실·의문·관계 관찰을 위한 working memory입니다. **승무원 기록(Crew Archive)**은 여러 항해에서 실제로 목격한 authored observation만 남깁니다. 아직 보지 않은 장면, hidden motive, Null 정체/확률, raw relationship 수치는 저장하거나 추론하지 않습니다.
 
 CALIBRATION에서도 실제 목격 observation은 조용히 기록되지만, 첫 플레이 흐름을 방해하는 연속 Codex 알림은 띄우지 않습니다.
+
+## CLEAR SIGNAL — 덜 붐비는 대화 흐름
+
+중후반에는 중요한 이야기가 한꺼번에 너무 많이 열리지 않도록 현재 loop에서 이미 본 핵심 스레드를 우선합니다. 보통 2~3개의 중요한 흐름이 중심이 되고, 이미 시작된 이야기의 후속이나 당신이 직접 집중해서 찾는 질문은 계속 이어갈 수 있습니다.
+
+이 제한은 정답이나 Null 정보를 몰래 사용하지 않습니다. **당신이 실제로 본 장면, 직접 고른 topic, pinned question, 이미 드러난 follow-up**만 사용합니다. 중요한 후속 장면을 없애는 hard cap도 아니며, 놓친 선택 콘텐츠 때문에 main story가 막히지 않습니다.
 
 ## Notebook
 

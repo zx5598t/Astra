@@ -1,14 +1,14 @@
-# ASTRA 0.5.6 — ECHOES
+# ASTRA 0.5.7 — CLEAR SIGNAL
 
 같은 배에서 깨어났지만, 우리는 서로 다른 목적지를 기억한다.  
 ASTRA의 탐사요원으로서 기록과 현장을 확인하고, 반복될 때마다 조금씩 달라지는 여덟 동료의 관계와 행동을 읽는 싱글플레이 SF 사회추리 미스터리입니다.
 
-0.5.6은 새 대형 시스템을 더하는 버전이 아니라, 0.5.3~0.5.5에서 이미 생긴 관계·선택·consequence를 **플레이어가 읽을 수 있는 짧은 여파**로 돌려주고, 여러 항해에서 **실제로 목격한 인물의 모습만** 승무원 기록에 남기는 완성/안정화 업데이트입니다.
+0.5.7 CLEAR SIGNAL은 새 시스템과 새 장면을 더 쌓는 대신, 이미 있는 608개의 authored voyage/reactive scene이 **한 번의 loop에서 덜 겹치고 더 선명하게 이어지도록** 선택 흐름을 정리한 업데이트입니다. 플레이어가 이미 본 중요한 스레드는 이어지기 쉬워지고, 관련 없는 새 고중요도 스레드는 한꺼번에 여러 개 열리지 않도록 soft weight로 억제합니다.
 
-관계 수치, hidden motive, Null 확률이나 내부 source id는 공개하지 않습니다. Notebook은 현재 항해의 working memory로 남고, Crew Archive의 Observation Codex는 실제 경험으로 해금된 authored observation만 항해를 넘어 보존합니다. 신규 authored voyage scene은 **0개**이며 전체 library는 **608개**를 유지합니다.
+Mandatory/progression, 실제 FOLLOWUP·consequence, 현재 보이는 continuation, 명시적으로 고른 topic과 pinned question은 이 예산을 우회합니다. 숨은 Null 정보나 motive, raw relationship 수치는 selector에 넣지 않으며 save schema는 v10을 그대로 유지합니다. 신규 authored voyage scene은 **0개**이고 전체 library는 **608개**를 유지합니다.
 
 - [플레이 안내](START_HERE.md)
-- [0.5.6 변경 사항](docs/RELEASE_NOTES.md)
+- [0.5.7 변경 사항](docs/RELEASE_NOTES.md)
 - [설계와 저장 호환](docs/GAME_DESIGN.md)
 - [인물 설정](docs/CHARACTERS.md)
 - [이미지 출처와 변환](docs/ASSET_AUDIT.md)
@@ -26,7 +26,19 @@ ASTRA의 탐사요원으로서 기록과 현장을 확인하고, 반복될 때�
 - RED SHIFT — 마렌과 출항보다 오래된 시료.
 - LAST LIGHT — 기록과 사람에 대한 판단이 합쳐지는 후반.
 
-아직 배우지 않은 시스템은 미리 전부 보여 주지 않습니다. 0.5.6에서도 기존 Routine/Consequence/Micro-Arc는 본격 노출을 ECHO WARD 이후에 두며, CALIBRATION에는 routine narration을 추가하지 않아 첫 30분의 필수 텍스트량을 늘리지 않습니다.
+아직 배우지 않은 시스템은 미리 전부 보여 주지 않습니다. 0.5.7에서도 기존 Routine/Consequence/Micro-Arc는 본격 노출을 ECHO WARD 이후에 두며, CALIBRATION에는 routine narration을 추가하지 않아 첫 30분의 필수 텍스트량을 늘리지 않습니다.
+
+## CLEAR SIGNAL — 서사 초점 회복
+
+- 한 loop의 player-visible high-salience 새 스레드는 보통 **2~3개** 안에서 움직이도록 soft budget을 적용합니다.
+- 이미 보인 authored chain의 continuation, due FOLLOWUP/consequence, mandatory/progression은 새 스레드로 세지 않습니다.
+- 세 번째 unrelated FOCUS family부터 가중치를 낮추고 네 번째 이후는 예외적으로만 나타나게 하지만, hard cap으로 막지는 않습니다.
+- explicit topic과 직접 연결된 pinned question은 계속 찾아갈 수 있습니다.
+- 같은 화자에게 optional scene이 몰리면 speaker exposure 가중치를 낮춥니다. 미라는 ECHO WARD 이후 optional exposure 최대 **4회**를 그대로 지킵니다.
+- dense loop에서는 두 번째 autonomous beat를 버리지 않고 뒤로 미룹니다.
+- content audit의 대형 library 경고는 런타임 500-loop gate로 대체하고, 반복 opener 경고는 실제 scene ID/speaker/action을 출력합니다.
+
+500-loop 실제 플레이 경로 검증 결과는 high-salience distinct family 평균 **2.22**, P95 **3**, 최대 **4**, 4개 이상 unrelated thread **11/500**입니다. continuation **10회**, zero-meaningful 연속 **0**, visible signature **500/500**, autonomous unique **23**, 0.5.3 authored coverage **59.3%**, rare immediate repeat **0**, Mira optional max **4**를 기록했습니다.
 
 ## Living Crew
 
@@ -91,24 +103,26 @@ Notebook은 정답표가 아니라 기억 보조입니다.
 
 ## 검증
 
-0.5.6 구현 코드 기준 검증은 Godot **4.7.2 stable**에서 Linux/Windows 모두 GREEN입니다.
+0.5.7 CLEAR SIGNAL 구현 기준 검증은 Godot **4.7.2 stable**에서 Linux/Windows 모두 GREEN입니다.
 
 - Linux import / 전체 GDScript parse clean
 - 전체 모델: **45,301 checks**, 40 games 기준 TOTAL smart **68%** / random **0%** / passive **0%**
 - 기존 0.5.1~0.5.5 regression 유지
 - Codex 0.5.6: **95 checks**
 - ECHOES 0.5.6: **33 checks**
+- CLEAR SIGNAL 0.5.7 invariants: **47 checks**
+- CLEAR SIGNAL 500-loop runtime exposure: **10 checks**
 - Windows UI smoke / main-scene boot 성공
 - 1366×768 / 1920×1080 핵심 UI 접근성 smoke 유지
 - authored scene audit: **608개**, 캐릭터별 98 / 81 / 74 / 79 / 71 / 64 / 62 / 79
 
-정식 0.5.6 ZIP/SHA-256은 VERSION을 0.5.6으로 맞춘 최종 CI에서 다시 생성해 검증합니다.
+정식 0.5.7 Windows CI artifact는 `ASTRA-0.5.7-windows.zip`이며 최종 검증 SHA-256은 `a9d1bdb0959c9d2dd3a51953daed48e8d146a7e33d17a1de862e1579d0a2f48b`입니다.
 
 ## 실행과 빌드
 
-정식 0.5.6 Windows 후보의 파일명은 다음과 같습니다.
+정식 0.5.7 Windows 후보의 파일명은 다음과 같습니다.
 
-`ASTRA-0.5.6-windows.zip`
+`ASTRA-0.5.7-windows.zip`
 
 압축을 풀고 `ASTRA/ASTRA.exe`를 실행합니다. 리소스는 실행 파일에 포함되며 선택형 AI를 켜지 않으면 네트워크 연결이 필요하지 않습니다.
 
@@ -119,6 +133,8 @@ godot --headless --path . --import
 godot --headless --path . --script res://tests/run_tests.gd -- --games=40
 godot --headless --path . --script res://tests/codex_056_tests.gd
 godot --headless --path . --script res://tests/echoes_056_tests.gd
+godot --headless --path . --script res://tests/clear_signal_057_tests.gd
+godot --headless --path . --script res://tests/clear_signal_057_simulation.gd
 godot --headless --path . --script res://tests/content_audit.gd
 powershell -File tools/build_windows.ps1 -Godot "C:\path\to\godot.exe"
 ```

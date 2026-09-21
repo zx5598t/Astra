@@ -337,6 +337,11 @@ func load_snapshot(path: String = SNAPSHOT_PATH) -> bool:
 func _hydrate_054_voyage_defaults() -> void:
     if voyage.is_empty():
         return
+    if not voyage.has("loop_focus_families"): voyage["loop_focus_families"] = []
+    if not voyage.has("loop_focus_events"): voyage["loop_focus_events"] = []
+    if not voyage.has("loop_focus_counts"): voyage["loop_focus_counts"] = {}
+    if not voyage.has("recent_focus_families"): voyage["recent_focus_families"] = []
+    if not voyage.has("speaker_exposure"): voyage["speaker_exposure"] = {}
     if not voyage.has("routine_observed"): voyage["routine_observed"] = []
     if not voyage.has("routine_observations"): voyage["routine_observations"] = []
     if not voyage.has("micro_arc_state"): voyage["micro_arc_state"] = {}
@@ -3864,6 +3869,8 @@ func begin_voyage(memory: Dictionary = {}) -> void:
         "inspected":[], "met":[], "recent":memory.get("recent", []).duplicate(), "seen":{},
         "seen_ever":memory.get("seen_ever",{}).duplicate(true),
         "recent_families":memory.get("recent_families",[]).duplicate(),
+        "loop_focus_families":[], "loop_focus_events":[], "loop_focus_counts":{},
+        "recent_focus_families":memory.get("recent_focus_families",[]).duplicate(),
         "rare_recent":memory.get("rare_recent",[]).duplicate(),
         "recent_signatures":memory.get("recent_signatures",[]).duplicate(), "replay_signature":"",
         "echo":memory.get("echo", {}).duplicate(true), "bonds":memory.get("bonds", {}).duplicate(true),
@@ -4362,6 +4369,54 @@ func _voyage_fact(id: String, note: String, source_type: String = "DIRECT") -> v
     if id == str(AstraVoyageContent.chapter(case_id)["fact"]):
         voyage["goal_done"] = true
         _advance_curiosity_question(id)
+func _focus_context(explicit_topic: bool = false) -> Dictionary:
+    # Player-safe selector boundary. Do not add truth/nulls, motive assignments,
+    # hidden relationship floats or unseen candidate results here.
+    return {
+        "loop_focus_families":Array(voyage.get("loop_focus_families",[])).duplicate(),
+        "loop_focus_events":Array(voyage.get("loop_focus_events",[])).duplicate(true),
+        "loop_focus_counts":Dictionary(voyage.get("loop_focus_counts",{})).duplicate(true),
+        "recent_focus_families":Array(voyage.get("recent_focus_families",[])).duplicate(),
+        "speaker_exposure":Dictionary(voyage.get("speaker_exposure",{})).duplicate(true),
+        "explicit_topic":explicit_topic
+    }
+
+func _record_focus_exposure(scene: Dictionary) -> void:
+    var level := AstraStoryletScheduler.salience(scene)
+    if level not in ["MANDATORY","FOLLOWUP","FOCUS"]:
+        return
+    var id := str(scene.get("id",""))
+    var family := AstraStoryletScheduler.family_key(scene)
+    # Decide continuation against the already-visible context before appending
+    # this scene. A follow-up may use a different authored family id while still
+    # belonging to the same player-visible thread.
+    var continuation := AstraStoryletScheduler.is_continuation(scene,_focus_context())
+    var event := {
+        "scene":id,
+        "family":family,
+        "chain_id":str(scene.get("chain_id","")),
+        "category":str(scene.get("category","")),
+        "intent":str(scene.get("intent",scene.get("tag",""))),
+        "tag":str(scene.get("tag","")),
+        "salience":level,
+        "speaker":str(scene.get("speaker","")),
+        "continuation":continuation,
+        "source":"visible_scene"
+    }
+    voyage["loop_focus_events"].append(event)
+    while voyage["loop_focus_events"].size() > 24:
+        voyage["loop_focus_events"].pop_front()
+    # Mandatory/progression and authored FOLLOWUP are visible and recorded but
+    # do not consume the soft 2-3 *new-thread* budget. A genuine continuation
+    # likewise does not open another thread merely because its authored family
+    # id differs. Only a genuinely new FOCUS family consumes a slot.
+    if level in ["FOLLOWUP","FOCUS"] and family != "":
+        if level == "FOCUS" and not continuation and family not in voyage["loop_focus_families"]:
+            voyage["loop_focus_families"].append(family)
+        var counts: Dictionary = voyage.get("loop_focus_counts",{})
+        counts[family] = int(counts.get(family,0)) + 1
+        voyage["loop_focus_counts"] = counts
+
 func _voyage_scene(scene: Dictionary) -> void:
     if scene.is_empty():
         return
@@ -4401,6 +4456,7 @@ func _voyage_scene(scene: Dictionary) -> void:
         voyage["recent_families"].append(family)
         while voyage["recent_families"].size() > 18:
             voyage["recent_families"].pop_front()
+    _record_focus_exposure(scene)
     if str(scene.get("rarity","")) == "rare":
         voyage["rare_recent"].append(id)
         while voyage["rare_recent"].size() > 8:
@@ -4682,11 +4738,17 @@ func _pair_scene_context_ok(scene: Dictionary) -> bool:
 func voyage_talk(who: String, topic: String = "") -> bool:
     if phase != "EXPLORE" or who not in voyage_people() or who not in voyage.get("met", []) or not voyage["scene"].is_empty():
         return false
-    if who == "mira" and topic == "" and case_id in ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"] and int(voyage.get("mira_optional_exposure",0)) >= 4:
+    var speaker_exposure_now: Dictionary = voyage.get("speaker_exposure",{})
+    var mira_exposure_now := maxi(
+        int(voyage.get("mira_optional_exposure",0)),
+        int(speaker_exposure_now.get("mira",0))
+    )
+    if who == "mira" and case_id in ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"] and mira_exposure_now >= 4:
         _voyage_scene({"id":"053_mira_exposure_cap","speaker":"mira","tag":"silence","action":"미라는 하던 검사를 마무리하며 짧게 손을 들어 보인다. 지금은 자기 일에 집중하는 편이 좋아 보인다.","lines":[],"choices":[]})
         _voyage_tick(false)
         changed.emit()
         return true
+    var focus_context := _focus_context(topic != "")
     var eligible: Array = []
     var bond := float(voyage["bonds"].get(who,0.0))
     var echo := echo_strength(_echo_entry(who))
@@ -4742,20 +4804,42 @@ func voyage_talk(who: String, topic: String = "") -> bool:
         _voyage_scene({"id":who+"_busy","speaker":who,"action":AstraJosa.eun(name_of(who))+" 하던 일을 마무리한다. 잠시 조용히 곁에 선다.","lines":[],"choices":[]})
     else:
         if bool(voyage.get("momentum_state",{}).get("force_meaningful",false)):
+            # CLEAR SIGNAL: drought recovery continues an already visible thread
+            # before opening an unrelated hidden-motive thread.
+            var continuation_057: Array = eligible.filter(func(item):
+                return AstraStoryletScheduler.is_continuation(item,focus_context) and AstraStoryletScheduler.salience(item) in ["MANDATORY","FOLLOWUP","FOCUS"]
+            )
+            var linked_057: Array = eligible.filter(func(item):
+                var family := AstraStoryletScheduler.family_key(item)
+                var unseen := int(voyage.get("seen_ever",{}).get(str(item.get("id","")),0)) == 0
+                return unseen and AstraStoryletScheduler.salience(item) in ["MANDATORY","FOLLOWUP","FOCUS"] and (
+                    family in voyage.get("loop_focus_families",[]) or AstraStoryletScheduler.direct_pinned_match(item,pinned_question_entry())
+                )
+            )
+            var canon_followup_057: Array = eligible.filter(func(item):
+                return str(item.get("category","")) == "CANON" or AstraStoryletScheduler.salience(item) == "FOLLOWUP"
+            )
             var meaningful_055: Array = eligible.filter(func(item): return bool(item.get("_meaningful_055",false)))
-            if not meaningful_055.is_empty():
+            if not continuation_057.is_empty():
+                eligible = continuation_057
+            elif not linked_057.is_empty():
+                eligible = linked_057
+            elif not canon_followup_057.is_empty():
+                eligible = canon_followup_057
+            elif not meaningful_055.is_empty():
                 eligible = meaningful_055
-        # Prefer scenes not seen in the last few conversations. Fall back only
-        # when the eligible pool is genuinely small; never block progression.
+        # Ordinary recent-family repetition is still suppressed, but an actual
+        # current-loop continuation and an explicit topic survive this prefilter
+        # so the scheduler can make the final weighted decision.
         var recent_families: Array = voyage.get("recent_families",[])
+        var recent_ids: Array = voyage.get("recent",[])
         var fresh: Array = eligible.filter(func(item):
-            var family := str(item.get("family",item.get("id","")))
-            return item["id"] not in voyage["recent"].slice(-6) and family not in recent_families.slice(-5)
+            return AstraStoryletScheduler.keep_fresh_candidate(item,recent_ids,recent_families,focus_context)
         )
         if not fresh.is_empty(): eligible = fresh
         var selected: Dictionary = AstraStoryletScheduler.pick(
             eligible, voyage.get("seen_ever",{}), recent_families,
-            str(voyage.get("social_theme","")), rng.randf(), pinned_question_entry()
+            str(voyage.get("social_theme","")), rng.randf(), pinned_question_entry(), focus_context
         )
         voyage["storylet_pity"] = AstraStoryletScheduler.update_pity(
             voyage.get("storylet_pity",{}), eligible, str(selected.get("id",""))
@@ -5030,8 +5114,23 @@ func _autonomous_knowledge_share(actors: Array) -> void:
                             voyage["evidence_ownership"] = ownership
                         return
 
+func _should_defer_second_autonomous() -> bool:
+    if voyage.get("autonomous_seen_loop",[]).size() < 1:
+        return false
+    if voyage.get("loop_focus_families",[]).size() < 2:
+        return false
+    for raw in voyage.get("loop_focus_events",[]):
+        var event: Dictionary = raw
+        if str(event.get("category","")) in ["INCIDENT","INCIDENT_AFTER","CONSEQUENCE"] or str(event.get("salience","")) == "FOLLOWUP":
+            return true
+    return false
+
 func _maybe_autonomous_beat(room: String) -> bool:
     if room == "" or not voyage.get("scene",{}).is_empty():
+        return false
+    # Keep the queued beat intact. Dense loops merely defer a second ambient
+    # opportunity so it can surface later if the loop becomes quiet.
+    if _should_defer_second_autonomous():
         return false
     var queue: Array = voyage.get("activity_queue",[])
     var beat := AstraCrewActivityModel.room_beat(queue,room)
@@ -5606,9 +5705,20 @@ func _updated_micro_arc_recent() -> Array:
         result.pop_front()
     return result
 
+func _updated_recent_focus_families() -> Array:
+    var result: Array = Array(voyage.get("recent_focus_families",[])).duplicate()
+    for family in voyage.get("loop_focus_families",[]):
+        var value := str(family)
+        if value == "":
+            continue
+        result.append(value)
+    while result.size() > 8:
+        result.pop_front()
+    return result
+
 func voyage_memory() -> Dictionary:
     if voyage.is_empty(): return {}
-    var meaningful: bool = (not voyage.get("motive_observations",[]).is_empty()) or (not voyage.get("foreknowledge_reactions",[]).is_empty()) or (not voyage.get("cooperative_history",[]).is_empty())
+    var meaningful: bool = (not voyage.get("loop_focus_families",[]).is_empty()) or (not voyage.get("motive_observations",[]).is_empty()) or (not voyage.get("foreknowledge_reactions",[]).is_empty()) or (not voyage.get("cooperative_history",[]).is_empty())
     var next_momentum := AstraForeknowledgeModel.update_momentum(voyage.get("momentum_state",{}),meaningful)
     var echo: Dictionary = {}
     var bonds: Dictionary = voyage.get("bonds",{}).duplicate(true)
@@ -5636,6 +5746,7 @@ func voyage_memory() -> Dictionary:
         "past":voyage.get("past",{}).duplicate(true),
         "recent":voyage.get("recent",[]).duplicate(),
         "recent_families":voyage.get("recent_families",[]).duplicate(),
+        "recent_focus_families":_updated_recent_focus_families(),
         "rare_recent":voyage.get("rare_recent",[]).duplicate(),
         "recent_signatures":_updated_recent_signatures(),
         "seen_ever":voyage.get("seen_ever",{}).duplicate(true),

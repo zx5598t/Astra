@@ -1,4 +1,4 @@
-# ASTRA 0.5.6 설계 — ECHOES
+# ASTRA 0.5.7 설계 — CLEAR SIGNAL
 
 ## 핵심 판타지
 
@@ -25,6 +25,24 @@ ASTRA는 “AI NPC 8명이 랜덤 문장을 말하는 마피아 게임”이 아
 | LAST_LIGHT | 서로 다른 사본 보존 | 전체 관계 + main mystery |
 
 미라는 Emotional Anchor이지만 다른 chapter의 주인공 자리를 빼앗지 않는다. 메인 미스터리의 해답 담당자가 아니라 “이 상황 속 사람들이 어떻게 버티는가”를 가장 자주 보여 주는 인물이다.
+
+## CLEAR SIGNAL: player-visible narrative focus
+
+0.5.7은 새 authoritative system을 추가하지 않고 storylet selection의 **노출 밀도**를 조절한다. 목표는 한 loop에 중요한 이야기를 더 많이 보여 주는 것이 아니라, 플레이어가 이미 본 2~3개의 핵심 스레드를 기억하고 이어갈 수 있게 하는 것이다.
+
+focus context는 loop_focus_families / loop_focus_events / recent visible focus / speaker_exposure / explicit_topic처럼 플레이어가 실제로 알 수 있는 값만 사용한다. hidden truth, Null assignment, motive assignment, raw relationship float는 입력하지 않는다.
+
+- genuinely new FOCUS family만 soft thread budget을 소비한다.
+- mandatory/progression과 authored FOLLOWUP/consequence는 별도 새 스레드로 세지 않는다.
+- 같은 visible chain의 continuation은 recent-family 억제를 우회하고 soft weight 우대를 받는다.
+- explicit topic과 direct pinned-question match는 계속 seekable하다.
+- 두 개의 active high-salience thread 뒤에 열리는 unrelated thread는 점진적으로 확률을 낮추되 hard cap으로 금지하지 않는다.
+- 같은 화자의 optional scene이 몰리면 speaker exposure가 soft penalty를 준다.
+- dense loop의 두 번째 autonomous beat는 삭제하지 않고 defer한다.
+
+이 변경은 save schema를 늘리지 않는다. 기존 voyage nested state를 hydrate하며 v10 호환성을 유지한다. CALIBRATION과 DEAD AIR의 학습 구조나 필수 텍스트량도 늘리지 않는다.
+
+500-loop release gate는 평균/P95뿐 아니라 4+ unrelated thread 빈도, continuation 발생, zero-meaningful 연속, visible signature variety, autonomous coverage, 0.5.3 authored coverage, rare repeat, Mira max exposure를 함께 검사한다.
 
 ## ECHOES: 보이는 결과와 실제 경험의 장기 기억
 
