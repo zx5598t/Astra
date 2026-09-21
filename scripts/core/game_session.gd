@@ -5381,7 +5381,7 @@ func _updated_micro_arc_recent() -> Array:
 
 func voyage_memory() -> Dictionary:
     if voyage.is_empty(): return {}
-    var meaningful := (not voyage.get("motive_observations",[]).is_empty()) or (not voyage.get("foreknowledge_reactions",[]).is_empty()) or (not voyage.get("cooperative_history",[]).is_empty()) or (not voyage.get("canon_post_arrival_seen",[]).is_empty())
+    var meaningful: bool = (not voyage.get("motive_observations",[]).is_empty()) or (not voyage.get("foreknowledge_reactions",[]).is_empty()) or (not voyage.get("cooperative_history",[]).is_empty())
     var next_momentum := AstraForeknowledgeModel.update_momentum(voyage.get("momentum_state",{}),meaningful)
     var echo: Dictionary = {}
     var bonds: Dictionary = voyage.get("bonds",{}).duplicate(true)
