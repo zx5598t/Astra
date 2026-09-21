@@ -2,7 +2,7 @@ class_name AstraMetaProgress
 extends RefCounted
 
 # Persistent archive: campaign unlocks, per-case records, lifetime stats and
-# player-observed crew notes. Save v10 adds Codex observation ids without
+# player-observed crew notes. Save v11 adds slot-scoped voyage memory while v10 added Codex observation ids without
 # removing any v4-v9 field; missing fields are hydrated instead of migrated
 # destructively.
 
