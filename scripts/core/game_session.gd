@@ -4406,11 +4406,12 @@ func _record_focus_exposure(scene: Dictionary) -> void:
     voyage["loop_focus_events"].append(event)
     while voyage["loop_focus_events"].size() > 24:
         voyage["loop_focus_events"].pop_front()
-    # Mandatory onboarding/progression is visible and recorded but does not
-    # consume the soft 2-3 thread budget. A genuine continuation also does not
-    # open another distinct thread merely because its authored family id differs.
+    # Mandatory/progression and authored FOLLOWUP are visible and recorded but
+    # do not consume the soft 2-3 *new-thread* budget. A genuine continuation
+    # likewise does not open another thread merely because its authored family
+    # id differs. Only a genuinely new FOCUS family consumes a slot.
     if level in ["FOLLOWUP","FOCUS"] and family != "":
-        if not continuation and family not in voyage["loop_focus_families"]:
+        if level == "FOCUS" and not continuation and family not in voyage["loop_focus_families"]:
             voyage["loop_focus_families"].append(family)
         var counts: Dictionary = voyage.get("loop_focus_counts",{})
         counts[family] = int(counts.get(family,0)) + 1
