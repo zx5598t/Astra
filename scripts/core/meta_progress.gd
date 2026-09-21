@@ -2,12 +2,12 @@ class_name AstraMetaProgress
 extends RefCounted
 
 # Persistent archive: campaign unlocks, per-case records, lifetime stats and
-# player-observed crew notes. Save v10 adds Codex observation ids without
+# player-observed crew notes. Save v11 adds slot-scoped voyage memory while v10 added Codex observation ids without
 # removing any v4-v9 field; missing fields are hydrated instead of migrated
 # destructively.
 
 const DEFAULT_SAVE_PATH := "user://astra_meta.cfg"
-const SAVE_VERSION := 10
+const SAVE_VERSION := 11
 const CAMPAIGN_CASES := AstraCaseCatalog.CAMPAIGN
 const RANK_ORDER := ["D", "C", "B", "A", "S"]
 
@@ -43,6 +43,8 @@ var unlocks_announced: Array[String] = []
 var failed_case_count: int = 0
 var loop_summaries: Array = []
 var voyage_memory: Dictionary = {}
+# Save v11: campaign memory is slot-scoped. `voyage_memory` remains as a legacy mirror for old saves/tools.
+var slot_voyage_memory: Dictionary = {}
 # 0.5.1 onboarding state. Intro is scoped to save slot rather than the PC-wide
 # settings file; feature help is profile-wide and can always be reopened with H.
 var slot_intro_seen: Dictionary = {}
@@ -58,6 +60,7 @@ func load_data() -> void:
     if cfg.load(save_path) != OK:
         return
     voyage_memory = _dict(cfg.get_value("progress","voyage_memory",{}))
+    slot_voyage_memory = _dict(cfg.get_value("progress","slot_voyage_memory",{}))
     slot_intro_seen = _dict(cfg.get_value("progress","slot_intro_seen",{}))
     _load_string_list(seen_help, cfg.get_value("progress","seen_help",[]))
     total_insight = int(cfg.get_value("progress", "total_insight", 0))
@@ -98,6 +101,7 @@ func save_data() -> bool:
     var cfg := ConfigFile.new()
     cfg.set_value("meta", "save_version", SAVE_VERSION)
     cfg.set_value("progress","voyage_memory",voyage_memory)
+    cfg.set_value("progress","slot_voyage_memory",slot_voyage_memory)
     cfg.set_value("progress","slot_intro_seen",slot_intro_seen)
     cfg.set_value("progress","seen_help",seen_help)
     cfg.set_value("progress","codex_entries_unlocked",codex_entries_unlocked)
@@ -158,6 +162,7 @@ func reset() -> void:
     failed_case_count = 0
     loop_summaries.clear()
     voyage_memory.clear()
+    slot_voyage_memory.clear()
     slot_intro_seen.clear()
     seen_help.clear()
     codex_entries_unlocked.clear()
@@ -259,6 +264,20 @@ func record_case_result(case_id: String, protocol: String, report: Dictionary, p
         save_data()
     return {"insight_gain": gain, "new_best": new_best, "unlocked": unlocked, "new_badge": new_badge}
 
+func is_case_unlocked_for_slot(case_id: String, slot: int) -> bool:
+    if AstraCaseCatalog.is_calibration(case_id):
+        return true
+    var index := CAMPAIGN_CASES.find(case_id)
+    if index < 0:
+        return false
+    var memory := voyage_memory_for_slot(slot)
+    var chapters: Array = memory.get("chapters",[])
+    # A campaign slot advances only from chapters completed in that slot.
+    # Global archive/history can never unlock a fresh slot.
+    if index == 0:
+        return AstraCaseCatalog.CALIBRATION in chapters
+    return str(CAMPAIGN_CASES[index - 1]) in chapters
+
 func is_case_unlocked(case_id: String) -> bool:
     if AstraCaseCatalog.is_calibration(case_id):
         return true
@@ -296,6 +315,13 @@ func completed_campaign_cases() -> int:
 
 func campaign_complete() -> bool:
     return completed_campaign_cases() >= CAMPAIGN_CASES.size()
+
+func recommended_case_id_for_slot(slot: int) -> String:
+    var chapters: Array = voyage_memory_for_slot(slot).get("chapters",[])
+    for case_id in [AstraCaseCatalog.CALIBRATION] + CAMPAIGN_CASES:
+        if str(case_id) not in chapters:
+            return str(case_id)
+    return str(CAMPAIGN_CASES[CAMPAIGN_CASES.size() - 1])
 
 func recommended_case_id() -> String:
     # Keep historical scores while giving returning 0.4 players the new opening.
@@ -363,6 +389,26 @@ static func _load_string_list(target: Array[String], source) -> void:
         return
     for item in source:
         target.append(str(item))
+
+func voyage_memory_for_slot(slot: int) -> Dictionary:
+    var key := str(maxi(0, slot))
+    if slot_voyage_memory.has(key):
+        return _dict(slot_voyage_memory[key]).duplicate(true)
+    # v10 and older had one campaign memory. Migrate it only into slot 0 so
+    # starting another slot cannot inherit an unrelated campaign.
+    if key == "0" and not voyage_memory.is_empty():
+        return voyage_memory.duplicate(true)
+    return {}
+
+func set_voyage_memory_for_slot(slot: int, memory: Dictionary) -> void:
+    var key := str(maxi(0, slot))
+    slot_voyage_memory[key] = memory.duplicate(true)
+    voyage_memory = memory.duplicate(true) # compatibility mirror
+
+func clear_voyage_memory_for_slot(slot: int) -> void:
+    slot_voyage_memory.erase(str(maxi(0, slot)))
+    if maxi(0, slot) == 0:
+        voyage_memory.clear()
 
 func intro_seen_for_slot(slot: int) -> bool:
     return bool(slot_intro_seen.get(str(maxi(0, slot)), false))

@@ -147,19 +147,22 @@ func start_new_campaign(slot: int = -1) -> void:
     active_slot = clampi(chosen, 0, SLOT_COUNT - 1)
     AstraGameSession.delete_snapshot(slot_path(active_slot))
     meta.reset_intro_for_slot(active_slot)
+    meta.clear_voyage_memory_for_slot(active_slot)
     meta.save_data()
     start_case(AstraCaseCatalog.CALIBRATION, "ANALYST", active_slot)
 
 func start_case(case_id: String, protocol: String, slot: int = -1) -> void:
-    if not meta.is_case_unlocked(case_id):
-        fx.toast("아직 잠긴 사건입니다. " + meta.unlock_hint(case_id), AstraUI.GOLD)
-        return
+    var target_slot := active_slot
     if slot >= 0:
-        active_slot = clampi(slot, 0, SLOT_COUNT - 1)
+        target_slot = clampi(slot, 0, SLOT_COUNT - 1)
     elif session == null:
         var free_slot := first_free_slot()
         if free_slot >= 0:
-            active_slot = free_slot
+            target_slot = free_slot
+    if not meta.is_case_unlocked_for_slot(case_id, target_slot):
+        fx.toast("이 저장 슬롯에서는 아직 잠긴 사건입니다. 이전 장을 먼저 완료하세요.", AstraUI.GOLD)
+        return
+    active_slot = target_slot
     selected_protocol = protocol
     session = AstraGameSession.new()
     var seed_value := int(Time.get_unix_time_from_system() * 1000.0) % 2147483
@@ -175,7 +178,7 @@ func _enter_prepared_session() -> void:
     if session == null:
         show_title()
         return
-    var memory: Dictionary = meta.voyage_memory.duplicate(true)
+    var memory: Dictionary = meta.voyage_memory_for_slot(active_slot)
     memory["codex_entries_unlocked"] = meta.codex_entries_unlocked.duplicate()
     _connect_codex_events()
     session.begin_voyage(memory)
@@ -184,6 +187,7 @@ func _enter_prepared_session() -> void:
 
 func clear_slot_state(slot: int) -> void:
     meta.reset_intro_for_slot(slot)
+    meta.clear_voyage_memory_for_slot(slot)
     meta.save_data()
 
 func show_session_screen() -> void:
@@ -333,7 +337,7 @@ func resume_case(slot: int = -1) -> void:
 func record_result(finished: AstraGameSession) -> Dictionary:
     var memory := finished.voyage_memory()
     if not memory.is_empty():
-        meta.voyage_memory = memory
+        meta.set_voyage_memory_for_slot(active_slot, memory)
     var codex_events := finished.codex_unlock_events()
     for event in codex_events:
         meta.unlock_codex_entry(str(event.get("id","")))

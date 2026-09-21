@@ -42,6 +42,19 @@ func refresh() -> void:
         _later_day(s)
 
 func _first_day(s: AstraGameSession) -> void:
+    # Story framing: tell the player where the chapter stands before asking
+    # them to parse timestamps, clues or suspects. This is deliberately short:
+    # one concrete situation and one question, not a lore dump.
+    var chapter_story := AstraVoyageContent.chapter(s.case_id)
+    var framing := AstraUI.reading_panel(AstraUI.VIOLET)
+    _body.add_child(framing)
+    var framing_box := AstraUI.vbox(6)
+    framing.add_child(framing_box)
+    framing_box.add_child(AstraUI.label("현재 상황", AstraUI.T_META, AstraUI.VIOLET))
+    framing_box.add_child(AstraUI.prose(str(chapter_story.get("situation", s.case_data.get("story_intro", ""))), AstraUI.T_BODY, AstraUI.TEXT))
+    framing_box.add_child(AstraUI.label("이번에 확인할 것", AstraUI.T_META, AstraUI.GOLD))
+    framing_box.add_child(AstraUI.prose(str(chapter_story.get("goal", s.case_data.get("objective", ""))), AstraUI.T_BODY, AstraUI.TEXT))
+
     var awakened := _newly_awakened(s)
     if awakened != "":
         var member := s.npc(awakened)
@@ -131,6 +144,9 @@ func _later_day(s: AstraGameSession) -> void:
     for line in s.morning_report:
         box.add_child(AstraUI.prose(str(line), AstraUI.T_BODY, AstraUI.TEXT))
     box.add_child(AstraUI.prose(s.story_dispatch(), AstraUI.T_META, AstraUI.MUTED))
+    var chapter_story := AstraVoyageContent.chapter(s.case_id)
+    box.add_child(AstraUI.label("계속 확인할 것", AstraUI.T_META, AstraUI.GOLD))
+    box.add_child(AstraUI.prose(str(chapter_story.get("goal", s.case_data.get("objective", ""))), AstraUI.T_BODY, AstraUI.TEXT))
     _add_previous_day_feedback(s)
     var status := AstraUI.hbox(10)
     _body.add_child(status)

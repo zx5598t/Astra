@@ -107,7 +107,8 @@ func test_new_character_ordering() -> void:
         s.setup(str(case_id), 6100 + checks)
         s.begin_voyage()
         var scene: Dictionary = s.voyage.get("scene", {})
-        check(str(scene.get("id", "")) == waking + "_awakening", "%s opens with %s awakening before ordinary dialogue" % [str(case_id), waking])
+        var expected_intro := "arrival_" + waking if s.contact_flow() else waking + "_awakening"
+        check(str(scene.get("id", "")) == expected_intro, "%s opens with %s introduction before ordinary dialogue" % [str(case_id), waking])
         check(not s.voyage_talk(waking), "%s cannot enter ordinary dialogue while awakening is on screen" % waking)
         _close_voyage_scene(s)
         check(waking in s.voyage.get("met", []), "%s is marked introduced after awakening" % waking)

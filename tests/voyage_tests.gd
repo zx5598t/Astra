@@ -10,12 +10,23 @@ func close_scene(s: AstraGameSession) -> void:
         guard += 1
         var scene: Dictionary = s.voyage["scene"]
         if int(s.voyage["line"]) >= scene.get("lines",[]).size()-1 and not scene.get("choices",[]).is_empty():
-            check(s.voyage_choose(0),"choice applied")
+            var choices: Array = scene.get("choices",[])
+            var pick := 0
+            # FIRST CONTACT's first decision is intentionally restricted to
+            # the two evidence-review effects; authored ordering may include
+            # non-applicable legacy choices, so choose a legal effect.
+            if s.first_day_flow() and str(scene.get("id","")) == "first_panel":
+                for i in range(choices.size()):
+                    if str(choices[i].get("effect","")) in ["check_source","check_maintenance"]:
+                        pick = i
+                        break
+            check(s.voyage_choose(pick),"choice applied")
         else:
             s.voyage_next()
 func _initialize() -> void:
     test_exploration_consequences()
-    var expected := [4,4,5,6,7,8,8]
+    # 0.6.0 authored calendar: one crewmate joins on Days 2-5.
+    var expected := [4,5,6,7,8,8,8]
     var ids := ["CALIBRATION"] + AstraCaseCatalog.CAMPAIGN
     var memory := {}
     for i in range(ids.size()):
@@ -23,15 +34,24 @@ func _initialize() -> void:
         s.setup(ids[i],9143+i)
         s.begin_voyage(memory)
         check(s.roster.size()==expected[i],"progressive roster "+ids[i])
-        check(s.null_count==(1 if expected[i]<7 else 2),"influence count "+ids[i])
+        check(s.null_count==AstraCaseCatalog.null_count(AstraCaseCatalog.get_case(ids[i])),"influence count "+ids[i])
         check(s.roster.slice(0,4)==AstraCrewCatalog.INITIAL,"initial four")
         close_scene(s)
         for who in s.roster:
             s.voyage_visit_person(who)
             close_scene(s)
         if not s.voyage["goal_done"]:
-            s.voyage_ask_goal(str(s.voyage_people()[0]))
-            close_scene(s)
+            var fact := str(AstraVoyageContent.chapter(ids[i]).get("fact",""))
+            for room_id in s.voyage_rooms():
+                if str(s.voyage.get("room","")) != str(room_id):
+                    s.voyage_move(str(room_id),false)
+                    close_scene(s)
+                for point in s.voyage_points():
+                    if str(point[4]) == fact and s.voyage_inspect(str(point[0])):
+                        close_scene(s)
+                        break
+                if s.voyage["goal_done"]:
+                    break
         check(s.voyage_can_finish(),"story never blocked "+ids[i])
         var path := "user://astra_050_test.session"
         check(s.save_snapshot(path),"save "+ids[i])
@@ -69,7 +89,11 @@ func _initialize() -> void:
         s.setup("DEAD_AIR",seed)
         s.begin_voyage(memory)
         close_scene(s)
-        s.voyage_talk("mira")
+        # DEAD_AIR now wakes Sena. Mira therefore has to be met through the
+        # normal visit flow before ordinary dialogue can be sampled.
+        check(s.voyage_visit_person("mira"),"seed variety meets mira")
+        close_scene(s)
+        check(s.voyage_talk("mira"),"seed variety starts mira dialogue")
         variants[str(s.voyage["scene"].get("id",""))]=true
     check(variants.size()>=3,"100 seed scene variety")
     var meta := AstraMetaProgress.new("user://astra_050_meta.cfg")
@@ -107,20 +131,34 @@ func test_exploration_consequences() -> void:
         s.voyage_visit_person(who)
         close_scene(s)
     if not s.voyage["goal_done"]:
-        s.voyage_ask_goal(str(s.voyage_people()[0]))
-        close_scene(s)
+        # FIRST CONTACT/contact-flow guidance no longer grants the chapter fact:
+        # finish the real ECHO_WARD investigation by inspecting its authored
+        # signal point, exactly as the player must do at runtime.
+        var goal_fact := str(AstraVoyageContent.chapter("ECHO_WARD").get("fact",""))
+        for room_id in s.voyage_rooms():
+            if str(s.voyage.get("room","")) != str(room_id):
+                s.voyage_move(str(room_id),false)
+                close_scene(s)
+            for point in s.voyage_points():
+                if str(point[4]) == goal_fact and s.voyage_inspect(str(point[0])):
+                    close_scene(s)
+                    break
+            if s.voyage["goal_done"]:
+                break
     check(s.finish_voyage() and s.flags.get("mission_backup",false),"exploration choice enables actual night backup")
     var pity := AstraGameSession.new()
     pity.setup("CALIBRATION",8)
     pity.begin_voyage()
     close_scene(pity)
-    # CALIBRATION is one room by design, so the pity clock (which only ticks
-    # on a "deliver" action such as a move) is exercised by re-entering the
-    # same room rather than room-hopping.
+    # 0.6.0 FIRST CONTACT deliberately requires one direct investigation.
+    # Re-entering the room must not auto-complete the core discovery.
     for i in range(12):
         pity.voyage_move("medbay")
         close_scene(pity)
-    check(pity.voyage["goal_done"],"main discovery offered even without inspecting")
+    check(not pity.voyage["goal_done"],"FIRST CONTACT core discovery still requires direct inspection")
+    check(pity.voyage_inspect("pod"),"FIRST CONTACT direct panel inspection works")
+    close_scene(pity)
+    check(pity.voyage["goal_done"],"direct inspection completes the FIRST CONTACT discovery")
     var last := ""
     var variants := {}
     pity.voyage_visit_person("mira")

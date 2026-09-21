@@ -215,7 +215,11 @@ func _play_case(case_id: String, protocol: String) -> void:
                     s.set_mark(str(ranked[1]), "null")
                 screen.select(str(ranked[0]))
                 await _wait(1)
-                screen._view._cast(str(ranked[0]))
+                s.select_ballot("target",str(ranked[0]))
+                # The real UI opens a confirmation modal. Smoke tests exercise
+                # the ballot contract directly so a headless run cannot stall
+                # forever waiting for a human click inside that modal.
+                s.confirm_ballot()
                 await _wait(2)
             "NIGHT":
                 screen.select(str(s.living_ids()[0]))
@@ -224,6 +228,8 @@ func _play_case(case_id: String, protocol: String) -> void:
                 await _wait(2)
         s.advance()
         await _wait(2)
+    if s.phase != "RESULT":
+        printerr("UI SMOKE STATE · %s/%s phase=%s day=%d guard=%d outcome=%s blocked=%s pending=%s vote_cast=%s night_done=%s" % [case_id,protocol,s.phase,s.day,guard,s.outcome,s.tutorial_blocked_reason(),str(s.pending_event),str(s.vote_cast),str(s.night_done)])
     _expect(s.phase == "RESULT", "%s/%s reached result" % [case_id, protocol])
     await _wait(4)
     _expect(not screen.archive_change.is_empty(), "%s/%s archive recorded" % [case_id, protocol])
@@ -244,21 +250,29 @@ func _finish_exploration() -> void:
     var s: AstraGameSession = app.session
     if s.phase != "EXPLORE": return
     await _close_scene()
-    for who in s.roster:
-        s.voyage_visit_person(who)
-        await _close_scene()
     if not s.voyage["goal_done"]:
-        var available := s.voyage_people()
-        if available.is_empty():
-            for who in s.roster:
-                if s.voyage_visit_person(str(who)):
+        # 0.6.0 makes the chapter fact a direct player investigation. Do not
+        # rely on the old ask-a-crewmate shortcut, especially in CALIBRATION
+        # where direct panel inspection is an explicit release gate.
+        var fact := str(AstraVoyageContent.chapter(s.case_id).get("fact",""))
+        var found_goal := false
+        for room_id in s.voyage_rooms():
+            if str(s.voyage.get("room","")) != str(room_id):
+                s.voyage_move(str(room_id),false)
+                await _close_scene()
+            for point in s.voyage_points():
+                if str(point[4]) == fact and s.voyage_inspect(str(point[0])):
+                    found_goal = true
                     await _close_scene()
-                    available = s.voyage_people()
-                    if not available.is_empty():
-                        break
-        _expect(not available.is_empty(),"routine exploration still makes a crewmate reachable for the chapter goal")
-        if not available.is_empty():
-            s.voyage_ask_goal(str(available[0]))
+                    break
+            if found_goal:
+                break
+        _expect(found_goal,"routine exploration exposes the chapter goal as a direct investigation")
+    # Optional conversations come after the mandatory fact so autonomous
+    # chatter cannot consume or obscure the direct-investigation smoke path.
+    if s.case_id != AstraCaseCatalog.CALIBRATION:
+        for who in s.roster:
+            s.voyage_visit_person(who)
             await _close_scene()
     if s.case_id != AstraCaseCatalog.CALIBRATION and s.voyage.get("visits",[]).size() < 2:
         for room_id in s.voyage_rooms():

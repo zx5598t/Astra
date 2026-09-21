@@ -25,6 +25,7 @@ func _initialize() -> void:
     test_protocols()
     test_meeting_limits()
     test_night_and_endings()
+    test_final_night_timeout_gate()
     test_050_phase_and_vote_invariants()
     test_meta_progress()
     test_simulations(games)
@@ -170,7 +171,10 @@ func test_protocols() -> void:
                 break
             check(s.investigation_ap == (4 if protocol == "ANALYST" else 3), "%s investigation AP on day %d" % [protocol, s.day])
             s.advance()
-            check(s.talk_ap == (5 if protocol == "EMPATH" else 4), "%s talk AP on day %d" % [protocol, s.day])
+            var expected_talk := (5 if protocol == "EMPATH" else 4)
+            if int(s.flags.get("restricted_info_until_day", 0)) == s.day:
+                expected_talk -= 1
+            check(s.talk_ap == expected_talk, "%s talk AP on day %d respects next-day information cost" % [protocol, s.day])
             _auto_step(s)
         if protocol == "AUDITOR":
             var t := AstraGameSession.new()
@@ -394,3 +398,15 @@ func test_simulations(games: int) -> void:
     # release build uses (40); shorter developer runs get a looser one.
     var strict: bool = games >= 40
     check(passive_rate < (0.2 if strict else 0.3), "the crowd cannot solve cases without the player (%d seeds, %.0f%%)" % [games, passive_rate * 100.0])
+
+
+func test_final_night_timeout_gate() -> void:
+    var s := AstraGameSession.new()
+    s.setup("ECHO_WARD",606000)
+    s.day = s.max_days
+    s.phase = "NIGHT"
+    s.night_done = true
+    s.outcome = ""
+    s.advance()
+    check(s.phase == "RESULT", "final surviving night enters RESULT")
+    check(s.outcome == "TIMEOUT", "final surviving night records TIMEOUT")

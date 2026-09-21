@@ -80,7 +80,7 @@ func test_v9_to_v10_migration() -> void:
     check(meta.save_data(),"migrated v9 profile saves")
     var cfg := ConfigFile.new()
     check(cfg.load(V9_PATH) == OK,"saved migrated profile reloads as config")
-    check(int(cfg.get_value("meta","save_version",0)) == 10,"saving migrated profile writes save version 10")
+    check(int(cfg.get_value("meta","save_version",0)) == AstraMetaProgress.SAVE_VERSION,"saving migrated profile writes current save version")
     check(Array(cfg.get_value("progress","codex_entries_unlocked",[])).has("rho_mistake"),"v10 stores Codex unlock ids")
 
 func test_duplicate_and_persistence() -> void:

@@ -17,7 +17,8 @@ const HUMAN_REASON_TEXT := {
     "trusted_colleague":"현재 관계에서 이 사람과 공유할 가치가 있다고 판단함",
     "privacy_boundary":"확인되지 않았거나 개인적인 정보라 공유를 제한함",
     "accumulated_behavior":"며칠 동안 쌓인 발언과 행동 정황",
-    "insufficient_evidence":"직접 근거가 부족해 기권"
+    "insufficient_evidence":"직접 근거가 부족함",
+    "no_legal_vote_target":"합법적으로 선택할 수 있는 투표 대상이 없음"
 }
 
 static func reason(code: String, weight: float, source: String = "") -> Dictionary:
@@ -33,7 +34,7 @@ static func trace(actor: String, action: String, target: String, reasons: Array,
     for item in reasons:
         if float(item.get("weight",0.0)) > float(strongest.get("weight",0.0)):
             strongest = Dictionary(item).duplicate(true)
-    if target == "":
+    if target == "" and reasons.is_empty():
         strongest = reason("insufficient_evidence", 1.0)
     return {
         "actor":actor, "action":action, "target":target, "day":day,

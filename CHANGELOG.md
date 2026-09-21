@@ -1,3 +1,13 @@
+# 0.6.0 · FIRST CONTACT / STORY LOOP · 2026-09-22
+
+0.6.0은 FIRST CONTACT부터 LAST_LIGHT까지 조사 → 판단 → 결과 → 다음 질문의 장 흐름을 실제 플레이에 연결한다. CALIBRATION은 네 명의 승무원, 직접 조사 1회, 선택 상태 확인, discussion/review, 순차 합류를 유지하며 핵심 reveal은 Result 전에 경험 가능하도록 한다.
+
+NPC 투표는 유효 대상이 있으면 자신이 아는 정보와 DecisionTrace를 바탕으로 대상을 선택한다. 빈 문자열 fallback 기권을 허용하지 않고, 기권은 legal target 부재 등 명시된 조건에서만 reason code·사람이 읽을 수 있는 reason·DecisionTrace와 함께 기록한다. Null도 동일한 투표 규칙 위에서 생존 전략을 사용하며 2-Null의 고정 담합 패턴을 만들지 않는다.
+
+Null 배정은 play seed 기반 deterministic assignment와 recent-history soft anti-repeat를 유지한다. replay QA는 같은 stage의 여러 seed에서 single/pair 분포, history soft exclusion, same seed + same history 재현성을 검증한다.
+
+잘못된 격리의 정보 비용은 지정된 다음 날에만 적용되며 이후 날짜와 다른 run/slot으로 전파되지 않는다. voyage memory와 reset 경계, FIRST CONTACT, story consistency, LAST_LIGHT 복수 history, Linux/Windows CI gate를 함께 검증한다.
+
 # 0.5.7 · CLEAR SIGNAL · 2026-09-21
 
 0.5.6 ECHOES까지 축적된 608개의 authored voyage/reactive scene과 Living Crew, Routine, Micro-Arc, Consequence, Motive, Incident, Codex를 삭제하거나 다시 만들지 않고 **한 loop에서 보이는 고중요도 서사의 밀도와 연결 순서**를 정리했다. 신규 authored voyage scene은 **0개**이며 save schema는 **v10**을 유지한다.

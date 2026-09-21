@@ -5,6 +5,10 @@ const CHAPTERS := {
     "CALIBRATION": {
         "title": "눈을 뜬 자리",
         "goal": "수면실 전력이 끊긴 이유를 확인한다.",
+        "situation": "당신과 미라·준·다렌·노아가 먼저 깨어났다. 나머지 네 명은 장기수면 중이고, 의료실 포드 하나가 승인 기록 없이 열렸다.",
+        "resolved": "포드 잠금은 현장 콘솔에서 실제로 해제됐다. 단순 전원 오류가 아니며, 실행자 서명만 사라져 있다.",
+        "open_question": "실행자 서명과 노아의 날짜가 함께 어긋난 원인은 무엇일까?",
+        "next_hook": "통신 기록을 확인하면, 이 배가 향한 목적지부터 서로 다르게 적혀 있다.",
         "fact": "power",
         "discovery": "수면실 잠금이 풀렸다. 실행자 칸은 비어 있다.",
         "outro": "노아가 방금 적은 날짜를 가리킨다. 하루 전이다. 미라가 다시 당신의 손목을 잡는다. “들리나요?”",
@@ -14,51 +18,75 @@ const CHAPTERS := {
     "DEAD_AIR": {
         "title": "마지막 교신",
         "goal": "서로 다른 목적지 기록의 출처를 찾는다.",
+        "situation": "외부 통신이 정상 절차로 차단됐다. 동시에 보관실에서 서로 다른 목적지를 적은 두 원본 문서가 발견된다.",
+        "resolved": "두 목적지 문서는 둘 다 위조가 아니다. 같은 날 정식 서명을 거친 원본이다.",
+        "open_question": "한 항해에 왜 서로 다른 목적지가 두 개 존재할까?",
+        "next_hook": "통신이 잠깐 살아난 순간, 아직 하지 않은 당신의 말이 먼저 돌아온다.",
         "fact": "destination",
         "discovery": "귀환 승인서와 탐사 명령서가 같은 날 서명됐다. 두 문서 모두 원본이다.",
         "outro": "통신이 잠깐 열린다. 돌아온 것은 당신이 아직 하지 않은 말이다.",
-        "awake": "",
+        "awake": "sena",
         "room": "comms"
     },
     "GLASS_GARDEN": {
         "title": "유리 정원",
         "goal": "세나와 함께 잠긴 구역의 안전을 확인한다.",
+        "situation": "보안 구역 전력이 꺼졌고, 세나의 기억과 준의 배치 기록이 같은 과거를 다르게 말한다.",
+        "resolved": "세나가 기억하는 근무일은 실제 기록에 남아 있다. 하지만 준의 배치 기록에서는 그 하루만 빠져 있다.",
+        "open_question": "기억이 틀린 게 아니라면, 과거의 기록 자체가 서로 다른 것일까?",
+        "next_hook": "잠긴 문은 세나가 열기 전에 안쪽에서 먼저 열린다.",
         "fact": "security",
         "discovery": "세나의 순찰 기록에는 준과 함께 근무한 날이 있다. 준의 배치 기록에는 그날이 없다.",
         "outro": "세나가 열쇠를 돌리기 전에 문이 열린다. 안쪽 손잡이에 누군가의 손자국이 남아 있다.",
-        "awake": "sena",
+        "awake": "vale",
         "room": "security"
     },
     "ECHO_WARD": {
         "title": "메아리 병동",
         "goal": "소렌이 들은 신호를 의료 기록과 대조한다.",
+        "situation": "소렌이 수면 중이던 시각의 목소리가 통신망에서 발견됐다. 포드는 그 시간 내내 닫혀 있었다.",
+        "resolved": "신호의 목소리는 합성물이 아니라 승무원들의 실제 음성과 일치한다. 시간 순서만 맞지 않는다.",
+        "open_question": "기록이 미래의 대화를 먼저 갖고 있다면, 어느 쪽 시간이 잘못된 걸까?",
+        "next_hook": "복원된 항법 기록에는 ASTRA가 이미 목적지에 도착했다는 문장이 남아 있다.",
         "fact": "signal",
         "discovery": "수면 중인 소렌의 음성이 통신 기록에 남아 있다. 같은 시간 포드는 닫혀 있었다.",
         "outro": "녹음 속 소렌이 숨을 들이마신다. 옆에 앉은 소렌은 숨을 멈춘다.",
-        "awake": "vale",
+        "awake": "eli",
         "room": "comms"
     },
     "SILENT_ORBIT": {
         "title": "고요한 궤도",
         "goal": "루칸과 항로 기록의 빈 구간을 확인한다.",
+        "situation": "항법 데이터 한 구간이 지워졌다. 계기상 ASTRA는 이동 중이지만 창밖의 별은 거의 움직이지 않는다.",
+        "resolved": "‘ASTRA — 목적지 도착 완료’ 기록은 선내 정식 기록이다. 날짜는 현재보다 약 19년 전이다.",
+        "open_question": "19년 전에 도착했다면, 지금 우리가 기억하는 출항과 항해는 무엇일까?",
+        "next_hook": "도착 이후에도 누군가는 선내에서 정상 업무를 계속한 흔적이 남아 있다.",
         "fact": "arrival",
         "discovery": "ASTRA — 목적지 도착 완료. 기록 날짜는 현재보다 19년 전이다.",
         "outro": "루칸이 창밖을 본다. 항로 화면의 별은 움직이는데, 창밖의 별은 그대로다.",
-        "awake": "eli",
+        "awake": "lyra",
         "room": "navigation"
     },
     "RED_SHIFT": {
         "title": "다른 하늘",
         "goal": "마렌의 시료와 선내 자원 기록을 비교한다.",
+        "situation": "생태 구역 표본이 죽기 시작한다. 일부 씨앗은 목적지에서 채집된 것으로 기록돼 있는데, 채집일은 출항보다 빠르다.",
+        "resolved": "시료의 채집 위치와 연대 기록은 서로 다른 장비에서 같은 값으로 확인된다. 단순 입력 오류가 아니다.",
+        "open_question": "우리가 출항하기 전에 목적지에서 채집된 시료가 어떻게 ASTRA 안에 있을까?",
+        "next_hook": "그리고 이번 기록에서는 준과 세나가 ‘이번 항해에서 처음 만난 사이’로 바뀌어 있다.",
         "fact": "sample",
         "discovery": "씨앗의 채집 장소는 ASTRA의 목적지다. 채집일은 출항일보다 이르다.",
         "outro": "마렌이 흙을 봉투에 돌려놓는다. 뿌리에 묻은 작은 이름표는 당신의 필체다.",
-        "awake": "lyra",
+        "awake": "",
         "room": "garden"
     },
     "LAST_LIGHT": {
         "title": "남은 불빛",
         "goal": "도착 기록을 누구와 함께 보존할지 결정한다.",
+        "situation": "전력 계통이 무너져 모든 기록을 살릴 수 없다. 지금까지 모은 도착 기록과 승무원 기억이 한곳에서 충돌한다.",
+        "resolved": "서로 다른 기록 사본은 목적지는 달라도 ‘도착 완료’라는 문장만 공통으로 남긴다. Null 사건만으로는 이 모순을 설명할 수 없다.",
+        "open_question": "도착은 실제로 있었던 것 같은데, 누가 언제 어떤 항해를 기억하도록 만든 걸까?",
+        "next_hook": "손상된 기록의 다음 줄과 빈 좌표 칸은 아직 복구되지 않았다. 이번 사건은 끝났지만 ASTRA의 기록은 끝나지 않았다.",
         "fact": "archive",
         "discovery": "복사한 기록의 목적지 칸이 서로 다르다. 도착했다는 문장만 남아 있다.",
         "outro": "다음 신호가 들어온다. 이번에는 아무도 혼자 듣지 않는다. 좌표 칸은 여전히 비어 있다.",
@@ -66,6 +94,98 @@ const CHAPTERS := {
         "room": "archive"
     }
 }
+# Local answers are delivered in play, not invented by the Result screen.
+# Each beat names the people whose expertise can support the conclusion.
+const RESOLUTION_BEATS := {
+    "DEAD_AIR": {
+        "payoff_type":"FACTUAL","participants":["noa","dax"],
+        "action":"당신이 두 목적지 문서를 같은 화면에 띄운다. 노아는 승인 번호를, 다렌은 파일 서명을 따로 대조한다.",
+        "lines":[["noa","둘 다 같은 날 ASTRA 승인 체계에서 접수된 원본이에요. 조잡한 위조본을 하나 섞은 게 아니에요."],
+            ["dax","그러면 쉬운 답 하나는 지워도 돼. 문제는 가짜 문서가 아니라, 유효한 기록이 둘이라는 거야."]]
+    },
+    "GLASS_GARDEN": {
+        "payoff_type":"HUMAN","participants":["sena","rho"],
+        "action":"세나가 자신의 순찰 기록을, 준이 당시 배치 기록을 나란히 놓는다.",
+        "lines":[["sena","여기. 나는 이 날 준이랑 같이 돌았어. 시간하고 문 번호까지 기억해."],
+            ["rho","내 배치표에는 그 하루가 없어. 그런데 네 기록의 형식도 서명도 멀쩡해."],
+            ["sena","그럼 누가 거짓말하는 걸로 끝낼 수는 없겠네. 우리 둘 다 가진 근거에서는 맞아."]]
+    },
+    "ECHO_WARD": {
+        "payoff_type":"REALITY_CONTRADICTION","participants":["vale","mira"],
+        "action":"소렌이 수면 중 녹음과 지금 자신의 목소리를 같은 분석기에 넣는다.",
+        "lines":[["vale","합성 흔적은 없어요. 호흡 간격까지 제 목소리와 같아요."],
+            ["mira","그 시각의 포드 생체 기록도 실제예요. 목소리도 기록도 버릴 수 없다면, 시간 순서를 다시 봐야 해요."]]
+    },
+    "SILENT_ORBIT": {
+        "payoff_type":"FACTUAL","participants":["eli","dax"],
+        "action":"루칸이 항법 기록과 관측창의 별 위치를 고정하고, 다렌이 시스템 시각과 서명을 대조한다.",
+        "lines":[["eli","도착 완료 기록은 항법 화면 장식이 아니야. 별 위치와 끝점이 같이 맞아."],
+            ["dax","시스템 시각과 서명도 같은 결론이야. 이 기록은 지금보다 약 19년 전의 정식 선내 기록이야."],
+            ["eli","그럼 우리가 기억하는 출항부터 다시 물어야겠네."]]
+    },
+    "RED_SHIFT": {
+        "payoff_type":"HUMAN","participants":["lyra","noa"],
+        "action":"마렌이 시료 라벨과 생장 기록을 펼치고, 노아가 독립된 보관 기록의 날짜를 맞춘다.",
+        "lines":[["lyra","채집 장소와 생장 시간은 따로 잰 값인데 둘 다 목적지를 가리켜요. 출항 전 날짜도 같고요."],
+            ["noa","보관 기록까지 일치해요. 한 사람이 날짜를 잘못 적은 걸로는 설명이 안 돼요."],
+            ["lyra","이게 정말 우리가 다녀온 흔적이라면… 저는 그 시간을 왜 기억하지 못하죠?"]]
+    },
+    "LAST_LIGHT": {
+        "payoff_type":"FACTUAL","participants":["noa","dax"],
+        "action":"남은 전력으로 노아와 다렌이 지금까지 보존한 기록 사본을 한 번만 더 교차 검증한다.",
+        "lines":[["noa","목적지 이름은 서로 달라요. 그런데 서로 다른 사본 모두에 ‘도착 완료’가 남아 있어요."],
+            ["dax","체크섬과 서명 체계도 각 사본 안에서는 유효해. 단순 손상된 한 과거가 아니야."],
+            ["noa","그리고 가장 오래된 차이는 이번 Null 사건보다 앞서 있어요. Null 하나로 전부 설명할 수 없어요."],
+            ["dax","그럼 남는 질문은 하나네. 우리는 어느 history에서 깨어난 거지?"]]
+    }
+}
+
+static func resolution_thread(case_id: String) -> Dictionary:
+    if not RESOLUTION_BEATS.has(case_id):
+        return {}
+    var data: Dictionary = RESOLUTION_BEATS[case_id].duplicate(true)
+    var participants: Array = data.get("participants",[]).duplicate()
+    data.merge({
+        "id":"story_resolution_" + case_id.to_lower(),
+        "speaker":str(participants[0]) if not participants.is_empty() else "",
+        "category":"MANDATORY","tag":"story_resolution","thread":true,
+        "choices":[],"compressible":false,"story_resolution":true,
+        "requires_fact":str(chapter(case_id).get("fact",""))
+    },false)
+    return data
+
+static func hook_thread(case_id: String) -> Dictionary:
+    var data := chapter(case_id)
+    return {
+        "id":"story_hook_" + case_id.to_lower(),
+        "speaker":"","participants":[],"category":"MANDATORY","tag":"story_hook",
+        "action":str(data.get("next_hook","")),"lines":[],"choices":[],
+        "compressible":false,"story_hook":true
+    }
+
+# 0.6.0 foreshadow registry. A mystery object is not allowed to be a one-line
+# disposable shock: each entry records where it returns and what is actually
+# answered by the end of this chapter set.
+const FORESHADOW_LEDGER := {
+    "wrist": {"introduced":"CALIBRATION","repeated":"GLASS_GARDEN","deepened":"ECHO_WARD","partial_answer":"RESET residue changes with history","final_status":"OPEN"},
+    "mira_bandage": {"introduced":"CALIBRATION","repeated":"CALIBRATION_RESET","deepened":"ECHO_WARD","partial_answer":"player memory survives a world-state change","final_status":"OPEN"},
+    "warm_cup": {"introduced":"CALIBRATION","repeated":"GLASS_GARDEN","deepened":"SILENT_ORBIT","partial_answer":"ordinary life continued around impossible records","final_status":"PARTIAL"},
+    "pod_signature": {"introduced":"CALIBRATION","repeated":"DEAD_AIR","deepened":"LAST_LIGHT","partial_answer":"pod was deliberately unlocked; executor signature alone is absent","final_status":"PARTIAL"},
+    "noa_date": {"introduced":"CALIBRATION","repeated":"DEAD_AIR","deepened":"SILENT_ORBIT","partial_answer":"the offset belongs to a broader timestamp contradiction","final_status":"PARTIAL"},
+    "two_destinations": {"introduced":"DEAD_AIR","repeated":"SILENT_ORBIT","deepened":"LAST_LIGHT","partial_answer":"both documents are valid originals from internally valid histories","final_status":"PARTIAL"},
+    "unsaid_words": {"introduced":"DEAD_AIR","repeated":"ECHO_WARD","deepened":"ECHO_WARD_RESET","partial_answer":"recorded sequence can precede lived sequence","final_status":"PARTIAL"},
+    "inside_opened_door": {"introduced":"GLASS_GARDEN","repeated":"ECHO_WARD","deepened":"LAST_LIGHT","partial_answer":"physical traces can belong to a conflicting valid record","final_status":"OPEN"},
+    "soren_voice": {"introduced":"ECHO_WARD","repeated":"ECHO_WARD_RESET","deepened":"SILENT_ORBIT","partial_answer":"the voice is genuine, but its time ordering is wrong","final_status":"PARTIAL"},
+    "still_stars": {"introduced":"SILENT_ORBIT","repeated":"SILENT_ORBIT_RESET","deepened":"LAST_LIGHT","partial_answer":"displayed voyage motion and physical sky do not share one history","final_status":"PARTIAL"},
+    "arrival_19y": {"introduced":"SILENT_ORBIT","repeated":"RED_SHIFT","deepened":"LAST_LIGHT","partial_answer":"ASTRA has a valid arrival-complete record from about 19 years ago","final_status":"CONFIRMED"},
+    "post_arrival_work": {"introduced":"SILENT_ORBIT","repeated":"RED_SHIFT","deepened":"LAST_LIGHT","partial_answer":"normal work continued after recorded arrival","final_status":"CONFIRMED"},
+    "old_sample_player_hand": {"introduced":"RED_SHIFT","repeated":"LAST_LIGHT","deepened":"LAST_LIGHT","partial_answer":"independent sample records belong to a pre-departure/post-arrival contradiction","final_status":"PARTIAL"},
+    "blank_coordinates": {"introduced":"LAST_LIGHT","repeated":"LAST_LIGHT_RESET","deepened":"NEXT_ARC","partial_answer":"the damaged next line survives while destination coordinate remains unrecovered","final_status":"OPEN"}
+}
+
+static func foreshadow_ledger() -> Dictionary:
+    return FORESHADOW_LEDGER.duplicate(true)
+
 # How each chapter's loop-reset screen frames itself. Every chapter ending the
 # same way ("same wrapper, different outro line") is the fastest way to make a
 # seven-chapter game feel like one screen repeated seven times, so the title
@@ -3405,8 +3525,104 @@ static func scene(id: String) -> Dictionary:
     return {}
 
 static func awake_roster(id: String) -> Array:
-    var count := maxi(0, AstraCaseCatalog.CAMPAIGN.find(id))
-    return AstraCrewCatalog.INITIAL + AstraCrewCatalog.AWAKENING_ORDER.slice(0, mini(count,4))
+    return AstraCrewCatalog.joined_on_day(campaign_day(id))
+
+# Calendar contract is authored explicitly, independently of CAMPAIGN indices.
+# A case has its own local days; replays return to the chapter's campaign date.
+const CAMPAIGN_DATES := {"CALIBRATION":1,"DEAD_AIR":2,"GLASS_GARDEN":3,"ECHO_WARD":4,"SILENT_ORBIT":5,"RED_SHIFT":6,"LAST_LIGHT":7}
+static func campaign_day(id: String) -> int:
+    return int(CAMPAIGN_DATES.get(id,1))
+
+const FIRST_RECORD := "포드 전원 공급은 정상이다. 장기수면 중인 동료는 네 명이다. 잠금 해제 이력의 실행자 칸이 비어 있다."
+const FIRST_CONTRIBUTIONS := {
+    "mira":"의무관 미라. 장기수면 후 당신의 상태를 살피고 생명유지 신호의 해석 범위를 설명한다.",
+    "rho":"기관 담당 준. 공구를 챙겨 각성 점검을 돕는다. 전원 고장과 정비 가능성을 구분한다.",
+    "dax":"시스템 설계자 다렌. 상태 기록과 실행자 기록을 구분하고, 빈칸을 고의 조작으로 단정하지 않는다.",
+    "noa":"기록관 노아. 확정된 사실과 아직 확인하지 못한 항목을 나눠 적는다."
+}
+const FIRST_THREADS := {
+    "first_wake": {
+        "action":"수면에서 깨어난 당신을 미라가 의료실에서 살핀다. 옆에서 세 동료가 각성 점검을 돕고 있다.",
+        "lines":[["mira","저는 의무관 미라예요. 장기수면 뒤에는 여기서 상태를 확인해요. 당신은 ASTRA의 탐사요원이고요."],
+            ["rho","기관 담당 준이야. 손은 천천히 움직여. 공구는 내가 들게."],
+            ["dax","다렌. 시스템 설계자야. 남은 포드를 열기 전에 전원 상태를 확인해야 해."],
+            ["noa","기록관 노아예요. 확인한 것만 적을게요. 먼저 포드 제어 패널을 눌러 주세요."]],"choices":[]},
+    "first_panel": {
+        "requires_fact":"power","action":"당신이 연 포드 제어 패널을 네 동료가 함께 본다. 전원 표시와 잠금 이력은 서로 다른 칸이다.",
+        "lines":[["rho","공급 전원은 정상이야. 지금 포드가 닫혀 있는 걸 정전 탓으로 볼 수는 없어."],
+            ["mira","생명유지 신호도 안정적이에요. 그럼 왜 해제 이력에 이름이 없을까요?"],
+            ["dax","상태 기록은 무엇이 일어났는지, 실행자 칸은 누가 요청했는지야. 빈칸만으로 고의 조작이라고 할 수는 없어."],
+            ["noa","전원 정상, 실행자 칸 공백. 여기까지가 사실이에요. 원인은 아직 빈칸으로 둘게요."]],
+        "choices":[{"label":"잠금 이력의 원본과 복사본부터 비교한다 · 공동 확인","effect":"check_source"},
+            {"label":"정비 중 남은 기록인지 준에게 묻는다 · 질문","effect":"check_maintenance"}]},
+    "first_source": {
+        "requires_fact":"power","action":"다렌이 원본 보기와 읽기 전용 사본을 나란히 연다. 노아가 비교 기준을 적는다.",
+        "lines":[["dax","지금 볼 수 있는 두 화면에는 같은 빈칸이 있어. 복사 과정만 문제였는지는 이전 백업이 있어야 알 수 있어."],
+            ["noa","현재 원본에도 공백. 이전 백업은 미확인. 두 문장을 나눠 남길게요."],
+            ["mira","상태 확인은 끝났어요. 오늘은 누구도 격리하지 않고 다음 포드의 각성을 준비해요."]],"choices":[]},
+    "first_maintenance": {
+        "requires_fact":"power","action":"준이 공구를 내려놓고 패널의 상태 항목을 다시 읽는다.",
+        "lines":[["rho","정비 중에도 잠금 상태는 달라질 수 있어. 하지만 누가 어떤 작업을 했는지는 이 화면만으로 몰라."],
+            ["dax","맞아. 전원 고장과 작업 이력은 따로 확인하자. 내일 출입 기록을 붙이면 범위를 줄일 수 있어."],
+            ["mira","지금 생명유지는 안정적이에요. 오늘은 누구도 격리하지 않고 다음 포드의 각성을 준비해요."]],"choices":[]}
+}
+const ARRIVALS := {
+    "sena": {"action":"전날 확인한 전원으로 보안 담당 포드의 순차 각성이 끝난다. 세나가 일어나 출입문부터 살핀다.",
+        "lines":[["sena","보안 책임자 세나야. 문이 열리는 쪽부터 확인할게. 준, 뒤쪽 봐 줘."],["rho","알았어. 잠깐만, 공구부터 챙기고."],
+            ["sena","통신실까지 통로는 안전해. 기록을 가져올 수 있어. 잠금 이력은 사용자 칸과 열림 상태를 나눠 봐야 해."],
+            ["noa","통로 확인은 세나의 관찰로 남길게요. 빈 서명의 이유는 아직 몰라요."],
+            ["sena","이상하네. 준이랑 같이 근무한 기억이 있는데… 그 기록은 일 끝나고 같이 보자."]]},
+    "vale": {"action":"확인된 통로를 통해 다음 포드 점검이 끝난다. 소렌은 눈을 뜨자 경보음과 수신음을 따로 줄인다.",
+        "lines":[["vale","통신관 소렌이에요. 지금 나는 소리는 경보예요. 누군가 말하는 신호와는 달라요."],
+            ["sena","좋아. 보안 구역의 알림이 어디서 오는지 같이 확인하자."],
+            ["vale","발신 장치와 재생 장치를 따로 적어 둘게요. 같은 소리라고 같은 출처는 아니니까요."],
+            ["noa","오늘 구역 점검 기록에 그 기준을 붙일게요."],
+            ["vale","수면 중에 제 이름을 들은 것 같아요. 기억뿐이라, 녹음이 있는지부터 찾아볼게요."]]},
+    "eli": {"action":"순차 각성 점검이 항법 담당 포드에 도달한다. 루칸은 난간을 잡고 창과 항로 화면을 번갈아 본다.",
+        "lines":[["eli","항법사 루칸이야. 서두르지 마. 화면 시각부터 맞추자."],
+            ["vale","신호 기록과 포드 기록을 대조하려고 해요. 시각 기준을 봐 줄래요?"],
+            ["eli","두 장치의 시계를 따로 적어. 가까운 시각을 같다고 합치면 없던 모순도 생겨."],
+            ["noa","각 장치의 출처도 붙여 둘게요."],
+            ["eli","내가 만든 항로 사본이 있을 거야. 원본과 왜 따로 뒀는지는 직접 확인하고 말할게."]]},
+    "lyra": {"action":"마지막 순차 각성 포드가 열린다. 마렌이 물컵을 받아 들고 생태 구역 상태표부터 찾는다.",
+        "lines":[["lyra","생태학자 마렌이에요. 물은 조금이면 돼요. 시료 보관 상태도 같이 볼까요?"],
+            ["mira","먼저 한 모금 마셔요. 상태표는 가져다 드릴게요."],
+            ["lyra","고마워요. 오래된 도착 기록을 볼 때 보관 기간도 대조해요. 시료가 지낸 시간은 문장과 별도로 확인할 수 있어요."],
+            ["eli","좋아. 오늘 항로 기록 옆에 그 기준을 남기자."],
+            ["lyra","폐기 목록에 있던 작은 모종이 마음에 걸려요. 아직 남아 있는지는 가서 봐야겠어요."]]}
+}
+
+static func linked_thread(id: String, data: Dictionary, participants: Array, requires_fact: String = "") -> Dictionary:
+    var result := data.duplicate(true)
+    result.merge({"id":id,"speaker":str(participants[0]),"participants":participants.duplicate(),"category":"MANDATORY","tag":"work","choices":[],"thread":true,"compressible":false},false)
+    result["requires_fact"] = str(data.get("requires_fact",requires_fact))
+    result["scope"] = "present_participants"
+    result["reuse"] = "once_per_case"
+    result["location"] = "medbay"
+    result["forbids"] = {"absent_participant":true}
+    var intentions: Array = {
+        "first_wake":["introduce","offer_help","explain_goal","request_action"],
+        "first_panel":["observation","source_question","limit_claim","separate_fact_hypothesis"],
+        "first_source":["compare_sources","record_uncertainty","safe_next_step"],
+        "first_maintenance":["alternative_hypothesis","agree_and_limit","safe_next_step"]
+    }.get(id,["introduce","respond","contribute","record","personal_question"])
+    var beats: Array = []
+    for i in range(result.get("lines",[]).size()):
+        beats.append({"id":id+":"+str(i),"speaker":result["lines"][i][0],"response_to":"" if i == 0 else id+":"+str(i-1),
+            "intent":str(intentions[mini(i,intentions.size()-1)]),"source":result["requires_fact"] if result["requires_fact"] != "" else "current_observation_or_own_role",
+            "requires_fact":result["requires_fact"],"expression":"determined" if i == 0 and id != "first_wake" else "neutral"})
+    result["beats"] = beats
+    return result
+
+static func first_thread(id: String) -> Dictionary:
+    return linked_thread(id,FIRST_THREADS.get(id,{}),AstraCrewCatalog.INITIAL)
+
+static func arrival_thread(who: String) -> Dictionary:
+    if not ARRIVALS.has(who): return {}
+    var participants: Array = []
+    for line in ARRIVALS[who]["lines"]:
+        if line[0] not in participants: participants.append(line[0])
+    return linked_thread("arrival_"+who,ARRIVALS[who],participants)
 
 # The first two chapters are one-to-three rooms on purpose: a new player
 # should never have to guess which of several doors leads somewhere useful
