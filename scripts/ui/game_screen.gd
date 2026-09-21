@@ -547,10 +547,22 @@ func exit_to_title() -> void:
     app.show_title()
 
 func restart_case() -> void:
-    app.start_case(session.case_id, session.protocol)
+    _show_loop_transition(session.case_id)
 
 func start_other_case(case_id: String) -> void:
-    app.start_case(case_id, session.protocol)
+    _show_loop_transition(case_id)
+
+func _show_loop_transition(case_id: String) -> void:
+    var framing := session.loop_reset_framing()
+    var box := AstraUI.vbox(12)
+    box.add_child(AstraUI.label(str(framing.get("title","기록 재동기화")), 24, AstraUI.VIOLET))
+    box.add_child(AstraUI.prose(str(framing.get("detail","")), AstraUI.T_BODY, AstraUI.TEXT))
+    box.add_child(AstraUI.prose("당신은 방금 전의 일을 기억한다. 함선 쪽 기록은 다시 다른 자리에 맞춰지기 시작한다.", AstraUI.T_META, AstraUI.MUTED))
+    var handler := func(_choice: int):
+        app.start_case(case_id, session.protocol)
+    AstraModal.open(app.overlay_root(), "LOOP RESIDUE", box,
+        [["건너뛰고 계속", AstraUI.MUTED], ["기억한 채 다음 기록으로", AstraUI.CYAN]],
+        handler, 680.0)
 
 func handle_hotkey(event: InputEventKey) -> bool:
     if session == null:
