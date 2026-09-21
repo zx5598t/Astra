@@ -44,7 +44,12 @@
 
 ## 정식 빌드 상태
 
-위 구현 검증 run은 repository VERSION이 아직 0.5.6이던 단계라 생성된 ZIP을 0.5.7 정식 artifact로 인정하지 않는다. 이 문서와 VERSION/project.godot을 0.5.7로 맞춘 뒤 최종 CI에서 `ASTRA-0.5.7-windows.zip`, 파일 크기와 SHA-256을 다시 기록한다.
+VERSION / project.godot을 0.5.7로 맞춘 최종 commit `dc4292bcd53c64fa2128593a6e35c788f2c8f7c7`, GitHub Actions run `35573583450`에서 Linux validation / Windows validation / Windows release-candidate가 모두 **PASS**했다.
+
+- Windows ZIP: `ASTRA-0.5.7-windows.zip`
+- 파일 크기: **92,844,194 bytes**
+- SHA-256: `a9d1bdb0959c9d2dd3a51953daed48e8d146a7e33d17a1de862e1579d0a2f48b`
+- exported `ASTRA.exe` boot: **PASS**
 
 ---
 
