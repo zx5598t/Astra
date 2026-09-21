@@ -25,7 +25,19 @@ func _initialize() -> void:
     quit(1)
 
 func _close(s: AstraGameSession) -> void:
-    s.voyage["scene"] = {}
+    # Resolve the visible scene through the public path so authored choices,
+    # immediate/delayed consequences, memory tags and callbacks are exercised.
+    # The simulation still never forces a particular scene id.
+    var guard := 0
+    while not s.voyage.get("scene",{}).is_empty() and guard < 32:
+        guard += 1
+        var scene: Dictionary = s.voyage.get("scene",{})
+        var lines: Array = scene.get("lines",[])
+        var choices: Array = scene.get("choices",[])
+        if not choices.is_empty() and int(s.voyage.get("line",-1)) >= lines.size() - 1:
+            s.voyage_choose(0)
+        else:
+            s.voyage_next()
 
 func _percentile(values: Array, p: float) -> float:
     if values.is_empty():
@@ -210,6 +222,20 @@ func simulate() -> void:
         var contacts := _profile_contacts(profile,s,run)
         for i in range(contacts.size()):
             _visit_and_talk(s,str(contacts[i]),profile == "LOYALIST" and i == contacts.size()-1)
+
+        # If the player actually saw an authored chain begin, give that visible
+        # speaker one ordinary follow-up opportunity. This uses only exposed
+        # runtime context and still lets the real selector decide what appears.
+        var followup_speakers: Array = []
+        for event_raw in s.voyage.get("loop_focus_events",[]):
+            var event: Dictionary = event_raw
+            if str(event.get("chain_id","")) == "":
+                continue
+            var speaker := str(event.get("speaker",""))
+            if speaker != "" and speaker not in followup_speakers:
+                followup_speakers.append(speaker)
+        for speaker in followup_speakers:
+            _visit_and_talk(s,str(speaker),false)
 
         # Give a queued autonomous beat one natural room opportunity. A SOCIAL
         # loop may attempt a second one; CLEAR SIGNAL can leave it queued when
