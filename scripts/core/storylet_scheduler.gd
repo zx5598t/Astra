@@ -13,7 +13,7 @@ static func rare_threshold(scene: Dictionary, pity: Dictionary) -> float:
         return minf(0.9, 0.50 + float(pity.get(str(scene.get("id","")),0)) * 0.08)
     return 1.0
 
-static func weight(scene: Dictionary, seen_ever: Dictionary, recent_families: Array, social_theme: String) -> float:
+static func weight(scene: Dictionary, seen_ever: Dictionary, recent_families: Array, social_theme: String, pinned_question: Dictionary = {}) -> float:
     var score := maxf(0.1,float(scene.get("_content_weight",1.0)))
     var id := str(scene.get("id",""))
     var family := str(scene.get("family",id))
@@ -31,15 +31,34 @@ static func weight(scene: Dictionary, seen_ever: Dictionary, recent_families: Ar
             score *= 1.28
     if bool(scene.get("player_specific",false)):
         score *= 1.08
+    # 0.5.4 follow-ups should not disappear under ordinary variety. This is
+    # still a weight, never a forced quest.
+    if str(scene.get("intent","")) == "micro_arc":
+        score *= 1.22
+    if str(scene.get("category","")) == "CONSEQUENCE":
+        score *= 1.35
+    if str(scene.get("routine_relevance","")) != "":
+        score *= 1.10
+    if not pinned_question.is_empty():
+        var links: Array = scene.get("question_links",[])
+        var question_id := str(pinned_question.get("id",""))
+        var related: Array = pinned_question.get("related",[])
+        if question_id in links:
+            score *= 1.22
+        else:
+            var speaker := str(scene.get("speaker",""))
+            var linked_target := str(scene.get("target",""))
+            if speaker in related or linked_target in related:
+                score *= 1.12
     return maxf(0.01,score)
 
-static func pick(candidates: Array, seen_ever: Dictionary, recent_families: Array, social_theme: String, roll: float) -> Dictionary:
+static func pick(candidates: Array, seen_ever: Dictionary, recent_families: Array, social_theme: String, roll: float, pinned_question: Dictionary = {}) -> Dictionary:
     if candidates.is_empty():
         return {}
     var weights: Array[float] = []
     var total := 0.0
     for scene in candidates:
-        var w := weight(scene,seen_ever,recent_families,social_theme)
+        var w := weight(scene,seen_ever,recent_families,social_theme,pinned_question)
         weights.append(w)
         total += w
     var cursor := clampf(roll,0.0,0.999999) * total

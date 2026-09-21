@@ -1,3 +1,53 @@
+# ASTRA 0.5.4 — AFTERMATH
+
+## Routines & Consequences
+
+0.5.4는 “살아 있는 승무원”을 “하루를 사는 승무원”으로 한 단계 더 밀어 붙인다. 동료는 플레이어가 말을 걸기 전에도 자기 장소에서 자기 일을 하고, 평소 공간·활동 baseline에서 벗어날 때는 내부 reason을 갖는다. 그 변화는 범인 표시가 아니라 플레이어가 “왜?”라고 묻게 하는 약한 단서다.
+
+전체 authored voyage/reactive scene은 **537개**다. 0.5.4 신규 장면은 **64개**이며 캐릭터별 총량은 미라 88 / 준 72 / 다렌 66 / 노아 70 / 세나 63 / 소렌 55 / 루칸 53 / 마렌 70이다.
+
+## Crew Routine
+
+정상 routine은 총 **36개 활동**, authored routine deviation은 **27개 상황**, reason tag는 **10종**이다. CALIBRATION/DEAD AIR의 visible deviation은 0, GLASS GARDEN은 최대 1, 이후는 최대 1~3개다. ECHO는 loop 0에서 나오지 않고 NULL_ACTIVITY는 실제 Null만 사용할 수 있다.
+
+기존 autonomous crew beat 27개는 유지하며 Routine과 연결한다.
+
+## Eight Micro-Arcs
+
+- Mira — Self Neglect
+- Jun — Mistake
+- Daren — Failed Model
+- Noa — Private Copy
+- Sena — Overprotection
+- Soren — Listening Fatigue
+- Lucan — Risk Route
+- Maren — Save One Sample
+
+각 arc는 4 beat이며 한 loop에 전부 나오지 않고 main story gate도 아니다.
+
+## Consequence Chains
+
+authored consequence event는 **23개**다: IMMEDIATE 4 / DELAYED 8 / NEXT_DAY 7 / NEXT_LOOP 4. 후속은 +trust/-trust 알림이 아니라 이후 장면, memory tag, 기록 공개 순서, 관계 태도, 다음 날 로그, 다음 loop residue로 나타난다. consequence stage는 일반 storylet selector가 선택보다 먼저 뽑지 못하게 gate했다.
+
+## Social Deduction Legibility
+
+전날과 표가 달라졌다면 DecisionTrace의 strongest reason을 이용해 new_evidence / relationship_change / memory_change / uncertainty로 구분한다. 개표 화면에는 **지난 투표와 달라짐 · 이전 → 현재 · 이유**가 짧게 보이며, opinion trace에는 해당 NPC의 known facts와 qualitative relationship context가 남는다.
+
+## Curiosity Pin
+
+Notebook의 열린 질문 중 최대 1개를 **집중해서 확인**할 수 있다. 관련 사람/방/storylet의 가중치만 조금 올리고 정답 위치나 Null 확률은 보여 주지 않는다.
+
+## First 30 Minutes
+
+CALIBRATION에는 Routine 설명문도 표시하지 않는다. 본격 Routine/Consequence/Micro-Arc는 ECHO WARD 이후에 체감되도록 해 첫 30분 복잡도를 다시 늘리지 않았다.
+
+## QA / Release Gate
+
+0.5.4 전용 게이트는 Routine 1,000-day simulation, 8 micro-arc, consequence timing/queue/expiry/next-loop carry, meaningful-choice audit, Curiosity pin, decision-legibility report, save migration, AFTERMATH 500-loop, 5/20-loop human-readable editorial report다. 기존 1,000 conversation / 1,000 meeting / 500-loop Living Crew와 Windows export + exported ASTRA.exe boot도 유지한다.
+
+Windows artifact: ASTRA-0.5.4-windows.zip + .sha256.
+
+---
 # ASTRA 0.5.3 — HEARTBEAT
 
 ## Familiar stranger

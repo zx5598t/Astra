@@ -1,3 +1,18 @@
+# 0.5.4 · AFTERMATH · 2026-09-21
+
+0.5.3 HEARTBEAT의 Living Crew를 다시 만들지 않고 관계·기억·KnowledgeModel·DecisionModel·storylet scheduler를 **Crew Routine → Routine Deviation → Micro-Arc → Consequence** 흐름으로 실제 플레이에 연결했다.
+
+정상 생활 baseline은 8명 합계 **36개 활동**, authored deviation은 **27개 상황 / 10개 reason tag**다. CALIBRATION과 DEAD AIR에는 눈에 띄는 routine deviation을 넣지 않고 GLASS GARDEN은 최대 1개, 이후 장은 최대 3개로 제한한다. ECHO는 loop 0에서 나오지 않고 NULL_ACTIVITY는 실제 Null만 사용할 수 있다.
+
+여덟 명에게 4-beat 대표 micro-arc를 하나씩 추가했다: Mira Self Neglect, Jun Mistake, Daren Failed Model, Noa Private Copy, Sena Overprotection, Soren Listening Fatigue, Lucan Risk Route, Maren Save One Sample.
+
+0.5.4 authored scene **64개**를 추가해 전체 voyage/reactive library는 **537개**가 됐다. 화자별 총량은 미라 88, 준 72, 다렌 66, 노아 70, 세나 63, 소렌 55, 루칸 53, 마렌 70이다. 소렌·루칸에는 각각 10개를 추가했다.
+
+Consequence event는 **23개**다(IMMEDIATE 4 / DELAYED 8 / NEXT_DAY 7 / NEXT_LOOP 4). queue는 최대 12개이며 expiry가 있고, NEXT_LOOP event는 voyage memory를 통해 carry된다.
+
+Curiosity Question은 한 개만 pin할 수 있다. 투표 변경은 DecisionTrace의 strongest reason을 이용해 new_evidence / relationship_change / memory_change / uncertainty로 구분하고, 개표 화면에서 이전 표와 현재 표, 이유를 짧게 보여 준다.
+
+0.5.4 테스트에는 routine model, micro-arc, consequence chain, meaningful choice, curiosity pin, decision legibility, save compatibility, AFTERMATH 500-loop simulation, 5/20-loop human-readable editorial report를 추가했다.
 # 0.5.3 · HEARTBEAT · 2026-09-21
 
 0.5.2의 Living Crew / Knowledge / Decision 기반을 그대로 이어 받아, 그 시스템이 실제 장면과 반복 플레이에서 체감되도록 연결했다.

@@ -1,4 +1,4 @@
-# ASTRA 0.5.3 설계 — HEARTBEAT
+# ASTRA 0.5.4 설계 — AFTERMATH
 
 ## 핵심 판타지
 
@@ -91,13 +91,13 @@ Hidden role은 personality를 교체하지 않는다. Null Mira도 의무관이�
 - 모든 main mystery 설명
 - 한 loop의 화면 독점
 
-0.5.3 authored speaker pool은 Mira 80개지만 중후반 일반 loop의 optional Mira scene은 최대 4개다.
+0.5.4 authored speaker pool은 Mira 88개지만 중후반 일반 loop의 optional Mira scene은 최대 4개다.
 
 ## Authored content
 
-현재 `AstraVoyageContent.all_scenes()`는 기존 scene + `AstraStorylets052` + `AstraStorylets053`를 합쳐 **473개**를 제공한다.
+현재 AstraVoyageContent.all_scenes()는 기존 scene + AstraStorylets052 + AstraStorylets053 + AstraStorylets054를 합쳐 **537개**를 제공한다.
 
-새 0.5.3 콘텐츠는 대부분 ECHO WARD 이후에 배치한다. CALIBRATION의 필수 대사량은 늘리지 않는다.
+0.5.4 Routine/Micro-Arc/Consequence 콘텐츠도 대부분 ECHO WARD 이후에 배치한다. CALIBRATION의 필수 대사량은 늘리지 않는다.
 
 `AstraStoryletScheduler`의 역할:
 1. get candidates
@@ -109,6 +109,18 @@ Hidden role은 personality를 교체하지 않는다. Null Mira도 의무관이�
 7. deterministic session RNG pick
 
 RNG는 선택만 한다. 내용은 authored data다.
+
+## Crew Routine — spatial baseline
+
+Routine은 생활 시뮬레이션 시간표가 아니라 **공간적 baseline**이다. 8명 합계 36개의 정상 활동을 가지고, authored deviation 27개는 10개의 명시적 reason 중 하나를 사용한다. 중요한 deviation에 random_room 같은 이유는 허용하지 않는다.
+
+플레이어는 반복을 통해 “이 사람은 보통 어디에서 무엇을 하는가”를 배운다. 그 baseline이 있기 때문에 다른 방에 있거나 평소와 다른 활동을 할 때 질문이 생긴다. routine deviation은 행동 단서일 뿐 Null의 hard evidence가 아니다.
+
+## Consequence & Micro-Arc
+
+AstraConsequenceModel은 IMMEDIATE / DELAYED / NEXT_DAY / NEXT_LOOP 네 timing을 관리한다. authored event 23개는 queue 상한과 expiry를 가지며 NEXT_LOOP만 다음 voyage memory에 carry된다.
+
+AstraStorylets054는 각 인물에 4-beat 대표 micro-arc를 하나씩 둔다. arc는 quest 목록으로 노출하지 않고 storylet scheduler의 조건/pity/recent suppression을 사용한다. consequence stage는 일반 selector에서 제외해 선택보다 먼저 결과가 나오는 것을 막는다.
 
 ## Autonomous Crew
 
@@ -216,7 +228,7 @@ Notebook은 추론 보조이며 자동 정답 판정은 하지 않는다.
 
 ## Save compatibility
 
-기존 진행 저장과 내부 캐릭터 ID는 유지한다. 0.5.3의 새 상태는 기존 `voyage` / memory dictionary 안의 선택적 key로 추가했다.
+기존 진행 저장과 내부 캐릭터 ID는 유지한다. 0.5.4의 새 상태도 기존 `voyage` / memory dictionary 안의 선택적 key로 추가했다.
 
 예:
 - storylet_pity
@@ -225,6 +237,10 @@ Notebook은 추론 보조이며 자동 정답 판정은 하지 않는다.
 - autonomous_recent
 - visible_signatures
 - evidence_ownership
+- routine_state / routine_observations
+- micro_arc_state / micro_arc_pity
+- consequence_queue / consequence_carry
+- pinned_question / opinion_changes
 
 오래된 저장에 해당 key가 없으면 기본값을 사용한다. 이전 저장을 자동 삭제하거나 강제 재시작하지 않는다.
 

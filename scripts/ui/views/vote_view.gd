@@ -218,6 +218,19 @@ func _count_panel(session: AstraGameSession, vote: Dictionary) -> Control:
         if voter != "player" and reasons.has(voter):
             var reason := AstraUI.label("이유 · " + str(reasons[voter]), AstraUI.T_META - 1, AstraUI.DIM, true)
             rows.add_child(reason)
+            for raw_change in vote.get("vote_changes",[]):
+                var change: Dictionary = raw_change
+                if str(change.get("voter","")) != voter:
+                    continue
+                var before := str(change.get("before",""))
+                var after := str(change.get("after",""))
+                var before_text := "기권" if before == "" else session.name_of(before)
+                var after_text := "기권" if after == "" else session.name_of(after)
+                rows.add_child(AstraUI.label(
+                    "지난 투표와 달라짐 · %s → %s · %s" % [before_text,after_text,str(change.get("reason","새 근거를 반영함"))],
+                    AstraUI.T_META - 2,AstraUI.MUTED,true
+                ))
+                break
         AstraUI.fade_in(row, 0.14)
         screen.fx.play("vote")
         if index[0] >= ballots.size():

@@ -26,6 +26,15 @@ try {
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/knowledge_propagation_tests.gd') "$logDir\knowledge-053.log" 'ASTRA 0.5.3 KNOWLEDGE PROPAGATION TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/relationship_callback_tests.gd') "$logDir\callbacks-053.log" 'ASTRA 0.5.3 RELATIONSHIP CALLBACK TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/heartbeat_053_simulation.gd') "$logDir\heartbeat-053.log" 'ASTRA 0.5.3 HEARTBEAT SIMULATION OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/routine_model_tests.gd') "$logDir\routine-054.log" 'ASTRA 0.5.4 ROUTINE MODEL TESTS OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/micro_arc_tests.gd') "$logDir\micro-arc-054.log" 'ASTRA 0.5.4 MICRO ARC TESTS OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/consequence_chain_tests.gd') "$logDir\consequence-054.log" 'ASTRA 0.5.4 CONSEQUENCE CHAIN TESTS OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/meaningful_choice_tests.gd') "$logDir\meaningful-054.log" 'ASTRA 0.5.4 MEANINGFUL CHOICE TESTS OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/curiosity_pin_tests.gd') "$logDir\curiosity-054.log" 'ASTRA 0.5.4 CURIOSITY PIN TESTS OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/decision_legibility_054_tests.gd') "$logDir\decision-054.log" 'ASTRA 0.5.4 DECISION LEGIBILITY TESTS OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/compatibility_054_tests.gd') "$logDir\compatibility-054.log" 'ASTRA 0.5.4 SAVE COMPATIBILITY TESTS OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/aftermath_054_simulation.gd') "$logDir\aftermath-054.log" 'ASTRA 0.5.4 AFTERMATH SIMULATION OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/editorial_054_report.gd', '--', '--loops=20') "$logDir\editorial-054.log" 'ASTRA 0.5.4 HUMAN EDITING REPORT OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/story_consistency_tests.gd') "$logDir\story-consistency.log" 'ASTRA STORY CONSISTENCY TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/content_audit.gd') "$logDir\content-audit.log" 'ASTRA CONTENT AUDIT OK'
     $exe = Join-Path $packageDir 'ASTRA.exe'
@@ -40,7 +49,10 @@ try {
     Copy-Item -LiteralPath $exe, "$packageDir\START_HERE.md", "$packageDir\LICENSES.md" -Destination $staging -Force
     Compress-Archive -LiteralPath $staging -DestinationPath $zip -Force
     $hash = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+    $zipSize = (Get-Item -LiteralPath $zip).Length
     "$hash  $(Split-Path $zip -Leaf)" | Set-Content -LiteralPath "$zip.sha256" -Encoding ascii
+    Write-Host "ASTRA WINDOWS ZIP SIZE: $zipSize bytes"
+    Write-Host "ASTRA WINDOWS SHA256: $hash"
     Write-Host "ASTRA WINDOWS BUILD OK: $zip"
 } catch {
     Write-Host "[ASTRA] $($_.Exception.Message)" -ForegroundColor Red

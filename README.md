@@ -1,12 +1,12 @@
-# ASTRA 0.5.3 — HEARTBEAT
+# ASTRA 0.5.4 — AFTERMATH
 
 같은 배에서 깨어났지만, 우리는 서로 다른 목적지를 기억한다.  
 ASTRA의 탐사요원으로서 기록과 현장을 확인하고, 반복될 때마다 조금씩 달라지는 여덟 동료의 관계와 행동을 읽는 싱글플레이 SF 사회추리 미스터리입니다.
 
-0.5.3은 0.5.2의 Living Crew 기반을 폐기하지 않고 실제 플레이에 더 강하게 연결합니다. 미라는 정해진 연애 루트가 아니라 **Emotional Anchor** 역할을 맡아 반복 속의 익숙함과 낯섦을 가장 깊게 보여 주고, 다른 일곱 명은 각자의 전문 분야와 spotlight를 그대로 유지합니다.
+0.5.4는 0.5.3 HEARTBEAT의 Living Crew 기반을 유지하면서, 승무원이 실제로 하루를 보내는 Crew Routine과 선택 뒤에 남는 Consequence Chain을 플레이 흐름에 연결합니다. 평소 위치와 행동을 알아야 deviation을 눈치챌 수 있고, 중요한 선택은 즉시/지연/다음 날/다음 루프의 작은 후속으로 돌아옵니다. 미라는 Emotional Anchor를 유지하지만 이번 확장의 중심은 여덟 명 전원의 생활과 결과입니다.
 
 - [플레이 안내](START_HERE.md)
-- [0.5.3 변경 사항](docs/RELEASE_NOTES.md)
+- [0.5.4 변경 사항](docs/RELEASE_NOTES.md)
 - [설계와 저장 호환](docs/GAME_DESIGN.md)
 - [인물 설정](docs/CHARACTERS.md)
 - [이미지 출처와 변환](docs/ASSET_AUDIT.md)
@@ -24,7 +24,7 @@ ASTRA의 탐사요원으로서 기록과 현장을 확인하고, 반복될 때�
 - RED SHIFT — 마렌과 출항보다 오래된 시료.
 - LAST LIGHT — 기록과 사람에 대한 판단이 합쳐지는 후반.
 
-아직 배우지 않은 시스템은 미리 전부 보여 주지 않습니다. 0.5.3의 신규 storylet과 autonomous crew beat도 대부분 ECHO WARD 이후에 배치해 첫 30분의 필수 텍스트량을 늘리지 않았습니다.
+아직 배우지 않은 시스템은 미리 전부 보여 주지 않습니다. 0.5.4의 Routine/Consequence/Micro-Arc도 본격 노출을 ECHO WARD 이후에 두며, CALIBRATION에는 routine narration을 추가하지 않아 첫 30분의 필수 텍스트량을 늘리지 않습니다.
 
 ## Living Crew
 
@@ -37,24 +37,36 @@ NPC의 중요한 행동은 가능한 한 “왜”가 남습니다.
 - 무고한 진술 차이는 EMBARRASSMENT / PROTECT_OTHER / HIDE_MISTAKE / KEEP_PROMISE / PERSONAL_SECRET / FEAR / MISREMEMBERED 등으로 나뉩니다. MISREMEMBERED는 거짓말 판정이 아닙니다.
 - 루프마다 social theme, 작은 hook, 관계/기억 변화가 일부 달라집니다. RNG가 대사를 쓰지는 않습니다.
 
-## HEARTBEAT 콘텐츠
+## AFTERMATH 콘텐츠
 
-현재 authored voyage/reactive scene library는 **473개**입니다.
+현재 authored voyage/reactive scene library는 **537개**입니다.
 
 | 인물 | authored scene |
 |---|---:|
-| 미라 | **80** |
-| 준 | 65 |
-| 다렌 | 59 |
-| 노아 | 63 |
-| 세나 | 56 |
-| 소렌 | 45 |
-| 루칸 | 43 |
-| 마렌 | 62 |
+| 미라 | **88** |
+| 준 | 72 |
+| 다렌 | 66 |
+| 노아 | 70 |
+| 세나 | 63 |
+| 소렌 | 55 |
+| 루칸 | 53 |
+| 마렌 | 70 |
 
-미라 private event pool은 **13개**, 전체 private event는 **47개**입니다. 미라 콘텐츠는 CARE / DAILY / MEDICAL / PLAYER / RELATIONSHIP / ECHO / CONFLICT로 나뉘며, 한 중후반 일반 루프에서 optional Mira scene은 최대 4개로 제한합니다.
+0.5.4 신규 authored scene은 **64개**입니다. 8명 × 4-beat micro-arc 32개와 routine/reaction/pair/opinion 장면 32개로 구성되며, 소렌과 루칸은 각각 10개의 신규 장면으로 더 보강했습니다.
 
-0.5.3은 별도로 **27개의 autonomous crew beat**를 추가합니다. 플레이어가 해당 장소에 있을 때 목격할 수도 있고 놓칠 수도 있으며, NPC끼리 실제로 정보를 주고받은 경우 KnowledgeModel에도 그 경로가 남습니다.
+Routine baseline은 **36개의 정상 활동**, **27개의 authored deviation 상황**, **10개의 reason tag**를 사용합니다. 한 loop/day의 눈에 띄는 deviation은 최대 3개로 제한하고, ECHO는 loop 0에서 나오지 않으며 NULL_ACTIVITY는 실제 Null에게만 허용합니다.
+
+Consequence authored event는 **23개**입니다: IMMEDIATE 4 / DELAYED 8 / NEXT_DAY 7 / NEXT_LOOP 4. 후속은 숫자 보상 대신 장면·메모·관계·다음 행동으로 돌아옵니다.
+
+기존 autonomous crew beat는 **27개**를 유지합니다.
+
+## Crew Routine & Consequences
+
+승무원은 플레이어를 기다리는 버튼이 아니라 이미 자기 일을 하고 있습니다. 플레이어가 직접 목격한 중요한 routine deviation만 Notebook의 **직접 본 변화**에 남습니다.
+
+여덟 명은 각각 하나의 대표 micro-arc를 가집니다: 미라의 자기 방치, 준의 작은 실수, 다렌의 실패한 모델, 노아의 개인 사본, 세나의 과잉 보호, 소렌의 청취 피로, 루칸의 위험 경로, 마렌의 표본 보존입니다. 한 loop에서 모두 보여 주지 않습니다.
+
+Notebook의 질문 하나는 **집중해서 확인**할 수 있습니다. 정답 위치를 알려 주지 않고 관련 사람/방/storylet의 선택 가중치만 조금 올립니다.
 
 ## Notebook
 
@@ -70,9 +82,9 @@ Notebook은 정답표가 아니라 기억 보조입니다.
 
 ## 검증
 
-0.5.3 release branch는 Godot **4.7.2 stable**에서 Linux/Windows를 함께 검증합니다.
+0.5.4 release branch는 Godot **4.7.2 stable**에서 Linux/Windows를 함께 검증합니다.
 
-주요 0.5.3 전용 게이트:
+주요 0.5.4 전용 게이트:
 
 - Mira content / agency / phrase audit
 - storylet unseen weighting / rare-event pity / multi-line coherence
@@ -88,9 +100,9 @@ Notebook은 정답표가 아니라 기억 보조입니다.
 
 ## 실행과 빌드
 
-정식 0.5.3 Windows 후보의 파일명은 다음과 같습니다.
+정식 0.5.4 Windows 후보의 파일명은 다음과 같습니다.
 
-`ASTRA-0.5.3-windows.zip`
+`ASTRA-0.5.4-windows.zip`
 
 압축을 풀고 `ASTRA/ASTRA.exe`를 실행합니다. 리소스는 실행 파일에 포함되며 선택형 AI를 켜지 않으면 네트워크 연결이 필요하지 않습니다.
 

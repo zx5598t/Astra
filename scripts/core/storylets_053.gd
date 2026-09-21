@@ -14,7 +14,7 @@ const MIRA_PACKS := [
     ["CARE","player","PLAYER","mira_wrist_first","당신이 기록 단말을 열자 미라가 화면보다 손목 센서를 먼저 본다.","기록은 도망 안 가요. 심박부터요.",{"player_specific":true,"tone_lines":{"WARM":"또 기록부터 보려고 했죠? 심박부터요.","PROFESSIONAL":"기록 전에 상태 확인할게요.","STRAINED":"앉아요. 검사만 하고 갈게요."},"requires":{"player_axis":"evidence_first"}}],
     ["CARE","danger","CRISIS","mira_after_danger","경보가 멎자 미라는 주변 장비가 아니라 당신 얼굴부터 확인한다.","괜찮아요? …아니, 그건 제가 확인할게요.",{"player_specific":true,"rarity":"uncommon"}],
     ["CARE","player","PLAYER","mira_sensor_back","모두의 수치를 적은 미라가 자기 센서는 켜지 않은 채 서랍을 닫는다.","저는 괜찮— …알았어요.",{"player_specific":true,"choices":[{"label":"센서를 미라에게 건넨다.","effect":"protect","memory_tag":"checked_on_mira"},{"label":"말없이 옆에 놓아 둔다.","effect":"wait"}]}],
-    ["CARE","reaction","PLAYER","mira_same_answer","미라는 당신이 괜찮다고 말하기도 전에 작은 센서를 꺼낸다.","이번에는 ‘괜찮다’부터 말하지 마요.",{"player_specific":true,"requires":{"choice_effect":"withhold","choice_count_min":2},"rarity":"uncommon"}],
+    ["CARE","reaction","PLAYER","mira_same_answer","미라는 대답이 나오기 전에 작은 센서를 꺼낸다. 당신이 괜찮다고 말할 걸 예상한 듯하다.","이번에는 ‘괜찮다’부터 말하지 마요.",{"player_specific":true,"requires":{"choice_effect":"withhold","choice_count_min":2},"rarity":"uncommon"}],
     ["CARE","work","WORK","mira_patient_before_log","미라는 오류가 난 의료 단말을 그대로 둔 채 옆 침상의 호흡부터 센다.","기계는 잠깐 기다려도 돼요. 사람은 아닐 수도 있어요.",{}],
 
     ["DAILY","everyday","DAILY","mira_tea_long","미라는 찻잔을 들었다가 너무 진해진 색을 보고 뜨거운 물을 더 붓는다.","또 너무 오래 우렸네요. 생각할 때마다 이래요.",{}],
@@ -27,20 +27,20 @@ const MIRA_PACKS := [
     ["MEDICAL","mystery","MYSTERY","mira_body_nineteen","19년 전 도착 기록을 본 미라는 날짜보다 현재 신체 검사표를 먼저 띄운다.","그럼 우리 몸은요? 기록대로면 이 수치가 이렇게 남아 있을 수 없어요.",{"chapters":["SILENT_ORBIT","LAST_LIGHT"]}],
     ["MEDICAL","work","MEDICAL","mira_med_stock","미라는 진통제 수량보다 사용 시각을 먼저 맞춘다.","누가 가져갔는지는 나중이에요. 먹은 사람이 지금 괜찮은지가 먼저예요.",{}],
 
-    ["PLAYER","player","PLAYER","mira_style_read","미라는 당신이 무엇부터 손대는지 보고 이미 다음 장비를 꺼내 둔다.","",{"player_specific":true,"tone_lines":{"WARM":"또 기록부터 갈 거죠? 저는 사람 쪽 볼게요.","PROFESSIONAL":"당신은 기록을 보세요. 저는 상태를 확인할게요.","STRAINED":"각자 맡은 것부터 해요. 그게 지금은 빠르겠어요."}}],
+    ["PLAYER","player","PLAYER","mira_style_read","미라는 손이 먼저 향하는 곳을 보고 다음 장비를 미리 꺼내 둔다.","",{"player_specific":true,"tone_lines":{"WARM":"또 기록부터 갈 거죠? 저는 사람 쪽 볼게요.","PROFESSIONAL":"당신은 기록을 보세요. 저는 상태를 확인할게요.","STRAINED":"각자 맡은 것부터 해요. 그게 지금은 빠르겠어요."}}],
     ["PLAYER","personal","PLAYER","mira_promise_injury","미라는 새 붕대를 꺼내며 포장지를 접어 당신 쪽에 밀어 둔다.","다치면 말하기. 그것만 약속해요.",{"player_specific":true,"choices":[{"label":"“약속할게요.”","effect":"promise","promise":"tell_injury"},{"label":"“그럴 일 없게 할게요.”","effect":"withhold"}],"rarity":"uncommon"}],
     ["PLAYER","reaction","PLAYER","mira_broken_injury_promise","미라는 숨겨 둔 상처를 본 뒤 바로 치료한다. 다 끝난 뒤에야 당신을 본다.","말하기로 했잖아요.",{"player_specific":true,"requires":{"memory_tag":"promise_broken:tell_injury"},"rarity":"rare"}],
-    ["PLAYER","conflict","CONFLICT","mira_accused_by_player","미라는 당신이 자신을 의심 표시한 화면을 보고도 지우라고 하지 않는다.","믿어 달라고 하진 않을게요. 대신 제가 안 했다는 증거도 같이 찾아봐요.",{"player_specific":true,"requires":{"memory_tag":"accused_mira"},"rarity":"uncommon"}],
+    ["PLAYER","conflict","CONFLICT","mira_accused_by_player","미라는 화면에 남은 자신의 의심 표시를 보고도 지우라고 하지 않는다.","믿어 달라고 하진 않을게요. 대신 제가 안 했다는 증거도 같이 찾아봐요.",{"player_specific":true,"requires":{"memory_tag":"accused_mira"},"rarity":"uncommon"}],
     ["PLAYER","reaction","PLAYER","mira_defended_by_player","회의 뒤 미라는 고맙다는 말보다 당신의 근거부터 다시 읽는다.","저라서 믿은 건 아니죠? …그랬으면 좋겠어요.",{"player_specific":true,"requires":{"memory_tag":"defended_mira"},"rarity":"uncommon"}],
     ["PLAYER","personal","PLAYER","mira_return_last_light","미라는 의료실 문을 열어 둔 채 당신이 나갈 준비를 하는 걸 본다.","",{"player_specific":true,"chapters":["LAST_LIGHT"],"rarity":"uncommon","tone_lines":{"WARM":"이번에도 기록부터 보러 갈 거예요? …알아요. 그래도 돌아와요.","PROFESSIONAL":"끝나면 의료실 들러요. 검사 하나 남았어요.","STRAINED":"다치면 적어도 말은 해요. 그건 별개니까."}}],
 
-    ["RELATIONSHIP","personal","RELATIONSHIP","mira_people_first_callback","미라는 당신이 기록을 덮고 먼저 사람을 확인한 일을 기억하고 있다.","그때 기록보다 사람부터 본 거, 저는 기억해요.",{"player_specific":true,"requires":{"player_axis":"people_first"},"rarity":"uncommon"}],
+    ["RELATIONSHIP","personal","RELATIONSHIP","mira_people_first_callback","미라는 기록보다 사람을 먼저 확인했던 당신의 선택을 기억하고 있다.","그때 기록보다 사람부터 본 거, 저는 기억해요.",{"player_specific":true,"requires":{"player_axis":"people_first"},"rarity":"uncommon"}],
     ["RELATIONSHIP","conflict","CONFLICT","mira_record_over_person","미라는 부상자를 뒤로 두고 기록을 가져온 결정을 비난하지 않는다. 대신 목소리가 평소보다 조용하다.","틀렸다고 말하려는 건 아니에요. 저라면 그렇게 못 했을 것 같아서.",{"player_specific":true,"requires":{"player_axis":"evidence_first"},"rarity":"rare","deviation_reason":"RECENT_CONFLICT","source_event":"record_over_person","possible_followup":"mira_value_repair"}],
     ["RELATIONSHIP","personal","RELATIONSHIP","mira_secret_kept","미라는 당신에게만 보여 줬던 의료 메모가 그대로 봉인되어 있는 걸 확인한다.","말하지 않은 것도 선택이었다는 건 알아요. 이번엔 그 선택을 믿을게요.",{"player_specific":true,"requires":{"memory_tag":"respected_medical_privacy"},"rarity":"rare"}],
 
     ["ECHO","echo","ECHO","mira_protection_device","산소 경보 속에서 당신이 기록 장치를 챙기려 하자 미라가 전원부터 꺼 버린다.","그건 다시 켤 수 있어요. 당신은 아니고.",{"player_specific":true,"requires":{"min_loop":1,"echo_axis":"protection","echo_min":0.28},"rarity":"rare","deviation_reason":"PROTECTION_ECHO","source_event":"prior_protection","possible_followup":"mira_protection_after"}],
     ["ECHO","echo","ECHO","mira_grief_breath","당신이 들어오자 미라의 호흡이 아주 잠깐 멈춘다. 본인도 그 사실을 알아차린 듯 시선을 피한다.","…아니에요.",{"player_specific":true,"requires":{"min_loop":1,"echo_axis":"grief","echo_min":0.25},"rarity":"rare","deviation_reason":"GRIEF_ECHO","source_event":"previous_loss","possible_followup":"mira_grief_quiet"}],
-    ["ECHO","echo","ECHO","mira_conflict_careful","미라는 처음 만난 사람에게 하듯 예의를 갖추지만, 질문을 하기 전 한 번 더 단어를 고른다.","상태부터 볼게요. 다른 이야기는… 그다음에 해요.",{"player_specific":true,"requires":{"min_loop":1,"echo_axis":"conflict","echo_min":0.25},"rarity":"rare","deviation_reason":"RECENT_CONFLICT","source_event":"previous_conflict","possible_followup":"mira_conflict_softens"}],
+    ["ECHO","echo","ECHO","mira_conflict_careful","미라는 낯선 사람을 대하듯 예의를 갖추지만, 질문을 하기 전 한 번 더 단어를 고른다.","상태부터 볼게요. 다른 이야기는… 그다음에 해요.",{"player_specific":true,"requires":{"min_loop":1,"echo_axis":"conflict","echo_min":0.25},"rarity":"rare","deviation_reason":"RECENT_CONFLICT","source_event":"previous_conflict","possible_followup":"mira_conflict_softens"}],
 
     ["CONFLICT","conflict","CONFLICT","mira_stop_risk","당신이 위험 구역 문을 다시 열려 하자 미라가 문 옆 차단 스위치를 먼저 내린다.","그만해요. 사람이 없어지면 시간이 남아도 소용없어요.",{"player_specific":true,"agency":true}],
     ["CONFLICT","conflict","CONFLICT","mira_withheld_medical","미라는 사건과 관련된 의료 기록 일부를 늦게 공유했다는 질문을 피하지 않는다.","말하지 않을 이유가 있었어요. 그게 옳았는지는 지금도 모르겠고요.",{"player_specific":true,"agency":true,"role_lines":{"NULL":"확정되지 않은 내용을 퍼뜨리면 치료도 조사도 망가져요. 필요한 부분은 이미 말했어요.","CREW":"환자 비밀이었어요. 사건과 연결된 걸 확인하고 나서야 말할 수 있었어요."},"rarity":"uncommon"}]
@@ -50,45 +50,45 @@ const MIRA_PACKS := [
 # systemic without stealing each chapter's established spotlight.
 const CREW_PACKS := {
     "rho":[
-        ["PLAYER","reaction","RELATIONSHIP","rho_repeat_direct","준이 당신이 입을 열기도 전에 공구를 하나 밀어 준다.","또 직접 뜯어볼 거지? 이번엔 이거부터 써.",{"requires":{"player_axis":"confrontational"}}],
+        ["PLAYER","reaction","RELATIONSHIP","rho_repeat_direct","준이 질문이 나오기도 전에 공구 하나를 당신 쪽으로 밀어 준다.","또 직접 뜯어볼 거지? 이번엔 이거부터 써.",{"requires":{"player_axis":"confrontational"}}],
         ["DAILY","everyday","DAILY","rho_bandage_bill","준이 새 붕대를 손목에 감고 의료실 쪽을 힐끗 본다.","이번엔 진짜 긁힌 것뿐이야. 미라한텐 그렇게 말해 줘.",{}],
         ["RELATIONSHIP","pair","PAIR","rho_sena_defense_callback","준은 세나가 지난 회의에서 자기 편을 들었던 말을 농담으로 넘기지 않는다.","그때 말해 준 건… 기억해.",{"requires":{"memory_tag":"sena_defended_rho"},"rarity":"uncommon","target":"sena"}],
         ["WORK","work","WORK","rho_share_tendency","준은 확인된 배선 상태를 근처 사람들에게 먼저 보여 준다.","이건 숨길 이유 없어. 손댈 사람은 다 알아야 해.",{"knowledge_share":"work"}]
     ],
     "noa":[
         ["PLAYER","reaction","RELATIONSHIP","noa_pattern_record","노아의 노트 한쪽에 당신이 기록을 먼저 보는 순서가 짧게 적혀 있다.","이번에도 같네요. 기록, 사람, 현장.",{"requires":{"player_axis":"evidence_first"}}],
-        ["PLAYER","reaction","RELATIONSHIP","noa_secretive_callback","노아는 당신이 아직 공개하지 않은 파일을 보며 질문을 줄인다.","공개할 준비가 되면 먼저 알려 주세요. 지금은 경로만 남길게요.",{"requires":{"player_axis":"secretive"}}],
+        ["PLAYER","reaction","RELATIONSHIP","noa_secretive_callback","노아는 아직 공개되지 않은 당신의 파일을 보며 질문을 줄인다.","공개할 준비가 되면 먼저 알려 주세요. 지금은 경로만 남길게요.",{"requires":{"player_axis":"secretive"}}],
         ["WORK","work","WORK","noa_verified_share","노아는 검증이 끝난 페이지에만 작은 공개 표시를 붙인다.","확인 안 된 건 제 노트에. 확인된 건 모두에게.",{"knowledge_share":"verified"}],
         ["CONFLICT","conflict","CONFLICT","noa_vote_memory","노아는 어제의 투표표와 오늘 기록을 나란히 둔다.","어제 판단이 틀렸다면 이유까지 같이 고쳐야 해요.",{}]
     ],
     "sena":[
-        ["PLAYER","reaction","RELATIONSHIP","sena_protective_player","세나는 당신이 다른 사람을 먼저 빼낸 일을 보고 다음 문을 먼저 연다.","사람부터 빼는 건 나도 동의해.",{"requires":{"player_axis":"protective"}}],
+        ["PLAYER","reaction","RELATIONSHIP","sena_protective_player","세나는 다른 사람을 먼저 빼낸 당신의 선택을 보고 다음 문을 먼저 연다.","사람부터 빼는 건 나도 동의해.",{"requires":{"player_axis":"protective"}}],
         ["DAILY","everyday","DAILY","sena_bandage_again","세나의 손목에 의료실 붕대가 또 감겨 있다.","말 안 해도 미라는 알아채더라.",{}],
         ["RELATIONSHIP","pair","PAIR","sena_rho_defense_memory","세나는 준에게 별말 없이 출입 권한을 먼저 열어 준다.","어제 네 말은 들었어. 오늘은 작업부터 해.",{"requires":{"memory_tag":"rho_defended_sena"},"rarity":"uncommon","target":"rho"}],
         ["WORK","work","WORK","sena_security_share","세나는 공개 경보는 즉시 띄우지만 보안 코드 자체는 화면에서 가린다.","위험은 알려야 해. 방법까지 다 보여 줄 필요는 없고.",{"knowledge_share":"security"}]
     ],
     "dax":[
-        ["PLAYER","reaction","RELATIONSHIP","dax_evidence_pattern","다렌은 당신이 기록부터 보는 걸 전제로 비교표의 빈칸을 남겨 둔다.","여긴 네가 채워. 사람 쪽은 내가 다시 물어볼게.",{"requires":{"player_axis":"evidence_first"}}],
+        ["PLAYER","reaction","RELATIONSHIP","dax_evidence_pattern","다렌은 기록부터 보는 당신의 습관을 예상해 비교표의 빈칸을 남겨 둔다.","여긴 네가 채워. 사람 쪽은 내가 다시 물어볼게.",{"requires":{"player_axis":"evidence_first"}}],
         ["DAILY","everyday","DAILY","dax_meal_math","다렌이 식사량을 정확히 반으로 나누다가 마지막 한 조각은 그냥 준다.","이건 계산 안 해도 되겠네.",{}],
         ["RELATIONSHIP","work","WORK","dax_rho_respect_callback","다렌은 준이 들었다는 소리를 이번에는 계산표의 입력값으로 먼저 넣는다.","관측이면 관측이지. 출처가 준이라고 버릴 이유는 없어.",{}],
         ["WORK","work","WORK","dax_share_model","다렌은 결론보다 계산 조건을 먼저 공유한다.","결과만 퍼지면 다음 사람이 같은 실수를 해.",{"knowledge_share":"system"}]
     ],
     "vale":[
-        ["PLAYER","reaction","RELATIONSHIP","vale_patient_player","소렌은 당신이 대답을 재촉하지 않았던 일을 기억한 듯 재생 버튼에서 손을 뗀다.","조금만 있다가 같이 들어요.",{"requires":{"player_axis":"patient"}}],
+        ["PLAYER","reaction","RELATIONSHIP","vale_patient_player","소렌은 재촉하지 않았던 당신을 기억한 듯 재생 버튼에서 손을 뗀다.","조금만 있다가 같이 들어요.",{"requires":{"player_axis":"patient"}}],
         ["DAILY","everyday","DAILY","vale_ear_rest","소렌은 한쪽 이어폰을 빼고 귀 뒤를 천천히 문지른다.","미라 말이 맞았어요. 계속 들으면 진짜 소리도 잡음처럼 돼요.",{}],
         ["RELATIONSHIP","pair","PAIR","vale_eli_quiet_callback","소렌은 루칸이 준 좌표만 적고 그 이유는 묻지 않는다.","설명은 나중에 들어도 돼요. 위치는 지금 필요하니까.",{"target":"eli"}],
         ["WORK","work","WORK","vale_share_signal","소렌은 확인되지 않은 음성은 보내지 않고 반복 간격만 공유한다.","제가 들은 말은 아직 제 거예요. 간격은 모두가 써도 되고요.",{"knowledge_share":"signal"}]
     ],
     "eli":[
-        ["PLAYER","reaction","RELATIONSHIP","eli_skeptical_player","루칸은 당신이 한 번 더 확인하는 걸 보고 이미 두 번째 경로를 띄워 둔다.","비교할 거면 이쪽도 봐.",{"requires":{"player_axis":"skeptical"}}],
+        ["PLAYER","reaction","RELATIONSHIP","eli_skeptical_player","루칸은 한 번 더 확인하는 당신을 보고 이미 두 번째 경로를 띄워 둔다.","비교할 거면 이쪽도 봐.",{"requires":{"player_axis":"skeptical"}}],
         ["DAILY","everyday","DAILY","eli_blank_window","루칸은 화면을 끄고 한동안 창밖 별만 본다.","가끔은 업데이트 안 되는 걸 봐야 해.",{}],
         ["RELATIONSHIP","pair","PAIR","eli_vale_callback","루칸은 소렌의 신호 시각을 들은 뒤 말없이 지도 한 점을 확대한다.","여기면 설명 하나는 줄어.",{"target":"vale"}],
         ["WORK","work","WORK","eli_share_route","루칸은 위험 경로는 즉시 공유하지만 아직 계산 중인 목적지는 남겨 둔다.","가야 할 데랑 갈 수도 있는 데는 다르니까.",{"knowledge_share":"route"}]
     ],
     "lyra":[
-        ["PLAYER","reaction","RELATIONSHIP","lyra_people_first","마렌은 당신이 사람부터 확인하는 걸 보고 시료 상자를 잠시 내려놓는다.","그럼 저는 환경 볼게요. 나중에 서로 바꿔 봐요.",{"requires":{"player_axis":"people_first"}}],
-        ["DAILY","everyday","DAILY","lyra_mira_plant","마렌은 의료실로 보낼 작은 화분의 마른 잎만 떼어 낸다.","미라는 분명 물 주는 걸 또 잊을 테니까요.",{}],
-        ["RELATIONSHIP","work","WORK","lyra_dax_survival","마렌은 다렌의 생존 확률표 옆에 실제 잎 상태를 붙인다.","살아남는다는 숫자에 이 상태도 들어가야 해요.",{}],
+        ["PLAYER","reaction","RELATIONSHIP","lyra_people_first","마렌은 사람부터 확인하는 당신을 보고 시료 상자를 잠시 내려놓는다.","그럼 저는 환경 볼게요. 나중에 서로 바꿔 봐요.",{"requires":{"player_axis":"people_first"}}],
+        ["DAILY","everyday","DAILY","lyra_mira_plant","마렌은 미라에게 보낼 작은 화분의 마른 잎만 떼어 낸다.","미라는 분명 물 주는 걸 또 잊을 테니까요.",{}],
+        ["RELATIONSHIP","work","WORK","lyra_dax_survival","마렌은 생존 확률표 옆에 실제 잎 상태를 붙인다. 표는 다렌이 만든 것이다.","살아남는다는 숫자에 이 상태도 들어가야 해요.",{}],
         ["WORK","work","WORK","lyra_share_risk","마렌은 생존에 직접 영향을 주는 표본 이상은 망설이지 않고 공개한다.","이건 비밀로 두면 안 돼요. 숨 쉬는 문제니까.",{"knowledge_share":"survival"}]
     ]
 }

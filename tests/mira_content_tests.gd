@@ -49,7 +49,7 @@ func test_mira_volume_and_mix() -> void:
         other_n += 1
     var avg := float(other_sum) / maxf(1.0,float(other_n))
     check(all.size() >= 470 and all.size() <= 550,"authored library is inside 0.5.3 target (%d)" % all.size())
-    check(mira_total >= 65 and mira_total <= 82,"Mira authored speaker pool is heroine-dense without runaway volume (%d)" % mira_total)
+    check(mira_total >= 80 and mira_total <= 95,"Mira emotional-anchor library remains deep but bounded across post-0.5.3 updates (%d)" % mira_total)
     check(mira_total >= other_max,"Mira is joint or sole largest authored speaker pool (%d vs %d)" % [mira_total,other_max])
     check(float(mira_total) >= avg + 10.0,"Mira pool is meaningfully above other-crew average (%.1f)" % avg)
     var groups := AstraStorylets053.mira_group_counts()
