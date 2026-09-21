@@ -64,9 +64,15 @@ func _profile_contacts(profile: String, s: AstraGameSession, run: int) -> Array:
         "MINIMAL":
             return [str(order[run % order.size()]),str(order[(run + 3) % order.size()])]
         "SOCIAL":
-            return [str(order[(run+i) % order.size()]) for i in range(6)]
+            var social_contacts: Array = []
+            for i in range(6):
+                social_contacts.append(str(order[(run + i) % order.size()]))
+            return social_contacts
         _:
-            return [str(order[(run*3+i*2) % order.size()]) for i in range(4)]
+            var explorer_contacts: Array = []
+            for i in range(4):
+                explorer_contacts.append(str(order[(run * 3 + i * 2) % order.size()]))
+            return explorer_contacts
 
 func _visit_and_talk(s: AstraGameSession, who: String, explicit_topic: bool = false) -> void:
     if who not in s.active_participants():
