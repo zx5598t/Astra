@@ -26,8 +26,9 @@ func _initialize() -> void:
     if failures.is_empty():
         print("ASTRA 0.5.6 CODEX TESTS OK · %d checks" % checks)
         quit(0)
-    print("ASTRA 0.5.6 CODEX TESTS FAILED · %d/%d" % [failures.size(),checks])
-    quit(1)
+    else:
+        print("ASTRA 0.5.6 CODEX TESTS FAILED · %d/%d" % [failures.size(),checks])
+        quit(1)
 
 func test_catalog_shape() -> void:
     var counts := AstraCodex.observation_counts()
