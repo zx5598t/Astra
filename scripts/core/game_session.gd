@@ -4453,7 +4453,12 @@ func _voyage_scene(scene: Dictionary) -> void:
         memory_state = AstraLivingCrew.remember(memory_state, target, memory_event)
         if who != "" and crew.has(who) and crew.has(target):
             var scene_tag := str(scene.get("tag",""))
-            var authored_social := scene_tag in ["pair","trust","relief","conflict","suspected","danger"] or str(scene.get("category","")) in ["RELATIONSHIP","CONFLICT"]
+            var scene_category := str(scene.get("category",""))
+            var authored_social := scene_tag in ["pair","trust","relief","conflict","suspected","danger"] or scene_category in ["RELATIONSHIP","CONFLICT"]
+            # Keep the 0.5.5 tag effects, but a visibly authored conflict also
+            # leaves tension. This is not inferred from the hidden social theme.
+            if scene_category == "CONFLICT":
+                _adjust_relationship(who,target,"tension",0.035,id,true,true)
             match scene_tag:
                 "pair", "trust", "relief":
                     _adjust_relationship(who,target,"comfort",0.02,id,true,authored_social)
