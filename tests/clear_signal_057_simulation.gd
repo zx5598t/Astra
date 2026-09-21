@@ -20,6 +20,7 @@ func _initialize() -> void:
     if failures.is_empty():
         print("ASTRA 0.5.7 CLEAR SIGNAL SIMULATION OK · %d checks" % checks)
         quit(0)
+        return
     print("ASTRA 0.5.7 CLEAR SIGNAL SIMULATION FAILED · %d/%d" % [failures.size(),checks])
     quit(1)
 
