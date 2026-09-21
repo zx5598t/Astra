@@ -2824,7 +2824,13 @@ func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int =
         if int(tally[candidate]) == top:
             leaders.append(str(candidate))
     var isolated := ""
-    if top > 0 and leaders.size() == 1:
+    # The player may explicitly abstain, but doing so must not let a thin,
+    # accidental NPC plurality decide containment on its own. Without the
+    # explorer's vote, the crew needs a real majority of eligible NPC voters.
+    # A direct player vote keeps the normal unique-plurality rule.
+    var npc_majority := maxi(2, int(ceil(float(voter_snapshot.size()) / 2.0)))
+    var isolation_threshold := 1 if target_id != "" else npc_majority
+    if top >= isolation_threshold and leaders.size() == 1:
         isolated = str(leaders[0])
     vote_cast = true
     last_vote = {
@@ -2832,7 +2838,7 @@ func cast_vote(target_id: String, theory_suspects: Array = [], confidence: int =
         "player_target": target_id, "isolated": isolated, "top": top,
         "tie": leaders.size() > 1 and isolated == "",
         "voters":voter_snapshot,"eligible_targets":target_snapshot,
-        "result_reason":"unique_highest" if isolated != "" else ("all_abstained" if tally.is_empty() else "tie"),
+        "result_reason":"unique_highest" if isolated != "" else ("all_abstained" if tally.is_empty() else ("insufficient_crew_majority" if leaders.size() == 1 and target_id == "" else "tie")),
         "player_state":"abstain" if target_id == "" else "target","ballots":[]
     }
     for voter in voter_snapshot:
@@ -6128,8 +6134,9 @@ func vote_counts() -> Dictionary:
     return result
 
 func vote_result_text() -> String:
-    if str(last_vote.get("isolated","")) != "": return "단독 최다 득표로 격리되었습니다. 최소 득표수 조건은 없습니다."
+    if str(last_vote.get("isolated","")) != "": return "유효한 투표 조건을 충족해 격리되었습니다."
     if last_vote.get("tally",{}).is_empty(): return "전원 기권으로 누구도 격리하지 않았습니다."
+    if str(last_vote.get("result_reason","")) == "insufficient_crew_majority": return "탐사요원이 기권한 가운데 승무원 과반에 미달해 누구도 격리하지 않았습니다."
     return "최다 득표 동률로 누구도 격리하지 않았습니다."
 
 func _build_containment_aftermath(isolated: String) -> Array:
