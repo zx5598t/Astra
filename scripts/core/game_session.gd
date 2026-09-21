@@ -5034,7 +5034,10 @@ func voyage_choose(index: int) -> bool:
     var choices: Array = scene.get("choices",[])
     if int(voyage["line"]) < scene.get("lines",[]).size()-1 or index < 0 or index >= choices.size(): return false
     var choice: Dictionary = choices[index]
-    # FIRST CONTACT only owns the authored first_panel decision. Once that\n    # panel is resolved, CALIBRATION may still surface ordinary authored\n    # choices; those must use the normal voyage choice pipeline.\n    if first_day_flow() and str(scene.get("id","")) == "first_panel":
+    # FIRST CONTACT only owns the authored first_panel decision. Once that
+    # panel is resolved, CALIBRATION may still surface ordinary authored
+    # choices; those must use the normal voyage choice pipeline.
+    if first_day_flow() and str(scene.get("id","")) == "first_panel":
         return _first_choice(str(scene.get("id","")),str(choice.get("effect","")))
     var effect := str(choice["effect"])
     var who := str(scene.get("speaker",""))
