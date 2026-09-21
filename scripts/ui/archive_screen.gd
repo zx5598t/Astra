@@ -222,7 +222,7 @@ func _crew_archive() -> void:
         else:
             for entry in entries:
                 var scope := str(entry.get("scope","OBSERVED"))
-                var scope_label := {"STABLE":"평소의 모습","OBSERVED":"관찰한 기록","ECHO":"잔향"}.get(scope,scope)
+                var scope_label: String = str({"STABLE":"평소의 모습","OBSERVED":"관찰한 기록","ECHO":"잔향"}.get(scope,scope))
                 var heading := "%s · %s" % [scope_label,str(entry.get("title",""))]
                 card.add_child(AstraUI.label(heading,AstraUI.T_META,AstraUI.GOLD if scope=="ECHO" else AstraUI.CYAN))
                 card.add_child(AstraUI.prose(str(entry.get("body","")),AstraUI.T_META,AstraUI.TEXT))
