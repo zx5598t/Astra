@@ -140,12 +140,12 @@ const CHARACTER_OBSERVATIONS = [
     {"id":"mira_familiar_wound","character":"mira","scope":"ECHO","title":"익숙한 손길","body":"처음 겪는 상황인데도 이미 해 본 사람처럼 손이 먼저 움직인 기록이 있다.","spoiler_level":1,"trigger_scenes":["mira_echo"]},
 
     {"id":"rho_hands_first","character":"rho","scope":"STABLE","title":"손이 먼저","body":"문제가 생기면 설명보다 직접 열어 보고 확인하는 편이다.","spoiler_level":0,"trigger_scenes":["rho_awakening"]},
-    {"id":"rho_sena_friction","character":"rho","scope":"OBSERVED","title":"남은 긴장","body":"어떤 항해 기록에서 준과 세나는 서로의 설명을 바로 받아들이지 못한 채 긴장을 남긴 적이 있다.","spoiler_level":1,"relationship_trigger":{"pair":["rho","sena"],"axis":"tension","direction":"UP"}},
+    {"id":"rho_sena_working_after_vote","character":"rho","scope":"OBSERVED","title":"어제는 어제","body":"어떤 항해 기록에서 준과 세나는 판단이 엇갈린 뒤에도 필요한 일을 함께 이어 간 적이 있다.","spoiler_level":1,"relationship_trigger":{"pair":["rho","sena"],"axis":"trust","direction":"UP"}},
     {"id":"rho_mistake","character":"rho","scope":"OBSERVED","title":"내 실수는 내 실수","body":"자기 실수를 사건 흔적과 분리해서 직접 인정한 항해 기록이 있다.","spoiler_level":1,"trigger_scenes":["054_rho_mistake_1"]},
     {"id":"rho_familiar_tools","character":"rho","scope":"ECHO","title":"익숙한 공구","body":"처음 보는 작업인데도 공구 위치를 이미 아는 사람처럼 움직인 기록이 있다.","spoiler_level":1,"trigger_scenes":["rho_echo"]},
 
     {"id":"dax_conditions_first","character":"dax","scope":"STABLE","title":"조건부터","body":"답보다 계산 조건과 입력값을 먼저 확인하는 편이다.","spoiler_level":0,"trigger_scenes":["dax_awakening"]},
-    {"id":"dax_noa_respect","character":"dax","scope":"OBSERVED","title":"기록과 계산","body":"어떤 항해 기록에서 다렌과 노아는 기록 해석을 두고 서로의 전문 판단을 인정한 적이 있다.","spoiler_level":1,"relationship_trigger":{"pair":["dax","noa"],"axis":"respect","direction":"UP"}},
+    {"id":"dax_noa_respect","character":"dax","scope":"OBSERVED","title":"기록과 계산","body":"어떤 항해 기록에서 다렌과 노아는 서로 다른 해석 방식을 남겨 두고 함께 검토한 적이 있다.","spoiler_level":1,"relationship_trigger":{"pair":["dax","noa"],"axis":"trust","direction":"UP"}},
     {"id":"dax_failed_model","character":"dax","scope":"OBSERVED","title":"틀린 모델","body":"맞는 계산이 실제와 어긋나자 자기 식을 고집하기보다 입력부터 다시 받은 기록이 있다.","spoiler_level":1,"trigger_scenes":["054_dax_failed_model_1"]},
     {"id":"dax_familiar_calculation","character":"dax","scope":"ECHO","title":"이미 풀어 본 식","body":"처음 보는 계산인데도 중간 단계를 건너뛴 듯 익숙하게 짚은 기록이 있다.","spoiler_level":1,"trigger_scenes":["dax_echo"]},
 
