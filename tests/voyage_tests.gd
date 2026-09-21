@@ -25,7 +25,8 @@ func close_scene(s: AstraGameSession) -> void:
             s.voyage_next()
 func _initialize() -> void:
     test_exploration_consequences()
-    # 0.6.0 authored calendar: one crewmate joins on Days 2-5.\n    var expected := [4,5,6,7,8,8,8]
+    # 0.6.0 authored calendar: one crewmate joins on Days 2-5.
+    var expected := [4,5,6,7,8,8,8]
     var ids := ["CALIBRATION"] + AstraCaseCatalog.CAMPAIGN
     var memory := {}
     for i in range(ids.size()):
@@ -133,7 +134,16 @@ func test_exploration_consequences() -> void:
     pity.setup("CALIBRATION",8)
     pity.begin_voyage()
     close_scene(pity)
-    # 0.6.0 FIRST CONTACT deliberately requires one direct investigation.\n    # Re-entering the room must not auto-complete the core discovery.\n    for i in range(12):\n        pity.voyage_move("medbay")\n        close_scene(pity)\n    check(not pity.voyage["goal_done"],"FIRST CONTACT core discovery still requires direct inspection")\n    check(pity.voyage_inspect("pod"),"FIRST CONTACT direct panel inspection works")\n    close_scene(pity)\n    check(pity.voyage["goal_done"],"direct inspection completes the FIRST CONTACT discovery")\n    var last := ""
+    # 0.6.0 FIRST CONTACT deliberately requires one direct investigation.
+    # Re-entering the room must not auto-complete the core discovery.
+    for i in range(12):
+        pity.voyage_move("medbay")
+        close_scene(pity)
+    check(not pity.voyage["goal_done"],"FIRST CONTACT core discovery still requires direct inspection")
+    check(pity.voyage_inspect("pod"),"FIRST CONTACT direct panel inspection works")
+    close_scene(pity)
+    check(pity.voyage["goal_done"],"direct inspection completes the FIRST CONTACT discovery")
+    var last := ""
     var variants := {}
     pity.voyage_visit_person("mira")
     close_scene(pity)
