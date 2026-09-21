@@ -112,8 +112,13 @@ static func _focus_budget_multiplier(scene: Dictionary, pinned_question: Diction
     if distinct < 2:
         return 1.0
     if distinct == 2:
-        return 0.90 if direct_pin else 0.72
-    return 0.72 if direct_pin else 0.40
+        # Once two high-salience threads are already visible, opening a third
+        # should be uncommon unless the player explicitly pinned it.
+        return 0.78 if direct_pin else 0.28
+    # Four-or-more unrelated focus threads are allowed, but should be rare.
+    # Continuations, FOLLOWUP, mandatory content and explicit topics bypass
+    # this branch above, so this only suppresses genuinely new threads.
+    return 0.55 if direct_pin else 0.10
 
 static func _speaker_multiplier(scene: Dictionary, pinned_question: Dictionary, focus_context: Dictionary) -> float:
     var who := str(scene.get("speaker",""))
