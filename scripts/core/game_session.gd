@@ -4932,6 +4932,14 @@ func voyage_talk(who: String, topic: String = "") -> bool:
     return true
 
 func voyage_ask_goal(who: String) -> bool:
+    if contact_flow():
+        if phase != "EXPLORE" or who not in voyage_people() or not voyage.get("scene",{}).is_empty():
+            return false
+        # Guidance points at a real object but never awards evidence.
+        voyage["hint_requested"] = true
+        notice.emit("hint",{"text":str(contact_objective().get("text",""))})
+        changed.emit()
+        return true
     if phase != "EXPLORE" or who not in voyage_people() or not voyage["scene"].is_empty():
         return false
     var chapter := AstraVoyageContent.chapter(case_id)
