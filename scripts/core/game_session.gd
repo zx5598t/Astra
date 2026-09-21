@@ -4387,6 +4387,10 @@ func _record_focus_exposure(scene: Dictionary) -> void:
         return
     var id := str(scene.get("id",""))
     var family := AstraStoryletScheduler.family_key(scene)
+    # Decide continuation against the already-visible context before appending
+    # this scene. A follow-up may use a different authored family id while still
+    # belonging to the same player-visible thread.
+    var continuation := AstraStoryletScheduler.is_continuation(scene,_focus_context())
     var event := {
         "scene":id,
         "family":family,
@@ -4396,15 +4400,17 @@ func _record_focus_exposure(scene: Dictionary) -> void:
         "tag":str(scene.get("tag","")),
         "salience":level,
         "speaker":str(scene.get("speaker","")),
+        "continuation":continuation,
         "source":"visible_scene"
     }
     voyage["loop_focus_events"].append(event)
     while voyage["loop_focus_events"].size() > 24:
         voyage["loop_focus_events"].pop_front()
     # Mandatory onboarding/progression is visible and recorded but does not
-    # consume the soft 2-3 thread budget.
+    # consume the soft 2-3 thread budget. A genuine continuation also does not
+    # open another distinct thread merely because its authored family id differs.
     if level in ["FOLLOWUP","FOCUS"] and family != "":
-        if family not in voyage["loop_focus_families"]:
+        if not continuation and family not in voyage["loop_focus_families"]:
             voyage["loop_focus_families"].append(family)
         var counts: Dictionary = voyage.get("loop_focus_counts",{})
         counts[family] = int(counts.get(family,0)) + 1
