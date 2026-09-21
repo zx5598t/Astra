@@ -10,7 +10,7 @@
 
 content audit은 608개 library 자체를 경고하지 않고 위 runtime gate로 노출 밀도를 검증한다. 반복 opener가 5회 이상이면 단순 단어 목록 대신 scene ID·speaker·action preview를 출력해 실제 편집 대상으로 바로 연결한다.
 
-구현 기준 commit `dc3755eeac2b3420418daf1acac4d777cd8df05c`, GitHub Actions run `35572924051`에서 Linux validation / Windows validation / Windows release-candidate가 모두 GREEN이었다. VERSION 0.5.7 승격 commit `dc4292bcd53c64fa2128593a6e35c788f2c8f7c7`, final run `35573583450`도 모두 GREEN이며 `ASTRA-0.5.7-windows.zip`(92,844,194 bytes)의 SHA-256은 `a9d1bdb0959c9d2dd3a51953daed48e8d146a7e33d17a1de862e1579d0a2f48b`이다.
+구현 기준 commit `dc3755eeac2b3420418daf1acac4d777cd8df05c`, GitHub Actions run `35572924051`에서 Linux validation / Windows validation / Windows release-candidate가 모두 GREEN이었다. VERSION 0.5.7 승격 commit `dc4292bcd53c64fa2128593a6e35c788f2c8f7c7`, RC run `35573583450`도 모두 GREEN이며 그 사전 RC ZIP(92,844,194 bytes)의 SHA-256은 `a9d1bdb0959c9d2dd3a51953daed48e8d146a7e33d17a1de862e1579d0a2f48b`이다. 이후 공식 tag commit `e4b20a77e7295ff4afa4c4ed086f738272d9409e`의 Windows run `35575857561`도 GREEN이었고, GitHub Release `v0.5.7`은 artifact `10627638550`의 `ASTRA-0.5.7-windows.zip`(92,844,194 bytes, SHA-256 `5ea10cb171ce3d42e66da54c3c14d2adff6f9648a3d86e8166146c016a0846ec`)을 공식 asset으로 사용한다.
 
 # 0.5.6 · ECHOES · 2026-09-21
 
