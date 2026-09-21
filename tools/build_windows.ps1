@@ -39,7 +39,7 @@ try {
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/editorial_054_report.gd', '--', '--loops=20') "$logDir\editorial-054.log" 'ASTRA 0.5.4 HUMAN EDITING REPORT OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/story_consistency_tests.gd') "$logDir\story-consistency.log" 'ASTRA STORY CONSISTENCY TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/first_contact_058_tests.gd') "$logDir\first-contact-058.log" 'ASTRA 0.5.8 FIRST CONTACT TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/contact_visual_058.gd') "$logDir\contact-visual-058.log" 'ASTRA 0.5.8 CONTACT VISUAL QA OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/contact_visual_058.gd') "$logDir\contact-visual-058.log" 'ASTRA 0.5.8 VISUAL CAPTURE OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/reset_060_tests.gd') "$logDir\reset-060.log" 'ASTRA 0.6.0 RESET TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/vote_abstain_060.gd') "$logDir\vote-abstain-060.log" 'ASTRA 0.6.0 NPC VOTE REGRESSION OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/content_audit.gd') "$logDir\content-audit.log" 'ASTRA CONTENT AUDIT OK'
