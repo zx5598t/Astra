@@ -159,7 +159,7 @@ static func weight(scene: Dictionary, seen_ever: Dictionary, recent_families: Ar
     # 0.5.4 follow-ups should not disappear under ordinary variety. This is
     # still a weight, never a forced quest.
     if str(scene.get("intent","")) == "micro_arc":
-        score *= 1.50
+        score *= 1.22
     if str(scene.get("category","")) == "CONSEQUENCE":
         score *= 1.35
     if str(scene.get("routine_relevance","")) != "":
