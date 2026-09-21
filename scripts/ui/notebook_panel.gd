@@ -89,6 +89,11 @@ func refresh() -> void:
         _clue_list.add_child(AstraUI.label("확인한 사실",20,AstraUI.CYAN))
         for note in session.voyage.get("notes",[]):
             _clue_list.add_child(AstraUI.prose(str(note),17,AstraUI.TEXT))
+        var motive_notes: Array = session.voyage.get("motive_observations",[])
+        if not motive_notes.is_empty():
+            _clue_list.add_child(AstraUI.label("행동의 이유를 추적한 흔적",18,AstraUI.MUTED))
+            for observation in motive_notes.slice(maxi(0,motive_notes.size()-3)):
+                _clue_list.add_child(AstraUI.prose(str(observation),15,AstraUI.DIM))
         var routine_notes: Array = session.voyage.get("routine_observations",[])
         if not routine_notes.is_empty():
             _clue_list.add_child(AstraUI.label("직접 본 변화",18,AstraUI.MUTED))
@@ -112,7 +117,9 @@ func refresh() -> void:
                     var knower := str(knower_raw)
                     names.append("나" if knower == "player" else session.name_of(knower))
                 var public_text := "공개됨" if bool(entry.get("public",false)) else "아직 비공개"
-                _clue_list.add_child(AstraUI.prose("%s · 알고 있음: %s · %s" % [label," / ".join(PackedStringArray(names)),public_text],15,AstraUI.DIM))
+                var source_type := str(session.voyage.get("information_sources",{}).get(fact_id,"DIRECT"))
+                var source_text := AstraForeknowledgeModel.source_label(source_type)
+                _clue_list.add_child(AstraUI.prose("%s · %s · 알고 있음: %s · %s" % [label,source_text," / ".join(PackedStringArray(names)),public_text],15,AstraUI.DIM))
         if int(session.voyage.get("loop",0)) > 0:
             var differences := session.loop_difference_summary()
             if not differences.is_empty():
