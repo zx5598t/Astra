@@ -25,7 +25,7 @@ const CHAPTERS := {
         "fact": "destination",
         "discovery": "귀환 승인서와 탐사 명령서가 같은 날 서명됐다. 두 문서 모두 원본이다.",
         "outro": "통신이 잠깐 열린다. 돌아온 것은 당신이 아직 하지 않은 말이다.",
-        "awake": "",
+        "awake": "sena",
         "room": "comms"
     },
     "GLASS_GARDEN": {
@@ -38,7 +38,7 @@ const CHAPTERS := {
         "fact": "security",
         "discovery": "세나의 순찰 기록에는 준과 함께 근무한 날이 있다. 준의 배치 기록에는 그날이 없다.",
         "outro": "세나가 열쇠를 돌리기 전에 문이 열린다. 안쪽 손잡이에 누군가의 손자국이 남아 있다.",
-        "awake": "sena",
+        "awake": "vale",
         "room": "security"
     },
     "ECHO_WARD": {
@@ -51,7 +51,7 @@ const CHAPTERS := {
         "fact": "signal",
         "discovery": "수면 중인 소렌의 음성이 통신 기록에 남아 있다. 같은 시간 포드는 닫혀 있었다.",
         "outro": "녹음 속 소렌이 숨을 들이마신다. 옆에 앉은 소렌은 숨을 멈춘다.",
-        "awake": "vale",
+        "awake": "eli",
         "room": "comms"
     },
     "SILENT_ORBIT": {
@@ -64,7 +64,7 @@ const CHAPTERS := {
         "fact": "arrival",
         "discovery": "ASTRA — 목적지 도착 완료. 기록 날짜는 현재보다 19년 전이다.",
         "outro": "루칸이 창밖을 본다. 항로 화면의 별은 움직이는데, 창밖의 별은 그대로다.",
-        "awake": "eli",
+        "awake": "lyra",
         "room": "navigation"
     },
     "RED_SHIFT": {
@@ -77,7 +77,7 @@ const CHAPTERS := {
         "fact": "sample",
         "discovery": "씨앗의 채집 장소는 ASTRA의 목적지다. 채집일은 출항일보다 이르다.",
         "outro": "마렌이 흙을 봉투에 돌려놓는다. 뿌리에 묻은 작은 이름표는 당신의 필체다.",
-        "awake": "lyra",
+        "awake": "",
         "room": "garden"
     },
     "LAST_LIGHT": {
