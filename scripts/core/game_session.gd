@@ -4731,7 +4731,12 @@ func _pair_scene_context_ok(scene: Dictionary) -> bool:
 func voyage_talk(who: String, topic: String = "") -> bool:
     if phase != "EXPLORE" or who not in voyage_people() or who not in voyage.get("met", []) or not voyage["scene"].is_empty():
         return false
-    if who == "mira" and case_id in ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"] and int(voyage.get("mira_optional_exposure",0)) >= 4:
+    var speaker_exposure_now: Dictionary = voyage.get("speaker_exposure",{})
+    var mira_exposure_now := maxi(
+        int(voyage.get("mira_optional_exposure",0)),
+        int(speaker_exposure_now.get("mira",0))
+    )
+    if who == "mira" and case_id in ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"] and mira_exposure_now >= 4:
         _voyage_scene({"id":"053_mira_exposure_cap","speaker":"mira","tag":"silence","action":"미라는 하던 검사를 마무리하며 짧게 손을 들어 보인다. 지금은 자기 일에 집중하는 편이 좋아 보인다.","lines":[],"choices":[]})
         _voyage_tick(false)
         changed.emit()
@@ -4816,6 +4821,24 @@ func voyage_talk(who: String, topic: String = "") -> bool:
                 eligible = canon_followup_057
             elif not meaningful_055.is_empty():
                 eligible = meaningful_055
+        # If the player returns to a person whose authored thread is already
+        # visible, continue that thread before opening another unrelated one.
+        # If no thread is visible yet, a repeated conversation with an actor
+        # whose active micro-arc can start is treated as deliberate player focus.
+        # This uses only player-visible exposure plus authored scheduler state;
+        # hidden truth/Null/motive data never enters this decision.
+        var continuation_candidates_057: Array = eligible.filter(func(item):
+            return AstraStoryletScheduler.is_continuation(item,focus_context)
+        )
+        if not continuation_candidates_057.is_empty():
+            eligible = continuation_candidates_057
+        elif int(voyage.get("speaker_exposure",{}).get(who,0)) >= 1 and voyage.get("loop_focus_families",[]).size() < 2:
+            var arc_starts_057: Array = eligible.filter(func(item):
+                return str(item.get("chain_id","")) != "" and int(item.get("requires_stage",-1)) == 0
+            )
+            if not arc_starts_057.is_empty():
+                eligible = arc_starts_057
+
         # Ordinary recent-family repetition is still suppressed, but an actual
         # current-loop continuation and an explicit topic survive this prefilter
         # so the scheduler can make the final weighted decision.
