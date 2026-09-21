@@ -5498,10 +5498,23 @@ func daily_social_summary(day_index: int = -1) -> Dictionary:
     }
 
 func night_feedback_summary() -> Dictionary:
+    # Night is for immediate authored consequences only. Relationship/opinion
+    # changes are deferred to the next briefing so the same sentence is not
+    # repeated on two consecutive screens.
     var summary := daily_social_summary(day)
-    summary["relationship_changes"] = Array(summary.get("relationship_changes",[])).slice(0,mini(2,Array(summary.get("relationship_changes",[])).size()))
+    summary["relationship_changes"] = []
+    summary["active_tensions"] = []
+    summary["opinion_changes"] = []
     summary["consequences"] = Array(summary.get("consequences",[])).slice(0,mini(2,Array(summary.get("consequences",[])).size()))
+    return summary
+
+func briefing_social_summary(day_index: int) -> Dictionary:
+    # Briefing carries forward durable social interpretation, not the immediate
+    # consequence line the player could already have read at night.
+    var summary := daily_social_summary(day_index)
+    summary["relationship_changes"] = Array(summary.get("relationship_changes",[])).slice(0,mini(2,Array(summary.get("relationship_changes",[])).size()))
     summary["opinion_changes"] = Array(summary.get("opinion_changes",[])).slice(0,mini(1,Array(summary.get("opinion_changes",[])).size()))
+    summary["consequences"] = []
     return summary
 
 func relationship_between(a_id: String, b_id: String) -> Dictionary:
