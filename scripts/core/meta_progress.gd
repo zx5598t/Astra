@@ -316,6 +316,13 @@ func completed_campaign_cases() -> int:
 func campaign_complete() -> bool:
     return completed_campaign_cases() >= CAMPAIGN_CASES.size()
 
+func recommended_case_id_for_slot(slot: int) -> String:
+    var chapters: Array = voyage_memory_for_slot(slot).get("chapters",[])
+    for case_id in [AstraCaseCatalog.CALIBRATION] + CAMPAIGN_CASES:
+        if str(case_id) not in chapters:
+            return str(case_id)
+    return str(CAMPAIGN_CASES[CAMPAIGN_CASES.size() - 1])
+
 func recommended_case_id() -> String:
     # Keep historical scores while giving returning 0.4 players the new opening.
     # Completed chapters are recorded separately from historical case wins.
