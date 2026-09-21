@@ -187,7 +187,7 @@ func _begin_first_run() -> void:
 func _begin_new_case() -> void:
     var free_slot: int = app.first_free_slot()
     if free_slot >= 0:
-        app.start_case(app.meta.recommended_case_id(), app.selected_protocol, free_slot)
+        app.start_case(app.meta.recommended_case_id_for_slot(free_slot), app.selected_protocol, free_slot)
         return
     # All three slots are in use, so the player has to say which one to reuse.
     var box := AstraUI.vbox(8)
@@ -201,7 +201,7 @@ func _begin_new_case() -> void:
         button.pressed.connect(func():
             if not holder.is_empty() and is_instance_valid(holder[0]):
                 holder[0].close(-1)
-            app.start_case(app.meta.recommended_case_id(), app.selected_protocol, slot)
+            app.start_case(app.meta.recommended_case_id_for_slot(slot), app.selected_protocol, slot)
         )
         box.add_child(button)
     holder.append(AstraModal.open(app.overlay_root(), "덮어쓸 자리를 고르세요", box, [["취소", AstraUI.MUTED]], Callable(), 560.0))
