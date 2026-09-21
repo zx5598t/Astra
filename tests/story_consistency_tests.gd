@@ -25,6 +25,7 @@ func close_scene(s: AstraGameSession) -> void:
 
 func _initialize() -> void:
     test_first_play_regression()
+    test_story_framing()
     test_narrative_continuity()
     if failures.is_empty():
         print("ASTRA STORY CONSISTENCY TESTS OK · %d checks" % checks)
@@ -70,6 +71,21 @@ func test_first_play_regression() -> void:
     check(s.outcome == "CONTINUE", "CALIBRATION: no win/lose judgement")
     # The phases a first-time player must never be asked to use.
     check(s.phase not in ["MEETING", "VOTE", "NIGHT"], "CALIBRATION: never reaches meeting/vote/night")
+
+# ---------------------------------------------------------------- story framing
+
+func test_story_framing() -> void:
+    var ids := ["CALIBRATION"] + AstraCaseCatalog.CAMPAIGN
+    var resolved_lines: Array[String] = []
+    for case_id in ids:
+        var chapter := AstraVoyageContent.chapter(str(case_id))
+        for key in ["situation", "goal", "discovery", "resolved", "open_question", "outro", "next_hook"]:
+            check(str(chapter.get(key, "")).strip_edges() != "", "%s: story framing has %s" % [case_id, key])
+        var resolved := str(chapter.get("resolved", ""))
+        check(resolved not in resolved_lines, "%s: local resolution is chapter-specific" % case_id)
+        resolved_lines.append(resolved)
+        check(str(chapter.get("resolved", "")) != str(chapter.get("open_question", "")),
+            "%s: resolved fact and remaining question are distinct" % case_id)
 
 # ---------------------------------------------------------------- §S continuity
 
