@@ -4308,6 +4308,12 @@ func voyage_move(room: String, greet: bool = true) -> bool:
     voyage["room"] = room
     if room not in voyage["visits"]:
         voyage["visits"].append(room)
+    # FIRST CONTACT is a deliberately bounded tutorial: moving inside the
+    # medbay must not spawn autonomous/awakening chatter that can cover the
+    # required panel and turn a harmless move into a progression blocker.
+    if first_day_flow():
+        changed.emit()
+        return true
     _voyage_tick(greet)
     _observe_routine_room(room)
     if greet and voyage["scene"].is_empty():
