@@ -32,7 +32,7 @@ const TOOLTIPS = {
     "night_secure": "한 구역을 감시해 그날 밤의 증거 인멸을 막습니다.",
     "night_backup": "그 구역의 기록을 복사해 둡니다. 지워져도 남습니다.",
     "night_rest": "쉽니다. 다음 날 대화 여유가 늘지만 아무도 지키지 못합니다.",
-    "auto": "대사를 자동으로 넘깁니다. 중요한 대사에서는 멈춥니다.",
+    "auto": "회의 발언을 자동으로 넘깁니다. 중요한 발언과 선택이 필요한 순간에는 멈춥니다.",
     "log": "지금까지 나온 대사를 처음부터 다시 봅니다."
 }
 
@@ -124,4 +124,95 @@ static func topics(unlocked_list: Array) -> Array:
         if needs != "" and not (needs in unlocked_list):
             continue
         result.append(topic)
+    return result
+
+
+# ---------------------------------------------------------------- 0.5.6 character observations
+#
+# These are not omniscient biographies. They are short observations the player
+# can keep only after actually seeing the matching scene or visible social beat.
+# OBSERVED/ECHO wording deliberately stays compatible with histories that may
+# differ in another loop.
+const CHARACTER_OBSERVATIONS = [
+    {"id":"mira_baseline_care","character":"mira","scope":"STABLE","title":"먼저 보는 사람","body":"다른 사람의 상태를 먼저 확인하는 편이다.","spoiler_level":0,"trigger_scenes":["mira_awakening"]},
+    {"id":"mira_medical_habit","character":"mira","scope":"STABLE","title":"상태부터","body":"문제가 생기면 결론보다 사람의 상태를 먼저 확인한다.","spoiler_level":0,"trigger_scenes":["mira_work"]},
+    {"id":"mira_self_neglect","character":"mira","scope":"OBSERVED","title":"마지막 환자","body":"어떤 항해에서 모두의 검사표를 채운 뒤 자기 이름 옆 칸만 비워 둔 적이 있다.","spoiler_level":1,"trigger_scenes":["054_mira_self_neglect_1"]},
+    {"id":"mira_familiar_wound","character":"mira","scope":"ECHO","title":"익숙한 손길","body":"처음 겪는 상황인데도 이미 해 본 사람처럼 손이 먼저 움직인 기록이 있다.","spoiler_level":1,"trigger_scenes":["mira_echo"]},
+
+    {"id":"rho_hands_first","character":"rho","scope":"STABLE","title":"손이 먼저","body":"문제가 생기면 설명보다 직접 열어 보고 확인하는 편이다.","spoiler_level":0,"trigger_scenes":["rho_awakening"]},
+    {"id":"rho_sena_working_after_vote","character":"rho","scope":"OBSERVED","title":"어제는 어제","body":"어떤 항해 기록에서 준과 세나는 판단이 엇갈린 뒤에도 필요한 일을 함께 이어 간 적이 있다.","spoiler_level":1,"relationship_trigger":{"pair":["rho","sena"],"axis":"trust","direction":"UP"}},
+    {"id":"rho_mistake","character":"rho","scope":"OBSERVED","title":"내 실수는 내 실수","body":"자기 실수를 사건 흔적과 분리해서 직접 인정한 항해 기록이 있다.","spoiler_level":1,"trigger_scenes":["054_rho_mistake_1"]},
+    {"id":"rho_familiar_tools","character":"rho","scope":"ECHO","title":"익숙한 공구","body":"처음 보는 작업인데도 공구 위치를 이미 아는 사람처럼 움직인 기록이 있다.","spoiler_level":1,"trigger_scenes":["rho_echo"]},
+
+    {"id":"dax_conditions_first","character":"dax","scope":"STABLE","title":"조건부터","body":"답보다 계산 조건과 입력값을 먼저 확인하는 편이다.","spoiler_level":0,"trigger_scenes":["dax_awakening"]},
+    {"id":"dax_noa_respect","character":"dax","scope":"OBSERVED","title":"기록과 계산","body":"어떤 항해 기록에서 다렌과 노아는 서로 다른 해석 방식을 남겨 두고 함께 검토한 적이 있다.","spoiler_level":1,"relationship_trigger":{"pair":["dax","noa"],"axis":"trust","direction":"UP"}},
+    {"id":"dax_failed_model","character":"dax","scope":"OBSERVED","title":"틀린 모델","body":"맞는 계산이 실제와 어긋나자 자기 식을 고집하기보다 입력부터 다시 받은 기록이 있다.","spoiler_level":1,"trigger_scenes":["054_dax_failed_model_1"]},
+    {"id":"dax_familiar_calculation","character":"dax","scope":"ECHO","title":"이미 풀어 본 식","body":"처음 보는 계산인데도 중간 단계를 건너뛴 듯 익숙하게 짚은 기록이 있다.","spoiler_level":1,"trigger_scenes":["dax_echo"]},
+
+    {"id":"noa_exact_words","character":"noa","scope":"STABLE","title":"정확한 문장","body":"뜻이 비슷해도 실제로 들은 문장과 추측한 문장을 구분하려 한다.","spoiler_level":0,"trigger_scenes":["noa_awakening"]},
+    {"id":"noa_record_habit","character":"noa","scope":"STABLE","title":"경로를 남기는 사람","body":"내용만큼 누가 언제 기록을 만졌는지도 중요하게 본다.","spoiler_level":0,"trigger_scenes":["noa_work"]},
+    {"id":"noa_copy","character":"noa","scope":"OBSERVED","title":"별도 사본","body":"원본이 바뀔 가능성을 의심해 확인되지 않은 사본을 공개 기록과 분리해 둔 항해 기록이 있다.","spoiler_level":1,"trigger_scenes":["054_noa_private_copy_1"]},
+    {"id":"noa_familiar_record","character":"noa","scope":"ECHO","title":"남겨 둔 자리","body":"처음 보는 기록인데도 비어 있어야 할 자리부터 확인한 듯한 순간이 있었다.","spoiler_level":1,"trigger_scenes":["noa_echo"]},
+
+    {"id":"sena_risk_first","character":"sena","scope":"STABLE","title":"위험부터","body":"말보다 먼저 위험 요소와 출입 경로를 확인하는 편이다.","spoiler_level":0,"trigger_scenes":["sena_awakening"]},
+    {"id":"sena_patrol_habit","character":"sena","scope":"STABLE","title":"문을 보는 사람","body":"사람과 이야기하는 동안에도 출입구와 주변 위험을 놓치지 않는다.","spoiler_level":0,"trigger_scenes":["sena_work"]},
+    {"id":"sena_overprotection","character":"sena","scope":"OBSERVED","title":"한 겹 더","body":"어떤 항해에서 안전을 위해 원래 절차보다 강한 차단을 걸어 둔 적이 있다.","spoiler_level":1,"trigger_scenes":["054_sena_overprotection_1"]},
+    {"id":"sena_familiar_guard","character":"sena","scope":"ECHO","title":"먼저 막은 길","body":"아직 위험이 드러나기 전인데도 특정 길을 먼저 막은 듯한 기록이 있다.","spoiler_level":1,"trigger_scenes":["sena_echo"]},
+
+    {"id":"vale_signal_first","character":"vale","scope":"STABLE","title":"신호의 간격","body":"내용을 단정하기보다 반복 간격과 잡음처럼 검증할 수 있는 부분부터 말한다.","spoiler_level":0,"trigger_scenes":["vale_awakening"]},
+    {"id":"vale_silence","character":"vale","scope":"STABLE","title":"듣지 않는 시간","body":"통신 장비를 끄고 아무것도 듣지 않는 시간이 필요하다는 걸 알고 있다.","spoiler_level":0,"trigger_scenes":["vale_work"]},
+    {"id":"vale_listening_fatigue","character":"vale","scope":"OBSERVED","title":"너무 오래 들은 밤","body":"어떤 항해에서 신호를 놓칠까 봐 쉬지 않고 듣다가 스스로의 판단이 느려진 적이 있다.","spoiler_level":1,"trigger_scenes":["054_vale_listening_fatigue_1"]},
+    {"id":"vale_familiar_voice","character":"vale","scope":"ECHO","title":"낯익은 주파수","body":"처음 잡힌 신호인데도 주파수를 이미 알고 있는 듯 반응한 기록이 있다.","spoiler_level":1,"trigger_scenes":["vale_echo"]},
+
+    {"id":"eli_route_first","character":"eli","scope":"STABLE","title":"전체 경로","body":"한 지점보다 전체 경로와 빠져나갈 길을 먼저 보는 편이다.","spoiler_level":0,"trigger_scenes":["eli_awakening"]},
+    {"id":"eli_navigation_habit","character":"eli","scope":"STABLE","title":"말보다 경로","body":"걱정을 길게 설명하기보다 안전한 길을 먼저 잡아 주는 쪽에 가깝다.","spoiler_level":0,"trigger_scenes":["eli_work"]},
+    {"id":"eli_risk_route","character":"eli","scope":"OBSERVED","title":"짧은 길의 책임","body":"어떤 항해에서 짧고 위험한 길과 길고 안정적인 길 사이의 책임을 직접 떠안은 적이 있다.","spoiler_level":1,"trigger_scenes":["054_eli_risk_route_1"]},
+    {"id":"eli_familiar_path","character":"eli","scope":"ECHO","title":"가 본 적 없는 길","body":"처음 지나는 구간인데도 흔들림이 적은 길을 이미 아는 사람처럼 고른 기록이 있다.","spoiler_level":1,"trigger_scenes":["eli_echo"]},
+
+    {"id":"lyra_living_system","character":"lyra","scope":"STABLE","title":"살아 있는 계통","body":"당장 한 사람뿐 아니라 사람들이 계속 살아갈 환경까지 함께 본다.","spoiler_level":0,"trigger_scenes":["lyra_awakening"]},
+    {"id":"lyra_ecology_habit","character":"lyra","scope":"STABLE","title":"버리지 않는 기준","body":"죽은 부분이 있다고 전체를 버리기보다 살아 있는 부분을 먼저 가려낸다.","spoiler_level":0,"trigger_scenes":["lyra_work"]},
+    {"id":"lyra_save_sample","character":"lyra","scope":"OBSERVED","title":"표본 하나","body":"어떤 항해에서 자원이 부족한 상황에서도 표본 하나를 더 살려 둘 방법을 찾은 적이 있다.","spoiler_level":1,"trigger_scenes":["054_lyra_save_sample_1"]},
+    {"id":"lyra_familiar_growth","character":"lyra","scope":"ECHO","title":"익숙한 생장","body":"처음 본 생장 상태인데도 다음 변화를 예상한 듯 손이 먼저 움직인 기록이 있다.","spoiler_level":1,"trigger_scenes":["lyra_echo"]}
+]
+
+static func character_entry(entry_id: String) -> Dictionary:
+    for entry in CHARACTER_OBSERVATIONS:
+        if str(entry.get("id","")) == entry_id:
+            return Dictionary(entry).duplicate(true)
+    return {}
+
+static func character_entries(character_id: String) -> Array:
+    var result: Array = []
+    for entry in CHARACTER_OBSERVATIONS:
+        if str(entry.get("character","")) == character_id:
+            result.append(Dictionary(entry).duplicate(true))
+    return result
+
+static func unlocks_for_scene(scene_id: String) -> Array:
+    var result: Array = []
+    for entry in CHARACTER_OBSERVATIONS:
+        if scene_id in Array(entry.get("trigger_scenes",[])):
+            result.append(str(entry.get("id","")))
+    return result
+
+static func relationship_unlocks(a_id: String, b_id: String, axis: String, direction: String) -> Array:
+    var result: Array = []
+    for entry in CHARACTER_OBSERVATIONS:
+        var trigger: Dictionary = entry.get("relationship_trigger",{})
+        if trigger.is_empty():
+            continue
+        var pair: Array = trigger.get("pair",[])
+        if pair.size() != 2:
+            continue
+        var pair_matches := (str(pair[0]) == a_id and str(pair[1]) == b_id) or (str(pair[0]) == b_id and str(pair[1]) == a_id)
+        if pair_matches and str(trigger.get("axis","")) == axis and str(trigger.get("direction","")) == direction:
+            result.append(str(entry.get("id","")))
+    return result
+
+static func observation_counts() -> Dictionary:
+    var result := {"TOTAL":0,"STABLE":0,"OBSERVED":0,"ECHO":0}
+    for entry in CHARACTER_OBSERVATIONS:
+        var scope := str(entry.get("scope","OBSERVED"))
+        result["TOTAL"] = int(result["TOTAL"]) + 1
+        result[scope] = int(result.get(scope,0)) + 1
     return result

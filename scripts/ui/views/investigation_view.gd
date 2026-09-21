@@ -24,11 +24,19 @@ func refresh() -> void:
     var session: AstraGameSession = screen.session
     AstraUI.clear(_rooms)
     var recommended: Array = session.recommended_rooms()
-    # AstraGameSession.tutorial_active() is permanently false in normal play
-    # (see game_session.gd); the one-target highlight below instead targets
-    # DEAD_AIR's first day, the second chapter and the first time a player
-    # reaches this older investigation screen, so it still gets a gentle nudge.
-    var first_time_guidance := session.case_id == "DEAD_AIR" and session.day == 1
+    # 0.5.1: one pulse means one next action. DEAD_AIR keeps guidance through
+    # its single investigation, GLASS_GARDEN guides each of its two steps, and
+    # ECHO_WARD only nudges the first investigation before free exploration.
+    var guidance_active := session.day == 1 and session.case_id in ["DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD"]
+    if session.case_id == "ECHO_WARD" and not session.found_clues().is_empty():
+        guidance_active = false
+    var guide_room := ""
+    if guidance_active:
+        for candidate in recommended:
+            var state := session.room_status(str(candidate))
+            if int(state.get("remaining", 0)) > 0:
+                guide_room = str(candidate)
+                break
     for room in session.case_data["rooms"]:
         var id := str(room["id"])
         var status := session.room_status(id)
@@ -54,7 +62,7 @@ func refresh() -> void:
         _rooms.add_child(button)
         # The recommended room is ringed on a first-time player's first day,
         # so they do not spend the first minute hunting for where to click.
-        AstraUI.set_tutorial_nudge(button, wanted and id != _room_id and first_time_guidance)
+        AstraUI.set_tutorial_nudge(button, guidance_active and id == guide_room and id != _room_id)
     AstraUI.clear(_stage)
     var art := AstraUI.thumb(AstraArt.room(_room_id),Vector2.ZERO)
     art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -72,6 +80,12 @@ func refresh() -> void:
     caption.add_child(AstraUI.label("이동은 무료 · 조사 지점 1곳당 1 행동", AstraUI.T_META, AstraUI.MUTED))
 
     var points := session.investigation_points(_room_id)
+    var guide_point := -1
+    if guidance_active and _room_id == guide_room:
+        for index in range(points.size()):
+            if bool(points[index].get("available", false)):
+                guide_point = index
+                break
     for i in range(points.size()):
         var point: Dictionary = points[i]
         var pos: Vector2 = point["position"]
@@ -104,7 +118,7 @@ func refresh() -> void:
         button.disabled = not available
         button.pressed.connect(_inspect.bind(str(point["id"])))
         box.add_child(button)
-        AstraUI.set_tutorial_nudge(button, available and first_time_guidance)
+        AstraUI.set_tutorial_nudge(button, guidance_active and i == guide_point)
     AstraUI.clear(_latest)
     var clue := session.clue_by_id(_last_clue_id)
     if not clue.is_empty():

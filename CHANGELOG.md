@@ -1,3 +1,106 @@
+# 0.5.7 · CLEAR SIGNAL · 2026-09-21
+
+0.5.6 ECHOES까지 축적된 608개의 authored voyage/reactive scene과 Living Crew, Routine, Micro-Arc, Consequence, Motive, Incident, Codex를 삭제하거나 다시 만들지 않고 **한 loop에서 보이는 고중요도 서사의 밀도와 연결 순서**를 정리했다. 신규 authored voyage scene은 **0개**이며 save schema는 **v10**을 유지한다.
+
+새 focus context는 플레이어가 실제로 본 loop focus family/event, 최근 visible focus, speaker exposure, explicit topic만 사용한다. hidden Null assignment, motive assignment, raw relationship float는 selector에 넣지 않는다. 실제 continuation과 authored FOLLOWUP/consequence, mandatory/progression은 새 스레드 예산을 소비하지 않으며 explicit topic과 direct pinned-question match도 계속 찾아갈 수 있다.
+
+관련 없는 새 FOCUS family는 두 개까지 자연스럽게 열리고, 세 번째부터 soft weight가 낮아지며 네 번째 이후는 예외적으로만 나타난다. hard cap은 두지 않았다. 이미 보인 continuation에는 가중치를 주고, 한 화자에게 optional scene이 몰리면 speaker exposure로 완화한다. 미라의 ECHO WARD 이후 optional exposure 최대 **4회**는 유지된다. dense loop에서는 두 번째 autonomous beat를 삭제하지 않고 defer한다.
+
+현실적인 public voyage path로 500 loop를 실행한 최종 기준은 high-salience distinct family 평균 **2.22**, P95 **3**, 최대 **4**, unrelated 4+ loop **11/500**, continuation **10회**, zero-meaningful consecutive **0**, visible signatures **500/500**, autonomous unique **23**, 0.5.3 authored coverage **59.3%**, rare immediate repeat **0**, Mira optional max **4**다. CLEAR SIGNAL invariant **47 checks**와 runtime exposure **10 checks**가 Linux validation과 Windows release-candidate gate에 연결됐다.
+
+content audit은 608개 library 자체를 경고하지 않고 위 runtime gate로 노출 밀도를 검증한다. 반복 opener가 5회 이상이면 단순 단어 목록 대신 scene ID·speaker·action preview를 출력해 실제 편집 대상으로 바로 연결한다.
+
+구현 기준 commit `dc3755eeac2b3420418daf1acac4d777cd8df05c`, GitHub Actions run `35572924051`에서 Linux validation / Windows validation / Windows release-candidate가 모두 GREEN이었다. VERSION 0.5.7 승격 commit `dc4292bcd53c64fa2128593a6e35c788f2c8f7c7`, RC run `35573583450`도 모두 GREEN이며 그 사전 RC ZIP(92,844,194 bytes)의 SHA-256은 `a9d1bdb0959c9d2dd3a51953daed48e8d146a7e33d17a1de862e1579d0a2f48b`이다. 이후 공식 tag commit `e4b20a77e7295ff4afa4c4ed086f738272d9409e`의 Windows run `35575857561`도 GREEN이었고, GitHub Release `v0.5.7`은 artifact `10627638550`의 `ASTRA-0.5.7-windows.zip`(92,844,194 bytes, SHA-256 `5ea10cb171ce3d42e66da54c3c14d2adff6f9648a3d86e8166146c016a0846ec`)을 공식 asset으로 사용한다.
+
+# 0.5.6 · ECHOES · 2026-09-21
+
+0.5.5 FAULT LINES까지 축적된 관계·DecisionTrace·Consequence·Living Crew를 다시 만들지 않고, **플레이어가 실제로 본 변화만 짧고 읽을 수 있게 되돌려 주는 피드백**과 **Observation Codex**를 완성했다.
+
+Crew Archive의 observation은 총 **32개**다(STABLE 14 / OBSERVED 10 / ECHO 8, 8명 각 4개). 실제 awakening/authored scene/visible relationship milestone을 경험했을 때만 해금되며, hidden relationship float·motive·Null state·미표시 storylet을 근거로 자동 추론하지 않는다. Notebook은 현재 항해의 working memory, Archive는 항해를 넘어 남는 실제 목격 기록으로 역할을 분리했다.
+
+관계 feedback은 같은 pair/day/axis의 작은 변화를 aggregate하고 미세 변화는 숨긴다. 밤은 즉시 consequence, 다음 날 briefing은 지속되는 relationship/opinion aftermath를 담당하도록 분리해 같은 문장을 연속 화면에서 반복하지 않는다. CALIBRATION의 Codex unlock은 저장하되 연속 toast는 생략한다.
+
+save schema는 **v10**을 유지한다. v9/legacy hydrate는 known_people과 실제 seen scene처럼 안전하게 복원 가능한 근거만 사용하고, snapshot resume 뒤 이미 meta에 저장된 Codex pending을 정리해 result의 "새 기록" 중복을 막는다.
+
+신규 authored voyage scene은 **0개**이며 전체 library는 **608개**를 유지한다. 최종 측정 캐릭터별 authored scene은 미라 98 / 준 81 / 다렌 74 / 노아 79 / 세나 71 / 소렌 64 / 루칸 62 / 마렌 79다.
+
+0.5.6 전용 release gate는 Codex **95 checks**, ECHOES **33 checks**이며 Linux/Windows validation과 Windows release-candidate pre-build에 모두 연결했다. 기존 0.5.1~0.5.5 regression threshold는 낮추지 않았다.
+
+# 0.5.5 · FAULT LINES · 2026-09-21
+
+0.5.4 AFTERMATH의 Routine / Knowledge / Decision / Consequence 기반을 유지하면서 **Personal Motive → Dynamic Incident → Cooperative Investigation → Delegation → Loop Foreknowledge → Familiar Scene Compression → Narrative Momentum**을 연결했다.
+
+Personal Motive는 ECHO WARD 이후 loop마다 일부 활동 중 NPC에게만 1~3개 배정되며 최대 3명이다. motive assignment는 Null 목록을 입력받아도 결과 계산에 사용하지 않아 **motive != Null**을 보장한다. 행동 목격·동행 조사·위임·incident 같은 서로 다른 source가 쌓일 때 HIDDEN → SUSPECTED → PARTIAL → REVEALED 내부 상태가 진행되지만 상태명/수치는 UI에 노출하지 않는다.
+
+함선 Incident는 **8종**(COMMS_SPIKE / POWER_RELAY / DOOR_LOCK / NAV_DRIFT / OXYGEN_BALANCE / SAMPLE_CONTAINMENT / ARCHIVE_CORRUPTION / MEDICAL_SHORTAGE)이다. CALIBRATION/DEAD AIR/GLASS GARDEN에는 발생하지 않으며 한 loop 최대 1건, 실시간 카운트다운 없이 기존 action economy를 사용한다.
+
+기존 companion을 Cooperative Investigation으로 확장했다. 핵심 fact는 동일하고 secondary observation만 인물 전문성에 따라 달라진다. SILENT ORBIT 이후에는 한 loop에 optional investigation 하나를 위임할 수 있으며 보고는 TESTIMONY 출처로 기록된다.
+
+이전 loop에서 실제로 본 incident만 foreknowledge 선택이 열리며 사용은 loop당 최대 2회다. 선행 대응은 항상 이득이 아니라 원래 생성될 기록을 잃는 trade-off를 가진다. NPC는 플레이어가 경보보다 먼저 움직인 사실에 반응한다.
+
+Notebook 정보에는 DIRECT / RECORD / TESTIMONY / RUMOR를 확률 대신 자연어 출처로 표시한다. 반복 장면은 seen count와 안전 조건을 모두 만족할 때만 압축하며 언제든 전체 장면을 펼칠 수 있다.
+
+0.5.5 authored/reactive scene **71개**를 추가해 전체 library는 **608개**가 됐다. 신규 분배는 미라 10 / 준 9 / 다렌 8 / 노아 9 / 세나 8 / 소렌 9 / 루칸 9 / 마렌 9다. 19년 전 도착 뒤에도 일정 기간 정상 업무가 이어졌다는 평범한 post-arrival record 후보 4개를 추가하되 한 캠페인에서 최대 2개만 보이게 했다.
+
+0.5.4 save의 신규 필드 부재는 optional nested default로 hydrate하며 강제 reset하지 않는다. 신규 CI는 motive/Null 독립성, chapter incident gate, foreknowledge 조건, 71 scene ID/초반 보호, specialist observation, 500-loop motive simulation, 1,000 incident simulation, human-readable editorial sample을 검증한다.
+
+# 0.5.4 · AFTERMATH · 2026-09-21
+
+0.5.3 HEARTBEAT의 Living Crew를 다시 만들지 않고 관계·기억·KnowledgeModel·DecisionModel·storylet scheduler를 **Crew Routine → Routine Deviation → Micro-Arc → Consequence** 흐름으로 실제 플레이에 연결했다.
+
+정상 생활 baseline은 8명 합계 **36개 활동**, authored deviation은 **27개 상황 / 10개 reason tag**다. CALIBRATION과 DEAD AIR에는 눈에 띄는 routine deviation을 넣지 않고 GLASS GARDEN은 최대 1개, 이후 장은 최대 3개로 제한한다. ECHO는 loop 0에서 나오지 않고 NULL_ACTIVITY는 실제 Null만 사용할 수 있다.
+
+여덟 명에게 4-beat 대표 micro-arc를 하나씩 추가했다: Mira Self Neglect, Jun Mistake, Daren Failed Model, Noa Private Copy, Sena Overprotection, Soren Listening Fatigue, Lucan Risk Route, Maren Save One Sample.
+
+0.5.4 authored scene **64개**를 추가해 전체 voyage/reactive library는 **537개**가 됐다. 화자별 총량은 미라 88, 준 72, 다렌 66, 노아 70, 세나 63, 소렌 55, 루칸 53, 마렌 70이다. 소렌·루칸에는 각각 10개를 추가했다.
+
+Consequence event는 **23개**다(IMMEDIATE 4 / DELAYED 8 / NEXT_DAY 7 / NEXT_LOOP 4). queue는 최대 12개이며 expiry가 있고, NEXT_LOOP event는 voyage memory를 통해 carry된다.
+
+Curiosity Question은 한 개만 pin할 수 있다. 투표 변경은 DecisionTrace의 strongest reason을 이용해 new_evidence / relationship_change / memory_change / uncertainty로 구분하고, 개표 화면에서 이전 표와 현재 표, 이유를 짧게 보여 준다.
+
+0.5.4 테스트에는 routine model, micro-arc, consequence chain, meaningful choice, curiosity pin, decision legibility, save compatibility, AFTERMATH 500-loop simulation, 5/20-loop human-readable editorial report를 추가했다.
+# 0.5.3 · HEARTBEAT · 2026-09-21
+
+0.5.2의 Living Crew / Knowledge / Decision 기반을 그대로 이어 받아, 그 시스템이 실제 장면과 반복 플레이에서 체감되도록 연결했다.
+
+미라를 ASTRA의 **Emotional Anchor**로 강화했다. 정해진 연애 루트나 plot armor를 주지 않고 CARE / DAILY / MEDICAL / PLAYER / RELATIONSHIP / ECHO / CONFLICT 콘텐츠를 확장했다. authored speaker scene은 미라 80개로 가장 깊지만 중후반 한 루프의 optional Mira 노출은 최대 4개이며, 미라가 Null·격리 대상이 되는 기존 규칙도 그대로 유지한다. 미라 private event는 13개로 확대했다.
+
+0.5.3 authored scene 81개를 추가해 전체 voyage/reactive scene library는 **473개**가 됐다. 화자별 총량은 미라 80, 준 65, 다렌 59, 노아 63, 세나 56, 소렌 45, 루칸 43, 마렌 62다. 관계 장면은 서로 앞 말을 실제로 받도록 line relation metadata를 추가했고, pair storylet은 이미 만난 활동 중 동료가 상황에 맞으면 자연스럽게 합류할 수 있게 했다.
+
+새 `AstraStoryletScheduler`는 미노출 authored scene을 약간 우대하고 최근 family를 억제하며 rare/uncommon 이벤트에 내부 pity를 적용한다. RNG는 scene을 고를 뿐 대사를 생성하지 않는다. `AstraCrewActivityModel`에는 **27개의 autonomous crew beat**를 추가해 NPC가 플레이어와 대화할 때만 존재하는 느낌을 줄였다. 목격하지 못한 event는 정상적으로 지나갈 수 있다.
+
+KnowledgeModel에는 NPC→NPC 명시적 전파 경로를 추가했다. A가 실제로 아는 사실만 B에게 전달할 수 있고, B가 C에게 말하기 전 C는 그 사실을 알지 못한다. player/private/public ownership은 Notebook의 가벼운 “정보 공유” 표시와 provenance에 연결된다. 자율 정보 공유에도 DecisionTrace가 남는다.
+
+플레이어 행동 기억과 관계 callback을 강화했다. 미라는 evidence_first / people_first / protective / skeptical / secretive / confrontational / patient 패턴에 모두 반응할 수 있고, 약속·의료 비밀 존중·미라 지목/변호 같은 일부 행동은 뒤의 authored scene 조건이 된다. NPC끼리 공개적으로 변호한 사실도 다음 관계 장면에서 사용할 수 있다.
+
+Curiosity Question은 Notebook의 **지금 궁금한 것**으로 표시하며 최대 3개만 보여 준다. 질문은 OPEN / PARTIAL / ANSWERED / CHANGED 상태를 사용하고, 해결했다고 생각한 질문도 다음 loop의 기록 변화로 다시 CHANGED가 될 수 있다.
+
+검증에는 Mira content/agency/phrase audit, storylet pity와 multi-line coherence, autonomous active-state, knowledge propagation, relationship callback, player-visible 500-loop HEARTBEAT simulation을 추가했다. 검증 기준점에서 500 loop의 visible signature는 500/500, Mira optional exposure 평균 2.50/최대 4, autonomous 27종, 0.5.3 scene coverage 65.4%, rare 즉시 반복 0회였다.
+
+## 0.5.2 · Living Crew · internal branch
+
+0.5.2는 별도 정식 GitHub Release로 발행하지 않은 내부 Living Crew 개발 브랜치다. 0.5.1의 미완성 stabilization 작업을 회수하고 `AstraKnowledgeModel`, `AstraDecisionModel`, `AstraLivingCrew`, `AstraStorylets052`를 추가했다. 관계 5축, 캐릭터 baseline/deviation, player behavior profile, rolling dialogue memory, social theme/loop hook, knowledge provenance, vote DecisionTrace, curiosity question, 1,000 conversation / 1,000 meeting / 500-loop simulation이 이 브랜치에서 만들어졌다.
+
+0.5.2의 코드와 테스트는 0.5.3의 기반으로 보존했다. 공식 릴리스 이력처럼 꾸미지 않고 internal branch로 기록한다.
+
+## 0.5.1 · internal stabilization / incomplete branch
+
+0.5.1은 정식 완결 릴리스가 아니라 0.5.0 이후 onboarding, unlock timing, slot intro, contextual help, objective/archive copy 정합성, meeting coherence, auto UX, 1366×768/1920×1080 검증을 누적하던 내부 브랜치였다. 이 작업은 폐기하지 않고 0.5.2와 0.5.3에 그대로 이어졌다.
+
+# 0.5.0 · 2026-09-20
+
+첫 30분의 시스템 노출을 다시 설계했다. CALIBRATION은 전원 패널 1회 + 미라와의 직접 대화 1회만 요구하고, DEAD_AIR는 조사/대화까지만, GLASS_GARDEN은 짧은 회의까지, ECHO_WARD부터 투표와 밤을 해금한다. 상단 단계 표시와 브리핑도 실제 챕터 흐름만 보여 준다.
+
+모든 발언·투표·밤 행동의 대상을 단일 ACTIVE 참가자 규칙으로 통일했다. 장기수면 격리와 생체 신호 두절을 별개 상태로 표시하며, 자기투표·비활성 승무원 투표/발언/보호 대상을 모델 단계에서 차단한다. 투표 결과에는 NPC별 판단 이유가 기록된다.
+
+회의는 무작위 독백 묶음 대신 논점 단위의 연결 대화로 바꿨다. 한 사람이 의혹을 제기하면 지목된 사람이 즉시 답하고, UI에는 새 논점/직전 발언에 대한 답을 표시한다. 자동 진행은 중요한 발언에서 실제로 일시정지되며 계속 버튼이 보인다.
+
+캐릭터 콘텐츠를 대폭 확장했다. 탐색용 작성 장면은 170개에서 **280개**로 늘었고 캐릭터별 장면 수를 28~36개로 다르게 배분했다. 핵심 관계 8쌍에는 최소 2개 이상의 전용 장면을 추가했고 3인 대화 4개를 넣었다. 개인 이벤트는 캐릭터별 4~6개, 총 **40개**로 늘려 날짜·신뢰·긴장 조건에 따라 다른 장면이 나온다.
+
+대화 결과는 숨은 수치 대신 **납득함 / 흔들림 / 아직 저항함 / 불확실 / 화남**으로 즉시 피드백한다. 새 승무원이 깨어나는 장면은 여러 인물이 함께 반응하는 짧은 입장 장면으로 다시 작성했다.
+
+검증 체계도 강화했다. 기존 규칙·저장·UI·사회추리·반복 플레이·항해 테스트에 더해 1,000개 이상의 생성 투표 불변조건, 260개 이상 장면/40개 이상 개인 이벤트/핵심 관계 장면을 검사하는 content audit, 첫판과 7개 장 연속 서사 정합성 검사를 릴리스 게이트로 추가했다. GitHub Actions는 Linux 검증과 별도로 Windows 가상 PC에서 Godot 4.7.2 import, 모델 테스트, UI smoke, 메인 장면 부팅을 실제 실행한다.
+
 # 0.4.2 · 2026-09-20
 
 순서 독립적인 pair_history(과거 관계)와 다섯 축으로 나뉜 echo_state(감정 잔향)로 관계 시스템을 다시 짰다. CALIBRATION·DEAD_AIR·GLASS_GARDEN의 방 목록과 완료 조건, 챕터별 AP 예산을 데이터로 옮겨 초반 난이도를 낮췄다. 선택 effect를 11종으로 넓히고 8인의 "trust" 장면 선택지를 각자 다르게 다시 썼다. 남은 살인사건-시대 잔재 문구를 정리하고 `content_audit.gd`를 실제 품질 게이트로 승격했다. 상세: [릴리스 노트](docs/RELEASE_NOTES.md).

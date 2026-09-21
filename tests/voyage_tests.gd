@@ -15,7 +15,7 @@ func close_scene(s: AstraGameSession) -> void:
             s.voyage_next()
 func _initialize() -> void:
     test_exploration_consequences()
-    var expected := [4,4,5,6,7,8,8]
+    var expected := [4,5,6,7,8,8,8]
     var ids := ["CALIBRATION"] + AstraCaseCatalog.CAMPAIGN
     var memory := {}
     for i in range(ids.size()):
@@ -23,14 +23,14 @@ func _initialize() -> void:
         s.setup(ids[i],9143+i)
         s.begin_voyage(memory)
         check(s.roster.size()==expected[i],"progressive roster "+ids[i])
-        check(s.null_count==(1 if expected[i]<7 else 2),"influence count "+ids[i])
+        check(s.null_count==(1 if i <= 3 else 2),"influence count "+ids[i])
         check(s.roster.slice(0,4)==AstraCrewCatalog.INITIAL,"initial four")
         close_scene(s)
         for who in s.roster:
             s.voyage_visit_person(who)
             close_scene(s)
         if not s.voyage["goal_done"]:
-            s.voyage_ask_goal(str(s.voyage_people()[0]))
+            check(preload("res://tests/voyage_driver.gd").inspect_goal(s),"explicit goal investigation")
             close_scene(s)
         check(s.voyage_can_finish(),"story never blocked "+ids[i])
         var path := "user://astra_050_test.session"
@@ -68,6 +68,8 @@ func _initialize() -> void:
         var s := AstraGameSession.new()
         s.setup("DEAD_AIR",seed)
         s.begin_voyage(memory)
+        close_scene(s)
+        s.voyage_visit_person("mira")
         close_scene(s)
         s.voyage_talk("mira")
         variants[str(s.voyage["scene"].get("id",""))]=true
@@ -107,7 +109,7 @@ func test_exploration_consequences() -> void:
         s.voyage_visit_person(who)
         close_scene(s)
     if not s.voyage["goal_done"]:
-        s.voyage_ask_goal(str(s.voyage_people()[0]))
+        check(preload("res://tests/voyage_driver.gd").inspect_goal(s),"explicit goal investigation")
         close_scene(s)
     check(s.finish_voyage() and s.flags.get("mission_backup",false),"exploration choice enables actual night backup")
     var pity := AstraGameSession.new()
@@ -120,7 +122,13 @@ func test_exploration_consequences() -> void:
     for i in range(12):
         pity.voyage_move("medbay")
         close_scene(pity)
-    check(pity.voyage["goal_done"],"main discovery offered even without inspecting")
+    check(not pity.voyage["goal_done"],"movement never creates main discovery")
+    check(preload("res://tests/voyage_driver.gd").inspect_goal(pity),"requested recovery points to actual inspection")
+    # Ordinary repeat suppression belongs to later optional conversations.
+    pity = AstraGameSession.new()
+    pity.setup("DEAD_AIR",8)
+    pity.begin_voyage()
+    close_scene(pity)
     var last := ""
     var variants := {}
     pity.voyage_visit_person("mira")

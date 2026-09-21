@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -24,7 +28,7 @@ jobs:
         run: |
           set -o pipefail
           ./godot --headless --path . --import 2>&1 | tee import.log
-          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" import.log; then
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" import.log; then
             echo "Godot import reported script errors."
             exit 1
           fi
@@ -92,6 +96,118 @@ jobs:
           grep -q "ASTRA VOYAGE TESTS OK" voyage.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error" voyage.log; then exit 1; fi
 
+      - name: 0.5.1 stabilization consistency
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/stabilization_051_tests.gd 2>&1 | tee stabilization-051.log
+          grep -q "ASTRA 0.5.1 STABILIZATION TESTS OK" stabilization-051.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" stabilization-051.log; then exit 1; fi
+
+      - name: 0.5.2 living crew, knowledge and decision invariants
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/living_crew_052_tests.gd 2>&1 | tee living-crew-052.log
+          grep -q "ASTRA 0.5.2 LIVING CREW TESTS OK" living-crew-052.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" living-crew-052.log; then exit 1; fi
+
+      - name: 0.5.2 1000-conversation 1000-meeting 500-loop simulation
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/living_crew_052_simulation.gd 2>&1 | tee simulation-052.log
+          grep -q "ASTRA 0.5.2 SIMULATION OK" simulation-052.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" simulation-052.log; then exit 1; fi
+
+      - name: 0.5.3 HEARTBEAT Mira, scheduler, autonomy and knowledge tests
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/mira_content_tests.gd 2>&1 | tee mira-053.log
+          grep -q "ASTRA 0.5.3 MIRA CONTENT TESTS OK" mira-053.log
+          ./godot --headless --path . --script res://tests/storylet_scheduler_tests.gd 2>&1 | tee scheduler-053.log
+          grep -q "ASTRA 0.5.3 STORYLET SCHEDULER TESTS OK" scheduler-053.log
+          ./godot --headless --path . --script res://tests/npc_autonomy_tests.gd 2>&1 | tee autonomy-053.log
+          grep -q "ASTRA 0.5.3 AUTONOMY TESTS OK" autonomy-053.log
+          ./godot --headless --path . --script res://tests/knowledge_propagation_tests.gd 2>&1 | tee knowledge-053.log
+          grep -q "ASTRA 0.5.3 KNOWLEDGE PROPAGATION TESTS OK" knowledge-053.log
+          ./godot --headless --path . --script res://tests/relationship_callback_tests.gd 2>&1 | tee callbacks-053.log
+          grep -q "ASTRA 0.5.3 RELATIONSHIP CALLBACK TESTS OK" callbacks-053.log
+          ./godot --headless --path . --script res://tests/heartbeat_053_simulation.gd 2>&1 | tee heartbeat-053.log
+          grep -q "ASTRA 0.5.3 HEARTBEAT SIMULATION OK" heartbeat-053.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" mira-053.log scheduler-053.log autonomy-053.log knowledge-053.log callbacks-053.log heartbeat-053.log; then exit 1; fi
+
+      - name: 0.5.4 routines consequences micro-arcs and curiosity
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/routine_model_tests.gd 2>&1 | tee routine-054.log
+          grep -q "ASTRA 0.5.4 ROUTINE MODEL TESTS OK" routine-054.log
+          ./godot --headless --path . --script res://tests/micro_arc_tests.gd 2>&1 | tee micro-arc-054.log
+          grep -q "ASTRA 0.5.4 MICRO ARC TESTS OK" micro-arc-054.log
+          ./godot --headless --path . --script res://tests/consequence_chain_tests.gd 2>&1 | tee consequence-054.log
+          grep -q "ASTRA 0.5.4 CONSEQUENCE CHAIN TESTS OK" consequence-054.log
+          ./godot --headless --path . --script res://tests/meaningful_choice_tests.gd 2>&1 | tee meaningful-054.log
+          grep -q "ASTRA 0.5.4 MEANINGFUL CHOICE TESTS OK" meaningful-054.log
+          ./godot --headless --path . --script res://tests/curiosity_pin_tests.gd 2>&1 | tee curiosity-054.log
+          grep -q "ASTRA 0.5.4 CURIOSITY PIN TESTS OK" curiosity-054.log
+          ./godot --headless --path . --script res://tests/decision_legibility_054_tests.gd 2>&1 | tee decision-054.log
+          grep -q "ASTRA 0.5.4 DECISION LEGIBILITY TESTS OK" decision-054.log
+          ./godot --headless --path . --script res://tests/compatibility_054_tests.gd 2>&1 | tee compatibility-054.log
+          grep -q "ASTRA 0.5.4 SAVE COMPATIBILITY TESTS OK" compatibility-054.log
+          ./godot --headless --path . --script res://tests/aftermath_054_simulation.gd 2>&1 | tee aftermath-054.log
+          grep -q "ASTRA 0.5.4 AFTERMATH SIMULATION OK" aftermath-054.log
+          ./godot --headless --path . --script res://tests/editorial_054_report.gd -- --loops=5 2>&1 | tee editorial-054.log
+          grep -q "ASTRA 0.5.4 HUMAN EDITING REPORT OK" editorial-054.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" routine-054.log micro-arc-054.log consequence-054.log meaningful-054.log curiosity-054.log decision-054.log compatibility-054.log aftermath-054.log editorial-054.log; then exit 1; fi
+
+      - name: 0.5.5 motives incidents cooperation foreknowledge and momentum
+        run: |
+          # Godot 4.7.2 can occasionally return a non-zero process code after a
+          # SceneTree test has explicitly printed its success marker and quit(0).
+          # Gate these deterministic scripts on their authored success markers
+          # plus the absence of script/parse/compile errors, rather than letting
+          # pipefail stop before the remaining 0.5.5 simulations can run.
+          set +e
+          ./godot --headless --path . --script res://tests/fault_lines_055_tests.gd 2>&1 | tee fault-lines-055.log
+          ./godot --headless --path . --script res://tests/fault_lines_055_simulation.gd 2>&1 | tee fault-lines-sim-055.log
+          ./godot --headless --path . --script res://tests/editorial_055_report.gd 2>&1 | tee editorial-055.log
+          set -e
+          grep -q "ASTRA 0.5.5 FAULT LINES TESTS OK" fault-lines-055.log
+          grep -q "ASTRA 0.5.5 FAULT LINES SIMULATION OK" fault-lines-sim-055.log
+          grep -q "ASTRA 0.5.5 HUMAN EDITING REPORT OK" editorial-055.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" fault-lines-055.log fault-lines-sim-055.log editorial-055.log; then exit 1; fi
+
+      - name: 0.5.6 observation Codex and ECHOES invariants
+        run: |
+          set +e
+          ./godot --headless --path . --script res://tests/codex_056_tests.gd 2>&1 | tee codex-056.log
+          ./godot --headless --path . --script res://tests/echoes_056_tests.gd 2>&1 | tee echoes-056.log
+          set -e
+          grep -q "ASTRA 0.5.6 CODEX TESTS OK" codex-056.log
+          grep -q "ASTRA 0.5.6 ECHOES TESTS OK" echoes-056.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" codex-056.log echoes-056.log; then exit 1; fi
+
+      - name: 0.5.7 CLEAR SIGNAL invariants and 500-loop runtime exposure
+        run: |
+          set +e
+          ./godot --headless --path . --script res://tests/clear_signal_057_tests.gd 2>&1 | tee clear-signal-057.log
+          ./godot --headless --path . --script res://tests/clear_signal_057_simulation.gd 2>&1 | tee clear-signal-sim-057.log
+          set -e
+          grep -q "ASTRA 0.5.7 CLEAR SIGNAL TESTS OK" clear-signal-057.log
+          grep -q "ASTRA 0.5.7 CLEAR SIGNAL SIMULATION OK" clear-signal-sim-057.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" clear-signal-057.log clear-signal-sim-057.log; then exit 1; fi
+
+      - name: Story continuity and first-play regression
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/story_consistency_tests.gd 2>&1 | tee story-consistency.log
+          grep -q "ASTRA STORY CONSISTENCY TESTS OK" story-consistency.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" story-consistency.log; then exit 1; fi
+
+      - name: 0.5.3 content depth and invariant audit
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/content_audit.gd 2>&1 | tee content-audit.log
+          grep -q "ASTRA CONTENT AUDIT OK" content-audit.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" content-audit.log; then exit 1; fi
+
       - name: Boot main scene headlessly
         run: |
           set +e
@@ -105,3 +221,173 @@ jobs:
             echo "Main scene boot reported script errors."
             exit 1
           fi
+
+  windows-validate:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot 4.7.2 stable for Windows
+        shell: pwsh
+        run: |
+          $base = 'https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable'
+          Invoke-WebRequest "$base/Godot_v4.7.2-stable_win64.exe.zip" -OutFile "$env:RUNNER_TEMP/godot.zip"
+          Expand-Archive "$env:RUNNER_TEMP/godot.zip" "$env:RUNNER_TEMP/godot"
+          "GODOT=$env:RUNNER_TEMP/godot/Godot_v4.7.2-stable_win64_console.exe" >> $env:GITHUB_ENV
+
+      - name: Import project on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --import 2>&1 | Tee-Object -FilePath windows-import.log
+          if (Select-String -Path windows-import.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows Godot import reported script errors.' }
+
+      - name: Run model and invariant tests on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/run_tests.gd -- --games=40 2>&1 | Tee-Object -FilePath windows-tests.log
+          if (-not (Select-String -Path windows-tests.log -Pattern 'ASTRA TESTS OK')) { throw 'Windows model tests did not pass.' }
+          if (Select-String -Path windows-tests.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows model tests reported script errors.' }
+
+      - name: Run 0.5.1 stabilization tests on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/stabilization_051_tests.gd 2>&1 | Tee-Object -FilePath windows-stabilization.log
+          if (-not (Select-String -Path windows-stabilization.log -Pattern 'ASTRA 0.5.1 STABILIZATION TESTS OK')) { throw 'Windows 0.5.1 stabilization tests did not pass.' }
+          if (Select-String -Path windows-stabilization.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.5.1 stabilization tests reported script errors.' }
+
+      - name: Run 0.5.2 living crew tests on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/living_crew_052_tests.gd 2>&1 | Tee-Object -FilePath windows-living-052.log
+          if (-not (Select-String -Path windows-living-052.log -Pattern 'ASTRA 0.5.2 LIVING CREW TESTS OK')) { throw 'Windows 0.5.2 living crew tests did not pass.' }
+          if (Select-String -Path windows-living-052.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.5.2 living crew tests reported script errors.' }
+
+      - name: Run 0.5.3 HEARTBEAT invariants on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/mira_content_tests.gd 2>&1 | Tee-Object -FilePath windows-mira-053.log
+          if (-not (Select-String -Path windows-mira-053.log -Pattern 'ASTRA 0.5.3 MIRA CONTENT TESTS OK')) { throw 'Windows Mira 0.5.3 tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/knowledge_propagation_tests.gd 2>&1 | Tee-Object -FilePath windows-knowledge-053.log
+          if (-not (Select-String -Path windows-knowledge-053.log -Pattern 'ASTRA 0.5.3 KNOWLEDGE PROPAGATION TESTS OK')) { throw 'Windows knowledge 0.5.3 tests did not pass.' }
+          if (Select-String -Path windows-mira-053.log,windows-knowledge-053.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.5.3 tests reported script errors.' }
+
+      - name: Run 0.5.4 routine and consequence invariants on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/routine_model_tests.gd 2>&1 | Tee-Object -FilePath windows-routine-054.log
+          if (-not (Select-String -Path windows-routine-054.log -Pattern 'ASTRA 0.5.4 ROUTINE MODEL TESTS OK')) { throw 'Windows routine 0.5.4 tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/micro_arc_tests.gd 2>&1 | Tee-Object -FilePath windows-micro-arc-054.log
+          if (-not (Select-String -Path windows-micro-arc-054.log -Pattern 'ASTRA 0.5.4 MICRO ARC TESTS OK')) { throw 'Windows micro-arc 0.5.4 tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/consequence_chain_tests.gd 2>&1 | Tee-Object -FilePath windows-consequence-054.log
+          if (-not (Select-String -Path windows-consequence-054.log -Pattern 'ASTRA 0.5.4 CONSEQUENCE CHAIN TESTS OK')) { throw 'Windows consequence 0.5.4 tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/curiosity_pin_tests.gd 2>&1 | Tee-Object -FilePath windows-curiosity-054.log
+          if (-not (Select-String -Path windows-curiosity-054.log -Pattern 'ASTRA 0.5.4 CURIOSITY PIN TESTS OK')) { throw 'Windows curiosity 0.5.4 tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/decision_legibility_054_tests.gd 2>&1 | Tee-Object -FilePath windows-decision-054.log
+          if (-not (Select-String -Path windows-decision-054.log -Pattern 'ASTRA 0.5.4 DECISION LEGIBILITY TESTS OK')) { throw 'Windows decision-legibility 0.5.4 tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/compatibility_054_tests.gd 2>&1 | Tee-Object -FilePath windows-compatibility-054.log
+          if (-not (Select-String -Path windows-compatibility-054.log -Pattern 'ASTRA 0.5.4 SAVE COMPATIBILITY TESTS OK')) { throw 'Windows save compatibility 0.5.4 tests did not pass.' }
+          if (Select-String -Path windows-routine-054.log,windows-micro-arc-054.log,windows-consequence-054.log,windows-curiosity-054.log,windows-decision-054.log,windows-compatibility-054.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.5.4 tests reported script errors.' }
+
+      - name: Run 0.5.6 Codex and ECHOES invariants on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/codex_056_tests.gd 2>&1 | Tee-Object -FilePath windows-codex-056.log
+          if (-not (Select-String -Path windows-codex-056.log -Pattern 'ASTRA 0.5.6 CODEX TESTS OK')) { throw 'Windows 0.5.6 Codex tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/echoes_056_tests.gd 2>&1 | Tee-Object -FilePath windows-echoes-056.log
+          if (-not (Select-String -Path windows-echoes-056.log -Pattern 'ASTRA 0.5.6 ECHOES TESTS OK')) { throw 'Windows 0.5.6 ECHOES tests did not pass.' }
+          if (Select-String -Path windows-codex-056.log,windows-echoes-056.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.5.6 tests reported script errors.' }
+
+      - name: Run 0.5.7 CLEAR SIGNAL invariants on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/clear_signal_057_tests.gd 2>&1 | Tee-Object -FilePath windows-clear-signal-057.log
+          if (-not (Select-String -Path windows-clear-signal-057.log -Pattern 'ASTRA 0.5.7 CLEAR SIGNAL TESTS OK')) { throw 'Windows CLEAR SIGNAL 0.5.7 tests did not pass.' }
+          if (Select-String -Path windows-clear-signal-057.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows CLEAR SIGNAL 0.5.7 tests reported script errors.' }
+
+      - name: Run UI smoke test on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/ui_smoke.gd 2>&1 | Tee-Object -FilePath windows-ui.log
+          if (-not (Select-String -Path windows-ui.log -Pattern 'ASTRA UI SMOKE OK')) { throw 'Windows UI smoke test did not pass.' }
+          if (Select-String -Path windows-ui.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows UI smoke reported script errors.' }
+
+      - name: Boot main scene on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --quit-after 120 2>&1 | Tee-Object -FilePath windows-boot.log
+          if (Select-String -Path windows-boot.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows main-scene boot reported script errors.' }
+
+      - name: Preserve Windows diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-validation-logs
+          path: windows-*.log
+          if-no-files-found: ignore
+
+  release-candidate-windows:
+    if: startsWith(github.ref, 'refs/heads/release/')
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read release candidate version
+        shell: pwsh
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          "ASTRA_VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Install Godot 4.7.2 and Windows export template
+        shell: pwsh
+        run: |
+          $base = 'https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable'
+          Invoke-WebRequest "$base/Godot_v4.7.2-stable_win64.exe.zip" -OutFile "$env:RUNNER_TEMP/godot.zip"
+          Expand-Archive "$env:RUNNER_TEMP/godot.zip" "$env:RUNNER_TEMP/godot"
+          Invoke-WebRequest "$base/Godot_v4.7.2-stable_export_templates.tpz" -OutFile "$env:RUNNER_TEMP/templates.zip"
+          $target = "$env:APPDATA/Godot/export_templates/4.7.2.stable"
+          New-Item -ItemType Directory $target -Force | Out-Null
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [IO.Compression.ZipFile]::OpenRead("$env:RUNNER_TEMP/templates.zip")
+          try {
+            foreach ($name in @('windows_release_x86_64.exe', 'version.txt')) {
+              $entry = $archive.GetEntry("templates/$name")
+              [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, "$target/$name", $true)
+            }
+          } finally { $archive.Dispose() }
+          "GODOT=$env:RUNNER_TEMP/godot/Godot_v4.7.2-stable_win64_console.exe" >> $env:GITHUB_ENV
+
+      - name: Validate 0.5.7 release candidate before build
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --import 2>&1 | Tee-Object -FilePath build-rc-import.log
+          if (Select-String -Path build-rc-import.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Release candidate import reported script errors.' }
+          & $env:GODOT --headless --path . --script res://tests/codex_056_tests.gd 2>&1 | Tee-Object -FilePath build-rc-codex-056.log
+          if (-not (Select-String -Path build-rc-codex-056.log -Pattern 'ASTRA 0.5.6 CODEX TESTS OK')) { throw 'Release candidate Codex tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/echoes_056_tests.gd 2>&1 | Tee-Object -FilePath build-rc-echoes-056.log
+          if (-not (Select-String -Path build-rc-echoes-056.log -Pattern 'ASTRA 0.5.6 ECHOES TESTS OK')) { throw 'Release candidate ECHOES tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/clear_signal_057_tests.gd 2>&1 | Tee-Object -FilePath build-rc-clear-signal-057.log
+          if (-not (Select-String -Path build-rc-clear-signal-057.log -Pattern 'ASTRA 0.5.7 CLEAR SIGNAL TESTS OK')) { throw 'Release candidate CLEAR SIGNAL tests did not pass.' }
+          if (Select-String -Path build-rc-codex-056.log,build-rc-echoes-056.log,build-rc-clear-signal-057.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Release candidate invariant tests reported script errors.' }
+
+      - name: Run full Windows release-candidate build
+        shell: pwsh
+        run: ./tools/build_windows.ps1 -Godot $env:GODOT
+
+      - name: Upload Windows release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTRA-${{ env.ASTRA_VERSION }}-windows-rc
+          path: |
+            build/ASTRA-*-windows.zip
+            build/ASTRA-*-windows.zip.sha256
+          if-no-files-found: error
+
+      - name: Preserve release-candidate logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release-candidate-logs
+          path: build/logs/*
+          if-no-files-found: ignore

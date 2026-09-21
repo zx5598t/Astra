@@ -44,7 +44,24 @@ func _run() -> void:
     _expect(app._current is AstraVoyageView, "cold open enters real ship exploration")
     app.show_title()
     await _wait(3)
-    _expect(app.settings.intro_seen, "cold open is not shown twice")
+    _expect(app.settings.intro_seen, "compatibility intro flag is still written")
+    _expect(app.meta.intro_seen_for_slot(app.active_slot), "finished opening is remembered for that save slot")
+    var first_slot: int = int(app.active_slot)
+    var second_slot: int = 1 if first_slot != 1 else 2
+    app.start_new_campaign(second_slot)
+    await _wait(3)
+    _expect(app._current is AstraOpeningView, "new save slot shows calibration opening again")
+    app._current._finish()
+    await _wait(4)
+    _expect(app.meta.intro_seen_for_slot(second_slot), "second save remembers its own opening")
+    app.show_title()
+    await _wait(2)
+    app.start_case(AstraCaseCatalog.CALIBRATION, "ANALYST", second_slot)
+    await _wait(3)
+    _expect(not (app._current is AstraOpeningView), "same save slot does not repeat calibration opening")
+    app.show_title()
+    await _wait(2)
+    app.active_slot = first_slot
 
     # The tutorial case has to be playable end to end before the campaign opens.
     await _play_case(AstraCaseCatalog.CALIBRATION, "ANALYST")
@@ -102,9 +119,31 @@ func _run() -> void:
     else:
         quit(1)
 
+func _inside_viewport(control: Control, viewport_size: Vector2) -> bool:
+    if control == null or not control.is_visible_in_tree():
+        return false
+    var rect := control.get_global_rect()
+    return rect.size.x > 0.0 and rect.size.y > 0.0 and rect.position.x >= -2.0 and rect.position.y >= -2.0 and rect.end.x <= viewport_size.x + 2.0 and rect.end.y <= viewport_size.y + 2.0
+
+func _check_game_layout(screen: AstraGameScreen, size: Vector2i, label: String) -> void:
+    root.size = size
+    await _wait(5)
+    var viewport_size := Vector2(size)
+    _expect(_inside_viewport(screen._objective_panel, viewport_size), label + " objective visible in viewport")
+    _expect(_inside_viewport(screen._primary, viewport_size), label + " primary CTA visible in viewport")
+    _expect(_inside_viewport(screen._help_button, viewport_size), label + " help button visible in viewport")
+    _expect(_inside_viewport(screen._budget_panel, viewport_size), label + " remaining-action panel visible in viewport")
+    if screen.session.case_id in [AstraCaseCatalog.CALIBRATION, "DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD"]:
+        _expect("도움말" in screen._help_button.text, label + " early help button is text-labelled")
+
 func _play_case(case_id: String, protocol: String) -> void:
     app.start_case(case_id, protocol)
     await _wait(4)
+    # A fresh save slot owns its own calibration intro in 0.5.1. Complete that
+    # short opening before expecting the voyage/game screen.
+    if app._current is AstraOpeningView:
+        app._current._finish()
+        await _wait(4)
     # First-appearance cards stack up in front of a new roster; dismiss them the
     # way a player would before driving the case.
     for _pass in range(12):
@@ -122,6 +161,15 @@ func _play_case(case_id: String, protocol: String) -> void:
         return
     var screen = app._current
     _expect(screen is AstraGameScreen, "%s game screen" % case_id)
+    # The action budget intentionally does not exist during BRIEFING. 0.5.1's
+    # resolution smoke checked it one phase too early and therefore failed on
+    # both 1366x768 and 1080p even though the actual action screen was fine.
+    if screen is AstraGameScreen and case_id == "DEAD_AIR":
+        if app.session.phase == "BRIEFING":
+            app.session.advance()
+            await _wait(2)
+        await _check_game_layout(screen, Vector2i(1366, 768), "1366x768")
+        await _check_game_layout(screen, Vector2i(1920, 1080), "1920x1080")
     var s: AstraGameSession = app.session
     var guard := 0
     while s.phase != "RESULT" and guard < 80:
@@ -147,6 +195,12 @@ func _play_case(case_id: String, protocol: String) -> void:
                     screen._view._do_ask(str(npc_id), "ALIBI", "")
                     await _wait(1)
             "MEETING":
+                _expect("회의 자동 넘김" in view._auto_toggle.text, "%s meeting auto is clearly meeting-only" % case_id)
+                var auto_before: bool = app.settings.auto_advance
+                view._toggle_auto()
+                _expect(app.settings.auto_advance != auto_before, "%s meeting auto toggle changes state" % case_id)
+                view._toggle_auto()
+                _expect(app.settings.auto_advance == auto_before, "%s meeting auto toggle restores state" % case_id)
                 view._flush()
                 if not s.found_clues().is_empty():
                     s.present_clue(str(s.found_clues()[0]["id"]))
@@ -161,7 +215,12 @@ func _play_case(case_id: String, protocol: String) -> void:
                     s.set_mark(str(ranked[1]), "null")
                 screen.select(str(ranked[0]))
                 await _wait(1)
-                screen._view._cast(str(ranked[0]))
+                s.select_ballot("target",str(ranked[0]))
+                screen._view._confirm()
+                await _wait(1)
+                # Exercise the review dialog's explicit confirmation, too.
+                for modal in app.overlay_root().get_children():
+                    if modal.has_method("close"): modal.close(1)
                 await _wait(2)
             "NIGHT":
                 screen.select(str(s.living_ids()[0]))
@@ -194,8 +253,8 @@ func _finish_exploration() -> void:
         s.voyage_visit_person(who)
         await _close_scene()
     if not s.voyage["goal_done"]:
-        s.voyage_ask_goal(str(s.voyage_people()[0]))
-        await _close_scene()
+        _expect(preload("res://tests/voyage_driver.gd").inspect_goal(s),"goal reached by actual inspection")
+        await _wait(3)
     _expect(s.voyage_can_finish(),"exploration has a reachable exit")
     s.finish_voyage()
     await _wait(3)

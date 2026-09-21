@@ -2,7 +2,7 @@ extends Control
 
 # Application root: background, screen routing, overlays and persistence.
 
-const VERSION_FALLBACK := "0.4.2"
+const VERSION_FALLBACK := "0.5.6"
 
 var meta := AstraMetaProgress.new()
 var settings := AstraSettings.new()
@@ -13,6 +13,7 @@ var selected_protocol: String = "ANALYST"
 var session: AstraGameSession
 var ai_status: String = ""
 var active_slot: int = 0
+var _fresh_campaign := false
 
 var _screen_root: Control
 var _overlay_layer: CanvasLayer
@@ -62,23 +63,31 @@ func _ready() -> void:
     add_child(ai_client)
     ai_client.action_received.connect(_on_ai_action)
 
-    # A brand new install goes straight into the cold open. Everything else —
-    # difficulty, protocol, case choice — is asked later or not at all, because
-    # none of it means anything to someone who has not seen the ship yet (§8).
-    if not settings.intro_seen:
-        show_opening()
+    # 0.5.1: the cold open belongs to a campaign/save slot, not to this PC.
+    # A truly fresh profile uses the same start_new_campaign() path as the title
+    # screen so the two entry routes cannot drift apart.
+    if not meta.past_calibration() and not has_any_save():
+        start_new_campaign(first_free_slot())
     else:
         show_title()
 
-func show_opening() -> void:
+func _show_campaign_opening() -> void:
     var opening := AstraOpeningView.new()
     _set_screen(opening)
     opening.setup(self)
     opening.finished.connect(func():
-        settings.intro_seen = true
+        meta.mark_intro_seen_for_slot(active_slot)
+        meta.save_data()
+        settings.intro_seen = true # compatibility only; no longer gates play.
         settings.save_data()
-        start_case(AstraCaseCatalog.CALIBRATION, "ANALYST")
+        _enter_prepared_session()
     , CONNECT_ONE_SHOT)
+
+func replay_opening() -> void:
+    var opening := AstraOpeningView.new()
+    _set_screen(opening)
+    opening.setup(self)
+    opening.finished.connect(func(): show_title(), CONNECT_ONE_SHOT)
 
 # The only question asked before play, and it has two answers. 0.3.1 opened on a
 # screen with difficulty, protocol and six cases on it; none of those are
@@ -130,29 +139,57 @@ func show_archive() -> void:
     _set_screen(archive)
     archive.setup(self)
 
+func start_new_campaign(slot: int = -1) -> void:
+    _fresh_campaign = true
+    var chosen := slot
+    if chosen < 0:
+        chosen = first_free_slot()
+    if chosen < 0:
+        chosen = 0
+    active_slot = clampi(chosen, 0, SLOT_COUNT - 1)
+    AstraGameSession.delete_snapshot(slot_path(active_slot))
+    meta.reset_intro_for_slot(active_slot)
+    meta.save_data()
+    start_case(AstraCaseCatalog.CALIBRATION, "ANALYST", active_slot)
+
 func start_case(case_id: String, protocol: String, slot: int = -1) -> void:
     if not meta.is_case_unlocked(case_id):
         fx.toast("아직 잠긴 사건입니다. " + meta.unlock_hint(case_id), AstraUI.GOLD)
         return
-    # A new case takes the slot it was asked for, the first free one, or — when
-    # all three are full — whichever the caller already had open.
     if slot >= 0:
         active_slot = clampi(slot, 0, SLOT_COUNT - 1)
-    else:
+    elif session == null:
         var free_slot := first_free_slot()
         if free_slot >= 0:
             active_slot = free_slot
     selected_protocol = protocol
     session = AstraGameSession.new()
     var seed_value := int(Time.get_unix_time_from_system() * 1000.0) % 2147483
-    # The archive's memory of recent Null assignments goes in, so the role does
-    # not settle on one face over a run of cases (§67).
     session.setup(case_id, seed_value, protocol, meta.difficulty_mode, meta.recent_null_history())
     session.features = meta.unlocked_features()
     session.set_tutorial(false)
-    session.begin_voyage(meta.voyage_memory)
+    if AstraCaseCatalog.is_calibration(case_id) and not meta.intro_seen_for_slot(active_slot):
+        _show_campaign_opening()
+        return
+    _enter_prepared_session()
+
+func _enter_prepared_session() -> void:
+    if session == null:
+        show_title()
+        return
+    var memory: Dictionary = meta.voyage_memory.duplicate(true)
+    if _fresh_campaign:
+        memory = {"mastered_guides":Array(meta.voyage_memory.get("mastered_guides",[])).duplicate()}
+        _fresh_campaign = false
+    memory["codex_entries_unlocked"] = meta.codex_entries_unlocked.duplicate()
+    _connect_codex_events()
+    session.begin_voyage(memory)
     _connect_autosave()
     show_session_screen()
+
+func clear_slot_state(slot: int) -> void:
+    meta.reset_intro_for_slot(slot)
+    meta.save_data()
 
 func show_session_screen() -> void:
     if session.phase == "EXPLORE":
@@ -245,6 +282,38 @@ func _migrate_legacy_slot() -> void:
     DirAccess.copy_absolute(ProjectSettings.globalize_path(legacy), ProjectSettings.globalize_path(target))
     AstraGameSession.delete_snapshot(legacy)
 
+func _connect_codex_events() -> void:
+    if session == null:
+        return
+    var callback := Callable(self,"_on_session_notice_056")
+    if not session.notice.is_connected(callback):
+        session.notice.connect(callback)
+
+func _on_session_notice_056(kind: String, payload: Dictionary) -> void:
+    if kind == "hint":
+        fx.toast(str(payload.get("text","")),AstraUI.GOLD,3.5)
+        return
+    if kind != "codex_unlock":
+        return
+    var entry_id := str(payload.get("id",""))
+    if not record_codex_unlock(entry_id):
+        return
+    # CALIBRATION can introduce several people in a short span. Preserve every
+    # witnessed observation, but do not turn the first playable minutes into a
+    # stack of archive notifications.
+    if session != null and AstraCaseCatalog.is_calibration(session.case_id):
+        return
+    var who := AstraCrewCatalog.display_name(str(payload.get("character","")))
+    fx.toast("승무원 기록 갱신 · " + who, AstraUI.CYAN, 1.8)
+
+func record_codex_unlock(entry_id: String) -> bool:
+    if not meta.unlock_codex_entry(entry_id):
+        return false
+    meta.save_data()
+    if session != null:
+        session.set_known_codex_entries(meta.codex_entries_unlocked)
+    return true
+
 func _connect_autosave() -> void:
     session.changed.connect(_save_session, CONNECT_DEFERRED)
     _save_session()
@@ -263,18 +332,29 @@ func resume_case(slot: int = -1) -> void:
         return
     session = restored
     session.features = meta.unlocked_features()
+    session.reconcile_codex_after_resume(meta.codex_entries_unlocked)
     selected_protocol = session.protocol
+    _connect_codex_events()
     _connect_autosave()
     show_session_screen()
+
+    var resume_note := session.calendar_caption()+" · "+session.phase_label()
+    if session.phase == "EXPLORE": resume_note += "\n"+str(session.contact_objective().get("text",""))
+    if not session.contact_flow(): resume_note += "\n이전 저장의 사건 명부와 진실을 그대로 유지합니다. 새 합류 일정은 새 사건부터 적용됩니다."
+    fx.toast(resume_note,AstraUI.CYAN,4.0)
 
 func record_result(finished: AstraGameSession) -> Dictionary:
     var memory := finished.voyage_memory()
     if not memory.is_empty():
         meta.voyage_memory = memory
+    var codex_events := finished.codex_unlock_events()
+    for event in codex_events:
+        meta.unlock_codex_entry(str(event.get("id","")))
     var before := meta.unlocked_features()
     var result := meta.record_case_result(finished.case_id, finished.protocol, finished.final_report, true)
     AstraGameSession.delete_snapshot(snapshot_path())
     result["new_features"] = AstraUnlocks.newly_unlocked(before, meta.unlocked_features())
+    result["new_codex"] = codex_events
     return result
 
 # Shown after the result screen, one card each. A feature that appears with no
@@ -309,9 +389,9 @@ func show_help() -> void:
     AstraModal.open(_overlay_root, "기록 보관소 · 도움말", box, [["닫기", AstraUI.CYAN]], Callable(), 860.0)
 
 # The [?] in the corner of a game screen: this screen only.
-func show_screen_help(phase: String, objective: String) -> void:
+func show_screen_help(phase: String, objective: String, budget: Dictionary = {}) -> void:
     AstraModal.open(_overlay_root, AstraGameSession.PHASE_LABELS.get(phase, phase),
-        AstraHelpPanel.screen_help(phase, objective), [["닫기", AstraUI.CYAN]], Callable(), 660.0)
+        AstraHelpPanel.screen_help(phase, objective, budget), [["닫기", AstraUI.CYAN]], Callable(), 660.0)
 
 func show_settings() -> void:
     var box := AstraUI.vbox(14)
@@ -335,8 +415,8 @@ func show_settings() -> void:
     var pace_box := AstraUI.vbox(8)
     pace.add_child(pace_box)
     pace_box.add_child(AstraUI.label("대사", AstraUI.T_HEAD, AstraUI.CYAN))
-    pace_box.add_child(AstraUI.prose("기본은 직접 넘기기입니다. 자동을 켜도 중요한 대사에서는 멈춥니다.", AstraUI.T_META, AstraUI.MUTED))
-    pace_box.add_child(_toggle_row("자동 진행", settings.auto_advance, func(on: bool):
+    pace_box.add_child(AstraUI.prose("회의 발언만 자동으로 넘깁니다. 질문 선택·투표·밤 행동과 탐색 장면은 직접 진행합니다. 중요한 발언에서는 멈춥니다.", AstraUI.T_META, AstraUI.MUTED))
+    pace_box.add_child(_toggle_row("회의 발언 자동 넘김", settings.auto_advance, func(on: bool):
         settings.auto_advance = on
     ))
     pace_box.add_child(_slider_row("자동 대기 시간", settings.auto_delay, 0.5, 3.0, 0.25, func(value: float):
@@ -412,6 +492,13 @@ func show_settings() -> void:
     check_row.add_child(status)
     box.add_child(ai_panel)
 
+    var replay_intro := AstraUI.button("오프닝 다시 보기", AstraUI.MUTED, 14, 38)
+    replay_intro.pressed.connect(func():
+        settings.save_data()
+        replay_opening()
+    )
+    box.add_child(replay_intro)
+
     var reset := AstraUI.button("조사 기록 초기화…", AstraUI.RED, 14, 38)
     reset.pressed.connect(_confirm_reset)
     box.add_child(reset)
@@ -444,7 +531,7 @@ func show_pause_menu() -> void:
         ["계속하기", AstraUI.CYAN, Callable()],
         ["플레이 방법", AstraUI.MUTED, show_help],
         ["설정", AstraUI.MUTED, show_settings],
-        ["이 사건 처음부터 (새 배치)", AstraUI.GOLD, func(): start_case(session.case_id, session.protocol)],
+        ["이 사건 처음부터 (새 배치)", AstraUI.GOLD, func(): start_case(session.case_id, session.protocol, active_slot)],
         ["아카이브로 나가기", AstraUI.RED, show_title]
     ]
     var modal_holder := []

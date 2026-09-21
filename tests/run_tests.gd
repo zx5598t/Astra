@@ -25,6 +25,7 @@ func _initialize() -> void:
     test_protocols()
     test_meeting_limits()
     test_night_and_endings()
+    test_050_phase_and_vote_invariants()
     test_meta_progress()
     test_simulations(games)
     if failures.is_empty():
@@ -156,9 +157,8 @@ func test_session_flow() -> void:
 
 func test_protocols() -> void:
     for protocol in ["ANALYST", "EMPATH", "AUDITOR"]:
-        # SILENT_ORBIT keeps the historical 3/3 investigation/talk baseline
-        # this loop's hardcoded numbers assume; GLASS_GARDEN's is lower now
-        # (§8 of the design notes).
+        # 0.5.0 keeps SILENT_ORBIT at 3 investigation / 4 talk before
+        # protocol bonuses. Talking is never scarcer than investigating.
         var s := AstraGameSession.new()
         s.setup("SILENT_ORBIT", 777, protocol)
         for day_index in range(2):
@@ -170,7 +170,7 @@ func test_protocols() -> void:
                 break
             check(s.investigation_ap == (4 if protocol == "ANALYST" else 3), "%s investigation AP on day %d" % [protocol, s.day])
             s.advance()
-            check(s.talk_ap == (4 if protocol == "EMPATH" else 3), "%s talk AP on day %d" % [protocol, s.day])
+            check(s.talk_ap == (5 if protocol == "EMPATH" else 4), "%s talk AP on day %d" % [protocol, s.day])
             _auto_step(s)
         if protocol == "AUDITOR":
             var t := AstraGameSession.new()
@@ -221,7 +221,7 @@ func test_night_and_endings() -> void:
     var wins := 0
     for seed_value in range(1, 11):
         var s := AstraGameSession.new()
-        s.setup("DEAD_AIR", seed_value, "ANALYST")
+        s.setup("ECHO_WARD", seed_value, "ANALYST")
         var nulls: Array = s.truth["nulls"]
         var guard := 0
         while s.phase != "RESULT" and guard < 60:
@@ -260,7 +260,48 @@ func test_night_and_endings() -> void:
         if s.outcome == "WIN":
             wins += 1
             check(int(s.final_report["theory"]["matched"]) == s.null_count, "oracle theory matched")
-    check(wins >= 8, "oracle voting wins most games (%d/10)" % wins)
+    check(wins >= 7, "oracle voting wins a clear majority of first full-social cases (%d/10)" % wins)
+
+# 0.5.0 release gate: exercise well over one thousand generated ballots and
+# state mutations. This protects the model invariant rather than relying on a
+# UI filter to hide impossible votes.
+func test_050_phase_and_vote_invariants() -> void:
+    check(AstraCaseCatalog.phase_flow("DEAD_AIR") == ["BRIEFING","INVESTIGATION","INTERROGATION","RESULT"], "Dead Air skips meeting/vote/night")
+    check(AstraCaseCatalog.phase_flow("GLASS_GARDEN") == ["BRIEFING","INVESTIGATION","INTERROGATION","MEETING","RESULT"], "Glass Garden stops after short meeting")
+    check("VOTE" in AstraCaseCatalog.phase_flow("ECHO_WARD") and "NIGHT" in AstraCaseCatalog.phase_flow("ECHO_WARD"), "Echo Ward introduces vote and night")
+    check(int(AstraCaseCatalog.ap_profile("DEAD_AIR", {}).get("investigation",0)) == 1 and int(AstraCaseCatalog.ap_profile("DEAD_AIR", {}).get("talk",0)) == 2, "Dead Air 1 investigation / 2 talk")
+    check(int(AstraCaseCatalog.ap_profile("GLASS_GARDEN", {}).get("investigation",0)) == 2 and int(AstraCaseCatalog.ap_profile("GLASS_GARDEN", {}).get("talk",0)) == 3, "Glass Garden 2 investigation / 3 talk")
+    check(int(AstraCaseCatalog.ap_profile("ECHO_WARD", {}).get("investigation",0)) == 3 and int(AstraCaseCatalog.ap_profile("ECHO_WARD", {}).get("talk",0)) == 3, "Echo Ward 3 investigation / 3 talk")
+
+    var cases := ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"]
+    var ballots_checked := 0
+    for seed_value in range(1, 301):
+        var case_id := str(cases[(seed_value - 1) % cases.size()])
+        var s := AstraGameSession.new()
+        s.setup(case_id, 90000 + seed_value, "ANALYST")
+        var intentions := s.vote_intentions()
+        for voter in intentions.keys():
+            var voter_id := str(voter)
+            var target_id := str(intentions[voter])
+            check(voter_id in s.eligible_voters(), "eligible voter %s/%d" % [case_id, seed_value])
+            check(target_id == "" or s.can_vote_for(voter_id, target_id), "legal target %s/%d %s->%s" % [case_id, seed_value, voter_id, target_id])
+            check(target_id == "" or target_id != voter_id, "no self vote %s/%d" % [case_id, seed_value])
+            ballots_checked += 1
+
+        # Mutate state exactly where the observed bugs happened: after a death
+        # or isolation, stale IDs must disappear from both sides of a ballot.
+        var active := s.active_participants()
+        if active.size() >= 3:
+            var removed := str(active[0])
+            s.crew[removed].status = AstraCrewMember.STATUS_OFFLINE if seed_value % 2 == 0 else AstraCrewMember.STATUS_ISOLATED
+            s.selected_id = removed
+            var after := s.vote_intentions()
+            check(not after.has(removed), "inactive crew cannot vote %s/%d" % [case_id, seed_value])
+            for voter in after.keys():
+                check(str(after[voter]) != removed, "inactive crew cannot be vote target %s/%d" % [case_id, seed_value])
+            s._fallback_selected()
+            check(s.selected_id != removed, "stale selected crew is cleared %s/%d" % [case_id, seed_value])
+    check(ballots_checked >= 1000, "vote invariant release gate checks 1000+ generated ballots (%d)" % ballots_checked)
 
 func test_meta_progress() -> void:
     var path := "user://astra_test_meta.cfg"
@@ -327,10 +368,16 @@ func test_simulations(games: int) -> void:
                 check(not passive_report.is_empty(), "passive game finished %s/%s/%d" % [case_id, protocol, seed_value])
                 if not passive_report.is_empty() and str(passive_report["outcome"]) == "WIN":
                     passive_wins += 1
-            smart_total_wins += smart_wins
-            random_total_wins += random_wins
-            passive_total_wins += passive_wins
-            total_games += games
+            # DEAD_AIR and GLASS_GARDEN are authored learning/story chapters in
+            # 0.5.0. They intentionally resolve without an isolation win
+            # condition, so counting their automatic completion as "random bot
+            # deduction wins" corrupts the balance metric. Social-deduction
+            # balance begins at ECHO_WARD.
+            if case_id in ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"]:
+                smart_total_wins += smart_wins
+                random_total_wins += random_wins
+                passive_total_wins += passive_wins
+                total_games += games
             summary.append("%-12s %-8s smart %3d%% random %3d%% passive %3d%% | score %5d day %.1f nulls %.2f innocents %.2f | %s" % [case_id, protocol, int(100.0 * smart_wins / games), int(100.0 * random_wins / games), int(100.0 * passive_wins / games), int(smart_score / maxf(1.0, float(games))), float(days) / games, float(nulls_caught) / games, float(innocents) / games, str(ranks)])
     for line in summary:
         print(line)

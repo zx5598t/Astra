@@ -22,17 +22,22 @@ func _initialize() -> void:
     _pair_scene_distribution()
     _personal_vs_everyday_ratio()
     _private_event_counts()
+    _authored_scene_volume()
+    _key_pair_and_trio_depth()
+    _vote_and_speaker_invariants()
     _pair_history_symmetry()
     _calibration_never_shows_meeting_or_vote()
     _dead_air_light_phase_flow()
     print("\n=== summary: %d FAIL, %d WARN ===" % [fails.size(), warns.size()])
     for f in fails: printerr("FAIL · " + f)
     for w in warns: print("WARN · " + w)
+    if fails.is_empty():
+        print("ASTRA CONTENT AUDIT OK")
     quit(1 if not fails.is_empty() else 0)
 
 func _by_speaker() -> Dictionary:
     var out := {}
-    for scene in AstraVoyageContent.SCENES:
+    for scene in AstraVoyageContent.all_scenes():
         var who := str(scene["speaker"])
         if not out.has(who): out[who] = []
         out[who].append(scene)
@@ -75,7 +80,7 @@ func _scene_counts_by_character() -> void:
 func _choice_effect_vocabulary() -> void:
     print("\n-- 3. Choice effect vocabulary --")
     var effects := {}
-    for scene in AstraVoyageContent.SCENES:
+    for scene in AstraVoyageContent.all_scenes():
         for choice in scene.get("choices", []):
             var effect := str(choice.get("effect", ""))
             effects[effect] = int(effects.get(effect, 0)) + 1
@@ -88,14 +93,36 @@ func _choice_effect_vocabulary() -> void:
 func _sentence_openers() -> void:
     print("\n-- 4. Repeated opening words in 'action' lines (possible template smell) --")
     var openers := {}
-    for scene in AstraVoyageContent.SCENES:
+    var offenders := {}
+    for scene in AstraVoyageContent.all_scenes():
         var action := str(scene.get("action", ""))
         if action == "": continue
-        var first_word := action.split(" ")[0] if " " in action else action.substr(0, mini(4, action.length()))
+        var words := action.split(" ")
+        var first_word := words[0] if not words.is_empty() else action.substr(0, mini(4, action.length()))
+        # Most Korean action narration naturally starts with the acting
+        # character's name ("준이", "미라가"). That is not template smell.
+        # Audit the first meaningful verb/object phrase after the subject.
+        if first_word in ["준이","준은","마렌이","마렌은","노아가","노아는","미라가","미라는","세나가","세나는","다렌이","다렌은","루칸이","루칸은","소렌이","소렌은"] and words.size() > 1:
+            first_word = words[1]
         openers[first_word] = int(openers.get(first_word, 0)) + 1
+        if not offenders.has(first_word):
+            offenders[first_word] = []
+        offenders[first_word].append({
+            "id":str(scene.get("id","")),
+            "speaker":str(scene.get("speaker","")),
+            "action":action
+        })
     var repeated: Array = []
     for word in openers:
-        if int(openers[word]) >= 5: repeated.append("%s (%d)" % [word, openers[word]])
+        if int(openers[word]) >= 5:
+            repeated.append("%s (%d)" % [word, openers[word]])
+            print("  opener '%s' · count=%d" % [word,openers[word]])
+            for raw in offenders.get(word,[]):
+                var item: Dictionary = raw
+                var preview := str(item.get("action",""))
+                if preview.length() > 72:
+                    preview = preview.substr(0,72) + "…"
+                print("    %s · %s · %s" % [str(item.get("id","")),str(item.get("speaker","")),preview])
     if repeated.is_empty():
         print("  OK: no opening word repeats 5+ times across all scenes.")
     else:
@@ -104,9 +131,14 @@ func _sentence_openers() -> void:
 func _pair_scene_distribution() -> void:
     print("\n-- 5. NPC-pair ('pair' tag) scene distribution --")
     var pairs := {}
-    for scene in AstraVoyageContent.SCENES:
+    for scene in AstraVoyageContent.all_scenes():
         if str(scene.get("tag","")) != "pair": continue
-        var key := AstraCrewCatalog.pair_key(str(scene["speaker"]), str(scene.get("target","")))
+        var speaker := str(scene.get("speaker",""))
+        var target := str(scene.get("target",""))
+        if speaker == "" or target == "" or speaker == target:
+            fails.append("invalid pair scene %s: speaker=%s target=%s" % [str(scene.get("id","")),speaker,target])
+            continue
+        var key := AstraCrewCatalog.pair_key(speaker,target)
         pairs[key] = int(pairs.get(key,0)) + 1
     var total: int = pairs.values().reduce(func(a,b): return a+b, 0)
     print("  %d pair scenes across %d distinct unordered pairings: %s" % [total, pairs.size(), str(pairs)])
@@ -119,6 +151,7 @@ func _personal_vs_everyday_ratio() -> void:
     var personal_tags := ["personal","secret","echo","grief","apology"]
     var everyday_tags := ["everyday","work","observation"]
     var ratios := []
+    var ratio_keys := {}
     for who in by_speaker:
         var personal := 0
         var everyday := 0
@@ -126,19 +159,98 @@ func _personal_vs_everyday_ratio() -> void:
             var tag := str(scene["tag"])
             if tag in personal_tags: personal += 1
             elif tag in everyday_tags: everyday += 1
-        ratios.append("%s %d:%d" % [who, personal, everyday])
+        var ratio_key := "%d:%d" % [personal, everyday]
+        ratio_keys[ratio_key] = true
+        ratios.append("%s %s" % [who, ratio_key])
     print("  " + ", ".join(PackedStringArray(ratios)))
-    warns.append("personal:everyday ratio is not yet differentiated per character (§11)")
+    if ratio_keys.size() < 4:
+        warns.append("personal:everyday mix is still too mechanically similar (%d distinct mixes)" % ratio_keys.size())
+    else:
+        print("  OK: character content mixes use %d distinct personal:everyday profiles." % ratio_keys.size())
 
 func _private_event_counts() -> void:
     print("\n-- 7. Private events per character --")
     var counts := {}
+    var total := 0
     for npc_id in AstraCrewCatalog.ORDER:
         counts[npc_id] = AstraPrivateEvents.count_for(npc_id)
-    print("  " + str(counts))
+        total += int(counts[npc_id])
+    print("  " + str(counts) + " / total " + str(total))
     for npc_id in counts:
-        if int(counts[npc_id]) <= 1:
-            fails.append("private events for %s: %d (§18 asks for 4-7 per character)" % [npc_id, counts[npc_id]])
+        var count := int(counts[npc_id])
+        if npc_id == "mira":
+            if count < 10 or count > 14:
+                fails.append("private events for Mira: %d (0.5.3 emotional-anchor target is 10-14)" % count)
+        elif count < 4 or count > 7:
+            fails.append("private events for %s: %d (other crew retain the 4-7 range)" % [npc_id, count])
+    if total < 47:
+        fails.append("private event pool only %d; 0.5.3 requires Mira depth without reducing other crew" % total)
+
+func _authored_scene_volume() -> void:
+    print("\n-- 8. Authored voyage scene volume --")
+    var total := AstraVoyageContent.all_scenes().size()
+    print("  total authored voyage scenes: %d" % total)
+    if total < 470:
+        fails.append("authored voyage/reactive scenes %d; 0.5.3 release floor is 470" % total)
+    if total > 550:
+        print("  INFO: large authored library (%d); runtime exposure is verified by required CLEAR SIGNAL 500-loop CI gate." % total)
+
+func _key_pair_and_trio_depth() -> void:
+    print("\n-- 9. Key pair and trio depth --")
+    var required := [
+        ["rho","sena"], ["mira","lyra"], ["dax","noa"], ["vale","eli"],
+        ["rho","dax"], ["sena","mira"], ["lyra","dax"], ["noa","vale"]
+    ]
+    var counts := {}
+    var trios := 0
+    for scene in AstraVoyageContent.all_scenes():
+        var tag := str(scene.get("tag",""))
+        if tag == "pair":
+            var key := AstraCrewCatalog.pair_key(str(scene.get("speaker","")), str(scene.get("target","")))
+            counts[key] = int(counts.get(key,0)) + 1
+        elif tag == "trio":
+            trios += 1
+    for pair in required:
+        var key := AstraCrewCatalog.pair_key(str(pair[0]), str(pair[1]))
+        var count := int(counts.get(key,0))
+        print("  %s: %d" % [key,count])
+        if count < 2:
+            fails.append("key pair %s only has %d authored scenes; need at least 2" % [key,count])
+    print("  trio scenes: %d" % trios)
+    if trios < 4:
+        fails.append("only %d authored trio scenes; 0.5.3 retains occasional 3-person conversation" % trios)
+
+func _vote_and_speaker_invariants() -> void:
+    print("\n-- 10. Vote/speaker model invariants --")
+    for seed_value in range(1, 301):
+        var s := AstraGameSession.new()
+        s.setup("ECHO_WARD", 70000 + seed_value)
+        var ballot := s.vote_intentions()
+        for voter in ballot:
+            var target := str(ballot[voter])
+            if target != "" and (str(voter) == target or not s.can_vote_for(str(voter), target)):
+                fails.append("illegal generated ballot %s -> %s at seed %d" % [str(voter),target,seed_value])
+                return
+        var active := s.active_participants()
+        if active.size() < 3:
+            continue
+        var removed := str(active[0])
+        s.crew[removed].status = AstraCrewMember.STATUS_OFFLINE
+        var after := s.vote_intentions()
+        if after.has(removed):
+            fails.append("offline voter remained in ballot at seed %d" % seed_value)
+            return
+        for voter in after:
+            if str(after[voter]) == removed:
+                fails.append("offline target remained in ballot at seed %d" % seed_value)
+                return
+        if s.can_meeting_speak(removed):
+            fails.append("offline speaker remained eligible for meeting feed at seed %d" % seed_value)
+            return
+        if not s.can_meeting_speak("player"):
+            fails.append("player was incorrectly blocked from meeting feed at seed %d" % seed_value)
+            return
+    print("  OK: 300 seeded ballots and meeting speakers obey ACTIVE-only invariants.")
 
 func _pair_history_symmetry() -> void:
     print("\n-- 8. pair_key() symmetry (canonical pair history) --")

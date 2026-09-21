@@ -24,12 +24,9 @@ signal finished
 
 # `art` picks the backdrop; `who` set means the line is spoken by a person.
 const BEATS := [
-    {"art":"wake", "system":"ASTRA · 의료실", "text":"손목을 잡은 손이 따뜻하다.\n천장에는 느리게 깜빡이는 등이 하나 있다."},
-    {"art":"wake", "who":"mira", "text":"들리나요? 천천히 눈 떠요.\n탐사팀 명부에 이름이 있었어요. 당신 맞죠?"},
-    {"art":"wake", "who":"rho", "text":"미라, 문 열려? 잠깐만. 이쪽 전원부터 살려 볼게."},
-    {"art":"wake", "who":"noa", "text":"당신까지 다섯 명. 나머지 포드 네 개는 아직 닫혀 있어요."},
-    {"art":"wake", "who":"dax", "text":"돌아가던 중이라고? 나는 탐사 임무로 왔는데."},
-    {"art":"wake", "system":"수신 기록", "text":"목적지: 지구.\n바로 아래, 같은 날짜의 명령서에는 다른 이름이 적혀 있다."}
+    {"art":"wake", "system":"ASTRA · 장거리 탐사선", "text":"당신은 ASTRA의 탐사요원이다.\n장기수면에서 깨어나 의료실에서 상태를 점검받는다."},
+    {"art":"wake", "who":"mira", "text":"깨어났네요. 괜찮아요?\n나머지 네 명은 아직 장기수면 중이에요."},
+    {"art":"wake", "who":"mira", "text":"남은 포드를 안전하게 열어야 해요.\n제어 패널에서 전원 상태부터 같이 확인해요."}
 ]
 const ART := {"wake":"res://assets/art031/backgrounds/medical.webp"}
 

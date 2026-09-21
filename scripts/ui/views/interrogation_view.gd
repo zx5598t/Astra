@@ -78,8 +78,17 @@ func _event_layout(session: AstraGameSession) -> Control:
     scene.text = "[i][color=#%s]%s[/color][/i]" % [AstraUI.hex(AstraUI.MUTED), AstraUI.escape(str(event.get("scene", "")))]
     box.add_child(scene)
     box.add_child(AstraUI.prose(str(event.get("prompt", "")), AstraUI.T_HEAD, AstraUI.TEXT))
+    var interject: Dictionary = event.get("interject", {})
+    if not interject.is_empty():
+        var interject_id := str(interject.get("speaker", ""))
+        if interject_id in session.active_participants():
+            box.add_child(AstraUI.prose(str(interject.get("text", "")), AstraUI.T_META, AstraUI.MUTED))
     box.add_child(AstraUI.label("이 대화에는 시간이 들지 않습니다.", AstraUI.T_META, AstraUI.DIM))
     var choices: Array = event.get("choices", [])
+    if choices.is_empty():
+        var continue_button := AstraUI.button("계속", AstraUI.CYAN, AstraUI.T_UI, 48, true)
+        continue_button.pressed.connect(_resolve_event.bind(-1))
+        box.add_child(continue_button)
     for index in range(choices.size()):
         var choice: Dictionary = choices[index]
         var button := AstraUI.button(str(choice.get("label", "")), AstraUI.PINK if index == 0 else AstraUI.CYAN, AstraUI.T_UI, 52)
@@ -273,4 +282,32 @@ func _do_ask(npc_id: String, intent: String, clue_id: String) -> void:
     elif result.has("clue"):
         screen.fx.play("clue")
         screen.fx.toast("새 단서 · " + str(result["clue"].get("title", "")), AstraUI.PINK)
+    _show_reaction(result)
     screen.request_ai_line(npc_id, intent, result)
+
+func _show_reaction(result: Dictionary) -> void:
+    var reaction: Dictionary = result.get("reaction", {})
+    if reaction.is_empty():
+        return
+    var code := str(reaction.get("code", "UNCERTAIN"))
+    var label := "불확실"
+    var color := AstraUI.MUTED
+    match code:
+        "CONVINCED":
+            label = "납득함"
+            color = AstraUI.GREEN
+        "SHAKEN":
+            label = "흔들림"
+            color = AstraUI.GOLD
+        "RESISTED":
+            label = "아직 저항함"
+            color = AstraUI.VIOLET
+        "ANGERED":
+            label = "화남"
+            color = AstraUI.RED
+        _:
+            label = "불확실"
+            color = AstraUI.MUTED
+    # The reaction code remains available for tests/rules, but the player sees
+    # an in-world action rather than a repeated system verdict such as "납득함".
+    screen.fx.toast(str(reaction.get("text", "")), color, 3.4)

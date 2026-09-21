@@ -137,7 +137,7 @@ func _refresh_detail() -> void:
         shade.anchor_right = 1.0
         shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
         frame.add_child(shade)
-        var name_label := AstraUI.label(id.to_upper(), 14, AstraUI.TEXT)
+        var name_label := AstraUI.label(AstraCrewCatalog.display_name(id), 14, AstraUI.TEXT)
         name_label.anchor_top = 0.82
         name_label.anchor_bottom = 1.0
         name_label.anchor_right = 1.0
@@ -158,9 +158,26 @@ func _refresh_detail() -> void:
     if not mission.is_empty():
         dossier.add_child(AstraUI.label("선택 임무  /  " + str(mission.get("title", "")), 14, accent, true))
     dossier.add_child(AstraUI.prose(AstraCaseCatalog.CAMPAIGN_PREMISE, AstraUI.T_META, AstraUI.MUTED))
-    dossier.add_child(AstraUI.label("흔적을 찾고  →  진술을 대조하고  →  숨어 있는 두 Null을 격리하세요", 13, AstraUI.DIM, true))
+    dossier.add_child(AstraUI.label(_case_goal_line(_selected_case), 13, AstraUI.DIM, true))
     _continue.text = "%s   →" % ("조사 시작 · " + str(data.get("title_ko", "")) if unlocked else app.meta.unlock_hint(_selected_case))
     _continue.disabled = not unlocked
+    _continue.tooltip_text = "항해 Day %d 시점 · 합류 동료 %d명으로 시작합니다. 회차가 바뀌면 이 시점의 명부로 다시 시작합니다." % [AstraVoyageContent.campaign_day(_selected_case),AstraVoyageContent.awake_roster(_selected_case).size()]
+
+func _case_goal_line(case_id: String) -> String:
+    match case_id:
+        "DEAD_AIR":
+            return "서로 다른 목적지 기록의 출처를 확인하세요."
+        "GLASS_GARDEN":
+            return "세나와 준의 서로 다른 근무 기록을 대조하세요."
+        "ECHO_WARD":
+            return "신호 기록을 확인하고, 처음으로 장기수면 격리 판단을 내립니다."
+        "SILENT_ORBIT":
+            return "항법 기록과 오래된 도착 기록을 대조하세요."
+        "RED_SHIFT":
+            return "겹치는 기록과 관계의 변화를 함께 확인하세요."
+        "LAST_LIGHT":
+            return "남은 기록을 연결해 ASTRA의 항해가 왜 반복되는지 확인하세요."
+    return str(AstraCaseCatalog.get_case(case_id).get("card_line", "기록과 기억이 어긋난 이유를 확인하세요."))
 
 func _refresh_protocols() -> void:
     AstraUI.clear(_protocol_row)
@@ -181,20 +198,38 @@ func _refresh_protocols() -> void:
 
 func _crew_archive() -> void:
     var grid := GridContainer.new()
-    grid.columns = 4
-    grid.add_theme_constant_override("h_separation", 12)
-    grid.add_theme_constant_override("v_separation", 12)
+    grid.columns = 2
+    grid.add_theme_constant_override("h_separation", 14)
+    grid.add_theme_constant_override("v_separation", 14)
     for id in ["mira", "sena", "noa", "lyra", "rho", "eli", "vale", "dax"]:
         var info := AstraCrewCatalog.info(id)
-        var card := AstraUI.vbox(5)
-        card.custom_minimum_size = Vector2(204, 0)
-        grid.add_child(card)
-        card.add_child(AstraUI.thumb(AstraCrewCatalog.portrait_path(id), Vector2(204, 176)))
-        card.add_child(AstraUI.label(AstraCrewCatalog.display_name(id) + "  ·  " + str(info.get("job", "")), 16, AstraCrewCatalog.accent(id)))
-        card.add_child(AstraUI.label(str(info.get("concept", "")), 13, AstraUI.MUTED, true))
+        var card_panel := AstraUI.panel(AstraUI.PANEL_2,Color(AstraCrewCatalog.accent(id),0.25),10,12)
+        card_panel.custom_minimum_size = Vector2(414,0)
+        grid.add_child(card_panel)
+        var card := AstraUI.vbox(6)
+        card_panel.add_child(card)
+        var hero := AstraUI.hbox(10)
+        card.add_child(hero)
+        hero.add_child(AstraUI.thumb(AstraCrewCatalog.portrait_path(id), Vector2(92,112)))
+        var title := AstraUI.vbox(3)
+        title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        hero.add_child(title)
+        title.add_child(AstraUI.label(AstraCrewCatalog.display_name(id),20,AstraCrewCatalog.accent(id)))
+        title.add_child(AstraUI.label(str(info.get("job","")),13,AstraUI.MUTED,true))
+        var entries: Array = app.meta.codex_entries_for(id)
+        title.add_child(AstraUI.label("관찰 기록 %d개" % entries.size(),12,AstraUI.CYAN))
+        if entries.is_empty():
+            card.add_child(AstraUI.prose("아직 직접 기록한 관찰이 없습니다. 함께 항해하며 실제로 본 모습만 여기에 남습니다.",AstraUI.T_META,AstraUI.DIM))
+        else:
+            for entry in entries:
+                var scope := str(entry.get("scope","OBSERVED"))
+                var scope_label: String = str({"STABLE":"평소의 모습","OBSERVED":"관찰한 기록","ECHO":"잔향"}.get(scope,scope))
+                var heading := "%s · %s" % [scope_label,str(entry.get("title",""))]
+                card.add_child(AstraUI.label(heading,AstraUI.T_META,AstraUI.GOLD if scope=="ECHO" else AstraUI.CYAN))
+                card.add_child(AstraUI.prose(str(entry.get("body","")),AstraUI.T_META,AstraUI.TEXT))
     var scroll := AstraUI.scroll(grid)
-    scroll.custom_minimum_size = Vector2(0, 540)
-    AstraModal.open(app.overlay_root(), "승무원 기록  /  누구를 믿을 것인가", scroll, [["닫기", AstraUI.CYAN]], Callable(), 940)
+    scroll.custom_minimum_size = Vector2(0, 560)
+    AstraModal.open(app.overlay_root(), "승무원 기록  /  내가 실제로 본 것", scroll, [["닫기", AstraUI.CYAN]], Callable(), 940)
 
 # With three slots a new case does not overwrite anything unless all three are
 # full, so the old "this will erase your progress" warning is gone.

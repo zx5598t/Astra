@@ -84,7 +84,7 @@ func apply_display() -> void:
 func fit_window_to_screen() -> void:
     if DisplayServer.get_name() == "headless" or fullscreen:
         return
-    DisplayServer.window_set_min_size(Vector2i(1024, 640))
+    DisplayServer.window_set_min_size(Vector2i(1120, 700))
     var screen := DisplayServer.window_get_current_screen()
     var usable := DisplayServer.screen_get_usable_rect(screen)
     var current := DisplayServer.window_get_size()

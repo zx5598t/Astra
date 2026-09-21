@@ -8,6 +8,11 @@ const ORDER := ["mira", "rho", "dax", "noa", "sena", "vale", "eli", "lyra"]
 const ASSET_IDS := {"mira":"mira", "rho":"jun", "dax":"daren", "noa":"noa", "sena":"sena", "vale":"soren", "eli":"lucan", "lyra":"maren"}
 const INITIAL := ["mira", "rho", "dax", "noa"]
 const AWAKENING_ORDER := ["sena", "vale", "eli", "lyra"]
+const JOIN_DAY := {"mira":1,"rho":1,"dax":1,"noa":1,"sena":2,"vale":3,"eli":4,"lyra":5}
+
+static func joined_on_day(campaign_day: int) -> Array:
+    return ORDER.filter(func(id): return int(JOIN_DAY[id]) <= campaign_day)
+
 
 # Physical / procedural traits used by trace clues. Every crew member is
 # uniquely identified by at least one pair of categories, so each saboteur
@@ -279,16 +284,25 @@ static func identifying_pairs(npc_id: String, roster: Array = []) -> Array:
 const EXPRESSION_ALIASES := {"calm":"neutral", "warm":"smile", "uneasy":"suspicious", "tense":"determined"}
 
 static func asset_id(npc_id: String) -> String:
-    return str(ASSET_IDS.get(npc_id, "mira"))
+    return str(ASSET_IDS.get(npc_id, ""))
+
+# Audited 2026-09-21: these supplied crops contain half/two faces. Use the
+# same person's intact neutral portrait until corrected originals arrive.
+const DAMAGED_CROPS := {"vale":["angry","sad","shocked","suspicious","tired"],"dax":["tired"]}
 
 static func portrait_path(npc_id: String, expression: String = "neutral") -> String:
+    if not CREW.has(npc_id):
+        return ""
     var mood := str(EXPRESSION_ALIASES.get(expression, expression))
+    if mood in DAMAGED_CROPS.get(npc_id,[]): mood = "neutral"
     if npc_id == "lyra" and mood == "neutral":
         return "res://assets/art050/portraits/maren.webp"
     var path := "res://assets/art050/expressions/%s/%s.webp" % [asset_id(npc_id), mood]
     return path if ResourceLoader.exists(path) else "res://assets/art050/portraits/%s.webp" % asset_id(npc_id)
 
 static func cast_path(npc_id: String, expression: String = "neutral", full: bool = false) -> String:
+    if not CREW.has(npc_id):
+        return ""
     if full:
         return "res://assets/art050/cast/%s.webp" % asset_id(npc_id)
     return portrait_path(npc_id, expression)
@@ -326,6 +340,8 @@ static func labelled(npc_id: String, short: bool = false) -> String:
 # Small sprite used beside a name so people are told apart by face, not by
 # spelling. Falls back to the square bust if the sprite is missing.
 static func dot_path(npc_id: String) -> String:
+    if not CREW.has(npc_id):
+        return ""
     var path := "res://assets/art050/heads/%s.webp" % asset_id(npc_id)
     return path if ResourceLoader.exists(path) else portrait_path(npc_id)
 

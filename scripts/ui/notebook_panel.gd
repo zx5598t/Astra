@@ -61,13 +61,71 @@ func cycle_tab() -> void:
 func refresh() -> void:
     AstraUI.clear(_clue_list)
     if not session.voyage.is_empty():
-        _clue_list.add_child(AstraUI.label("함께 확인한 것",20,AstraUI.CYAN))
+        var questions := session.current_questions()
+        if not questions.is_empty():
+            _clue_list.add_child(AstraUI.label("지금 궁금한 것",20,AstraUI.GOLD))
+            for question in questions:
+                var status := str(question.get("status","OPEN"))
+                var prefix := "?" if status == "OPEN" else ("✓" if status == "ANSWERED" else ("◐" if status == "PARTIAL" else "↻"))
+                var question_id := str(question.get("id",""))
+                var qrow := AstraUI.hbox(8)
+                _clue_list.add_child(qrow)
+                qrow.add_child(AstraUI.prose("%s %s" % [prefix,str(question.get("text",""))],17,AstraUI.TEXT))
+                var pinned := str(session.voyage.get("pinned_question","")) == question_id
+                var pin := AstraUI.button("집중 중" if pinned else "집중해서 확인",AstraUI.GOLD if pinned else AstraUI.MUTED,13,34)
+                pin.custom_minimum_size.x = 104
+                pin.pressed.connect(func(): session.pin_question(question_id))
+                qrow.add_child(pin)
+                if pinned:
+                    var related_labels: Array[String] = []
+                    for raw in question.get("related",[]):
+                        var key := str(raw)
+                        if key in session.roster:
+                            related_labels.append(session.name_of(key))
+                        elif AstraVoyageContent.ROOMS.has(key):
+                            related_labels.append(str(AstraVoyageContent.ROOMS[key]["name"]))
+                    if not related_labels.is_empty():
+                        _clue_list.add_child(AstraUI.prose("관련해서 볼 것 · " + " / ".join(PackedStringArray(related_labels)),14,AstraUI.DIM))
+        _clue_list.add_child(AstraUI.label("확인한 사실",20,AstraUI.CYAN))
         for note in session.voyage.get("notes",[]):
             _clue_list.add_child(AstraUI.prose(str(note),17,AstraUI.TEXT))
+        var motive_notes: Array = session.voyage.get("motive_observations",[])
+        if not motive_notes.is_empty():
+            _clue_list.add_child(AstraUI.label("행동의 이유를 추적한 흔적",18,AstraUI.MUTED))
+            for observation in motive_notes.slice(maxi(0,motive_notes.size()-3)):
+                _clue_list.add_child(AstraUI.prose(str(observation),15,AstraUI.DIM))
+        var routine_notes: Array = session.voyage.get("routine_observations",[])
+        if not routine_notes.is_empty():
+            _clue_list.add_child(AstraUI.label("직접 본 변화",18,AstraUI.MUTED))
+            for observation in routine_notes.slice(maxi(0,routine_notes.size()-3)):
+                _clue_list.add_child(AstraUI.prose(str(observation),15,AstraUI.DIM))
+        var ownership: Dictionary = session.voyage.get("evidence_ownership",{})
+        if not ownership.is_empty():
+            _clue_list.add_child(AstraUI.label("정보 공유",18,AstraUI.MUTED))
+            var ownership_keys: Array = ownership.keys()
+            var start := maxi(0,ownership_keys.size()-3)
+            for index in range(start,ownership_keys.size()):
+                var fact_id := str(ownership_keys[index])
+                var entry: Dictionary = ownership[fact_id]
+                var label := fact_id
+                for room_id in AstraVoyageContent.ROOMS:
+                    for point in AstraVoyageContent.ROOMS[room_id].get("points",[]):
+                        if str(point[4]) == fact_id:
+                            label = str(point[1])
+                var names: Array[String] = []
+                for knower_raw in entry.get("knows",[]):
+                    var knower := str(knower_raw)
+                    names.append("나" if knower == "player" else session.name_of(knower))
+                var public_text := "공개됨" if bool(entry.get("public",false)) else "아직 비공개"
+                var source_type := str(session.voyage.get("information_sources",{}).get(fact_id,"DIRECT"))
+                var source_text := AstraForeknowledgeModel.source_label(source_type)
+                _clue_list.add_child(AstraUI.prose("%s · %s · 알고 있음: %s · %s" % [label,source_text," / ".join(PackedStringArray(names)),public_text],15,AstraUI.DIM))
         if int(session.voyage.get("loop",0)) > 0:
-            _clue_list.add_child(AstraUI.label("지난번과 달라진 점",20,AstraUI.CYAN))
-            for note in session.voyage.get("changes",[]):
-                _clue_list.add_child(AstraUI.prose(str(note),16,AstraUI.MUTED))
+            var differences := session.loop_difference_summary()
+            if not differences.is_empty():
+                _clue_list.add_child(AstraUI.label("지난 기록과 달라진 점",20,AstraUI.CYAN))
+                for note in differences:
+                    _clue_list.add_child(AstraUI.prose(str(note),16,AstraUI.MUTED))
     var found := session.found_clues()
     if found.is_empty():
         _clue_list.add_child(AstraUI.label("아직 확보한 단서가 없습니다. 현장의 단말과 흔적을 살펴보세요.",16,AstraUI.MUTED,true))
@@ -176,6 +234,10 @@ func _refresh_people() -> void:
         head.add_child(AstraUI.label(member.job, AstraUI.T_META, AstraUI.DIM))
         if not member.is_alive():
             head.add_child(AstraUI.chip("격리 또는 두절", AstraUI.RED, AstraUI.T_META - 2))
+        if not session.voyage.is_empty():
+            for observation in session.character_observations(npc_id):
+                box.add_child(AstraUI.prose("· " + str(observation), AstraUI.T_META, AstraUI.TEXT))
+            continue
         var claim: Dictionary = session.known_claims.get(npc_id, {})
         if claim.is_empty():
             box.add_child(AstraUI.label("진술 · 아직 듣지 못함", AstraUI.T_META, AstraUI.DIM))

@@ -38,8 +38,8 @@ func _initialize() -> void:
     tutorial.advance()
     check(not tutorial.can_advance() and tutorial.pending_event.is_empty(),"first interview stays focused")
     tutorial.ask("mira","ALIBI")
-    # DEAD_AIR's talk budget is now as low as 1 (§8 of the design notes), so a
-    # single question can legitimately exhaust it; the "not enough yet" gate
+    # DEAD_AIR keeps a deliberately small talk budget in 0.5.0, so an early
+    # focused round can exhaust it; the "not enough yet" gate
     # only applies while there is still budget left to ask someone else.
     if tutorial.talk_ap > 0:
         check(not tutorial.can_advance(),"one statement is not the whole round")
@@ -124,9 +124,12 @@ func _case(case_id: String, protocol: String, seed_value: int) -> void:
     check(s.last_vote==r.last_vote,"save replay identical vote")
     s.advance();r.advance()
     if s.phase=="NIGHT":
-        var kind := "rest" if seed_value==42 else "backup"
-        var target: String = "self" if kind=="rest" else str(s.room_ids()[0])
-        check(not bool(s.choose_night_action(kind,"missing").get("ok",false)),"invalid night target rejected")
+        var options := s.night_options()
+        # 0.5.0 teaches the first night with protect/backup only. Rest is a
+        # later-chapter option, so choose it only where the model exposes it.
+        var can_rest := not Array(options.get("rest", [])).is_empty()
+        var kind := "rest" if seed_value==42 and can_rest else "backup"
+        var target: String = "self" if kind=="rest" else str(Array(options.get("backup", s.room_ids()))[0])
         var result := s.choose_night_action(kind,target)
         var replay := r.choose_night_action(kind,target)
         check(bool(result.get("ok",false)) and result==replay,"night action replay deterministic")

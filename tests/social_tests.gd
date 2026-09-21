@@ -73,26 +73,42 @@ func test_calibration_shape() -> void:
 # T, U — unlocks arrive in order, and nothing is shown before it exists.
 func test_progressive_unlock() -> void:
     var fresh := AstraUnlocks.unlocked(false, 0)
-    for feature in ["marks", "night", "hypothesis", "protocols", "case_select", "private_talk"]:
+    for feature in ["marks", "meeting", "vote", "night", "hypothesis", "protocols", "case_select", "private_talk"]:
         check(not AstraUnlocks.has(fresh, feature), "%s is hidden on a fresh archive" % feature)
     for feature in AstraUnlocks.ALWAYS:
         check(AstraUnlocks.has(fresh, feature), "%s is available from the start" % feature)
+
     var after_calibration := AstraUnlocks.unlocked(true, 0)
-    check(AstraUnlocks.has(after_calibration, "night"), "night opens after calibration")
-    check(not AstraUnlocks.has(after_calibration, "hypothesis"), "hypothesis stays closed after calibration")
-    var after_one := AstraUnlocks.unlocked(true, 1)
-    check(AstraUnlocks.has(after_one, "private_talk"), "private talk opens after one case")
-    check(not AstraUnlocks.has(after_one, "protocols"), "protocols stay closed after one case")
-    var after_three := AstraUnlocks.unlocked(true, 3)
-    check(AstraUnlocks.has(after_three, "protocols") and AstraUnlocks.has(after_three, "hypothesis"), "advanced tools open later")
-    # Order is stable and each step adds, never removes.
+    check(AstraUnlocks.has(after_calibration, "marks"), "marks open after calibration")
+    check(not AstraUnlocks.has(after_calibration, "meeting"), "meeting stays hidden after calibration")
+    check(not AstraUnlocks.has(after_calibration, "vote"), "vote stays hidden after calibration")
+    check(not AstraUnlocks.has(after_calibration, "night"), "night stays hidden after calibration")
+
+    var after_dead_air := AstraUnlocks.unlocked(true, 1)
+    check(AstraUnlocks.has(after_dead_air, "meeting"), "meeting opens after Dead Air")
+    check(AstraUnlocks.has(after_dead_air, "claim_search"), "claim search opens after Dead Air")
+    check(not AstraUnlocks.has(after_dead_air, "vote") and not AstraUnlocks.has(after_dead_air, "night"), "vote/night stay hidden before Echo Ward")
+
+    var after_glass := AstraUnlocks.unlocked(true, 2)
+    check(AstraUnlocks.has(after_glass, "vote") and AstraUnlocks.has(after_glass, "night"), "vote and night open after Glass Garden")
+
+    var after_echo := AstraUnlocks.unlocked(true, 3)
+    for feature in ["private_talk", "theory_report", "night_tactics"]:
+        check(AstraUnlocks.has(after_echo, feature), "%s opens after Echo Ward" % feature)
+    check(not AstraUnlocks.has(after_echo, "hypothesis"), "hypothesis stays hidden until after Silent Orbit")
+
+    var after_silent := AstraUnlocks.unlocked(true, 4)
+    check(AstraUnlocks.has(after_silent, "hypothesis") and AstraUnlocks.has(after_silent, "protocols"), "advanced tools open after Silent Orbit")
+    var after_red := AstraUnlocks.unlocked(true, 5)
+    check(AstraUnlocks.has(after_red, "relationship_events"), "relationship events open after Red Shift")
+
     var previous: Array = fresh
-    for played in range(0, 6):
+    for played in range(0, 7):
         var current := AstraUnlocks.unlocked(true, played)
         for feature in previous:
             check(feature in current, "unlocks never revoke %s" % feature)
         previous = current
-    # The session refuses gated behaviour even if a screen asks for it.
+
     var s := AstraGameSession.new()
     s.setup(AstraCaseCatalog.CALIBRATION, 5, "ANALYST", "STORY")
     s.features = AstraUnlocks.unlocked(false, 0)
@@ -126,7 +142,7 @@ func test_dialogue_pacing_defaults() -> void:
 # H, I — the meeting is a sequence of single speakers, and the first one is short.
 func test_meeting_is_one_voice_at_a_time() -> void:
     for seed_value in [3, 44, 128]:
-        var s := _play_to_meeting("DEAD_AIR", seed_value, "STORY")
+        var s := _play_to_meeting("ECHO_WARD", seed_value, "STORY")
         var feed: Array = s.meeting_feed
         check(not feed.is_empty(), "seed %d meeting produced statements" % seed_value)
         for entry in feed:
@@ -143,7 +159,7 @@ func test_meeting_is_one_voice_at_a_time() -> void:
 
 # J, K — public statements are recorded and can be compared.
 func test_claim_ledger() -> void:
-    var s := _play_to_meeting("DEAD_AIR", 9, "STANDARD")
+    var s := _play_to_meeting("GLASS_GARDEN", 9, "STANDARD")
     check(not s.claim_ledger.is_empty(), "meeting statements reach the ledger")
     var public_found := false
     for entry in s.claim_ledger:
@@ -200,13 +216,13 @@ func test_player_is_on_the_record() -> void:
 # V — Story mode does not take anyone on the first night.
 func test_story_first_night() -> void:
     for seed_value in range(1, 26):
-        var s: AstraGameSession = _play_to_night("DEAD_AIR", seed_value, "STORY")
+        var s: AstraGameSession = _play_to_night("ECHO_WARD", seed_value, "STORY")
         if s == null:
             continue
         check(s.casualties.is_empty(), "story seed %d loses nobody on night one" % seed_value)
     var standard_deaths := 0
     for seed_value in range(1, 26):
-        var s: AstraGameSession = _play_to_night("DEAD_AIR", seed_value, "STANDARD")
+        var s: AstraGameSession = _play_to_night("ECHO_WARD", seed_value, "STANDARD")
         if s != null and not s.casualties.is_empty():
             standard_deaths += 1
     check(standard_deaths > 0, "standard mode still has consequences on night one")
@@ -358,7 +374,13 @@ func _play_to_night(case_id: String, seed_value: int, difficulty: String):
     s.advance()
     if s.phase != "NIGHT":
         return null
-    s.choose_night_action("rest", "self")
+    # ECHO_WARD's first night teaches only protect/backup; complete it with
+    # a valid record-backup action so Story/Standard consequence tests measure
+    # the night model rather than an intentionally locked Rest button.
+    var backup_rooms: Array = s.night_options().get("backup", [])
+    if backup_rooms.is_empty():
+        return null
+    s.choose_night_action("backup", str(backup_rooms[0]))
     return s
 
 # The tutorial is the case people replay the most, so the crime itself has to

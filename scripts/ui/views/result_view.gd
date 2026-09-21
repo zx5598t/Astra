@@ -34,6 +34,10 @@ func refresh() -> void:
     hero_text.add_child(AstraUI.label(str(report.get("title", "")), 36, color))
     hero_text.add_child(AstraUI.label(str(report.get("subtitle", "")), 16, AstraUI.TEXT, true))
 
+    if session.case_id == AstraCaseCatalog.CALIBRATION:
+        _calibration_result(session, report)
+        return
+
     # What was different about *this* run, before any score appears. A player
     # who just lost needs the story of the run, not a receipt (§29, §92).
     var summary: Dictionary = report.get("loop_summary", {})
@@ -143,9 +147,9 @@ func refresh() -> void:
         var status := str(row.get("status", ""))
         var status_text := "생존"
         if status == AstraCrewMember.STATUS_ISOLATED:
-            status_text = "격리"
+            status_text = "장기수면 격리"
         elif status == AstraCrewMember.STATUS_OFFLINE:
-            status_text = "습격당함"
+            status_text = "생체 신호 두절"
         grid.add_child(AstraUI.label(status_text, 13, AstraUI.MUTED))
 
     var columns := AstraUI.hbox(18)
@@ -181,13 +185,23 @@ func refresh() -> void:
     var change: Dictionary = screen.archive_change
     if not change.is_empty():
         side.add_child(AstraUI.section("아카이브", AstraUI.CYAN))
-        side.add_child(AstraUI.label("항해 기록에 이번 조사을 보관했습니다.", 14, AstraUI.TEXT))
+        side.add_child(AstraUI.label("항해 기록에 이번 조사를 보관했습니다.", 14, AstraUI.TEXT))
         if bool(change.get("new_best", false)):
             side.add_child(AstraUI.chip("이 사건 최고 기록 갱신", AstraUI.GOLD, 13))
         for case_id in change.get("unlocked", []):
             side.add_child(AstraUI.chip("새 사건 해금 · " + screen.app.meta.case_display_name(str(case_id)), AstraUI.GREEN, 13))
         for feature in change.get("new_features", []):
             side.add_child(AstraUI.chip("새 기능 · " + AstraUnlocks.title_of(str(feature)), AstraUI.GOLD, 13))
+        var new_codex: Array = change.get("new_codex",[])
+        if not new_codex.is_empty():
+            side.add_child(AstraUI.label("새로 기록한 승무원 정보",AstraUI.T_META,AstraUI.CYAN))
+            var visible_count := mini(3,new_codex.size())
+            for index in range(visible_count):
+                var entry: Dictionary = new_codex[index]
+                var who := AstraCrewCatalog.display_name(str(entry.get("character","")))
+                side.add_child(AstraUI.prose("· %s — %s" % [who,str(entry.get("title",""))],AstraUI.T_META,AstraUI.TEXT))
+            if new_codex.size() > visible_count:
+                side.add_child(AstraUI.label("외 %d개 · 승무원 기록에서 확인" % (new_codex.size()-visible_count),AstraUI.T_META,AstraUI.MUTED))
 
     var buttons := AstraUI.hbox(10)
     _body.add_child(buttons)
@@ -204,6 +218,37 @@ func refresh() -> void:
         next.pressed.connect(screen.start_other_case.bind(next_id))
         buttons.add_child(next)
 
+func _calibration_result(session: AstraGameSession, report: Dictionary) -> void:
+    var learned := AstraUI.panel(Color(AstraUI.CYAN, 0.07), Color(AstraUI.CYAN, 0.38), 12, 14)
+    _body.add_child(learned)
+    var box := AstraUI.vbox(7)
+    learned.add_child(box)
+    box.add_child(AstraUI.label("이번에 알게 된 것", AstraUI.T_META, AstraUI.CYAN))
+    box.add_child(AstraUI.prose("· 당신은 ASTRA의 탐사요원입니다.\n· 네 명의 동료가 깨어 있고, 네 명은 장기수면 중입니다.\n· 포드 전원 기록에는 실행자 서명이 비어 있습니다.", AstraUI.T_BODY, AstraUI.TEXT))
+    box.add_child(AstraUI.label("첫 기록을 확보했습니다.", AstraUI.T_HEAD, AstraUI.GREEN))
+
+    var next_id := _next_case(session.case_id)
+    if next_id != "":
+        var next_data := AstraCaseCatalog.get_case(next_id)
+        var next_panel := AstraUI.panel(AstraUI.PANEL_2, Color(AstraUI.GOLD, 0.35), 10, 12)
+        _body.add_child(next_panel)
+        var next_box := AstraUI.vbox(5)
+        next_panel.add_child(next_box)
+        next_box.add_child(AstraUI.label("다음 기록", AstraUI.T_META, AstraUI.GOLD))
+        next_box.add_child(AstraUI.prose("서로 다른 목적지 기록이 왜 남았는지 확인합니다.", AstraUI.T_BODY, AstraUI.TEXT))
+        var next := AstraUI.primary_button("다음 사건 · %s →" % str(next_data.get("title", "")), AstraUI.GREEN)
+        next.pressed.connect(screen.start_other_case.bind(next_id))
+        next_box.add_child(next)
+
+    var buttons := AstraUI.hbox(10)
+    _body.add_child(buttons)
+    var archive := AstraUI.button("항해 기록으로", AstraUI.MUTED, 16, 48)
+    archive.pressed.connect(screen.app.show_archive)
+    buttons.add_child(archive)
+    var retry := AstraUI.button("CALIBRATION 다시 보기", AstraUI.CYAN, 16, 48)
+    retry.pressed.connect(screen.restart_case)
+    buttons.add_child(retry)
+
 func _null_card(session: AstraGameSession, npc_id: String) -> Control:
     var member := session.npc(npc_id)
     var card := AstraUI.panel(Color(AstraUI.RED, 0.07), Color(AstraUI.RED, 0.5), 10, 10)
@@ -218,7 +263,7 @@ func _null_card(session: AstraGameSession, npc_id: String) -> Control:
     box.add_child(AstraUI.label("담당 조작 · " + session.op_name(str(session.truth["null_ops"].get(npc_id, ""))), 13, AstraUI.TEXT, true))
     var claim: Dictionary = session.truth["claims"].get(npc_id, {})
     box.add_child(AstraUI.label("거짓 진술 · " + session.room_name(str(claim.get("position", ""))), 12, AstraUI.MUTED, true))
-    var fate := "격리됨" if member.status == AstraCrewMember.STATUS_ISOLATED else "끝까지 숨어 있었음"
+    var fate := "장기수면 격리됨" if member.status == AstraCrewMember.STATUS_ISOLATED else "끝까지 숨어 있었음"
     box.add_child(AstraUI.label(fate, 13, AstraUI.GREEN if member.status == AstraCrewMember.STATUS_ISOLATED else AstraUI.RED))
     return card
 

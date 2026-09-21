@@ -56,6 +56,7 @@ var _budget_name: Label
 var _budget_pips: RichTextLabel
 var _budget_count: Label
 var _step_labels: Dictionary = {}
+var _step_separators: Dictionary = {}
 var _ready_pulse: bool = false
 
 func setup(app_node, game_session: AstraGameSession, feedback: AstraFeedbackFX) -> void:
@@ -70,6 +71,7 @@ func setup(app_node, game_session: AstraGameSession, feedback: AstraFeedbackFX) 
     session.notice.connect(_on_notice)
     _on_changed()
     _announce_phase(session.phase)
+    call_deferred("_maybe_show_phase_onboarding", session.phase)
 
 func _build() -> void:
     _background = AstraUI.thumb(AstraArt.chapter(session.case_id), Vector2.ZERO)
@@ -98,13 +100,14 @@ func _build() -> void:
         _stepper.add_child(cell)
         _step_labels[step] = cell
         if index < STEPS.size() - 1:
-            _stepper.add_child(AstraUI.label("›", AstraUI.T_META, AstraUI.DIM))
+            var separator := AstraUI.label("›", AstraUI.T_META, AstraUI.DIM)
+            _stepper.add_child(separator)
+            _step_separators[step] = separator
     top.add_child(AstraUI.spacer())
     # Action points were drawn as a right-aligned grey caption and were the
     # single most missed piece of information in playtesting: people asked
     # questions until they ran out and only then noticed there was a budget.
     _budget_panel = AstraUI.panel(Color(0.04, 0.07, 0.11, 0.95), Color(AstraUI.GOLD, 0.45), 8, 10)
-    top.add_child(_budget_panel)
     _budget_row = AstraUI.hbox(10)
     _budget_panel.add_child(_budget_row)
     _budget_name = AstraUI.label("", AstraUI.T_META, AstraUI.MUTED)
@@ -116,19 +119,27 @@ func _build() -> void:
     _budget_row.add_child(_budget_count)
     _ap_label = AstraUI.rich(AstraUI.T_META)
     _ap_label.custom_minimum_size.x = 230
-    top.add_child(_ap_label)
     _note_button = AstraUI.button("조사 노트 · N", AstraUI.CYAN, AstraUI.T_META, 40)
     _note_button.tooltip_text = AstraCodex.tooltip("notebook")
     _note_button.pressed.connect(open_notebook)
     top.add_child(_note_button)
     # The help button sits beside the objective it explains, in the same spot on
     # every screen, so "where do I look this up" has one answer (§10).
-    _help_button = AstraUI.help_button()
+    var early_help := session.case_id in [AstraCaseCatalog.CALIBRATION, "DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD"]
+    _help_button = AstraUI.help_button(early_help)
     _help_button.pressed.connect(_open_screen_help)
     top.add_child(_help_button)
     var menu := AstraUI.button("메뉴 · Esc", AstraUI.MUTED, AstraUI.T_META, 40)
     menu.pressed.connect(func(): app.show_pause_menu())
     top.add_child(menu)
+
+    # Keep the action budget on its own short row. On 1366-wide screens the
+    # old all-in-one header pushed this panel past the viewport edge.
+    var status_row := AstraUI.hbox(10)
+    root.add_child(status_row)
+    status_row.add_child(_budget_panel)
+    status_row.add_child(_ap_label)
+    status_row.add_child(AstraUI.spacer())
 
     # PRIMARY: one line saying what to do next, always in the same place.
     # Built once and updated in place. Rebuilding it into an anchored holder on
@@ -182,7 +193,7 @@ func _build() -> void:
     # Marking is a 0.4.0 unlock: during calibration the player has four people
     # and one meeting, and a third annotation layer on top of that is noise.
     if session.has_feature("marks"):
-        var mark := AstraUI.button("내 판단 표시 · M", AstraUI.MUTED, AstraUI.T_META, 42)
+        var mark := AstraUI.button("개인 추리 메모 · M", AstraUI.MUTED, AstraUI.T_META, 42)
         mark.tooltip_text = AstraCodex.tooltip("mark")
         mark.pressed.connect(func(): _on_mark(_selected))
         bottom.add_child(mark)
@@ -194,7 +205,8 @@ func _build() -> void:
 func _on_changed() -> void:
     if session == null:
         return
-    if not session.crew.has(_selected):
+    if _selected not in session.active_participants():
+        session._fallback_selected()
         _selected = session.selected_id
     if session.phase == "INTERROGATION" and not session.pending_event.is_empty():
         _selected = str(session.pending_event.get("npc_id", _selected))
@@ -224,7 +236,7 @@ func _refresh_top() -> void:
     var day_text := "%d일째" % session.day
     if session.max_days > 1:
         day_text += " / %d" % session.max_days
-    _day_label.text = "%s  ·  %s" % [str(session.case_data.get("title_ko", "")), day_text]
+    _day_label.text = session.calendar_caption()
     _ap_label.text = "[right]" + session.time_caption() + "[/right]"
     _refresh_stepper()
     _refresh_budget()
@@ -237,17 +249,32 @@ func _refresh_top() -> void:
 # signal — several times per action — which churned a RichTextLabel and a dozen
 # Controls per refresh and left orphaned nodes behind.
 func _refresh_stepper() -> void:
-    var current := STEPS.find(session.phase)
+    var flow := AstraCaseCatalog.phase_flow(session.case_id)
+    var visible_steps: Array = ["BRIEFING"]
+    for step in STEPS:
+        if step != "BRIEFING" and step in flow:
+            visible_steps.append(step)
+    var current := visible_steps.find(session.phase)
     for index in range(STEPS.size()):
         var step := str(STEPS[index])
-        var here := index == current
-        var done := current >= 0 and index < current
-        var accent: Color = PHASE_COLORS.get(step, AstraUI.CYAN)
         var cell: Label = _step_labels.get(step, null)
         if cell == null:
             continue
+        var visible := step in visible_steps
+        cell.visible = visible
+        if not visible:
+            if _step_separators.has(step):
+                _step_separators[step].visible = false
+            continue
+        var visible_index := visible_steps.find(step)
+        var here := visible_index == current
+        var done := current >= 0 and visible_index < current
+        var accent: Color = PHASE_COLORS.get(step, AstraUI.CYAN)
         cell.add_theme_color_override("font_color", accent if here else (AstraUI.MUTED if done else AstraUI.DIM))
         cell.add_theme_font_size_override("font_size", AstraUI.font_size(AstraUI.T_UI if here else AstraUI.T_META))
+        if _step_separators.has(step):
+            var next_visible := visible_index >= 0 and visible_index + 1 < visible_steps.size()
+            _step_separators[step].visible = next_visible and str(visible_steps[visible_index + 1]) == str(STEPS[index + 1])
 
 # How many actions are left, as pips, in a bordered box. Empty pips are what
 # tell the player the budget existed in the first place.
@@ -262,9 +289,11 @@ func _refresh_budget() -> void:
     var accent: Color = AstraUI.DIM if left <= 0 else AstraUI.GOLD
     _budget_panel.add_theme_stylebox_override("panel",
         AstraUI.style(Color(0.04, 0.07, 0.11, 0.95), Color(accent, 0.5), 8, 1, 10))
-    _budget_name.text = str(spec.get("label", ""))
+    var early_budget := session.case_id in [AstraCaseCatalog.CALIBRATION, "DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD"]
+    _budget_name.text = (str(spec.get("label", "")) + " 가능") if early_budget else str(spec.get("label", ""))
+    _budget_pips.visible = not early_budget
     _budget_pips.text = AstraUI.pips(left, maximum, accent)
-    _budget_count.text = "%d / %d" % [left, maximum]
+    _budget_count.text = ("%d회 남음" % left) if early_budget else ("%d / %d" % [left, maximum])
     _budget_count.add_theme_color_override("font_color", accent)
 
 # The one line saying what to do next, plus the hint line under it.
@@ -306,7 +335,41 @@ func refresh_objective() -> void:
         _refresh_bottom()
 
 func _open_screen_help() -> void:
-    app.show_screen_help(session.phase, _objective_text)
+    app.show_screen_help(session.phase, _objective_text, session.action_budget())
+
+func _maybe_show_phase_onboarding(phase: String) -> void:
+    if not app.settings.show_hints: return
+    if phase not in ["INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"]:
+        return
+    if app.meta.has_seen_help(phase):
+        return
+    var title := ""
+    var body := ""
+    var button := "시작"
+    match phase:
+        "INVESTIGATION":
+            title = "현장 조사"
+            body = "금색 표시를 누르면 단서를 찾습니다.\n이번 사건에서는 조사 %d회가 기본입니다." % session.investigation_ap_max()
+            button = "조사 시작"
+        "INTERROGATION":
+            title = "동료와 대화"
+            body = "질문을 고르면 그 사람의 진술을 들을 수 있습니다.\n이번 사건에서는 질문 %d회가 기본입니다." % session.talk_ap_max()
+            button = "대화 시작"
+        "MEETING":
+            title = "공개 회의"
+            body = "공개된 기록과 서로 다른 설명을 비교합니다.\n단서를 공개하면 참석한 동료에게 전달됩니다. 개인 메모는 공개되지 않습니다."
+            button = "회의 시작"
+        "VOTE":
+            title = "긴급 장기수면 격리"
+            body = "가장 많은 표를 받은 승무원은 죽지 않습니다.\n사건이 끝날 때까지 장기수면 포드에 격리됩니다."
+            button = "투표 시작"
+        "NIGHT":
+            title = "밤 행동"
+            body = "밤에는 Null이 움직일 수 있습니다.\n탐사요원은 한 가지 행동으로 사람이나 기록을 지킬 수 있습니다."
+            button = "밤 시작"
+    app.meta.mark_help_seen(phase)
+    app.meta.save_data()
+    AstraModal.open(app.overlay_root(), title, AstraUI.prose(body, AstraUI.T_BODY, AstraUI.TEXT), [[button, AstraUI.CYAN]], Callable(), 600.0)
 
 func _refresh_roster() -> void:
     _roster.visible = session.phase in ["INTERROGATION", "MEETING", "VOTE", "NIGHT"]
@@ -316,7 +379,8 @@ func _refresh_roster() -> void:
         var selected: bool = id == _selected
         button.add_theme_stylebox_override("normal",AstraUI.style(Color(0.09,0.16,0.24,0.94) if selected else Color(0.03,0.05,0.08,0.91),AstraUI.CYAN if selected else AstraUI.BORDER,8,1,8))
         button.modulate = Color.WHITE if member.is_alive() else Color(0.55,0.57,0.62)
-        button.tooltip_text = member.job + " · " + (member.mood_label() if member.is_alive() else "격리 또는 신호 두절")
+        button.disabled = not member.is_alive()
+        button.tooltip_text = member.job + " · " + (member.mood_label() if member.is_alive() else session.status_label(str(id)))
 
 func _refresh_bottom() -> void:
     # The bottom strip is now the "where and when am I" line rather than a fixed
@@ -375,12 +439,13 @@ func _swap_view() -> void:
 
 func _on_phase_changed(phase: String) -> void:
     _announce_phase(phase)
+    call_deferred("_maybe_show_phase_onboarding", phase)
 
 func _announce_phase(phase: String) -> void:
     var accent: Color = PHASE_COLORS.get(phase, AstraUI.CYAN)
     match phase:
         "BRIEFING":
-            fx.banner("DAY %d" % session.day, "%s · %s" % [str(session.case_data.get("title", "")), "사건 브리핑" if session.day == 1 else "밤사이 보고"], accent)
+            fx.banner("사건 %d일차" % session.day, "%s · %s" % [str(session.case_data.get("title", "")), "사건 브리핑" if session.day == 1 else "밤사이 보고"], accent)
             fx.play("phase")
         "INVESTIGATION":
             fx.banner("현장 조사", "어디를 살필지, 무엇을 남길지 선택하세요.", accent)
@@ -392,7 +457,7 @@ func _announce_phase(phase: String) -> void:
             fx.banner("공개 회의", "알리바이가 공개되고, 반박이 시작됩니다.", accent)
             fx.play("phase")
         "VOTE":
-            fx.banner("격리 투표", "한 명을 격리합니다. 모두 각자 1표입니다. 동률이면 격리하지 않습니다.", accent)
+            fx.banner("장기수면 격리 투표", "최다 득표자는 사건이 끝날 때까지 포드로 이동합니다. 사망 처리가 아닙니다.", accent)
             fx.play("alert")
         "NIGHT":
             fx.banner("밤", "Null이 움직입니다.", accent, 1.1)
@@ -422,10 +487,16 @@ func select(npc_id: String) -> void:
     session.select(npc_id)
 
 func _on_mark(npc_id: String) -> void:
-    var mark := session.cycle_mark(npc_id)
-    fx.play("click")
-    if mark != "":
-        fx.toast("%s — %s로 표시" % [session.name_of(npc_id), str(AstraUI.MARK_LABEL[mark])], AstraUI.MARK_COLORS[mark], 1.6)
+    if npc_id not in session.roster or app.modal_open(): return
+    session.guide_exposed("memo")
+    var body := AstraUI.vbox(10)
+    body.add_child(AstraUI.prose("개인 메모입니다. NPC에게 전달되지 않고 투표나 보고서로 자동 제출되지 않습니다. 신뢰도 무고함을 확정하는 표시는 아닙니다.",18,AstraUI.TEXT))
+    var handler := func(choice: int):
+        if choice >= 0 and choice < 4:
+            session.set_mark(npc_id,["null","clear","unsure",""][choice])
+            session.guide_completed("memo")
+    AstraModal.open(app.overlay_root(),session.name_of(npc_id)+" · 개인 추리 메모",body,
+        [["의심",AstraUI.RED],["신뢰",AstraUI.CYAN],["판단 보류",AstraUI.GOLD],["표시 해제",AstraUI.MUTED]],handler,760.0)
 
 func _on_primary() -> void:
     if not session.can_advance():

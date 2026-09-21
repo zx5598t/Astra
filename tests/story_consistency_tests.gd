@@ -51,20 +51,19 @@ func test_first_play_regression() -> void:
         var key := str(s.voyage["room"]) + ":" + str(point[0])
         if key not in s.voyage["inspected"]:
             open_points += 1
-    check(open_points == 1, "CALIBRATION: exactly one open investigation point (%d)" % open_points)
-    for point in s.voyage_points():
-        check(s.voyage_inspect(str(point[0])), "CALIBRATION: required point inspectable")
-        close_scene(s)
+    check(open_points == 2, "CALIBRATION: one required and one optional point (%d)" % open_points)
+    check(s.voyage_inspect("pod"),"CALIBRATION: required point inspectable without optional")
+    close_scene(s)
     check(s.voyage["goal_done"], "CALIBRATION: goal found from the single required point")
 
-    # Never required to travel: every crewmate can be met without leaving medbay.
-    for who in s.roster:
-        check(s.voyage_visit_person(who), "CALIBRATION: %s reachable without travel" % who)
-        close_scene(s)
+    # Never required to hunt four talk buttons. The panel scene introduces
+    # Jun/Noa/Daren automatically; only Mira is a direct guided conversation.
+    check("mira" in s.voyage_people(), "CALIBRATION: Mira participates without travel")
+    close_scene(s)
     check(s.voyage["visits"] == ["medbay"], "CALIBRATION: never left medbay")
-    check(s.voyage["met"].size() == s.roster.size(), "CALIBRATION: everyone met")
+    check("mira" in s.voyage["met"], "CALIBRATION: required direct conversation completed")
 
-    check(s.voyage_can_finish(), "CALIBRATION: can finish without a soft-lock")
+    check(s.voyage_can_finish(), "CALIBRATION: can finish after one guided conversation")
     check(s.finish_voyage(), "CALIBRATION: finishes")
     check(s.phase == "RESULT", "CALIBRATION: routes straight to RESULT")
     check(s.outcome == "CONTINUE", "CALIBRATION: no win/lose judgement")
@@ -95,7 +94,7 @@ func test_narrative_continuity() -> void:
             s.voyage_visit_person(who)
             close_scene(s)
         if not s.voyage["goal_done"]:
-            s.voyage_ask_goal(str(s.voyage_people()[0]))
+            check(preload("res://tests/voyage_driver.gd").inspect_goal(s),"direct inspection reaches goal")
             close_scene(s)
         check(s.voyage_can_finish(), "%s: exploration completes" % case_id)
         check(s.finish_voyage(), "%s: finish_voyage succeeds" % case_id)

@@ -13,11 +13,15 @@ extends RefCounted
 # Neither of them explains the whole game at once, and neither of them uses a
 # term the player has not met in play.
 
-static func screen_help(phase: String, objective: String = "") -> Control:
+static func screen_help(phase: String, objective: String = "", budget: Dictionary = {}) -> Control:
     var info := AstraCodex.screen(phase)
     var box := AstraUI.vbox(14)
     if objective != "":
         box.add_child(AstraUI.objective_strip(objective))
+    if not budget.is_empty():
+        var left := int(budget.get("left", 0))
+        var maximum := int(budget.get("max", 0))
+        box.add_child(AstraUI.label("이번 사건 · %s %d회 중 %d회 남음" % [str(budget.get("label", "행동")), maximum, left], AstraUI.T_UI, AstraUI.GOLD))
     box.add_child(AstraUI.label(str(info.get("purpose", "")), AstraUI.T_HEAD, AstraUI.CYAN))
     for point in info.get("points", []):
         var row := AstraUI.hbox(10)
@@ -50,7 +54,7 @@ static func shortcuts() -> Control:
         ["Space / 클릭", "다음으로"],
         ["1 ~ 8", "승무원 선택"],
         ["N", "조사 노트"],
-        ["M", "내 판단 표시"],
+        ["M", "개인 추리 메모"],
         ["H", "이 화면 도움말"],
         ["Esc", "메뉴"],
         ["F11", "전체 화면"]

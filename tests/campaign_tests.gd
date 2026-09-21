@@ -28,7 +28,7 @@ func _initialize() -> void:
         check(not s.perform_mission().get("ok", false), "mission cannot repeat " + id)
         check(s.mission_status()["complete"] and s.objectives()[2]["complete"], "objective updates " + id)
         if id == "SILENT_ORBIT":
-            check(s.talk_ap_max() == 4, "relay grants talk action")
+            check(s.talk_ap_max() == 5, "relay grants one talk action on top of 0.5.0 baseline")
         if id == "RED_SHIFT":
             check(s.meeting_actions_max() == 3, "meeting upgrade")
         if id == "LAST_LIGHT":
@@ -43,6 +43,19 @@ func _initialize() -> void:
         check(loaded.rng.state == s.rng.state and loaded.flags == s.flags, "snapshot RNG and mission state " + id)
         var room := str(s.room_ids()[0])
         check(s.search_room(room) == loaded.search_room(room), "resumed search identical " + id)
+
+        # Exercise overwrite + .bak recovery while the chapter is still in a
+        # resumable phase. DEAD_AIR and GLASS_GARDEN now legitimately finish
+        # before the old VOTE/NIGHT sequence, and RESULT is intentionally not
+        # snapshot-able.
+        check(s.save_snapshot(PATH), "snapshot overwrite " + id)
+        var corrupt := FileAccess.open(PATH, FileAccess.WRITE)
+        corrupt.store_string("not a config file")
+        corrupt.close()
+        var recovered := AstraGameSession.new()
+        check(recovered.load_snapshot(PATH), "backup recovers damaged save " + id)
+        AstraGameSession.delete_snapshot(PATH)
+
         s.advance()
         loaded.advance()
         check(s.pending_event == loaded.pending_event, "resumed event identical " + id)
@@ -52,16 +65,11 @@ func _initialize() -> void:
         s.advance()
         loaded.advance()
         check(s.meeting_feed == loaded.meeting_feed, "resumed meeting identical " + id)
-        s.advance()
-        loaded.advance()
-        check(s.cast_vote("mira") == loaded.cast_vote("mira"), "resumed vote identical " + id)
-        check(s.save_snapshot(PATH), "snapshot overwrite " + id)
-        var corrupt := FileAccess.open(PATH, FileAccess.WRITE)
-        corrupt.store_string("not a config file")
-        corrupt.close()
-        var recovered := AstraGameSession.new()
-        check(recovered.load_snapshot(PATH), "backup recovers damaged save " + id)
-        AstraGameSession.delete_snapshot(PATH)
+        if s.phase == "MEETING":
+            s.advance()
+            loaded.advance()
+        if s.phase == "VOTE":
+            check(s.cast_vote("mira") == loaded.cast_vote("mira"), "resumed vote identical " + id)
         check(not AstraGameSession.has_snapshot(PATH), "snapshot removed " + id)
         var report := {"outcome": "WIN", "total": 3000, "rank": "A", "mission_complete": true, "objectives": s.objectives()}
         meta.record_case_result(id, "ANALYST", report, false)

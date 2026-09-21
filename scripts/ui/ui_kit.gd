@@ -303,10 +303,11 @@ static func objective_strip(text: String, accent: Color = CYAN) -> PanelContaine
     return card
 
 # The round [?] that opens help for the screen the player is on, not a manual.
-static func help_button() -> Button:
-    var node := button("?", CYAN, T_UI, 36, false)
-    node.custom_minimum_size = Vector2(36, 36)
-    node.tooltip_text = "이 화면에서 할 수 있는 일"
+static func help_button(expanded: bool = false) -> Button:
+    var text := "도움말 · H" if expanded else "?"
+    var node := button(text, CYAN, T_UI, 36, false)
+    node.custom_minimum_size = Vector2(96, 36) if expanded else Vector2(36, 36)
+    node.tooltip_text = "현재 화면에서 해야 할 일과 남은 행동을 다시 봅니다."
     return node
 
 # First-appearance card: art, name, job, one line. Nothing else — a personality
@@ -457,13 +458,25 @@ static func mark_as_target(control: Control, accent: Color = GOLD, caption: Stri
 # straight through without an if/else at every call site.
 static func set_tutorial_nudge(control: Control, enabled: bool, accent: Color = GOLD) -> void:
     if enabled:
-        mark_as_target(control, accent, "")
+        mark_as_target(control, accent, "현재 행동")
+        if not control.is_inside_tree():
+            control.ready.connect(func(): set_tutorial_nudge(control,true,accent),CONNECT_ONE_SHOT)
+            return
+        if not reduce_motion and not control.has_meta("nudge_tween"):
+            var pulse := control.create_tween().set_loops()
+            pulse.tween_property(control,"modulate",Color(1.0,0.90,0.72),1.2)
+            pulse.tween_property(control,"modulate",Color.WHITE,1.2)
+            control.set_meta("nudge_tween",pulse)
     else:
         clear_tutorial_nudge(control)
 
 static func clear_tutorial_nudge(control: Control) -> void:
-    if control == null:
-        return
+    if control == null: return
+    if control.has_meta("nudge_tween"):
+        var pulse: Tween = control.get_meta("nudge_tween")
+        if pulse.is_valid(): pulse.kill()
+        control.remove_meta("nudge_tween")
+    control.modulate = Color.WHITE
     if control is Button:
         control.remove_theme_stylebox_override("normal")
         control.remove_theme_stylebox_override("hover")

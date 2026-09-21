@@ -19,3 +19,8 @@ __pycache__/
 
 # Local launch diagnostics
 .godot-*.log
+
+# Test scratch scripts may be created during local/CI diagnostics. Keep real
+# fixtures and their normal Godot .uid files tracked; ignore only scratch names.
+tests/_tmp_*.gd
+tests/_tmp_*.gd.uid
