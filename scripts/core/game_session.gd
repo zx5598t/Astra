@@ -4987,6 +4987,14 @@ func voyage_next() -> void:
                 _voyage_scene(hook)
         elif bool(scene.get("story_hook",false)):
             voyage["story_hook_seen"] = true
+        # An incidental/autonomous beat can win the race immediately after the
+        # goal fact is discovered. Do not let that swallow the mandatory local
+        # answer: once the incidental scene closes, enqueue the resolution
+        # before any optional loop hook.
+        if voyage.get("scene",{}).is_empty() and not first_day_flow() and bool(voyage.get("goal_done",false)) and not bool(voyage.get("story_resolution_seen",false)):
+            var pending_resolution := AstraVoyageContent.resolution_thread(case_id)
+            if not pending_resolution.is_empty():
+                _voyage_scene(pending_resolution)
         if voyage.get("scene",{}).is_empty() and not first_day_flow() and not bool(voyage.get("hook_shown",false)) and not Dictionary(voyage.get("loop_hook",{})).is_empty():
             voyage["hook_shown"] = true
             _voyage_scene(voyage["loop_hook"])
