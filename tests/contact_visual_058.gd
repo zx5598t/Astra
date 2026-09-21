@@ -22,6 +22,29 @@ func capture(label: String) -> void:
     picture.save_jpg(output+"/"+label+".jpg",0.88)
     captures += 1
 
+
+func close_session_scene(session: AstraGameSession) -> void:
+    var guard := 0
+    while not session.voyage.get("scene",{}).is_empty() and guard < 40:
+        guard += 1
+        var scene: Dictionary = session.voyage["scene"]
+        if int(session.voyage["line"]) >= scene.get("lines",[]).size()-1 and not scene.get("choices",[]).is_empty():
+            session.voyage_choose(0)
+        else:
+            session.voyage_next()
+
+func inspect_session_goal(session: AstraGameSession) -> bool:
+    var fact := str(AstraVoyageContent.chapter(session.case_id).get("fact",""))
+    for room_id in session.voyage_rooms():
+        if str(session.voyage.get("room","")) != str(room_id):
+            session.voyage_move(str(room_id),false)
+            close_session_scene(session)
+        for point in session.voyage_points():
+            if str(point[4]) == fact and session.voyage_inspect(str(point[0])):
+                close_session_scene(session)
+                return true
+    return false
+
 func _run() -> void:
     if "--qa-output" in OS.get_cmdline_user_args():
         var args := OS.get_cmdline_user_args()
@@ -58,7 +81,7 @@ func _run() -> void:
         app.session.voyage_choose(1)
         app.session.voyage_next()
         await capture("05_choice_response_"+str(dim.x))
-        preload("res://tests/voyage_driver.gd").close_scene(app.session)
+        close_session_scene(app.session)
         await capture("06_ready_"+str(dim.x))
         app._current._help()
         await capture("07_help_"+str(dim.x))
@@ -70,7 +93,7 @@ func _run() -> void:
         app.session.voyage_next()
         await capture("09_day2_arrival_"+str(dim.x))
         app.start_case("ECHO_WARD","ANALYST",0)
-        preload("res://tests/voyage_driver.gd").inspect_goal(app.session)
+        inspect_session_goal(app.session)
         app.session.finish_voyage()
         while app.session.phase != "VOTE":
             if not app.session.pending_event.is_empty(): app.session.resolve_private_event(0)
