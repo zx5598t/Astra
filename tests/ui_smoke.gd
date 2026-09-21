@@ -225,6 +225,8 @@ func _play_case(case_id: String, protocol: String) -> void:
                 await _wait(2)
         s.advance()
         await _wait(2)
+    if s.phase != "RESULT":
+        printerr("UI SMOKE STATE · %s/%s phase=%s day=%d guard=%d outcome=%s blocked=%s pending=%s vote_cast=%s night_done=%s" % [case_id,protocol,s.phase,s.day,guard,s.outcome,s.tutorial_blocked_reason(),str(s.pending_event),str(s.vote_cast),str(s.night_done)])
     _expect(s.phase == "RESULT", "%s/%s reached result" % [case_id, protocol])
     await _wait(4)
     _expect(not screen.archive_change.is_empty(), "%s/%s archive recorded" % [case_id, protocol])
