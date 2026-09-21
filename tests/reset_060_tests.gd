@@ -13,6 +13,7 @@ func check(ok: bool, label: String) -> void:
 func _initialize() -> void:
     test_slot_isolation()
     test_hard_reset_contract()
+    test_wrongful_isolation_scope()
     if failures.is_empty():
         print("ASTRA 0.6.0 RESET TESTS OK · %d checks" % checks)
         quit(0)
@@ -97,3 +98,32 @@ func test_hard_reset_contract() -> void:
     var residue := s.loop_reset_framing()
     check(str(residue.get("detail","")) != "",
         "in-fiction loop residue remains a separate authored transition")
+
+
+func test_wrongful_isolation_scope() -> void:
+    var clean := AstraGameSession.new()
+    clean.setup("LAST_LIGHT",120060)
+    clean.day = 3
+    var normal_ap := clean.talk_ap_max()
+
+    var penalized := AstraGameSession.new()
+    penalized.setup("LAST_LIGHT",120060)
+    penalized.flags["restricted_info_until_day"] = 3
+    penalized.day = 2
+    check(penalized.talk_ap_max() == normal_ap, "wrongful-isolation information cost does not apply early")
+    penalized.day = 3
+    check(penalized.talk_ap_max() == maxi(1,normal_ap-1), "wrongful-isolation information cost applies on the designated next day")
+    penalized.day = 4
+    check(penalized.talk_ap_max() == normal_ap, "wrongful-isolation information cost expires after the designated day")
+
+    var other_run := AstraGameSession.new()
+    other_run.setup("LAST_LIGHT",120061)
+    other_run.day = 3
+    check(not other_run.flags.has("restricted_info_until_day"), "wrongful-isolation state does not leak into another run")
+    check(other_run.talk_ap_max() == normal_ap, "another run keeps the unpenalized information budget")
+
+    var meta := AstraMetaProgress.new()
+    meta.set_voyage_memory_for_slot(0,{"loops":1,"memory_tags":["slot0"]})
+    meta.set_voyage_memory_for_slot(1,{"loops":1,"memory_tags":["slot1"]})
+    meta.clear_voyage_memory_for_slot(0)
+    check(not meta.voyage_memory_for_slot(1).has("restricted_info_until_day"), "wrongful-isolation temporary state is not invented in another slot")
