@@ -8,6 +8,8 @@ var invalid_targets := 0
 var self_votes := 0
 var empty_reasons := 0
 var abstain_reasons := {}
+var null_abstains := 0
+var innocent_abstains := 0
 
 func check(ok: bool, label: String) -> void:
     checks += 1
@@ -19,8 +21,10 @@ func _initialize() -> void:
     test_low_information_votes()
     test_ballot_invariants()
     test_null_behavior()
+    test_explicit_ballot_records()
     print("NPC VOTE SIM · total %d · abstain %d · invalid %d · self %d · empty-reason %d" % [total_votes,abstains,invalid_targets,self_votes,empty_reasons])
     print("NPC VOTE ABSTAIN REASONS · " + JSON.stringify(abstain_reasons))
+    print("NPC VOTE ABSTAIN TYPES · Null %d · innocent %d · unexplained %d" % [null_abstains,innocent_abstains,empty_reasons])
     if failures.is_empty():
         print("ASTRA 0.6.0 NPC VOTE REGRESSION OK · %d checks" % checks)
         quit(0)
@@ -35,6 +39,8 @@ func _record_session(s: AstraGameSession) -> void:
         var target := str(intentions.get(voter,""))
         if target == "":
             abstains += 1
+            if s.crew[str(voter)].is_null(): null_abstains += 1
+            else: innocent_abstains += 1
             var trace := s._vote_decision_trace(str(voter),"")
             var why := str(trace.get("explanation",""))
             abstain_reasons[why] = int(abstain_reasons.get(why,0)) + 1
@@ -96,3 +102,23 @@ func test_null_behavior() -> void:
     check(null_abstains == 0, "Null NPCs do not fallback-abstain when targets exist")
     check(null_targets.size() >= 4, "two-Null voting does not collapse to one fixed target (%d targets)" % null_targets.size())
     print("NULL VOTE SAMPLE · ballots %d · abstain %d · target identities %d" % [null_ballots,null_abstains,null_targets.size()])
+
+
+func test_explicit_ballot_records() -> void:
+    for seed in range(40):
+        var s := AstraGameSession.new()
+        s.setup("LAST_LIGHT",900000+seed*71,"ANALYST","STANDARD",[])
+        s.phase = "VOTE"
+        var result := s.cast_vote("")
+        check(bool(result.get("ok",false)), "explicit abstain ballot can be recorded")
+        for ballot in s.last_vote.get("ballots",[]):
+            if str(ballot.get("voter","")) == "player":
+                check(bool(ballot.get("abstain",false)), "player abstain is explicit")
+                check(str(ballot.get("reason_code","")) == "player_abstain", "player abstain has reason code")
+                continue
+            var target := str(ballot.get("target",""))
+            check(bool(ballot.get("abstain",false)) == (target == ""), "NPC ballot abstain flag matches target state")
+            check(str(ballot.get("reason","")).strip_edges() != "", "NPC ballot stores readable reason")
+            check(not Dictionary(ballot.get("decision_trace",{})).is_empty(), "NPC ballot stores DecisionTrace")
+            if target == "":
+                check(str(ballot.get("reason_code","")) == "no_legal_vote_target", "NPC abstain stores allowed reason code")
