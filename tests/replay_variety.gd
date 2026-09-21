@@ -27,6 +27,8 @@ func _initialize() -> void:
             seeds = maxi(40, int(argument.split("=")[1]))
     print("REPLAY VARIETY · %d seeds per case" % seeds)
     test_role_distribution()
+    test_same_stage_replay()
+    test_soft_anti_repeat()
     test_pair_distribution()
     test_innocent_liar_distribution()
     test_opening_line_variety()
@@ -60,6 +62,72 @@ func test_role_distribution() -> void:
             highest = maxf(highest, float(counts[npc_id]))
         check(lowest > expected * 0.6, "%s: least-used Null still appears often (%d vs %d)" % [case_id, int(lowest), int(expected)])
         check(highest < expected * 1.4, "%s: most-used Null is not dominant (%d vs %d)" % [case_id, int(highest), int(expected)])
+
+
+# Explicit player-facing same-stage replay gate. Every campaign case is swept
+# independently rather than hiding a fixed-role stage inside campaign averages.
+func test_same_stage_replay() -> void:
+    for case_id in AstraCaseCatalog.CAMPAIGN:
+        var data := AstraCaseCatalog.get_case(str(case_id))
+        var roster: Array = AstraCaseCatalog.roster(data)
+        var wanted := AstraCaseCatalog.null_count(data)
+        var identities := {}
+        var pairs := {}
+        var previous := ""
+        var consecutive := 0
+        for index in range(seeds):
+            var truth := AstraCaseGenerator.generate(str(case_id),510000 + index * 101, [], "STANDARD")
+            var nulls: Array = truth.get("nulls",[]).duplicate()
+            for npc_id in nulls:
+                identities[str(npc_id)] = int(identities.get(str(npc_id),0)) + 1
+            nulls.sort()
+            var key := ":".join(PackedStringArray(nulls))
+            pairs[key] = true
+            if key == previous:
+                consecutive += 1
+            previous = key
+        check(identities.size() >= mini(roster.size(), maxi(2, roster.size()-1)),
+            "%s: same-stage replay uses multiple Null identities (%d/%d)" % [case_id,identities.size(),roster.size()])
+        if wanted >= 2:
+            var possible_pairs := roster.size() * (roster.size()-1) / 2
+            var required_pairs := mini(possible_pairs, maxi(3, int(ceil(float(possible_pairs) * 0.55))))
+            check(pairs.size() >= required_pairs,
+                "%s: two-Null replay covers varied pairs (%d/%d possible)" % [case_id,pairs.size(),possible_pairs])
+        else:
+            check(identities.size() >= mini(roster.size(),3),
+                "%s: one-Null replay does not collapse to one face" % case_id)
+        print("  SAME-STAGE %s · seeds %d · identities %s · pairs %d · consecutive %d" % [case_id,seeds,JSON.stringify(identities),pairs.size(),consecutive])
+
+# Recent history must lower repeat pressure without becoming a hard cooldown.
+func test_soft_anti_repeat() -> void:
+    for case_id in AstraCaseCatalog.CAMPAIGN:
+        var data := AstraCaseCatalog.get_case(str(case_id))
+        var roster: Array = AstraCaseCatalog.roster(data)
+        if roster.size() < 2:
+            continue
+        var recent := str(roster[0])
+        var baseline_hits := 0
+        var penalized_hits := 0
+        var history := [recent]
+        for index in range(seeds * 2):
+            var seed_value := 710000 + index * 131
+            var baseline := AstraCaseGenerator.generate(str(case_id),seed_value,[],"STANDARD")
+            var penalized := AstraCaseGenerator.generate(str(case_id),seed_value,history,"STANDARD")
+            if recent in baseline.get("nulls",[]): baseline_hits += 1
+            if recent in penalized.get("nulls",[]): penalized_hits += 1
+        check(penalized_hits < baseline_hits,
+            "%s: recent-history penalty lowers repeat frequency (%d < %d)" % [case_id,penalized_hits,baseline_hits])
+        check(penalized_hits > 0,
+            "%s: recent Null remains selectable; no hard exclusion" % case_id)
+        var a := AstraCaseGenerator.generate(str(case_id),818181,history,"STANDARD")
+        var b := AstraCaseGenerator.generate(str(case_id),818181,history,"STANDARD")
+        check(str(a.get("nulls",[])) == str(b.get("nulls",[])),
+            "%s: same seed + same history keeps Null assignment deterministic" % case_id)
+        check(str(a.get("positions",{})) == str(b.get("positions",{})),
+            "%s: same seed + same history keeps layout deterministic" % case_id)
+        check(str(a.get("herring","")) == str(b.get("herring","")),
+            "%s: same seed + same history keeps herring deterministic" % case_id)
+        print("  SOFT-REPEAT %s · recent %s · baseline %d · penalized %d" % [case_id,recent,baseline_hits,penalized_hits])
 
 # The two-Null pairing must not collapse onto a handful of duos.
 func test_pair_distribution() -> void:
