@@ -15,6 +15,7 @@ func _initialize() -> void:
     test_consequence_and_opinion_visibility()
     test_codex_actual_seen_only()
     test_hidden_state_leak()
+    test_cross_screen_repetition()
     if failures.is_empty():
         print("ASTRA 0.5.6 ECHOES TESTS OK · %d checks" % checks)
         quit(0)
@@ -104,6 +105,27 @@ func test_codex_actual_seen_only() -> void:
     var after := s.codex_unlock_events().size()
     check(after == before,"replaying same storylet does not duplicate Codex unlock")
     check(AstraCodex.unlocks_for_scene("054_mira_self_neglect_1").has(unseen_id),"Codex trigger is explicit authored scene mapping")
+
+func test_cross_screen_repetition() -> void:
+    var s := _session()
+    s._adjust_relationship("mira","lyra","trust",0.05,"056-cross-screen",true,true)
+    s._apply_consequence_event({
+        "id":"056-night-only","timing":"DELAYED","who":"mira",
+        "source_scene":"056-cross-screen-choice",
+        "note":"미라는 이전 선택을 기억하고 먼저 기록을 건넸다."
+    },false)
+    s.voyage["opinion_changes"].append({
+        "actor":"noa","target":"rho","reason_tag":"new_evidence",
+        "visible":true,"day":s.day
+    })
+    var night := s.night_feedback_summary()
+    var briefing := s.briefing_social_summary(s.day)
+    check(Array(night.get("relationship_changes",[])).is_empty(),"night does not repeat relationship feedback reserved for briefing")
+    check(Array(night.get("opinion_changes",[])).is_empty(),"night does not repeat opinion feedback reserved for briefing")
+    check(not Array(night.get("consequences",[])).is_empty(),"night keeps immediate consequence feedback")
+    check(Array(briefing.get("consequences",[])).is_empty(),"briefing does not repeat consequence already shown at night")
+    check(not Array(briefing.get("relationship_changes",[])).is_empty(),"briefing carries durable relationship aftermath")
+    check(not Array(briefing.get("opinion_changes",[])).is_empty(),"briefing carries durable opinion aftermath")
 
 func test_hidden_state_leak() -> void:
     var s := _session()
