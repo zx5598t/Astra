@@ -93,6 +93,7 @@ func _choice_effect_vocabulary() -> void:
 func _sentence_openers() -> void:
     print("\n-- 4. Repeated opening words in 'action' lines (possible template smell) --")
     var openers := {}
+    var offenders := {}
     for scene in AstraVoyageContent.all_scenes():
         var action := str(scene.get("action", ""))
         if action == "": continue
@@ -104,9 +105,24 @@ func _sentence_openers() -> void:
         if first_word in ["준이","준은","마렌이","마렌은","노아가","노아는","미라가","미라는","세나가","세나는","다렌이","다렌은","루칸이","루칸은","소렌이","소렌은"] and words.size() > 1:
             first_word = words[1]
         openers[first_word] = int(openers.get(first_word, 0)) + 1
+        if not offenders.has(first_word):
+            offenders[first_word] = []
+        offenders[first_word].append({
+            "id":str(scene.get("id","")),
+            "speaker":str(scene.get("speaker","")),
+            "action":action
+        })
     var repeated: Array = []
     for word in openers:
-        if int(openers[word]) >= 5: repeated.append("%s (%d)" % [word, openers[word]])
+        if int(openers[word]) >= 5:
+            repeated.append("%s (%d)" % [word, openers[word]])
+            print("  opener '%s' · count=%d" % [word,openers[word]])
+            for raw in offenders.get(word,[]):
+                var item: Dictionary = raw
+                var preview := str(item.get("action",""))
+                if preview.length() > 72:
+                    preview = preview.substr(0,72) + "…"
+                print("    %s · %s · %s" % [str(item.get("id","")),str(item.get("speaker","")),preview])
     if repeated.is_empty():
         print("  OK: no opening word repeats 5+ times across all scenes.")
     else:
@@ -177,7 +193,7 @@ func _authored_scene_volume() -> void:
     if total < 470:
         fails.append("authored voyage/reactive scenes %d; 0.5.3 release floor is 470" % total)
     if total > 550:
-        warns.append("authored voyage/reactive scenes %d; verify one-run exposure remains restrained" % total)
+        print("  INFO: large authored library (%d); runtime exposure is verified by required CLEAR SIGNAL 500-loop CI gate." % total)
 
 func _key_pair_and_trio_depth() -> void:
     print("\n-- 9. Key pair and trio depth --")
