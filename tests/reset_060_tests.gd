@@ -30,6 +30,11 @@ func test_slot_isolation() -> void:
     check(meta.voyage_memory_for_slot(1).is_empty(),
         "legacy memory never leaks into slot 1")
 
+    meta.calibration_completed = true
+    meta.case_counts = {"DEAD_AIR":9,"GLASS_GARDEN":8,"ECHO_WARD":7}
+    check(not meta.is_case_unlocked_for_slot("DEAD_AIR",1),
+        "global archive progress cannot unlock a fresh campaign slot")
+
     meta.set_voyage_memory_for_slot(0,{
         "loops":7,
         "arrivals":["sena","vale"],
@@ -50,6 +55,8 @@ func test_slot_isolation() -> void:
         "hard reset clears only the chosen slot campaign memory")
     check(int(meta.voyage_memory_for_slot(1).get("loops",-1)) == 3,
         "hard reset preserves other slot")
+    check(not meta.is_case_unlocked_for_slot("DEAD_AIR",0),
+        "hard-reset slot returns campaign chapter progression to CALIBRATION")
     check("slot1" in meta.voyage_memory_for_slot(1).get("memory_tags",[]),
         "other-slot narrative memory stays isolated")
 
