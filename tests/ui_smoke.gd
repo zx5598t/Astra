@@ -216,7 +216,10 @@ func _play_case(case_id: String, protocol: String) -> void:
                 screen.select(str(ranked[0]))
                 await _wait(1)
                 s.select_ballot("target",str(ranked[0]))
-                screen._view._confirm()
+                # The real UI opens a confirmation modal. Smoke tests exercise
+                # the ballot contract directly so a headless run cannot stall
+                # forever waiting for a human click inside that modal.
+                s.confirm_ballot()
                 await _wait(2)
             "NIGHT":
                 screen.select(str(s.living_ids()[0]))
