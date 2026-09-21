@@ -18,8 +18,9 @@ func _initialize() -> void:
     if failures.is_empty():
         print("ASTRA 0.5.6 ECHOES TESTS OK · %d checks" % checks)
         quit(0)
-    print("ASTRA 0.5.6 ECHOES TESTS FAILED · %d/%d" % [failures.size(),checks])
-    quit(1)
+    else:
+        print("ASTRA 0.5.6 ECHOES TESTS FAILED · %d/%d" % [failures.size(),checks])
+        quit(1)
 
 func _session() -> AstraGameSession:
     var s := AstraGameSession.new()
