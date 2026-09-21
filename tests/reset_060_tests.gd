@@ -17,6 +17,7 @@ func _initialize() -> void:
     if failures.is_empty():
         print("ASTRA 0.6.0 RESET TESTS OK · %d checks" % checks)
         quit(0)
+        return
     printerr("ASTRA 0.6.0 RESET TESTS FAILED · %d/%d" % [failures.size(),checks])
     quit(1)
 
