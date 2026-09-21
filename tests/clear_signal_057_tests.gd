@@ -170,6 +170,15 @@ func test_runtime_focus_recording() -> void:
     s._voyage_scene(candidate)
     check(s.voyage["loop_focus_families"].size() == 1 and int(s.voyage["loop_focus_counts"]["candidate_family"]) == 2,"repeat exposure increments count without duplicating distinct family")
 
+    var linked := _session()
+    var start := {"id":"linked_start","family":"thread_a","speaker":"rho","tag":"pair","category":"RELATIONSHIP","intent":"micro_arc","chain_id":"arc_linked"}
+    var follow := {"id":"linked_follow","family":"thread_b","speaker":"rho","tag":"pair","category":"RELATIONSHIP","intent":"followup","chain_id":"arc_linked"}
+    linked._voyage_scene(start)
+    linked._voyage_scene(follow)
+    check(linked.voyage["loop_focus_families"] == ["thread_a"],"cross-family continuation does not consume a second distinct thread")
+    check(bool(linked.voyage["loop_focus_events"][-1].get("continuation",false)),"runtime focus event records continuation classification")
+    check(int(linked.voyage["loop_focus_counts"].get("thread_b",0)) == 1,"continuation exposure is still counted for diagnostics")
+
     var ambient := {"id":"ambient","family":"ambient","speaker":"rho","tag":"work","category":"AUTONOMOUS"}
     s._voyage_scene(ambient)
     check("ambient" not in s.voyage["loop_focus_families"],"ambient/autonomous scene does not consume high-salience thread budget")
