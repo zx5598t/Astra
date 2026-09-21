@@ -342,7 +342,8 @@ static func get_case(case_id: String) -> Dictionary:
         return data
     var story := AstraVoyageContent.chapter(case_id)
     data["roster"] = AstraVoyageContent.awake_roster(case_id)
-    data["null_count"] = 1 if data["roster"].size() < 7 else 2
+    # ECHO_WARD is the first formal vote, so it teaches one Null before later two-Null cases.
+    data["null_count"] = 1 if data["roster"].size() < 7 or case_id == "ECHO_WARD" else 2
     data["trace_steps"] = 2
     data["max_days"] = 2 if data["roster"].size() < 7 else 4
     data["ops"] = data.get("ops",[]).slice(0,data["null_count"])
