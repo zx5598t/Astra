@@ -2741,7 +2741,8 @@ func vote_intentions() -> Dictionary:
                 continue
             var relationship_weight := 0.18 if day <= 1 else (0.28 if day == 2 else 0.36)
             var noise_scale := 0.0 if day <= 1 else VOTE_NOISE
-            var value := member.get_suspicion(other) - member.get_affinity(other) * relationship_weight + (_stable_noise(npc_id + other) - 0.5) * noise_scale + _public_trace_support(other)
+            var evidence_attention := 0.45 + _stable_noise("evidence_attention:" + npc_id + ":" + str(other)) * 0.35
+            var value := member.get_suspicion(other) - member.get_affinity(other) * relationship_weight + (_stable_noise(npc_id + other) - 0.5) * noise_scale + _public_trace_support(other) * evidence_attention
             if value > best:
                 best = value
                 target = str(other)
