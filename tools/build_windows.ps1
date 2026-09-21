@@ -26,6 +26,8 @@ try {
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/knowledge_propagation_tests.gd') "$logDir\knowledge-053.log" 'ASTRA 0.5.3 KNOWLEDGE PROPAGATION TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/relationship_callback_tests.gd') "$logDir\callbacks-053.log" 'ASTRA 0.5.3 RELATIONSHIP CALLBACK TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/heartbeat_053_simulation.gd') "$logDir\heartbeat-053.log" 'ASTRA 0.5.3 HEARTBEAT SIMULATION OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/clear_signal_057_tests.gd') "$logDir\clear-signal-057.log" 'ASTRA 0.5.7 CLEAR SIGNAL TESTS OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/clear_signal_057_simulation.gd') "$logDir\clear-signal-sim-057.log" 'ASTRA 0.5.7 CLEAR SIGNAL SIMULATION OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/routine_model_tests.gd') "$logDir\routine-054.log" 'ASTRA 0.5.4 ROUTINE MODEL TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/micro_arc_tests.gd') "$logDir\micro-arc-054.log" 'ASTRA 0.5.4 MICRO ARC TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/consequence_chain_tests.gd') "$logDir\consequence-054.log" 'ASTRA 0.5.4 CONSEQUENCE CHAIN TESTS OK'
