@@ -143,7 +143,9 @@ static func weight(scene: Dictionary, seen_ever: Dictionary, recent_families: Ar
     if family in recent_families.slice(maxi(0,recent_families.size()-5)) and not continuation:
         score *= 0.22
     if continuation:
-        score *= 1.22
+        # CLEAR SIGNAL: a visible authored thread should be noticeably easier
+        # to continue, but remains a weight rather than a forced selection.
+        score *= 2.50
     score *= _focus_budget_multiplier(scene,pinned_question,focus_context)
     score *= _speaker_multiplier(scene,pinned_question,focus_context)
     var target := str(scene.get("target",""))
@@ -157,7 +159,7 @@ static func weight(scene: Dictionary, seen_ever: Dictionary, recent_families: Ar
     # 0.5.4 follow-ups should not disappear under ordinary variety. This is
     # still a weight, never a forced quest.
     if str(scene.get("intent","")) == "micro_arc":
-        score *= 1.22
+        score *= 1.50
     if str(scene.get("category","")) == "CONSEQUENCE":
         score *= 1.35
     if str(scene.get("routine_relevance","")) != "":
