@@ -103,21 +103,25 @@ Notebook은 정답표가 아니라 기억 보조입니다.
 
 ## 검증
 
-0.6.0 release-recovery 기준 GitHub Actions run **#518**은 Godot **4.7.2 stable**에서 Linux/Windows validation 모두 GREEN입니다.
+0.6.1 개발 검증 GitHub Actions run **#536** (`35673297533`)은 Godot **4.7.2 stable**에서 Linux/Windows validation 모두 GREEN입니다.
 
 - Linux import / 전체 GDScript parse clean
-- voyage regression: **649 checks PASS**
-- story consistency: **407 checks PASS**
+- HUMAN TRACE: **326 checks PASS**
+- 전체 core model: **49,255 checks PASS**
+- campaign: **106 checks PASS**
+- voyage regression: **656 checks PASS**
+- story consistency: **419 checks PASS**
 - FIRST CONTACT: **259 checks PASS**
 - reset safety: **22 checks PASS**
-- NPC vote regression: **19,086 checks PASS** / 4,200 ballots / invalid 0 / self 0 / empty reason 0
+- NPC vote regression: **19,086 checks PASS**
 - --games=40 TOTAL: smart **79%** / random **19%** / passive **0%**
 - deduction gate: smart - random **60%p**, passive < 20% 유지
-- UI smoke: **PASS**
+- Linux/Windows UI smoke 및 main-scene boot: **PASS**
 - content audit: **0 FAIL / 1 WARN** (반복 opener 편집 경고)
 - authored voyage/reactive scene library: **608개**
+- save schema: **v11**, migration 없음
 
-Windows 정식 ZIP/SHA256과 v0.6.0 Release 값은 main 병합 후 tag-source 빌드 결과를 기준으로 기록합니다.
+개발 브랜치의 Windows release-candidate packaging은 의도대로 실행하지 않습니다. 정식 Windows ZIP/SHA256, tag, GitHub Release는 최종 배포 요청 시에만 생성합니다.
 
 ## 실행과 빌드
 
