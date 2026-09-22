@@ -1,3 +1,11 @@
+# ASTRA 0.6.2 — HUMAN AFTERMATH
+
+0.6.1 HUMAN TRACE의 후속 패스다. 새 대형 시스템이나 scene pack 대신 기존 resolution reaction, next-loop residue, story hook의 역할을 분리했다. player-facing primary owner를 명시해 같은 consequence를 여러 surface가 설명하는 방향을 피하고, residue에는 실제 source handling tag를 남겨 다음 loop callback의 provenance를 검증할 수 있게 했다.
+
+callback/reaction/hook은 기존 Storylet Scheduler가 continuation으로 인식할 수 있는 metadata를 사용한다. hidden Null, hidden motive, raw relationship는 selector input에 추가하지 않았다. authored voyage/reactive library와 save schema v11은 그대로 유지한다.
+
+정식 Windows packaging, v0.6.2 tag, GitHub Release와 release asset upload는 이번 개발 단계에서 생성하지 않는다.
+
 # ASTRA 0.6.1 — HUMAN TRACE
 
 ## 발견한 사실을 어떻게 다뤘는가
