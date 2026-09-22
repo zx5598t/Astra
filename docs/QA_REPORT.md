@@ -18,7 +18,34 @@ Windows packaging / tag / GitHub Release는 최종 배포 시점까지 의도적
 
 ## 검증 결과
 
-PR CI 완료 후 실제 check 수, bot 비율, content audit FAIL/WARN, Linux/Windows validation 결과를 이 섹션에 기록한다. 기존 threshold는 완화하지 않는다.
+검증 commit: `51e2d82c4e426ab6b165b25ce244d468f3caba88`  
+GitHub Actions: run `35673297533` (#536)
+
+- Linux import / 전체 GDScript parse: **PASS**
+- Linux validate: **PASS**
+- Windows validate / UI smoke / main-scene boot: **PASS**
+- HUMAN TRACE: **326 checks PASS**
+- 전체 core model: **49,255 checks PASS**
+- campaign: **106 checks PASS**
+- voyage regression: **656 checks PASS**
+- story consistency: **419 checks PASS**
+- FIRST CONTACT: **259 checks PASS**
+- reset safety: **22 checks PASS**
+- NPC vote regression: **19,086 checks PASS**
+- `--games=40`: smart **79%** / random **19%** / passive **0%**
+- deduction gate: smart - random **60%p** / passive < 20% — **PASS**
+- CLEAR SIGNAL: **50 checks PASS** + 500-loop simulation **10 checks PASS**
+- authored voyage/reactive library: **608**
+- content audit: **0 FAIL / 1 WARN**
+- WARN: opener repeated 5+ — 같은(6), 자기(5), 당신이(6), 의료(5)
+- save schema: **v11 유지**, migration 없음
+- dev branch `release-candidate-windows`: **SKIPPED (expected)**
+
+기존 assertion/threshold는 완화하지 않았다. HUMAN TRACE 전용 회귀에는 canonical resolution fact 소유권, incidental `last_fact` 비공유, `information_sources` 문자열 schema 유지, speaker/public share 구분, mandatory reaction → story hook 우선순위, immediate consequence 보존을 포함한다.
+
+Windows packaging: **NOT RUN — intentionally deferred**  
+Git tag: **NOT CREATED — intentionally deferred**  
+GitHub Release: **NOT CREATED — intentionally deferred**
 
 ---
 
