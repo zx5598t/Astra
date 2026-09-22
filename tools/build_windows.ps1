@@ -12,6 +12,7 @@ try {
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--import') "$logDir\import.log"
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/run_tests.gd', '--', '--games=40') "$logDir\rules.log" 'ASTRA TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/campaign_tests.gd') "$logDir\campaign.log" 'ASTRA CAMPAIGN TESTS OK'
+    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/human_trace_061_tests.gd') "$logDir\human-trace-061.log" 'ASTRA 0.6.1 HUMAN TRACE TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/ui_smoke.gd') "$logDir\ui.log" 'ASTRA UI SMOKE OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/redesign_tests.gd') "$logDir\redesign.log" 'ASTRA REDESIGN TESTS OK'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/social_tests.gd') "$logDir\social.log" 'ASTRA SOCIAL TESTS OK'
