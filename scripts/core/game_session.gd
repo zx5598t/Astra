@@ -5026,6 +5026,10 @@ func voyage_next() -> void:
                 _voyage_scene(reaction_hook)
         elif bool(scene.get("story_hook",false)):
             voyage["story_hook_seen"] = true
+            # Mandatory resolution -> reaction -> hook has priority. Any older
+            # immediate consequence that was deferred while this chain was on
+            # screen may surface only after the hook closes.
+            _deliver_due_consequence("IMMEDIATE")
         # An incidental/autonomous beat can win the race immediately after the
         # goal fact is discovered. Do not let that swallow the mandatory local
         # answer: once the incidental scene closes, enqueue the resolution
@@ -5086,6 +5090,10 @@ func voyage_choose(index: int) -> bool:
             voyage["memory_tags"].append("mira:promise_broken:tell_injury")
         voyage["promise_history"].append({"who":"mira","promise":"tell_injury","loop":int(voyage.get("loop",0)),"state":"broken"})
     var last_fact := str(voyage.get("last_fact",""))
+    # A mandatory resolution always handles its chapter's canonical fact. An
+    # incidental scene may have updated last_fact immediately beforehand.
+    if bool(scene.get("story_resolution",false)):
+        last_fact = str(AstraVoyageContent.chapter(case_id).get("fact",""))
     if last_fact != "" and effect in ["share","record","open_records"]:
         var ownership: Dictionary = voyage.get("evidence_ownership",{})
         var evidence: Dictionary = ownership.get(last_fact,{"found_by":"player","knows":["player"],"public":false})
@@ -5179,10 +5187,9 @@ func voyage_choose(index: int) -> bool:
             evidence["knows"] = knowers
             ownership[resolution_fact] = evidence
             voyage["evidence_ownership"] = ownership
-            voyage["information_sources"][resolution_fact] = {
-                "source_type":"DIRECT","source_scene":str(scene.get("id","")),
-                "handling":effect,"memory_tag":memory_tag
-            }
+            # information_sources is intentionally a fact -> source-type string
+            # map. Handling provenance already lives in memory_tags, dialogue
+            # memory and the visible trace note; do not change this value's type.
         var reaction := AstraVoyageContent.resolution_reaction(case_id,memory_tag,active_participants())
         if not reaction.is_empty():
             _voyage_scene(reaction)
@@ -5206,7 +5213,13 @@ func voyage_choose(index: int) -> bool:
         var after_scene := AstraStorylets055.incident_after_scene(str(incident_result.get("id","")),str(scene.get("speaker","")))
         if not after_scene.is_empty():
             _voyage_scene(after_scene)
-    _deliver_due_consequence("IMMEDIATE")
+    var mandatory_story_scene: Dictionary = voyage.get("scene",{})
+    if mandatory_story_scene.is_empty() or not (
+        bool(mandatory_story_scene.get("story_resolution",false))
+        or bool(mandatory_story_scene.get("story_reaction",false))
+        or bool(mandatory_story_scene.get("story_hook",false))
+    ):
+        _deliver_due_consequence("IMMEDIATE")
     changed.emit()
     return true
 func voyage_use_recorder() -> bool:
