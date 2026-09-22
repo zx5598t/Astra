@@ -1,8 +1,10 @@
 # ASTRA 0.7.4 — PLAYBACK
 
-0.7.4는 0.7.0~0.7.3에서 만든 스토리·관계·visual beat를 새 시스템으로 늘리지 않고 실제 플레이 흐름에서 더 자연스럽게 잇는 narrative-flow polish입니다. 기존 continuation/focus/consequence 경로를 유지하면서, 방금 본 중요한 장면 직후 관계없는 dynamic incident가 즉시 새 스레드를 여는 경우만 한 action 동안 늦춥니다. 플레이어가 직접 인물을 찾아가거나 질문을 고르는 행동은 막지 않습니다.
+0.7.4는 0.7.0~0.7.3에서 만든 스토리·관계·visual beat를 새 시스템으로 늘리지 않고 실제 플레이 흐름에서 더 자연스럽게 잇는 narrative-flow polish입니다. 기존 continuation/focus/consequence 경로를 유지하면서, 방금 본 MANDATORY/FOLLOWUP/FOCUS 장면 직후 관계없는 dynamic incident가 즉시 새 스레드를 여는 경우만 한 action 동안 늦춥니다. 플레이어가 직접 인물을 찾아가거나 topic을 고르는 행동은 막지 않습니다.
 
-authored library는 **622개**, save schema는 **v11**, 신규 visual asset은 **0개**입니다. 0.7.1/0.7.2/0.7.3 visual mapping은 그대로 유지합니다.
+completion pass에서는 ACT II 결과 화면이 모두 CALIBRATION의 reset 문구로 되돌아가던 fallback을 제거했습니다. SECOND_WATCH · BORROWED DAYS · BLIND DECK · THREE MINUTES DARK · CONTINUITY · THRESHOLD가 각 장에서 실제로 확인한 흔적을 짧게 남기므로, LAST_LIGHT 이후에도 “무엇을 알아냈고 무엇이 남았는지”가 이어집니다. Night는 즉시 consequence, Briefing은 지속되는 관계/판단 변화라는 기존 역할 분리도 회귀 테스트로 고정했습니다.
+
+authored library는 **622개**, save schema는 **v11**, 신규 authored scene/visual asset/persistent field는 모두 **0개**입니다. 0.7.1/0.7.2/0.7.3의 visual mapping 15개와 FIRST IMPRESSION, HUMAN SIGNAL consequence 경로는 그대로 유지합니다.
 
 # ASTRA 0.7.0 — SECOND WATCH
 
