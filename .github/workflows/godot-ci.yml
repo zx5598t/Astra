@@ -374,6 +374,25 @@ jobs:
           if (-not (Select-String -Path windows-vote-abstain-060.log -Pattern 'ASTRA 0.6.0 NPC VOTE REGRESSION OK')) { throw 'Windows vote/abstain regression did not pass.' }
           if (Select-String -Path windows-story-consistency.log,windows-first-contact-058.log,windows-reset-060.log,windows-vote-abstain-060.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows story/reset gates reported script errors.' }
 
+      - name: Run 0.7.x ACT II and visual story regression on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/story_070_consistency.gd 2>&1 | Tee-Object -FilePath windows-story-070.log
+          if (-not (Select-String -Path windows-story-070.log -Pattern 'ASTRA STORY 070 CONSISTENCY TESTS OK')) { throw 'Windows 0.7.0 story consistency did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/act2_070_tests.gd 2>&1 | Tee-Object -FilePath windows-act2-070.log
+          if (-not (Select-String -Path windows-act2-070.log -Pattern 'ASTRA ACT2 070 TESTS OK')) { throw 'Windows 0.7.0 ACT II tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/act2_070_simulation.gd 2>&1 | Tee-Object -FilePath windows-act2-sim-070.log
+          if (-not (Select-String -Path windows-act2-sim-070.log -Pattern 'ASTRA ACT2 070 SIMULATION OK')) { throw 'Windows 0.7.0 ACT II simulation did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/crew_glimpse_070_tests.gd 2>&1 | Tee-Object -FilePath windows-glimpse-070.log
+          if (-not (Select-String -Path windows-glimpse-070.log -Pattern 'ASTRA CREW GLIMPSE 070 TESTS OK')) { throw 'Windows 0.7.0 crew glimpse did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/character_arc_070_tests.gd 2>&1 | Tee-Object -FilePath windows-arc-070.log
+          if (-not (Select-String -Path windows-arc-070.log -Pattern 'ASTRA CHARACTER ARC 070 TESTS OK')) { throw 'Windows 0.7.0 character arc did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/visual_story_071_tests.gd 2>&1 | Tee-Object -FilePath windows-visual-071.log
+          if (-not (Select-String -Path windows-visual-071.log -Pattern 'ASTRA 0.7.1 VISUAL STORY TESTS OK')) { throw 'Windows 0.7.1 visual story did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/visual_story_072_tests.gd 2>&1 | Tee-Object -FilePath windows-visual-072.log
+          if (-not (Select-String -Path windows-visual-072.log -Pattern 'ASTRA 0.7.2 VISUAL STORY TESTS OK')) { throw 'Windows 0.7.2 visual story did not pass.' }
+          if (Select-String -Path windows-story-070.log,windows-act2-070.log,windows-act2-sim-070.log,windows-glimpse-070.log,windows-arc-070.log,windows-visual-071.log,windows-visual-072.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.7.x regression reported script errors.' }
+
       - name: Run 0.5.1 stabilization tests on Windows
         shell: pwsh
         run: |
