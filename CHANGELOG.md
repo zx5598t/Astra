@@ -1,3 +1,13 @@
+# 0.6.1 · HUMAN TRACE · 2026-09-22
+
+- DEAD_AIR~LAST_LIGHT의 canonical resolution 뒤에 장별 3개 handling choice를 연결했다. 사실 자체와 chapter order는 분기하지 않는다.
+- 기존 voyage choice pipeline, memory_tags, DialogueMemory, KnowledgeModel, evidence ownership, Notebook note를 재사용한다.
+- 선택 뒤 최대 한 번의 짧은 authored reaction을 거쳐 기존 story hook으로 복귀한다.
+- 이전 loop의 선택은 직접 기억 대사가 아니라 기록 배치·습관·echo처럼 작은 residue callback으로 돌아올 수 있다.
+- 이미 본 동일 resolution은 결론 설명을 압축하되 현재 loop의 선택지는 유지하고 “장면 전체 보기” payload를 보존한다.
+- Windows release workflow는 v* tag push 또는 workflow_dispatch에서만 실행한다. main VERSION 변경만으로 packaging/release가 시작되지 않는다.
+- save schema는 실제 최신 저장소 기준 v11을 유지하며 migration을 추가하지 않는다.
+
 # 0.6.0 · FIRST CONTACT / STORY LOOP · 2026-09-22
 
 0.6.0은 FIRST CONTACT부터 LAST_LIGHT까지 조사 → 판단 → 결과 → 다음 질문의 장 흐름을 실제 플레이에 연결한다. CALIBRATION은 네 명의 승무원, 직접 조사 1회, 선택 상태 확인, discussion/review, 순차 합류를 유지하며 핵심 reveal은 Result 전에 경험 가능하도록 한다.
