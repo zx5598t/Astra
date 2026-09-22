@@ -281,6 +281,13 @@ jobs:
           if (-not (Select-String -Path windows-tests.log -Pattern 'ASTRA TESTS OK')) { throw 'Windows model tests did not pass.' }
           if (Select-String -Path windows-tests.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows model tests reported script errors.' }
 
+      - name: Run 0.6.1 HUMAN TRACE resolution handling on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/human_trace_061_tests.gd 2>&1 | Tee-Object -FilePath windows-human-trace-061.log
+          if (-not (Select-String -Path windows-human-trace-061.log -Pattern 'ASTRA 0.6.1 HUMAN TRACE TESTS OK')) { throw 'Windows HUMAN TRACE 0.6.1 tests did not pass.' }
+          if (Select-String -Path windows-human-trace-061.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows HUMAN TRACE 0.6.1 tests reported script errors.' }
+
       - name: Run story consistency, FIRST CONTACT and reset gates on Windows
         shell: pwsh
         run: |
