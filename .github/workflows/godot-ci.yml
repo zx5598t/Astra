@@ -260,6 +260,18 @@ jobs:
           grep -q "ASTRA 0.6.0 NPC VOTE REGRESSION OK" vote-abstain-060.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" story-consistency.log first-contact-058.log reset-060.log vote-abstain-060.log; then exit 1; fi
 
+      - name: 0.7.x ACT II and visual story regression
+        run: |
+          set +e
+          ./godot --headless --path . --script res://tests/story_070_consistency.gd 2>&1 | tee story-070.log
+          ./godot --headless --path . --script res://tests/act2_070_tests.gd 2>&1 | tee act2-070.log
+          ./godot --headless --path . --script res://tests/visual_story_071_tests.gd 2>&1 | tee visual-story-071.log
+          set -e
+          grep -q "ASTRA 0.7.0 STORY CONSISTENCY OK" story-070.log
+          grep -q "ASTRA 0.7.0 ACT II TESTS OK" act2-070.log
+          grep -q "ASTRA 0.7.1 VISUAL STORY TESTS OK" visual-story-071.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" story-070.log act2-070.log visual-story-071.log; then exit 1; fi
+
       - name: 0.5.3 content depth and invariant audit
         run: |
           set -o pipefail

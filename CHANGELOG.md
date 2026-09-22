@@ -1,3 +1,13 @@
+# 0.7.1 · VISUAL STORY PASS · 2026-09-22
+
+0.7.0의 ACT II 구조와 save schema v11은 그대로 두고, **SECOND_WATCH · BLIND_DECK · THREE_MINUTES_DARK · CONTINUITY · THRESHOLD** 다섯 핵심 resolution에 실제 장면 아트를 연결했다. 신규 자산은 `assets/art071/`의 1280×720 SVG 5장이다. 인물 얼굴을 새로 정의하지 않고 근무 로그, 숨은 정비 갑판, 겹치는 비상 경보, 평범한 생활 기록, 장기수면 재개 공백처럼 플레이어가 그 장면에서 실제로 봐야 하는 상황을 중심으로 구성했다.
+
+새 컷신 엔진이나 art manager는 만들지 않았다. 기존 `AstraArt`에 0.7.1 매핑 하나를 추가하고, `AstraVoyageView`의 기존 stage가 `story_resolution_*` 동안만 해당 이미지를 사용한다. 파일이 없거나 매핑되지 않은 장면은 기존 room art + portrait 경로로 자동 fallback한다. 저장 필드와 progression은 바뀌지 않는다.
+
+다섯 장면의 situation/outro와 resolution action/dialogue도 이미지와 중복 설명하지 않도록 다듬었다. SECOND_WATCH는 “사고 기록”보다 몇 주간의 평범한 근무를, BLIND_DECK은 지도 밖 공간의 실제 사용 흔적을, THREE_MINUTES_DARK는 역할 분담과 정보 출처 차이를, CONTINUITY는 재난보다 오래 남은 생활 흔적을, THRESHOLD는 정상 생활 → 긴 공백 → 장기수면 재개의 차분한 충격을 강조한다. canonical fact, handling choice, reveal 순서와 ACT II 결론은 유지한다.
+
+전용 `visual_story_071_tests.gd`를 추가하고 기존 `story_070_consistency.gd` / `act2_070_tests.gd`와 함께 GitHub Actions gate에 연결했다. 기존 `ui_smoke.gd`는 모든 캠페인 장을 직접 플레이하므로 다섯 resolution art 경로도 실제 UI 흐름에서 함께 검증한다.
+
 # 0.7.0 · SECOND WATCH · 2026-09-22
 
 ACT I(Day 1~7) 재구축 + ACT II(Day 8~13) 신설. 실제 리포지토리를 먼저 감사한 뒤 진행했다: 거의 모든 서사 지원 시스템(Knowledge/Decision/Routine/Consequence/Motive/Incident/Codex/Claim Ledger/relationship 3계층/storylet scheduler)이 이미 구현되어 있었고, 8명 전원이 이미 4단계 개인 micro-arc를 갖고 있었다. 새 manager를 추가하지 않고 기존 API를 확장했다.
