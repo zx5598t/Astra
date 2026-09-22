@@ -89,6 +89,20 @@ jobs:
           grep -q "ASTRA 0.6.2 AFTERMATH UI SMOKE OK" aftermath-ui-062.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" human-aftermath-sim-062.log editorial-062.log aftermath-ui-062.log; then exit 1; fi
 
+      - name: Capture 0.6.2 HUMAN AFTERMATH visuals
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/aftermath_visual_062.gd 2>&1 | tee aftermath-visual-062.log
+          grep -q "ASTRA 0.6.2 AFTERMATH VISUAL CAPTURE OK" aftermath-visual-062.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" aftermath-visual-062.log; then exit 1; fi
+
+      - name: Preserve 0.6.2 HUMAN AFTERMATH visual captures
+        uses: actions/upload-artifact@v4
+        with:
+          name: aftermath-062-visuals
+          path: build/qa/aftermath_062/*.png
+          if-no-files-found: error
+
       - name: Headless UI smoke test (title -> full case -> result)
         run: |
           set -o pipefail
