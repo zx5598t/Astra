@@ -1,3 +1,9 @@
+# 0.6.2 · HUMAN AFTERMATH · 2026-09-22
+
+HUMAN TRACE의 선택→반응→story hook 흐름에 player-facing aftermath ownership과 source provenance를 명시했다. 중요한 residue는 ordinary optional content와 섞이지 않도록 continuation으로 표시하며, 반응은 dialogue, loop residue는 character action, 다음 mystery는 story hook이 각각 primary presentation을 맡는다. 새 relationship/memory/consequence 시스템은 추가하지 않았고 save schema v11을 유지한다.
+
+전용 HUMAN AFTERMATH regression은 authored handling reaction, source event, inactive speaker, hidden selector truth, continuation priority, save contract를 검사한다. 정식 Windows package/tag/GitHub Release는 사용자 정책에 따라 보류한다.
+
 # 0.6.1 · HUMAN TRACE · 2026-09-22
 
 - DEAD_AIR~LAST_LIGHT의 canonical resolution 뒤에 장별 3개 handling choice를 연결했다. 사실 자체와 chapter order는 분기하지 않는다.
