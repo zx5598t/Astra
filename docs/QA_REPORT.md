@@ -1,3 +1,25 @@
+# 0.6.2 HUMAN AFTERMATH QA — 2026-09-22
+
+검증 branch: `dev/0.6.2-human-aftermath`  
+PR: #12  
+GitHub Actions: run `35676989115` — Linux/Windows **GREEN**
+
+- Linux import / GDScript parse: **PASS**
+- Core model: **49,255 checks PASS**
+- Campaign: **106 checks PASS**
+- HUMAN TRACE: **326 checks PASS**
+- HUMAN AFTERMATH: **138 checks PASS**
+- Content Audit: **0 FAIL / 0 WARN**
+- deduction bot (--games=40): smart **79%** / random **19%** / passive **0%**
+- bot gate: smart-random **+60%p**, passive < 20% — **PASS**
+- UI smoke: Linux **PASS**, Windows **PASS**
+- Windows validation / main scene boot: **PASS**
+- save schema: **v11**, migration 없음
+- authored voyage/reactive library: **608**, 신규 scene 0 / 삭제 scene 0
+- 정식 Windows packaging: **DEFERRED**
+- v0.6.2 tag / GitHub Release / release asset: **DEFERRED**
+- 1920×1080 별도 visual capture: **NOT RUN** (기존 `visual_qa.gd`는 두 해상도를 지원하지만 이번 CI gate에서는 별도 실행하지 않음)
+
 # QA REPORT — ASTRA 0.6.1 HUMAN TRACE
 
 검증 환경: Godot 4.7.2 stable · GitHub Actions Linux/Windows validation  
