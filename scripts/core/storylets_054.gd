@@ -39,12 +39,12 @@ const ARC_PACKS := {
             {"label":"준의 현장값을 먼저 가져온다.","effect":"help","memory_tag":"054_dax_accepts_field","consequences":[{"id":"dax-model-delay","timing":"DELAYED","followup_scene":"054_dax_failed_model_3","delay":2}]},
             {"label":"노아의 원본 로그부터 대조한다.","effect":"record","memory_tag":"054_dax_accepts_record","consequences":[{"id":"dax-model-day","timing":"NEXT_DAY","note":"다렌은 다음 계산부터 원본 로그와 현장값을 같은 입력 표에 넣었다."}]}
         ]}],
-        [3,"consequence","CONSEQUENCE","dax_failed_model","다렌은 계산식 옆에 준의 진동값과 노아의 로그 시각을 같은 크기로 적는다.","내 식이 틀렸다는 뜻보다, 입력을 혼자 정하면 안 된다는 뜻에 가깝네.",{}],
+        [3,"consequence","CONSEQUENCE","dax_failed_model","다렌은 자기 계산 옆 빈칸을 준 쪽으로 밀어 현장 진동값을 나란히 적게 한다.","모델보다 입력부터 같이 정했어야 했네.",{}],
         [4,"personal","RELATIONSHIP","dax_failed_model","검증이 끝난 표에서 다렌은 틀린 계산을 지우지 않는다.","남겨 둬. 다음에 맞는 답이 나와도 왜 틀렸는지는 필요하니까.",{}]
     ],
     "noa":[
         [1,"routine","MYSTERY","noa_private_copy","노아가 공식 보관함과 다른 위치에 같은 날짜의 사본 하나를 따로 두고 있다.","아직 원본인지 판단 못 했어요. 그래서 공개본에 섞지 않았어요.",{}],
-        [2,"player","PLAYER","noa_private_copy","노아는 사본 봉인을 손으로 누른 채 당신의 대답을 기다린다.","어떻게 할까요?",{"choices":[
+        [2,"player","PLAYER","noa_private_copy","노아는 사본 봉인 위에 손을 얹고 공식 보관함 쪽을 한 번 본다.","이 사본, 어디까지 공개할까요?",{"choices":[
             {"label":"확인될 때까지 노아에게 맡긴다.","effect":"promise","memory_tag":"054_noa_trusted_copy","consequences":[{"id":"noa-copy-delay","timing":"DELAYED","followup_scene":"054_noa_private_copy_3","delay":3}]},
             {"label":"지금 모두에게 존재만 공개한다.","effect":"share","memory_tag":"054_noa_copy_exists_public","consequences":[{"id":"noa-copy-day","timing":"NEXT_DAY","note":"사본의 내용이 아니라 존재 사실만 회의 기록에 남았다."}]},
             {"label":"노아가 없는 동안 먼저 확인한다.","effect":"confront","memory_tag":"054_noa_copy_peeked","consequences":[{"id":"noa-copy-loop","timing":"NEXT_LOOP","memory_tag":"noa_boundary_echo","note":"다음 기록에서 노아는 개인 사본을 예전보다 늦게 꺼낸다."}]}
@@ -54,7 +54,7 @@ const ARC_PACKS := {
     ],
     "sena":[
         [1,"routine","CONFLICT","sena_overprotection","세나는 위험 구역 앞에 임시 차단선을 하나 더 쳐 두었다. 원래 절차보다 한 단계 강하다.","오늘은 여기 안 들어가는 게 맞아.",{}],
-        [2,"player","PLAYER","sena_overprotection","세나는 출입카드를 내리지 않은 채 당신을 본다.","그래도 들어갈 거야?",{"choices":[
+        [2,"player","PLAYER","sena_overprotection","세나는 차단선 앞에서 몸을 비키지 않은 채 출입카드를 쥔다.","그래도 들어갈 거야?",{"choices":[
             {"label":"세나 판단을 따르고 다른 경로를 찾는다.","effect":"wait","memory_tag":"054_sena_obeyed","consequences":[{"id":"sena-safe-delay","timing":"DELAYED","followup_scene":"054_sena_overprotection_3","delay":2}]},
             {"label":"위험을 감수하고 직접 확인한다.","effect":"confront","memory_tag":"054_sena_ignored","consequences":[{"id":"sena-risk-immediate","timing":"IMMEDIATE","note":"세나는 당신을 혼자 보내지 않고 뒤에서 차단 스위치를 잡는다."},{"id":"sena-risk-loop","timing":"NEXT_LOOP","memory_tag":"sena_protection_conflict_echo","note":"다음 기록에서 세나는 당신의 위험 판단을 한 번 더 확인한다."}]}
         ]}],
@@ -82,7 +82,7 @@ const ARC_PACKS := {
     ],
     "lyra":[
         [1,"routine","PERSONAL","lyra_save_sample","폐기 상자 위에 있어야 할 작은 표본 하나가 마렌의 작업대 안쪽에 남아 있다.","이건 아직 버리고 싶지 않아요. 하루만 더 보면 안 될까요?",{}],
-        [2,"player","PLAYER","lyra_save_sample","마렌은 표본 옆에 줄어드는 냉각 자원 수치를 함께 띄운다.","살릴 이유도, 버릴 이유도 있어요.",{"choices":[
+        [2,"player","PLAYER","lyra_save_sample","마렌은 표본 용기를 손에 든 채 냉각 자원 표시를 함께 켠다.","하루를 더 주면, 그만큼 다른 데서 써야 해요.",{"choices":[
             {"label":"하루 더 보존한다.","effect":"protect","memory_tag":"054_lyra_saved_sample","consequences":[{"id":"lyra-sample-day","timing":"NEXT_DAY","note":"보존한 표본이 생태 수치를 하나 더 보여 줬지만 냉각 자원을 더 사용했다."},{"id":"lyra-sample-delay","timing":"DELAYED","followup_scene":"054_lyra_save_sample_3","delay":3}]},
             {"label":"지금 폐기한다.","effect":"procedure","memory_tag":"054_lyra_discarded_sample","consequences":[{"id":"lyra-discard-immediate","timing":"IMMEDIATE","note":"자원 부담은 사라졌지만 표본에서 더 얻을 정보도 함께 포기했다."}]}
         ]}],
@@ -121,7 +121,7 @@ const EXTRA_PACKS := {
     ],
     "vale":[
         ["routine","DAILY","vale_silent_rest","소렌은 헤드셋 없이 통신실에 앉아 있다. 빈 채널조차 꺼 둔 상태다.","지금은 아무것도 안 듣는 게 일인 것 같아요.",{}],
-        ["pair","PAIR","vale_eli_direction","소렌이 신호 방향 하나만 말하자 루칸은 지도에서 두 경로를 지운다.","좌표는 아직 몰라도 방향은 줄일 수 있네요.",{"target":"eli"}],
+        ["pair","PAIR","vale_eli_direction","소렌이 손으로 신호 방향을 가리키자 루칸은 지도에서 교차하지 않는 두 경로를 지운다.","좌표는 없어도 이쪽은 아니야.",{"target":"eli"}],
         ["reaction","RELATIONSHIP","vale_patient_player","소렌은 재촉이 없자 파일을 다시 처음부터 틀지 않는다.","기다려 주면 같은 소리를 덜 의심하게 돼요.",{"requires":{"player_axis":"patient"}}],
         ["pair","PAIR","vale_noa_source","소렌은 노아에게 음성 내용보다 파일 생성 시각부터 보여 준다.","제가 들은 말보다 이 시간이 먼저 믿을 만해요.",{"target":"noa"}],
         ["observation","MOOD","vale_window_silence","통신실 밖을 나선 소렌은 기계음이 적은 복도에서 한동안 멈춰 선다.","조용한 데 오면 아까 소리가 더 선명해질 때가 있어요.",{}],
