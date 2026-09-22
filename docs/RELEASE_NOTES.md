@@ -1,10 +1,12 @@
 # ASTRA 0.7.4 — PLAYBACK
 
-0.7.4는 콘텐츠 추가보다 **장면 사이의 연결**을 다듬는다. 기존 CLEAR SIGNAL scheduler가 가진 continuation/focus-family/speaker-exposure 규칙과 HUMAN TRACE/HUMAN AFTERMATH consequence 경로를 그대로 사용한다.
+0.7.4는 콘텐츠 추가보다 **장면 사이의 연결과 플레이 후 잔향**을 다듬는 버전이다. 기존 CLEAR SIGNAL scheduler의 continuation/focus-family/speaker-exposure, HUMAN TRACE/HUMAN AFTERMATH consequence, chapter progression을 그대로 사용한다.
 
-실제 코드 감사에서 dynamic incident가 일반 action tick의 앞쪽에서 실행되어, 방금 본 중요한 관계·micro-arc·mandatory beat의 여운 직후 전혀 다른 사건이 끼어들 수 있는 경로를 확인했다. 새 시스템 대신 현재 loop의 player-visible focus event에 action index를 기록하고, 최근 high-salience beat 뒤 한 action 동안 unrelated incident만 늦춘다. 플레이어가 특정 인물을 찾아가거나 topic을 고르는 행동은 제한하지 않는다.
+첫 0.7.4 패스에서 player-visible high-salience beat 직후 unrelated Dynamic Incident를 한 action 늦추는 breathing room을 추가했다. completion pass에서는 이 guard가 MANDATORY/FOLLOWUP/FOCUS 모두에 적용되면서도 플레이어가 직접 인물을 찾아가거나 topic을 선택하는 행동은 계속 허용되는지 회귀로 고정했다. micro-arc 선택 → delayed consequence → authored callback도 기존 queue를 통해 실제 도달 가능한지 검증한다.
 
-신규 authored scene **0**, 삭제 scene **0**, 신규 visual asset **0**, save schema **v11 유지**. art071/art072/art073의 기존 15개 visual mapping은 유지한다.
+추가로 ACT II의 `RESET_FRAMING` 누락을 수정했다. 이전에는 SECOND_WATCH 이후 결과 화면이 CALIBRATION의 “같은 목소리/반창고” 문구로 fallback했지만, 이제 ACT II 여섯 장이 각 장의 실제 발견을 짧은 residue로 남긴다. LAST_LIGHT → SECOND_WATCH → THRESHOLD 슬롯 progression, Night의 즉시 consequence / Briefing의 지속 social interpretation 역할 분리도 PLAYBACK gate에 포함했다.
+
+신규 authored scene **0**, 삭제 scene **0**, 신규 visual asset **0**, 신규 persistent field **0**, save schema **v11 유지**. art071/art072/art073의 기존 15개 visual mapping과 FIRST IMPRESSION을 유지하며 새 manager를 만들지 않았다.
 
 # ASTRA 0.7.2 — ACT I VISUAL STORY PASS
 
