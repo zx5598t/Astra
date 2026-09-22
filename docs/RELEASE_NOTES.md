@@ -6,6 +6,8 @@ callback/reaction/hook은 기존 Storylet Scheduler가 continuation으로 인식
 
 정식 Windows packaging, v0.6.2 tag, GitHub Release와 release asset upload는 이번 개발 단계에서 생성하지 않는다.
 
+후속 검증에서 500-loop HUMAN AFTERMATH simulation과 실제 authored text 기반 editorial report, 1366×768/1920×1080 전용 aftermath UI smoke를 추가했다. 이 과정에서 RED_SHIFT next-loop residue의 행동 주체는 노아인데 base resolution speaker가 남아 초상/화자가 어긋날 수 있는 경로를 발견해 callback의 visible speaker를 authored 행동과 일치시켰다. 최종 보완 CI run `35679587205`에서 Linux/Windows가 모두 GREEN이며 HUMAN AFTERMATH **150 checks**, simulation **13 checks**, duplicate feedback 0, ordinary optional starvation 0, unreachable callback ID 0을 기록했다.
+
 # ASTRA 0.6.1 — HUMAN TRACE
 
 ## 발견한 사실을 어떻게 다뤘는가
