@@ -33,14 +33,20 @@ func reach_resolution(s: AstraGameSession) -> Dictionary:
         for point in s.voyage_points():
             if str(point[4]) == fact and s.voyage_inspect(str(point[0])):
                 var guard := 0
-                while guard < 30:
+                while guard < 50:
                     guard += 1
                     var scene: Dictionary = s.voyage.get("scene",{})
                     if scene.is_empty():
                         break
                     if bool(scene.get("story_resolution",false)):
                         return scene
-                    s.voyage_next()
+                    var lines: Array = scene.get("lines",[])
+                    var choices: Array = scene.get("choices",[])
+                    if int(s.voyage.get("line",-1)) >= lines.size()-1 and not choices.is_empty():
+                        if not s.voyage_choose(0):
+                            break
+                    else:
+                        s.voyage_next()
                 return s.voyage.get("scene",{})
     return {}
 
