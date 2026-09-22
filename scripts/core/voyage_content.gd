@@ -127,7 +127,7 @@ const RESOLUTION_BEATS := {
             ["mira","그 시간에 포드도 닫혀 있었어요. 생체 기록까지 실제라면 어느 한쪽을 없던 일로 만들 수 없어요."]],
         "choices":[
             {"label":"신호 원본을 손대지 않고 별도 보존한다.","effect":"keep_copy","memory_tag":"echo_ward_preserve_signal"},
-            {"label":"소렌에게 녹음 전체를 끝까지 들려준다.","effect":"share","memory_tag":"echo_ward_play_signal_for_soren"},
+            {"label":"소렌에게 녹음 전체를 끝까지 들려준다.","effect":"share","share_scope":"speaker","memory_tag":"echo_ward_play_signal_for_soren"},
             {"label":"의료 기록과 통신 기록을 분리해 둔다.","effect":"withhold","memory_tag":"echo_ward_split_medical_signal"}
         ]
     },
