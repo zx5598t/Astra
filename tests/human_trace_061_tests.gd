@@ -93,7 +93,7 @@ func test_choice_progression() -> void:
             check(bool(after_choice.get("story_reaction",false)) or bool(after_choice.get("story_hook",false)),
                 "%s/%d: choice advances to at most one reaction or hook" % [case_id,choice_index])
             if bool(after_choice.get("story_reaction",false)):
-                check(not Array(after_choice.get("choices",[])).size() > 0,"%s/%d: reaction has no second decision" % [case_id,choice_index])
+                check(Array(after_choice.get("choices",[])).is_empty(),"%s/%d: reaction has no second decision" % [case_id,choice_index])
             close_scene(s)
             check(bool(s.voyage.get("story_hook_seen",false)),"%s/%d: reaction path reaches story hook" % [case_id,choice_index])
             check(s.voyage_can_finish(),"%s/%d: no EXPLORE soft-lock" % [case_id,choice_index])
@@ -138,7 +138,7 @@ func test_canon_guards() -> void:
     check(AstraMetaProgress.SAVE_VERSION == 11,"save schema remains current v11")
     for case_id in IDS:
         var beat := AstraVoyageContent.resolution_thread(case_id)
-        check(not JSON.stringify(beat).contains("player":"NULL"),"%s: Player != Null guard not contradicted" % case_id)
+        check(not JSON.stringify(beat).contains("\\"player\\":\\"NULL\\""),"%s: Player != Null guard not contradicted" % case_id)
     var last := AstraVoyageContent.chapter("LAST_LIGHT")
     check(str(last.get("resolved","")).contains("서로 다른 기록 사본"),"LAST_LIGHT keeps multiple valid histories")
     check(str(last.get("resolved","")).contains("Null 사건만으로는"),"LAST_LIGHT keeps Null-not-total-cause canon")
