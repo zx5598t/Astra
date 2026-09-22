@@ -70,6 +70,13 @@ jobs:
           grep -q "ASTRA 0.6.1 HUMAN TRACE TESTS OK" human-trace-061.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" human-trace-061.log; then exit 1; fi
 
+      - name: 0.6.2 HUMAN AFTERMATH ownership and residue
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/human_aftermath_062_tests.gd 2>&1 | tee human-aftermath-062.log
+          grep -q "ASTRA 0.6.2 HUMAN AFTERMATH TESTS OK" human-aftermath-062.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" human-aftermath-062.log; then exit 1; fi
+
       - name: Headless UI smoke test (title -> full case -> result)
         run: |
           set -o pipefail
