@@ -271,6 +271,7 @@ jobs:
           ./godot --headless --path . --script res://tests/visual_story_071_tests.gd 2>&1 | tee visual-story-071.log
           ./godot --headless --path . --script res://tests/visual_story_072_tests.gd 2>&1 | tee visual-story-072.log
           ./godot --headless --path . --script res://tests/visual_story_073_tests.gd 2>&1 | tee visual-story-073.log
+          ./godot --headless --path . --script res://tests/playback_074_tests.gd 2>&1 | tee playback-074.log
           set -e
           grep -q "ASTRA STORY 070 CONSISTENCY TESTS OK" story-070.log
           grep -q "ASTRA ACT2 070 TESTS OK" act2-070.log
@@ -280,7 +281,8 @@ jobs:
           grep -q "ASTRA 0.7.1 VISUAL STORY TESTS OK" visual-story-071.log
           grep -q "ASTRA 0.7.2 VISUAL STORY TESTS OK" visual-story-072.log
           grep -q "ASTRA 0.7.3 HUMAN SIGNAL TESTS OK" visual-story-073.log
-          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" story-070.log act2-070.log act2-sim-070.log glimpse-070.log arc-070.log visual-story-071.log visual-story-072.log visual-story-073.log; then exit 1; fi
+          grep -q "ASTRA 0.7.4 PLAYBACK TESTS OK" playback-074.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" story-070.log act2-070.log act2-sim-070.log glimpse-070.log arc-070.log visual-story-071.log visual-story-072.log visual-story-073.log playback-074.log; then exit 1; fi
 
       - name: 0.5.3 content depth and invariant audit
         run: |
@@ -394,8 +396,10 @@ jobs:
           & $env:GODOT --headless --path . --script res://tests/visual_story_072_tests.gd 2>&1 | Tee-Object -FilePath windows-visual-072.log
           if (-not (Select-String -Path windows-visual-072.log -Pattern 'ASTRA 0.7.2 VISUAL STORY TESTS OK')) { throw 'Windows 0.7.2 visual story did not pass.' }
           & $env:GODOT --headless --path . --script res://tests/visual_story_073_tests.gd 2>&1 | Tee-Object -FilePath windows-visual-073.log
+          & $env:GODOT --headless --path . --script res://tests/playback_074_tests.gd 2>&1 | Tee-Object -FilePath windows-playback-074.log
           if (-not (Select-String -Path windows-visual-073.log -Pattern 'ASTRA 0.7.3 HUMAN SIGNAL TESTS OK')) { throw 'Windows 0.7.3 HUMAN SIGNAL did not pass.' }
-          if (Select-String -Path windows-story-070.log,windows-act2-070.log,windows-act2-sim-070.log,windows-glimpse-070.log,windows-arc-070.log,windows-visual-071.log,windows-visual-072.log,windows-visual-073.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.7.x regression reported script errors.' }
+          if (-not (Select-String -Path windows-playback-074.log -Pattern 'ASTRA 0.7.4 PLAYBACK TESTS OK')) { throw 'Windows 0.7.4 PLAYBACK did not pass.' }
+          if (Select-String -Path windows-story-070.log,windows-act2-070.log,windows-act2-sim-070.log,windows-glimpse-070.log,windows-arc-070.log,windows-visual-071.log,windows-visual-072.log,windows-visual-073.log,windows-playback-074.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.7.x regression reported script errors.' }
           # SceneTree tests can leave a non-zero native LASTEXITCODE after printing their
           # explicit success marker on Godot 4.7.2. All authored assertions and error
           # scans above have passed, so normalize the step status rather than masking tests.
