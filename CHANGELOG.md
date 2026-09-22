@@ -1,3 +1,11 @@
+# 0.7.2 · ACT I VISUAL STORY PASS · 2026-09-22
+
+ACT I의 기억점 5장에 신규 1280×720 SVG 장면 아트를 추가했다: **CALIBRATION / ECHO_WARD / SILENT_ORBIT / RED_SHIFT / LAST_LIGHT**. DEAD_AIR는 LAST_LIGHT의 병렬 기록 이미지와 역할이 겹쳐 제외했고, 초반 5~10분의 기억점을 위해 CALIBRATION을 선택했다.
+
+표시는 0.7.1의 `AstraArt.story_scene()` + `AstraVoyageView` stage 교체 방식을 그대로 확장했다. ECHO_WARD·SILENT_ORBIT·RED_SHIFT·LAST_LIGHT는 `story_resolution_*` reveal에서, CALIBRATION은 기존 `first_wake`에서만 표시된다. 이미지가 없거나 매핑되지 않은 장면은 기존 room art/portrait fallback을 유지한다. 새 manager/cutscene/save 필드는 없다.
+
+ECHO_WARD는 소렌의 청취 전문성, SILENT_ORBIT은 별→시스템 시각→도착 기록→정비 이력, RED_SHIFT는 생장선→독립 날짜→필기 습관, LAST_LIGHT는 서명→체크섬→병렬 유효성 순서가 읽히도록 action/dialogue를 다듬었다. player-facing `history` 표현도 자연스러운 한국어로 정리했다. 0.7.0 CI 누락 3종(act2 simulation / crew glimpse / character arc)과 신규 `visual_story_072_tests.gd`를 CI에 직접 연결했다. save schema는 **v11 유지**다.
+
 # 0.7.1 · VISUAL STORY PASS · 2026-09-22
 
 0.7.0의 ACT II 구조와 save schema v11은 그대로 두고, **SECOND_WATCH · BLIND_DECK · THREE_MINUTES_DARK · CONTINUITY · THRESHOLD** 다섯 핵심 resolution에 실제 장면 아트를 연결했다. 신규 자산은 `assets/art071/`의 1280×720 SVG 5장이다. 인물 얼굴을 새로 정의하지 않고 근무 로그, 숨은 정비 갑판, 겹치는 비상 경보, 평범한 생활 기록, 장기수면 재개 공백처럼 플레이어가 그 장면에서 실제로 봐야 하는 상황을 중심으로 구성했다.
