@@ -224,6 +224,11 @@ static func resolution_thread(case_id: String, memory_tags: Array = []) -> Dicti
         data["aftermath_source_tag"] = callback_source_tag
         data["intent"] = "callback"
         data["continuation"] = true
+        if callback_speaker != "":
+            data["speaker"] = callback_speaker
+            if callback_speaker not in participants:
+                participants.append(callback_speaker)
+            data["participants"] = participants
     data.merge({
         "id":"story_resolution_" + case_id.to_lower(),
         "speaker":str(participants[0]) if not participants.is_empty() else "",
