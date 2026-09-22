@@ -20,6 +20,7 @@ Windows packaging / tag / GitHub Release는 최종 배포 시점까지 의도적
 
 검증 commit: `51e2d82c4e426ab6b165b25ce244d468f3caba88`  
 GitHub Actions: run `35673297533` (#536)
+후속 opener 정리 검증: run `35675120500` (#541), commit `b67467a0ae95ffc168b1175451c2cd465a97fe5c` — Linux/Windows **GREEN**
 
 - Linux import / 전체 GDScript parse: **PASS**
 - Linux validate: **PASS**
@@ -36,8 +37,8 @@ GitHub Actions: run `35673297533` (#536)
 - deduction gate: smart - random **60%p** / passive < 20% — **PASS**
 - CLEAR SIGNAL: **50 checks PASS** + 500-loop simulation **10 checks PASS**
 - authored voyage/reactive library: **608**
-- content audit: **0 FAIL / 1 WARN**
-- WARN: opener repeated 5+ — 같은(6), 자기(5), 당신이(6), 의료(5)
+- content audit: **0 FAIL / 0 WARN**
+- repeated opener 5+: **없음**
 - save schema: **v11 유지**, migration 없음
 - dev branch `release-candidate-windows`: **SKIPPED (expected)**
 
