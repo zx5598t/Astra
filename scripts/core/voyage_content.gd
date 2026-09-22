@@ -99,60 +99,143 @@ const CHAPTERS := {
 const RESOLUTION_BEATS := {
     "DEAD_AIR": {
         "payoff_type":"FACTUAL","participants":["noa","dax"],
-        "action":"당신이 두 목적지 문서를 같은 화면에 띄운다. 노아는 승인 번호를, 다렌은 파일 서명을 따로 대조한다.",
-        "lines":[["noa","둘 다 같은 날 ASTRA 승인 체계에서 접수된 원본이에요. 조잡한 위조본을 하나 섞은 게 아니에요."],
-            ["dax","그러면 쉬운 답 하나는 지워도 돼. 문제는 가짜 문서가 아니라, 유효한 기록이 둘이라는 거야."]]
+        "action":"두 목적지 문서를 한 화면에 겹치자 노아가 승인 번호를 짚고, 다렌은 서명 검증 창을 따로 띄운다.",
+        "lines":[["noa","승인 번호가 둘 다 살아 있어요. 같은 날 ASTRA 체계가 접수한 원본이에요."],
+            ["dax","가짜 하나를 버리면 끝나는 문제가 아니네. 서로 모순되는 유효 조건이 둘 다 남아 있어."]],
+        "choices":[
+            {"label":"두 원본을 한 묶음으로 보존한다.","effect":"record","memory_tag":"dead_air_keep_both_originals"},
+            {"label":"승무원들이 두 문서를 함께 보게 한다.","effect":"share","memory_tag":"dead_air_public_dual_destination"},
+            {"label":"사본 하나는 따로 보관해 둔다.","effect":"keep_copy","memory_tag":"dead_air_private_copy"}
+        ]
     },
     "GLASS_GARDEN": {
         "payoff_type":"HUMAN","participants":["sena","rho"],
-        "action":"세나가 자신의 순찰 기록을, 준이 당시 배치 기록을 나란히 놓는다.",
-        "lines":[["sena","여기. 나는 이 날 준이랑 같이 돌았어. 시간하고 문 번호까지 기억해."],
-            ["rho","내 배치표에는 그 하루가 없어. 그런데 네 기록의 형식도 서명도 멀쩡해."],
-            ["sena","그럼 누가 거짓말하는 걸로 끝낼 수는 없겠네. 우리 둘 다 가진 근거에서는 맞아."]]
+        "action":"세나는 순찰 기록의 문 번호를 손끝으로 따라가고, 준은 자기 배치표의 빈 하루에서 손을 멈춘다.",
+        "lines":[["sena","이 날은 기억해. 준이랑 같이 돌았고, 마지막 문은 내가 잠갔어."],
+            ["rho","내 쪽에는 그 하루만 없어. 네 기록이 틀렸다고 하기엔 형식도 서명도 멀쩡하고."],
+            ["sena","그럼 기억 하나를 지워서 맞출 일은 아니네."]],
+        "choices":[
+            {"label":"세나의 기억을 기록 옆에 함께 남긴다.","effect":"record","memory_tag":"glass_garden_back_sena_record"},
+            {"label":"준에게 빠진 하루를 직접 설명해 달라고 한다.","effect":"confront","memory_tag":"glass_garden_jun_explains_gap"},
+            {"label":"두 기록은 당분간 따로 보관한다.","effect":"withhold","memory_tag":"glass_garden_keep_conflict_open"}
+        ]
     },
     "ECHO_WARD": {
         "payoff_type":"REALITY_CONTRADICTION","participants":["vale","mira"],
-        "action":"소렌이 수면 중 녹음과 지금 자신의 목소리를 같은 분석기에 넣는다.",
-        "lines":[["vale","합성 흔적은 없어요. 호흡 간격까지 제 목소리와 같아요."],
-            ["mira","그 시각의 포드 생체 기록도 실제예요. 목소리도 기록도 버릴 수 없다면, 시간 순서를 다시 봐야 해요."]]
+        "action":"재생 버튼을 누른 소렌이 자기 숨소리가 나오자 손을 뗀다. 미라는 같은 시각의 포드 생체 기록을 화면에 고정한다.",
+        "lines":[["vale","…제 목소리예요. 합성 흔적도 없고, 숨 쉬는 버릇까지 같아요. 듣고 있으니까 더 싫네요."],
+            ["mira","그 시간에 포드도 닫혀 있었어요. 생체 기록까지 실제라면 어느 한쪽을 없던 일로 만들 수 없어요."]],
+        "choices":[
+            {"label":"신호 원본을 손대지 않고 별도 보존한다.","effect":"keep_copy","memory_tag":"echo_ward_preserve_signal"},
+            {"label":"소렌에게 녹음 전체를 끝까지 들려준다.","effect":"share","memory_tag":"echo_ward_play_signal_for_soren"},
+            {"label":"의료 기록과 통신 기록을 분리해 둔다.","effect":"withhold","memory_tag":"echo_ward_split_medical_signal"}
+        ]
     },
     "SILENT_ORBIT": {
         "payoff_type":"FACTUAL","participants":["eli","dax"],
-        "action":"루칸이 항법 기록과 관측창의 별 위치를 고정하고, 다렌이 시스템 시각과 서명을 대조한다.",
-        "lines":[["eli","도착 완료 기록은 항법 화면 장식이 아니야. 별 위치와 끝점이 같이 맞아."],
-            ["dax","시스템 시각과 서명도 같은 결론이야. 이 기록은 지금보다 약 19년 전의 정식 선내 기록이야."],
-            ["eli","그럼 우리가 기억하는 출항부터 다시 물어야겠네."]]
+        "action":"루칸은 항로 끝점과 관측창의 별을 번갈아 본다. 다렌은 말없이 시스템 시각과 서명 검증을 다시 돌린다.",
+        "lines":[["eli","도착 표시는 장식이 아니야. 항로 끝점과 별 위치가 같이 맞아."],
+            ["dax","서명도 유효해. 날짜는 지금보다 약 19년 전. 정식 선내 기록이라는 조건은 피할 수 없어."],
+            ["eli","그럼 지금 움직이고 있다는 화면부터 다시 의심해야겠네."]],
+        "choices":[
+            {"label":"19년 전 도착 기록을 공개한다.","effect":"share","memory_tag":"silent_orbit_public_arrival"},
+            {"label":"루칸과 한 번 더 항로를 재검증한다.","effect":"confront","memory_tag":"silent_orbit_private_recheck"},
+            {"label":"검증된 원본 사본을 따로 남긴다.","effect":"keep_copy","memory_tag":"silent_orbit_preserve_arrival_copy"}
+        ]
     },
     "RED_SHIFT": {
         "payoff_type":"HUMAN","participants":["lyra","noa"],
-        "action":"마렌이 시료 라벨과 생장 기록을 펼치고, 노아가 독립된 보관 기록의 날짜를 맞춘다.",
-        "lines":[["lyra","채집 장소와 생장 시간은 따로 잰 값인데 둘 다 목적지를 가리켜요. 출항 전 날짜도 같고요."],
-            ["noa","보관 기록까지 일치해요. 한 사람이 날짜를 잘못 적은 걸로는 설명이 안 돼요."],
-            ["lyra","이게 정말 우리가 다녀온 흔적이라면… 저는 그 시간을 왜 기억하지 못하죠?"]]
+        "action":"마렌은 시료 봉투를 다시 열어 뿌리 상태부터 확인한다. 노아는 그 옆에서 독립 보관 기록의 날짜만 조용히 맞춘다.",
+        "lines":[["lyra","이건 숫자만 이상한 게 아니에요. 실제로 자란 시간이 있고, 채집 장소도 목적지를 가리켜요."],
+            ["noa","보관 기록도 같은 날짜예요. 한 사람이 잘못 적은 기록으로 처리할 수 없어요."],
+            ["lyra","그런데 이 생명은 그 시간을 지나왔어요. 우리가 기억하지 못한다고 없어지는 건 아니죠."]],
+        "choices":[
+            {"label":"시료 기록을 승무원들과 공유한다.","effect":"share","memory_tag":"red_shift_preserve_sample_record"},
+            {"label":"마렌의 생태 판단을 먼저 기록한다.","effect":"record","memory_tag":"red_shift_back_maren_judgment"},
+            {"label":"자신의 필체가 나온 부분은 아직 공개하지 않는다.","effect":"withhold","memory_tag":"red_shift_hide_handwriting"}
+        ]
     },
     "LAST_LIGHT": {
         "payoff_type":"FACTUAL","participants":["noa","dax"],
-        "action":"남은 전력으로 노아와 다렌이 지금까지 보존한 기록 사본을 한 번만 더 교차 검증한다.",
-        "lines":[["noa","목적지 이름은 서로 달라요. 그런데 서로 다른 사본 모두에 ‘도착 완료’가 남아 있어요."],
-            ["dax","체크섬과 서명 체계도 각 사본 안에서는 유효해. 단순 손상된 한 과거가 아니야."],
-            ["noa","그리고 가장 오래된 차이는 이번 Null 사건보다 앞서 있어요. Null 하나로 전부 설명할 수 없어요."],
-            ["dax","그럼 남는 질문은 하나네. 우리는 어느 history에서 깨어난 거지?"]]
+        "action":"전력이 꺼지기 전에 노아가 남은 사본을 펼친다. 다렌은 서로 다른 체크섬을 보고 한동안 아무 말도 하지 않는다.",
+        "lines":[["noa","목적지는 서로 달라요. 그런데 어느 사본을 열어도 ‘도착 완료’는 남아 있어요."],
+            ["dax","각 사본 안에서는 서명과 체크섬이 유효해. 손상된 한 과거를 억지로 복구하는 문제가 아니야."],
+            ["noa","가장 오래된 차이는 이번 Null 사건보다 앞서 있어요."],
+            ["dax","그럼 Null 하나를 원인으로 놓고 나머지를 접어 버리면 안 되겠네."]],
+        "choices":[
+            {"label":"사람들의 기억과 기록을 함께 보존한다.","effect":"record","memory_tag":"last_light_people_and_records"},
+            {"label":"검증 가능한 자료부터 우선 사본으로 남긴다.","effect":"keep_copy","memory_tag":"last_light_verified_first"},
+            {"label":"서로 다른 history를 하나로 합치지 않고 병렬 보존한다.","effect":"withhold","memory_tag":"last_light_parallel_histories"}
+        ]
     }
 }
 
-static func resolution_thread(case_id: String) -> Dictionary:
+const RESOLUTION_REACTIONS := {
+    "dead_air_keep_both_originals":{"speaker":"noa","text":"노아가 두 문서 사이에 같은 보존 번호를 적는다. “이번에는 어느 쪽도 먼저 버리지 않을게요.”"},
+    "dead_air_public_dual_destination":{"speaker":"dax","text":"다렌이 공개 목록을 확인한다. “좋아. 이제 모순 자체가 공동의 출발점이네.”"},
+    "dead_air_private_copy":{"speaker":"noa","text":"노아는 사본 위치를 묻지 않는다. 대신 원본 두 장의 해시만 다시 적어 둔다."},
+    "glass_garden_back_sena_record":{"speaker":"sena","text":"세나가 짧게 고개를 끄덕인다. “기억을 증거 대신 쓰진 마. 그래도 없던 일로 만들지도 말고.”"},
+    "glass_garden_jun_explains_gap":{"speaker":"rho","text":"준이 빈 날짜를 오래 본다. “설명할 수 있는 데까지는 내가 설명할게. 모르는 건 모른다고 하고.”"},
+    "glass_garden_keep_conflict_open":{"speaker":"sena","text":"세나는 두 파일을 닫지 않은 채 창만 떨어뜨려 놓는다. “좋아. 아직 하나로 만들지 말자.”"},
+    "echo_ward_preserve_signal":{"speaker":"vale","text":"소렌이 원본 잠금 표시를 확인한다. “다시 듣고 싶진 않아도, 없어지는 건 더 싫어요.”"},
+    "echo_ward_play_signal_for_soren":{"speaker":"vale","text":"끝까지 들은 소렌이 헤드셋을 내려놓는다. “적어도 어디까지가 제 목소리인지는 제가 알겠어요.”"},
+    "echo_ward_split_medical_signal":{"speaker":"mira","text":"미라가 두 기록의 보존 경로를 따로 표시한다. “서로 설명하기 전까지는 서로 덮어쓰지 않게 해요.”"},
+    "silent_orbit_public_arrival":{"speaker":"eli","text":"루칸이 공개된 항로를 다시 확대한다. “이제 누구든 같은 끝점을 볼 수 있겠네.”"},
+    "silent_orbit_private_recheck":{"speaker":"eli","text":"루칸이 관측창 쪽으로 몸을 돌린다. “한 번 더 보자. 기록보다 먼저 별부터.”"},
+    "silent_orbit_preserve_arrival_copy":{"speaker":"dax","text":"다렌이 사본 검증값을 따로 남긴다. “원본이 바뀌어도 비교할 기준은 생겼어.”"},
+    "red_shift_preserve_sample_record":{"speaker":"lyra","text":"마렌이 시료 봉투를 다시 봉한다. “사람들이 날짜만 보지 않고 이게 살아온 시간도 봤으면 해요.”"},
+    "red_shift_back_maren_judgment":{"speaker":"lyra","text":"마렌이 생장선을 다시 짚는다. “그럼 제가 확실히 말할 수 있는 것부터 남길게요.”"},
+    "red_shift_hide_handwriting":{"speaker":"noa","text":"노아는 공개본의 빈 칸을 보고도 바로 묻지 않는다. 대신 원본 보존 여부만 확인한다."},
+    "last_light_people_and_records":{"speaker":"noa","text":"노아가 기록 묶음 옆에 사람별 증언 표식을 붙인다. “둘 중 하나만 남기면 또 절반만 남아요.”"},
+    "last_light_verified_first":{"speaker":"dax","text":"다렌이 검증된 사본부터 전원 보호 영역으로 옮긴다. “해석은 나중에도 할 수 있어. 근거부터 살리자.”"},
+    "last_light_parallel_histories":{"speaker":"noa","text":"노아가 두 묶음 사이에 선을 긋지 않는다. “같아질 때까지 기다리지 말고, 다른 채로 남겨요.”"}
+}
+
+static func resolution_thread(case_id: String, memory_tags: Array = []) -> Dictionary:
     if not RESOLUTION_BEATS.has(case_id):
         return {}
     var data: Dictionary = RESOLUTION_BEATS[case_id].duplicate(true)
     var participants: Array = data.get("participants",[]).duplicate()
+    var callback := ""
+    var callback_map := {
+        "DEAD_AIR":["dead_air_public_dual_destination","노아가 두 문서를 나란히 놓는다. 이상하게도 처음부터 함께 봐야 할 것 같은 배치다."],
+        "GLASS_GARDEN":["glass_garden_keep_conflict_open","세나가 두 기록 창을 겹치지 않고 나란히 띄운다. 그 방식이 낯설지 않다."],
+        "ECHO_WARD":["echo_ward_preserve_signal","소렌은 재생 전에 먼저 원본 잠금 상태부터 확인한다."],
+        "SILENT_ORBIT":["silent_orbit_private_recheck","루칸은 항법 화면보다 관측창을 먼저 본다."],
+        "RED_SHIFT":["red_shift_hide_handwriting","노아가 공개 기록의 빈 부분에서 잠깐 시선을 멈춘다. 이유를 단정하지는 않는다."],
+        "LAST_LIGHT":["last_light_parallel_histories","노아는 서로 다른 사본을 합치지 않고 처음부터 두 묶음으로 펼친다."]
+    }
+    if callback_map.has(case_id):
+        var spec: Array = callback_map[case_id]
+        for stored in memory_tags:
+            if str(stored).ends_with(":" + str(spec[0])) or str(stored) == str(spec[0]):
+                callback = str(spec[1])
+                break
+    if callback != "":
+        data["action"] = callback + " " + str(data.get("action",""))
+        data["human_trace_callback"] = true
     data.merge({
         "id":"story_resolution_" + case_id.to_lower(),
         "speaker":str(participants[0]) if not participants.is_empty() else "",
         "category":"MANDATORY","tag":"story_resolution","thread":true,
-        "choices":[],"compressible":false,"story_resolution":true,
+        "compressible":false,"story_resolution":true,"human_trace_resolution":true,
         "requires_fact":str(chapter(case_id).get("fact",""))
     },false)
     return data
+
+static func resolution_reaction(case_id: String, memory_tag: String, active: Array) -> Dictionary:
+    if memory_tag == "" or not RESOLUTION_REACTIONS.has(memory_tag):
+        return {}
+    var spec: Dictionary = RESOLUTION_REACTIONS[memory_tag]
+    var who := str(spec.get("speaker",""))
+    if who == "" or who not in active:
+        return {}
+    return {
+        "id":"story_reaction_" + case_id.to_lower() + "_" + memory_tag,
+        "speaker":who,"participants":[who],"category":"MANDATORY","tag":"story_reaction",
+        "action":"","lines":[[who,str(spec.get("text",""))]],"choices":[],
+        "compressible":false,"story_reaction":true
+    }
 
 static func hook_thread(case_id: String) -> Dictionary:
     var data := chapter(case_id)
