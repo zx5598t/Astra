@@ -21,7 +21,7 @@ const CHARACTER_PACKS := {
         ["everyday","DAILY","shared_food","준이 비상식량을 반으로 부러뜨려 한쪽을 밀어 준다.","맛없을 땐 양이라도 줄여야지."],
         ["work","WORK","repair_order","준이 나사를 풀기 전에 조립 순서를 바닥에 먼저 놓는다.","나중에 누가 손댔는지 보려면 원래 순서부터 남겨야 해."],
         ["personal","PERSONAL","sena_distance","준이 세나 이름이 적힌 점검표를 보다가 펜을 내려놓는다.","이번엔 내가 먼저 물어보면 더 꼬일 것 같네."],
-        ["observation","MYSTERY","wrong_screw","준이 같은 모양의 나사 둘을 굴려 소리를 비교한다.","하나는 여기 물건이 아니야. 모양만 맞춘 거야."],
+        ["observation","MYSTERY","wrong_screw","준이 나사 둘을 굴려 모양과 소리를 비교한다.","하나는 여기 물건이 아니야. 모양만 맞춘 거야."],
         ["work","WORK","backup_fuse","준이 예비 퓨즈 수량을 두 번 센 뒤 자기 주머니를 뒤집는다.","좋아, 이번 건 내 실수 아니네. 그럼 더 귀찮아졌고."],
         ["personal","RELATIONSHIP","player_tool","준이 작업대 한쪽의 작은 드라이버를 알아본다. 당신이 주워 둔 것이다.","그거 아직 갖고 있었네. 내가 잃어버린 줄 알았는데.",{"choices":[{"label":"드라이버를 건넨다.","effect":"help"},{"label":"“나중에 필요할 것 같아서.”","effect":"record"}]}],
         ["conflict","CONFLICT","daren_method","준이 ‘정상 범위’ 표시 위에 진동 파형을 겹친다. 다렌의 계산과 어긋난다.","정상 범위가 정상 소리를 보장하진 않아."],
@@ -46,7 +46,7 @@ const CHARACTER_PACKS := {
         ["silence","MOOD","lost_brightness","마렌이 들어오는 사람마다 인사하던 날과 달리, 오늘은 표본 숫자만 세고 있다.","",{"requires":{"min_loop":1},"rarity":"rare","deviation_reason":"GRIEF_ECHO","source_event":"previous_loss","possible_followup":"lyra_small_kindness"}]
     ],
     "noa": [
-        ["observation","MYSTERY","exact_quote","노아가 같은 문장을 두 번 적고 조사 하나만 동그라미 친다.","어제는 ‘봤다’고 했고 오늘은 ‘확인했다’고 했어요."],
+        ["observation","MYSTERY","exact_quote","노아가 문장 둘을 나란히 적고 조사 하나만 동그라미 친다.","어제는 ‘봤다’고 했고 오늘은 ‘확인했다’고 했어요."],
         ["work","WORK","margin_note","노아가 원문을 고치지 않고 여백에만 작은 메모를 남긴다.","틀렸다고 지우면 왜 틀렸는지까지 없어져요."],
         ["everyday","DAILY","short_pencil","노아가 거의 끝난 연필에 캡을 끼워 다시 쓴다.","아직 한 줄은 더 쓸 수 있어요."],
         ["observation","MYSTERY","silence_stamp","노아가 회의 녹음의 침묵 구간에도 시간을 찍는다.","아무도 대답하지 않은 것도 발언의 일부예요."],
@@ -65,7 +65,7 @@ const CHARACTER_PACKS := {
         ["work","WORK","patient_first","미라가 단말 경고보다 옆 사람의 손 떨림을 먼저 확인한다.","로그는 잠깐 기다려도 돼요. 이 사람부터 볼게요."],
         ["everyday","DAILY","warm_room","미라가 실내 온도를 0.5도 올리고 사람들 표정을 살핀다.","같은 온도도 수면 뒤엔 더 춥게 느껴져요."],
         ["observation","MYSTERY","double_pulse","미라가 겹친 맥박 기록 두 줄을 확대한다.","센서는 하나인데 맥박이 두 번 있어요."],
-        ["personal","PERSONAL","own_chart","미라가 자기 차트를 다른 사람 기록 옆에 놓는다.","저도 같은 기준으로 봐 주세요. 예외가 되면 더 이상해요."],
+        ["personal","PERSONAL","own_chart","미라가 개인 차트를 다른 사람 기록 옆에 놓는다.","저도 같은 기준으로 봐 주세요. 예외가 되면 더 이상해요."],
         ["work","WORK","medicine_gap","미라가 빈 진통제 칸을 채우지 않고 사용 기록부터 연다.","누가 썼는지보다 먼저 괜찮은지 확인해야 해요."],
         ["everyday","DAILY","quiet_music","미라가 아주 작은 볼륨으로 오래된 피아노 곡을 틀어 둔다.","너무 조용하면 오히려 사람 숨소리가 신경 쓰여서요."],
         ["personal","RELATIONSHIP","sena_bandage","미라가 세나가 두고 간 붕대를 접어 서랍 맨 앞에 둔다.","안 다쳤다면서 꼭 하나씩 쓰고 가요."],
