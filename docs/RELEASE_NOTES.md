@@ -14,6 +14,12 @@ Windows release workflow의 main-push 자동 실행을 제거했다. 일반 Godo
 
 Save schema는 실제 최신 main의 **v11**을 유지하며 신규 migration은 없다.
 
+## 개발 검증
+
+GitHub Actions run **#536** (`35673297533`), commit `51e2d82c4e426ab6b165b25ce244d468f3caba88`에서 Linux/Windows validation이 모두 GREEN이다. HUMAN TRACE **326 checks**, core model **49,255 checks**, campaign **106**, voyage **656**, story consistency **419**, FIRST CONTACT **259**, reset **22**, NPC vote regression **19,086**을 통과했다. `--games=40`은 smart **79%** / random **19%** / passive **0%**, content audit은 **0 FAIL / 1 WARN**이다.
+
+Windows packaging / Git tag / GitHub Release는 개발 정책에 따라 실행하지 않았다.
+
 ---
 
 # ASTRA 0.6.0 — FIRST CONTACT / STORY LOOP
