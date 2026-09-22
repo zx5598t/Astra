@@ -102,9 +102,13 @@ func _draw() -> void:
     # first-wake beat as its early memory point. Missing assets still fall back.
     var story_art := ""
     var scene_id := str(scene.get("id",""))
-    if scene_id.begins_with("story_resolution_"):
+    # 0.7.3 HUMAN SIGNAL maps only five exact authored storylet ids. It never
+    # selects art from hidden motive/relationship state, and a missing asset
+    # falls through to the established chapter/room/portrait presentation.
+    story_art = AstraArt.storylet_scene(scene_id)
+    if story_art == "" and scene_id.begins_with("story_resolution_"):
         story_art = AstraArt.story_scene(session.case_id)
-    elif session.case_id == "CALIBRATION" and scene_id == "first_wake":
+    elif story_art == "" and session.case_id == "CALIBRATION" and scene_id == "first_wake":
         story_art = AstraArt.story_scene("CALIBRATION")
     var stage_art_path := story_art if story_art != "" else AstraArt.room(room)
     var art := AstraUI.thumb(stage_art_path,Vector2.ZERO)
