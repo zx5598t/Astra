@@ -4,6 +4,7 @@ extends RefCounted
 const ROOT := "res://assets/art031/"
 const ROOT_040 := "res://assets/art040/"
 const ROOT_071 := "res://assets/art071/"
+const ROOT_072 := "res://assets/art072/"
 const ROOM_ART := {
     "comms": "bridge", "bridge": "bridge", "navigation": "bridge", "antenna": "bridge", "deck": "bridge", "observatory": "bridge",
     "engine": "engine", "reactor": "engine", "core": "engine", "power": "engine", "coolant": "engine",
@@ -15,6 +16,13 @@ const ROOM_ART := {
 }
 const CHAPTER_ART := {"DEAD_AIR": "bridge", "ECHO_WARD": "medical", "GLASS_GARDEN": "garden", "SILENT_ORBIT": "engine", "RED_SHIFT": "archive", "LAST_LIGHT": "breach",
     "SECOND_WATCH": "archive", "BORROWED_DAYS": "lounge", "BLIND_DECK": "breach", "THREE_MINUTES_DARK": "engine", "CONTINUITY": "garden", "THRESHOLD": "bridge"}
+const STORY_ART_072 := {
+    "CALIBRATION": "calibration",
+    "ECHO_WARD": "echo_ward",
+    "SILENT_ORBIT": "silent_orbit",
+    "RED_SHIFT": "red_shift",
+    "LAST_LIGHT": "last_light"
+}
 const STORY_ART_071 := {
     "SECOND_WATCH": "second_watch",
     "BLIND_DECK": "blind_deck",
@@ -29,10 +37,14 @@ static func room(id: String) -> String:
 static func chapter(id: String) -> String:
     return background(str(CHAPTER_ART.get(id, "bridge")))
 static func story_scene(id: String) -> String:
-    var key := str(STORY_ART_071.get(id, ""))
+    var key := str(STORY_ART_072.get(id, ""))
+    var root := ROOT_072
+    if key == "":
+        key = str(STORY_ART_071.get(id, ""))
+        root = ROOT_071
     if key == "":
         return ""
-    var path := ROOT_071 + key + ".svg"
+    var path := root + key + ".svg"
     return path if ResourceLoader.exists(path) else ""
 static func item(id: String) -> String:
     return ROOT + "items/" + id + ".webp"

@@ -97,12 +97,15 @@ func _draw() -> void:
     stage.clip_contents = true
     body.add_child(stage)
     var scene: Dictionary = state.get("scene",{})
-    # 0.7.1 keeps the existing voyage stage and dialogue flow. Only the five
-    # authored ACT II resolution threads may replace the room art; if an asset
-    # is absent, story_scene() returns "" and the normal room/portrait path wins.
+    # 0.7.2 reuses the same non-modal stage replacement from 0.7.1.
+    # ACT I art appears only at authored reveal beats; CALIBRATION uses the
+    # first-wake beat as its early memory point. Missing assets still fall back.
     var story_art := ""
-    if str(scene.get("id","")).begins_with("story_resolution_"):
+    var scene_id := str(scene.get("id",""))
+    if scene_id.begins_with("story_resolution_"):
         story_art = AstraArt.story_scene(session.case_id)
+    elif session.case_id == "CALIBRATION" and scene_id == "first_wake":
+        story_art = AstraArt.story_scene("CALIBRATION")
     var stage_art_path := story_art if story_art != "" else AstraArt.room(room)
     var art := AstraUI.thumb(stage_art_path,Vector2.ZERO)
     art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -110,23 +113,27 @@ func _draw() -> void:
     stage.add_child(AstraArt.shade())
     if scene.is_empty():
         _hotspots(stage)
-    elif story_art == "":
+    else:
         var speaker := str(scene.get("speaker",""))
         var line_index := int(state.get("line",-1))
         if line_index >= 0 and line_index < scene.get("lines",[]).size():
             var line: Array = scene["lines"][line_index]
             if str(line[0]) != "": speaker = str(line[0])
+        # FIRST IMPRESSION is presentation-independent: authored story art may
+        # replace the portrait, but it must never suppress the one-time glimpse.
         if speaker != "":
-            var mood: String = {"danger":"afraid","trust":"smile","suspected":"suspicious","conflict":"annoyed","grief":"sad","relief":"happy","night":"tired"}.get(str(scene.get("tag","")),"neutral")
-            var portrait := AstraUI.thumb(AstraCrewCatalog.cast_path(speaker,mood),Vector2.ZERO)
-            portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-            portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-            stage.add_child(portrait)
             _maybe_glimpse(stage,speaker)
-        if scene.has("target"):
-            var other := AstraUI.thumb(AstraCrewCatalog.dot_path(str(scene["target"])),Vector2(90,90))
-            other.position = Vector2(12,12)
-            stage.add_child(other)
+        if story_art == "":
+            if speaker != "":
+                var mood: String = {"danger":"afraid","trust":"smile","suspected":"suspicious","conflict":"annoyed","grief":"sad","relief":"happy","night":"tired"}.get(str(scene.get("tag","")),"neutral")
+                var portrait := AstraUI.thumb(AstraCrewCatalog.cast_path(speaker,mood),Vector2.ZERO)
+                portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+                portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                stage.add_child(portrait)
+            if scene.has("target"):
+                var other := AstraUI.thumb(AstraCrewCatalog.dot_path(str(scene["target"])),Vector2(90,90))
+                other.position = Vector2(12,12)
+                stage.add_child(other)
     var panel := AstraUI.reading_panel(AstraUI.CYAN,0.97)
     panel.custom_minimum_size.x = 480
     panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL

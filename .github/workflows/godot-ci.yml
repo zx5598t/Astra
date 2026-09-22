@@ -265,12 +265,20 @@ jobs:
           set +e
           ./godot --headless --path . --script res://tests/story_070_consistency.gd 2>&1 | tee story-070.log
           ./godot --headless --path . --script res://tests/act2_070_tests.gd 2>&1 | tee act2-070.log
+          ./godot --headless --path . --script res://tests/act2_070_simulation.gd 2>&1 | tee act2-sim-070.log
+          ./godot --headless --path . --script res://tests/crew_glimpse_070_tests.gd 2>&1 | tee glimpse-070.log
+          ./godot --headless --path . --script res://tests/character_arc_070_tests.gd 2>&1 | tee arc-070.log
           ./godot --headless --path . --script res://tests/visual_story_071_tests.gd 2>&1 | tee visual-story-071.log
+          ./godot --headless --path . --script res://tests/visual_story_072_tests.gd 2>&1 | tee visual-story-072.log
           set -e
           grep -q "ASTRA STORY 070 CONSISTENCY TESTS OK" story-070.log
           grep -q "ASTRA ACT2 070 TESTS OK" act2-070.log
+          grep -q "ASTRA ACT2 070 SIMULATION OK" act2-sim-070.log
+          grep -q "ASTRA CREW GLIMPSE 070 TESTS OK" glimpse-070.log
+          grep -q "ASTRA CHARACTER ARC 070 TESTS OK" arc-070.log
           grep -q "ASTRA 0.7.1 VISUAL STORY TESTS OK" visual-story-071.log
-          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" story-070.log act2-070.log visual-story-071.log; then exit 1; fi
+          grep -q "ASTRA 0.7.2 VISUAL STORY TESTS OK" visual-story-072.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" story-070.log act2-070.log act2-sim-070.log glimpse-070.log arc-070.log visual-story-071.log visual-story-072.log; then exit 1; fi
 
       - name: 0.5.3 content depth and invariant audit
         run: |
@@ -365,6 +373,29 @@ jobs:
           & $env:GODOT --headless --path . --script res://tests/vote_abstain_060.gd 2>&1 | Tee-Object -FilePath windows-vote-abstain-060.log
           if (-not (Select-String -Path windows-vote-abstain-060.log -Pattern 'ASTRA 0.6.0 NPC VOTE REGRESSION OK')) { throw 'Windows vote/abstain regression did not pass.' }
           if (Select-String -Path windows-story-consistency.log,windows-first-contact-058.log,windows-reset-060.log,windows-vote-abstain-060.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows story/reset gates reported script errors.' }
+
+      - name: Run 0.7.x ACT II and visual story regression on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/story_070_consistency.gd 2>&1 | Tee-Object -FilePath windows-story-070.log
+          if (-not (Select-String -Path windows-story-070.log -Pattern 'ASTRA STORY 070 CONSISTENCY TESTS OK')) { throw 'Windows 0.7.0 story consistency did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/act2_070_tests.gd 2>&1 | Tee-Object -FilePath windows-act2-070.log
+          if (-not (Select-String -Path windows-act2-070.log -Pattern 'ASTRA ACT2 070 TESTS OK')) { throw 'Windows 0.7.0 ACT II tests did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/act2_070_simulation.gd 2>&1 | Tee-Object -FilePath windows-act2-sim-070.log
+          if (-not (Select-String -Path windows-act2-sim-070.log -Pattern 'ASTRA ACT2 070 SIMULATION OK')) { throw 'Windows 0.7.0 ACT II simulation did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/crew_glimpse_070_tests.gd 2>&1 | Tee-Object -FilePath windows-glimpse-070.log
+          if (-not (Select-String -Path windows-glimpse-070.log -Pattern 'ASTRA CREW GLIMPSE 070 TESTS OK')) { throw 'Windows 0.7.0 crew glimpse did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/character_arc_070_tests.gd 2>&1 | Tee-Object -FilePath windows-arc-070.log
+          if (-not (Select-String -Path windows-arc-070.log -Pattern 'ASTRA CHARACTER ARC 070 TESTS OK')) { throw 'Windows 0.7.0 character arc did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/visual_story_071_tests.gd 2>&1 | Tee-Object -FilePath windows-visual-071.log
+          if (-not (Select-String -Path windows-visual-071.log -Pattern 'ASTRA 0.7.1 VISUAL STORY TESTS OK')) { throw 'Windows 0.7.1 visual story did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/visual_story_072_tests.gd 2>&1 | Tee-Object -FilePath windows-visual-072.log
+          if (-not (Select-String -Path windows-visual-072.log -Pattern 'ASTRA 0.7.2 VISUAL STORY TESTS OK')) { throw 'Windows 0.7.2 visual story did not pass.' }
+          if (Select-String -Path windows-story-070.log,windows-act2-070.log,windows-act2-sim-070.log,windows-glimpse-070.log,windows-arc-070.log,windows-visual-071.log,windows-visual-072.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows 0.7.x regression reported script errors.' }
+          # SceneTree tests can leave a non-zero native LASTEXITCODE after printing their
+          # explicit success marker on Godot 4.7.2. All authored assertions and error
+          # scans above have passed, so normalize the step status rather than masking tests.
+          exit 0
 
       - name: Run 0.5.1 stabilization tests on Windows
         shell: pwsh

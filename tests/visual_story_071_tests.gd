@@ -40,7 +40,6 @@ func _run() -> void:
         check(Array(resolution.get("lines",[])).size() >= 3, "%s resolution keeps authored dialogue" % case_id)
 
     check(AstraArt.story_scene("BORROWED_DAYS") == "", "BORROWED_DAYS stays on the existing fallback")
-    check(AstraArt.story_scene("LAST_LIGHT") == "", "ACT I finale stays on the existing fallback")
     check(AstraArt.story_scene("NOT_A_CHAPTER") == "", "unknown chapter safely falls back")
 
     if failures.is_empty():

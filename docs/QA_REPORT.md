@@ -1,3 +1,24 @@
+# 0.7.2 ACT I VISUAL STORY PASS QA — 2026-09-22
+
+기준: `main @ 9519464c8916a2f9def58a641c81ffcca30037b1` (ASTRA 0.7.1)  
+작업 브랜치: `feature/0.7.2-act1-visual-pass`
+
+## 구현 범위
+
+- 신규 scene art: **5장** — CALIBRATION / ECHO_WARD / SILENT_ORBIT / RED_SHIFT / LAST_LIGHT
+- 자산: `assets/art072/`, SVG 1280×720, baked text 없음
+- 선택 판단: DEAD_AIR는 LAST_LIGHT와 병렬 기록 구도가 겹쳐 제외, 초반 기억점이 필요한 CALIBRATION 선택
+- 표시: 기존 `AstraArt` + `AstraVoyageView` stage 재사용; 4개 resolution + CALIBRATION first_wake
+- 기존 ACT II 0.7.1 이미지 5장 유지
+- save schema: **v11 유지**, migration 없음
+- 신규 시스템/manager: **0**
+- player-facing `history` 잔존 표현 정리
+- CI: 0.7.0 누락 직접 실행 3종 + 0.7.2 visual regression 추가
+
+## 검증 상태
+
+GitHub Actions 결과는 PR 실행 후 이 문서에 실제 run 결과로 갱신한다. assertion/threshold는 낮추지 않았다.
+
 # 0.7.1 VISUAL STORY PASS QA — 2026-09-22
 
 기준: `main @ 4e7099458e2e3d7db3722c15ddce3eac133ab94f` (ASTRA 0.7.0 SECOND WATCH)  
