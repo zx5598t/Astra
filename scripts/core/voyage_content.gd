@@ -214,6 +214,10 @@ static func resolution_thread(case_id: String, memory_tags: Array = []) -> Dicti
     if callback != "":
         data["action"] = callback + " " + str(data.get("action",""))
         data["human_trace_callback"] = true
+        data["aftermath_owner"] = "character_action"
+        data["aftermath_source_tag"] = str(spec[0])
+        data["intent"] = "callback"
+        data["continuation"] = true
     data.merge({
         "id":"story_resolution_" + case_id.to_lower(),
         "speaker":str(participants[0]) if not participants.is_empty() else "",
@@ -234,7 +238,9 @@ static func resolution_reaction(case_id: String, memory_tag: String, active: Arr
         "id":"story_reaction_" + case_id.to_lower() + "_" + memory_tag,
         "speaker":who,"participants":[who],"category":"MANDATORY","tag":"story_reaction",
         "action":"","lines":[[who,str(spec.get("text",""))]],"choices":[],
-        "compressible":false,"story_reaction":true
+        "compressible":false,"story_reaction":true,
+        "aftermath_owner":"dialogue","aftermath_source_tag":memory_tag,
+        "source_event":memory_tag,"intent":"aftermath","continuation":true
     }
 
 static func hook_thread(case_id: String) -> Dictionary:
@@ -243,7 +249,8 @@ static func hook_thread(case_id: String) -> Dictionary:
         "id":"story_hook_" + case_id.to_lower(),
         "speaker":"","participants":[],"category":"MANDATORY","tag":"story_hook",
         "action":str(data.get("next_hook","")),"lines":[],"choices":[],
-        "compressible":false,"story_hook":true
+        "compressible":false,"story_hook":true,
+        "aftermath_owner":"story_hook","intent":"followup","continuation":true
     }
 
 # 0.6.0 foreshadow registry. A mystery object is not allowed to be a one-line
