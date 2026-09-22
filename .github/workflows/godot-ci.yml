@@ -295,6 +295,13 @@ jobs:
           if (-not (Select-String -Path windows-human-trace-061.log -Pattern 'ASTRA 0.6.1 HUMAN TRACE TESTS OK')) { throw 'Windows HUMAN TRACE 0.6.1 tests did not pass.' }
           if (Select-String -Path windows-human-trace-061.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows HUMAN TRACE 0.6.1 tests reported script errors.' }
 
+      - name: Run 0.6.2 HUMAN AFTERMATH on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/human_aftermath_062_tests.gd 2>&1 | Tee-Object -FilePath windows-human-aftermath-062.log
+          if (-not (Select-String -Path windows-human-aftermath-062.log -Pattern 'ASTRA 0.6.2 HUMAN AFTERMATH TESTS OK')) { throw 'Windows HUMAN AFTERMATH 0.6.2 tests did not pass.' }
+          if (Select-String -Path windows-human-aftermath-062.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows HUMAN AFTERMATH 0.6.2 tests reported script errors.' }
+
       - name: Run story consistency, FIRST CONTACT and reset gates on Windows
         shell: pwsh
         run: |
