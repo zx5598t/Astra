@@ -107,10 +107,30 @@ func _wrong_accusation_sample() -> void:
     )
 
 func _relationship_samples() -> void:
-    var found := 0
+    var candidates: Array = []
     for raw in AstraStorylets052.scenes():
         var scene: Dictionary = raw
-        if str(scene.get("category","")) != "RELATIONSHIP" or Array(scene.get("choices",[])).is_empty():
+        if not Array(scene.get("choices",[])).is_empty() and (
+            str(scene.get("category","")) == "RELATIONSHIP"
+            or str(scene.get("intent","")) == "relationship"
+        ):
+            candidates.append(scene)
+    for raw in AstraStorylets053.scenes():
+        var scene: Dictionary = raw
+        if Array(scene.get("choices",[])).is_empty():
+            continue
+        var has_memory_choice := false
+        for choice in Array(scene.get("choices",[])):
+            if str(choice.get("memory_tag","")) != "":
+                has_memory_choice = true
+                break
+        if str(scene.get("category","")) == "RELATIONSHIP" or bool(scene.get("player_specific",false)) or has_memory_choice:
+            candidates.append(scene)
+    var used_speakers: Dictionary = {}
+    var found := 0
+    for scene in candidates:
+        var speaker := str(scene.get("speaker",""))
+        if speaker in used_speakers and candidates.size() > 2:
             continue
         var choices: Array = scene.get("choices",[])
         _print_sample(
@@ -119,15 +139,16 @@ func _relationship_samples() -> void:
             str(choices[0].get("label","")),
             _line_text(scene),
             "family=" + str(scene.get("family","")),
-            "(relationship scene; next-loop residue only if separately authored)",
-            "speaker=" + str(scene.get("speaker","")) + " · intent=" + str(scene.get("intent","")),
-            "one relationship scene owns this beat"
+            "(next-loop residue only when this exact choice has an authored callback)",
+            "speaker=" + speaker + " · category=" + str(scene.get("category","")) + " · memory_tag=" + str(choices[0].get("memory_tag","")),
+            "one authored scene owns this beat"
         )
+        used_speakers[speaker] = true
         found += 1
         if found >= 2:
             break
     if found < 2:
-        failures.append("fewer than two relationship-sensitive authored samples")
+        failures.append("fewer than two relationship-sensitive authored choice samples")
 
 func _close_scene(s: AstraGameSession, choice_index: int = 0) -> void:
     var guard := 0
