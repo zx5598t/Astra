@@ -1,3 +1,54 @@
+# QA REPORT — ASTRA 0.6.1 HUMAN TRACE
+
+검증 환경: Godot 4.7.2 stable · GitHub Actions Linux/Windows validation  
+작업 브랜치: `dev/0.6.1-human-trace`
+
+## 개발 업데이트 정책
+
+Windows packaging / tag / GitHub Release는 최종 배포 시점까지 의도적으로 보류한다. latest formal GitHub Release가 v0.5.7인 것은 개발 실패가 아니다. 일반 PR/main Godot CI와 Windows validation은 계속 gate로 사용한다.
+
+## 구현 범위
+
+- DEAD_AIR~LAST_LIGHT: canonical fact 이후 authored handling choice 연결
+- 기존 voyage choice / DialogueMemory / memory tag / KnowledgeModel / ownership 재사용
+- 선택 뒤 최대 1회 HUMAN reaction 후 story hook 복귀
+- 다음 loop residue callback 및 repeat-resolution compression
+- release.yml: main push packaging 제거, v* tag + workflow_dispatch 유지
+- save schema: **v11 유지**, migration 없음
+
+## 검증 결과
+
+검증 commit: `51e2d82c4e426ab6b165b25ce244d468f3caba88`  
+GitHub Actions: run `35673297533` (#536)
+
+- Linux import / 전체 GDScript parse: **PASS**
+- Linux validate: **PASS**
+- Windows validate / UI smoke / main-scene boot: **PASS**
+- HUMAN TRACE: **326 checks PASS**
+- 전체 core model: **49,255 checks PASS**
+- campaign: **106 checks PASS**
+- voyage regression: **656 checks PASS**
+- story consistency: **419 checks PASS**
+- FIRST CONTACT: **259 checks PASS**
+- reset safety: **22 checks PASS**
+- NPC vote regression: **19,086 checks PASS**
+- `--games=40`: smart **79%** / random **19%** / passive **0%**
+- deduction gate: smart - random **60%p** / passive < 20% — **PASS**
+- CLEAR SIGNAL: **50 checks PASS** + 500-loop simulation **10 checks PASS**
+- authored voyage/reactive library: **608**
+- content audit: **0 FAIL / 1 WARN**
+- WARN: opener repeated 5+ — 같은(6), 자기(5), 당신이(6), 의료(5)
+- save schema: **v11 유지**, migration 없음
+- dev branch `release-candidate-windows`: **SKIPPED (expected)**
+
+기존 assertion/threshold는 완화하지 않았다. HUMAN TRACE 전용 회귀에는 canonical resolution fact 소유권, incidental `last_fact` 비공유, `information_sources` 문자열 schema 유지, speaker/public share 구분, mandatory reaction → story hook 우선순위, immediate consequence 보존을 포함한다.
+
+Windows packaging: **NOT RUN — intentionally deferred**  
+Git tag: **NOT CREATED — intentionally deferred**  
+GitHub Release: **NOT CREATED — intentionally deferred**
+
+---
+
 # QA REPORT — ASTRA 0.6.0 FIRST CONTACT / STORY LOOP
 
 검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64  
@@ -511,3 +562,5 @@ ZIP은 패키징 시각 등 archive metadata 때문에 동일 소스의 재빌�
 1. action prose opener 반복 WARN 1건.
 2. 473개 authored scene 전체를 사람이 직접 수동 플레이로 전부 검수한 것은 아니다. 자동 coverage와 coherence audit은 이를 보완하지만 완전한 인간 편집 검수와 동일하지는 않다.
 3. 공식 GitHub Release는 이 문서 작성 시점까지 과거 공개 버전에 머물러 있다. 0.5.3 release branch의 최종 green/Windows artifact 확인 후 main/tag 단계에서 정리한다.
+
+<!-- CI retry marker: HUMAN TRACE deterministic ownership coverage -->

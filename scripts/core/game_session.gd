@@ -4434,7 +4434,7 @@ func voyage_inspect(point_id: String) -> bool:
         _voyage_tick()
         if voyage["scene"].is_empty():
             if fact_id == str(AstraVoyageContent.chapter(case_id).get("fact","")) and case_id != AstraCaseCatalog.CALIBRATION:
-                var resolution := AstraVoyageContent.resolution_thread(case_id)
+                var resolution := AstraVoyageContent.resolution_thread(case_id, voyage.get("memory_tags",[]))
                 if not resolution.is_empty():
                     _voyage_scene(resolution)
                 else:
@@ -4531,7 +4531,13 @@ func _voyage_scene(scene: Dictionary) -> void:
     var incoming_id := str(incoming.get("id",""))
     var seen_counts: Dictionary = voyage.get("scene_seen_counts",{})
     var prior_seen := int(seen_counts.get(incoming_id,0))
-    if AstraForeknowledgeModel.can_compress(incoming,prior_seen):
+    if bool(incoming.get("human_trace_resolution",false)) and prior_seen >= 1 and not bool(incoming.get("human_trace_callback",false)):
+        incoming["_full_action"] = str(incoming.get("action",""))
+        incoming["_full_lines"] = Array(incoming.get("lines",[])).duplicate(true)
+        incoming["action"] = "이미 확인한 결론이다. 이번에는 이 사실을 어떻게 다룰지 결정한다."
+        incoming["lines"] = []
+        incoming["compressed"] = true
+    elif AstraForeknowledgeModel.can_compress(incoming,prior_seen):
         incoming["_full_action"] = str(incoming.get("action",""))
         incoming["_full_lines"] = Array(incoming.get("lines",[])).duplicate(true)
         incoming["action"] = AstraForeknowledgeModel.compressed_action(incoming)
@@ -5014,14 +5020,22 @@ func voyage_next() -> void:
             var hook := AstraVoyageContent.hook_thread(case_id)
             if not hook.is_empty():
                 _voyage_scene(hook)
+        elif bool(scene.get("story_reaction",false)):
+            var reaction_hook := AstraVoyageContent.hook_thread(case_id)
+            if not reaction_hook.is_empty():
+                _voyage_scene(reaction_hook)
         elif bool(scene.get("story_hook",false)):
             voyage["story_hook_seen"] = true
+            # Mandatory resolution -> reaction -> hook has priority. Any older
+            # immediate consequence that was deferred while this chain was on
+            # screen may surface only after the hook closes.
+            _deliver_due_consequence("IMMEDIATE")
         # An incidental/autonomous beat can win the race immediately after the
         # goal fact is discovered. Do not let that swallow the mandatory local
         # answer: once the incidental scene closes, enqueue the resolution
         # before any optional loop hook.
         if voyage.get("scene",{}).is_empty() and not first_day_flow() and bool(voyage.get("goal_done",false)) and not bool(voyage.get("story_resolution_seen",false)):
-            var pending_resolution := AstraVoyageContent.resolution_thread(case_id)
+            var pending_resolution := AstraVoyageContent.resolution_thread(case_id, voyage.get("memory_tags",[]))
             if not pending_resolution.is_empty():
                 _voyage_scene(pending_resolution)
         if voyage.get("scene",{}).is_empty() and not first_day_flow() and not bool(voyage.get("hook_shown",false)) and not Dictionary(voyage.get("loop_hook",{})).is_empty():
@@ -5076,7 +5090,9 @@ func voyage_choose(index: int) -> bool:
             voyage["memory_tags"].append("mira:promise_broken:tell_injury")
         voyage["promise_history"].append({"who":"mira","promise":"tell_injury","loop":int(voyage.get("loop",0)),"state":"broken"})
     var last_fact := str(voyage.get("last_fact",""))
-    if last_fact != "" and effect in ["share","record","open_records"]:
+    # Story resolutions handle their canonical chapter fact explicitly below.
+    # Never let an incidental last_fact leak into resolution ownership.
+    if last_fact != "" and effect in ["share","record","open_records"] and not bool(scene.get("story_resolution",false)):
         var ownership: Dictionary = voyage.get("evidence_ownership",{})
         var evidence: Dictionary = ownership.get(last_fact,{"found_by":"player","knows":["player"],"public":false})
         var knowers: Array = evidence.get("knows",[])
@@ -5124,13 +5140,69 @@ func voyage_choose(index: int) -> bool:
     # the resolution/hook and leave EXPLORE impossible to finish.
     if bool(scene.get("story_resolution",false)):
         voyage["story_resolution_seen"] = true
-        var story_hook := AstraVoyageContent.hook_thread(case_id)
-        if not story_hook.is_empty():
-            _voyage_scene(story_hook)
+        if memory_tag != "":
+            var trace_notes := {
+                "dead_air_keep_both_originals":"두 목적지 원본을 함께 보존함",
+                "dead_air_public_dual_destination":"두 목적지 원본을 함께 공개함",
+                "dead_air_private_copy":"목적지 기록 사본 하나를 별도 보존함",
+                "glass_garden_back_sena_record":"세나의 기억을 기록 옆에 함께 남김",
+                "glass_garden_jun_explains_gap":"준에게 누락된 하루를 직접 설명하게 함",
+                "glass_garden_keep_conflict_open":"세나와 준의 기록을 당분간 분리함",
+                "echo_ward_preserve_signal":"소렌의 신호 원본을 별도 보존함",
+                "echo_ward_play_signal_for_soren":"소렌에게 녹음 전체를 들려줌",
+                "echo_ward_split_medical_signal":"의료 기록과 통신 기록을 분리 보관함",
+                "silent_orbit_public_arrival":"19년 전 도착 기록을 공개함",
+                "silent_orbit_private_recheck":"루칸과 도착 기록을 다시 검증함",
+                "silent_orbit_preserve_arrival_copy":"19년 전 도착 기록 사본을 별도 보존함",
+                "red_shift_preserve_sample_record":"시료 기록을 승무원들과 공유함",
+                "red_shift_back_maren_judgment":"마렌의 생태 판단을 먼저 기록함",
+                "red_shift_hide_handwriting":"자신의 필체가 나온 부분은 아직 공개하지 않음",
+                "last_light_people_and_records":"사람들의 기억과 기록을 함께 보존함",
+                "last_light_verified_first":"검증 가능한 자료부터 우선 보존함",
+                "last_light_parallel_histories":"서로 다른 history를 병렬 보존함"
+            }
+            var trace_note := str(trace_notes.get(memory_tag,""))
+            if trace_note != "" and trace_note not in voyage["notes"]:
+                voyage["notes"].append(trace_note)
+        var resolution_fact := str(AstraVoyageContent.chapter(case_id).get("fact",""))
+        if resolution_fact != "":
+            var ownership: Dictionary = voyage.get("evidence_ownership",{})
+            var evidence: Dictionary = ownership.get(resolution_fact,{"found_by":"player","knows":["player"],"public":false})
+            var knowers: Array = evidence.get("knows",[])
+            if effect == "share":
+                if str(choice.get("share_scope","public")) == "speaker":
+                    if who != "" and who not in knowers:
+                        knowers.append(who)
+                    AstraKnowledgeModel.share_with(flags,resolution_fact,who,day,"player")
+                else:
+                    for member_id in active_participants():
+                        if member_id not in knowers:
+                            knowers.append(member_id)
+                    evidence["public"] = true
+                    AstraKnowledgeModel.make_public(flags,resolution_fact,active_participants(),day,"resolution_choice")
+            elif effect == "keep_copy":
+                evidence["player_copy"] = true
+            evidence["knows"] = knowers
+            ownership[resolution_fact] = evidence
+            voyage["evidence_ownership"] = ownership
+            # information_sources is intentionally a fact -> source-type string
+            # map. Handling provenance already lives in memory_tags, dialogue
+            # memory and the visible trace note; do not change this value's type.
+        var reaction := AstraVoyageContent.resolution_reaction(case_id,memory_tag,active_participants())
+        if not reaction.is_empty():
+            _voyage_scene(reaction)
+        else:
+            var story_hook := AstraVoyageContent.hook_thread(case_id)
+            if not story_hook.is_empty():
+                _voyage_scene(story_hook)
+    elif bool(scene.get("story_reaction",false)):
+        var reaction_hook := AstraVoyageContent.hook_thread(case_id)
+        if not reaction_hook.is_empty():
+            _voyage_scene(reaction_hook)
     elif bool(scene.get("story_hook",false)):
         voyage["story_hook_seen"] = true
     if voyage.get("scene",{}).is_empty() and not first_day_flow() and bool(voyage.get("goal_done",false)) and not bool(voyage.get("story_resolution_seen",false)):
-        var pending_resolution := AstraVoyageContent.resolution_thread(case_id)
+        var pending_resolution := AstraVoyageContent.resolution_thread(case_id, voyage.get("memory_tags",[]))
         if not pending_resolution.is_empty():
             _voyage_scene(pending_resolution)
     if not foreknowledge_reaction.is_empty():
@@ -5139,7 +5211,13 @@ func voyage_choose(index: int) -> bool:
         var after_scene := AstraStorylets055.incident_after_scene(str(incident_result.get("id","")),str(scene.get("speaker","")))
         if not after_scene.is_empty():
             _voyage_scene(after_scene)
-    _deliver_due_consequence("IMMEDIATE")
+    var mandatory_story_scene: Dictionary = voyage.get("scene",{})
+    if mandatory_story_scene.is_empty() or not (
+        bool(mandatory_story_scene.get("story_resolution",false))
+        or bool(mandatory_story_scene.get("story_reaction",false))
+        or bool(mandatory_story_scene.get("story_hook",false))
+    ):
+        _deliver_due_consequence("IMMEDIATE")
     changed.emit()
     return true
 func voyage_use_recorder() -> bool:

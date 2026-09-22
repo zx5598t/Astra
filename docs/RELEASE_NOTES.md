@@ -1,3 +1,27 @@
+# ASTRA 0.6.1 — HUMAN TRACE
+
+## 발견한 사실을 어떻게 다뤘는가
+
+DEAD AIR부터 LAST LIGHT까지 핵심 사실은 기존 canon 그대로 유지된다. 대신 각 resolution에 장별 authored choice를 추가해 공개, 보존, 재검증, 분리, 개인 사본 같은 처리 방식을 플레이어가 고른다. 선택은 새 분기 엔진이 아니라 기존 voyage choice pipeline과 memory tag, DialogueMemory, KnowledgeModel, evidence ownership, consequence 경로를 사용한다.
+
+선택 뒤에는 가능한 경우 한 명의 짧은 reaction만 보여 주고 기존 story hook으로 돌아간다. 다음 loop callback도 NPC가 과거 loop를 초자연적으로 직접 기억하는 방식이 아니라, 기록을 놓는 습관이나 익숙한 확인 순서처럼 작은 residue로 표현한다. canonical resolved fact, chapter order, LAST_LIGHT의 multiple-valid-history canon과 Player != Null 조건은 바뀌지 않는다.
+
+반복 resolution은 첫 경험을 압축하지 않는다. 이미 본 동일 resolution은 기존 scene_seen_counts와 full-scene payload를 이용해 결론 설명만 줄이고, 이번 loop의 handling choice와 새 callback/reaction은 정상 속도로 남긴다.
+
+## 개발/배포 분리
+
+Windows release workflow의 main-push 자동 실행을 제거했다. 일반 Godot CI와 Windows validation은 개발 PR/main에서 계속 수행하지만, packaging/tag/GitHub Release는 v* tag 또는 명시적 workflow_dispatch 시점까지 보류한다.
+
+Save schema는 실제 최신 main의 **v11**을 유지하며 신규 migration은 없다.
+
+## 개발 검증
+
+GitHub Actions run **#536** (`35673297533`), commit `51e2d82c4e426ab6b165b25ce244d468f3caba88`에서 Linux/Windows validation이 모두 GREEN이다. HUMAN TRACE **326 checks**, core model **49,255 checks**, campaign **106**, voyage **656**, story consistency **419**, FIRST CONTACT **259**, reset **22**, NPC vote regression **19,086**을 통과했다. `--games=40`은 smart **79%** / random **19%** / passive **0%**, content audit은 **0 FAIL / 1 WARN**이다.
+
+Windows packaging / Git tag / GitHub Release는 개발 정책에 따라 실행하지 않았다.
+
+---
+
 # ASTRA 0.6.0 — FIRST CONTACT / STORY LOOP
 
 ## 첫 접촉에서 다음 질문까지
