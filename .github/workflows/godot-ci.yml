@@ -265,12 +265,20 @@ jobs:
           set +e
           ./godot --headless --path . --script res://tests/story_070_consistency.gd 2>&1 | tee story-070.log
           ./godot --headless --path . --script res://tests/act2_070_tests.gd 2>&1 | tee act2-070.log
+          ./godot --headless --path . --script res://tests/act2_070_simulation.gd 2>&1 | tee act2-sim-070.log
+          ./godot --headless --path . --script res://tests/crew_glimpse_070_tests.gd 2>&1 | tee glimpse-070.log
+          ./godot --headless --path . --script res://tests/character_arc_070_tests.gd 2>&1 | tee arc-070.log
           ./godot --headless --path . --script res://tests/visual_story_071_tests.gd 2>&1 | tee visual-story-071.log
+          ./godot --headless --path . --script res://tests/visual_story_072_tests.gd 2>&1 | tee visual-story-072.log
           set -e
           grep -q "ASTRA STORY 070 CONSISTENCY TESTS OK" story-070.log
           grep -q "ASTRA ACT2 070 TESTS OK" act2-070.log
+          grep -q "ASTRA ACT2 070 SIMULATION OK" act2-sim-070.log
+          grep -q "ASTRA CREW GLIMPSE 070 TESTS OK" glimpse-070.log
+          grep -q "ASTRA CHARACTER ARC 070 TESTS OK" arc-070.log
           grep -q "ASTRA 0.7.1 VISUAL STORY TESTS OK" visual-story-071.log
-          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" story-070.log act2-070.log visual-story-071.log; then exit 1; fi
+          grep -q "ASTRA 0.7.2 VISUAL STORY TESTS OK" visual-story-072.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" story-070.log act2-070.log act2-sim-070.log glimpse-070.log arc-070.log visual-story-071.log visual-story-072.log; then exit 1; fi
 
       - name: 0.5.3 content depth and invariant audit
         run: |
