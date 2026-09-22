@@ -97,9 +97,9 @@ func simulate_500_loops() -> void:
     var duplicate_feedback_exposure := 0
     var zero_aftermath_meaningful_choice := 0
     var ordinary_optional_starvation := 0
+    var reaction_speaker_distribution := {}
     var callback_speaker_distribution := {}
     var character_distribution := {}
-    var mira_optional_exposure := 0
     var unrelated_new_thread_count := 0
     var visible_continuation := 0
     var unreachable_callback_ids: Array[String] = []
@@ -133,7 +133,7 @@ func simulate_500_loops() -> void:
         if not reaction.is_empty():
             immediate_reaction_exposure += 1
             var who := str(reaction.get("speaker",""))
-            callback_speaker_distribution[who] = int(callback_speaker_distribution.get(who,0)) + 1
+            reaction_speaker_distribution[who] = int(reaction_speaker_distribution.get(who,0)) + 1
             character_distribution[who] = int(character_distribution.get(who,0)) + 1
         else:
             zero_aftermath_meaningful_choice += 1
@@ -141,6 +141,9 @@ func simulate_500_loops() -> void:
         var callback := AstraVoyageContent.resolution_thread(case_id,[tag])
         if bool(callback.get("human_trace_callback",false)):
             next_loop_callback_exposure += 1
+            var callback_who := str(callback.get("speaker",""))
+            callback_speaker_distribution[callback_who] = int(callback_speaker_distribution.get(callback_who,0)) + 1
+            character_distribution[callback_who] = int(character_distribution.get(callback_who,0)) + 1
             if AstraStoryletScheduler.is_continuation(callback,{}):
                 visible_continuation += 1
             # The callback is part of the direct mandatory resolution chain;
@@ -187,9 +190,9 @@ func simulate_500_loops() -> void:
     check(visible_continuation == next_loop_callback_exposure,"every exposed residue remains a visible continuation")
     check(unrelated_new_thread_count == 0,"mandatory residue is never classified as unrelated optional thread")
     check(unreachable_callback_ids.is_empty(),"all configured callback IDs remain reachable: %s" % str(unreachable_callback_ids))
-    check(callback_speaker_distribution.size() >= 6,"reaction speakers remain distributed across crew (%d)" % callback_speaker_distribution.size())
+    check(reaction_speaker_distribution.size() == AstraCrewCatalog.ORDER.size(),"all eight crew appear in authored immediate aftermath reactions (%d/%d)" % [reaction_speaker_distribution.size(),AstraCrewCatalog.ORDER.size()])
+    check(callback_speaker_distribution.size() >= 4,"next-loop callbacks remain character-distributed (%d speakers)" % callback_speaker_distribution.size())
     check(repeat_resolution_compression >= 1,"repeat-resolution compression remains active (%d/%d chapter probes)" % [repeat_resolution_compression,IDS.size()])
-    check(mira_optional_exposure <= 4,"Mira optional exposure budget remains compatible (%d)" % mira_optional_exposure)
 
     print("HUMAN AFTERMATH 500 LOOP METRICS")
     print("  meaningful choice count=%d" % meaningful_choice_count)
@@ -199,10 +202,11 @@ func simulate_500_loops() -> void:
     print("  duplicate feedback exposure=%d" % duplicate_feedback_exposure)
     print("  zero-aftermath meaningful choice=%d" % zero_aftermath_meaningful_choice)
     print("  ordinary optional starvation=%d" % ordinary_optional_starvation)
+    print("  immediate reaction speaker distribution=%s" % str(reaction_speaker_distribution))
     print("  callback speaker distribution=%s" % str(callback_speaker_distribution))
     print("  character distribution=%s" % str(character_distribution))
     print("  repeat-resolution compression=%d/%d" % [repeat_resolution_compression,IDS.size()])
-    print("  Mira optional exposure=%d (CLEAR SIGNAL max-4 gate remains authoritative)" % mira_optional_exposure)
+    print("  Mira optional exposure=measured by CLEAR SIGNAL 500-loop gate in the same CI run")
     print("  unrelated new-thread count=%d" % unrelated_new_thread_count)
     print("  visible continuation=%d" % visible_continuation)
     print("  unreachable callback IDs=%s" % str(unreachable_callback_ids))
