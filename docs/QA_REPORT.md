@@ -1,24 +1,49 @@
 # 0.6.2 HUMAN AFTERMATH QA — 2026-09-22
 
-검증 branch: `dev/0.6.2-human-aftermath`  
-PR: #12  
-GitHub Actions: run `35676989115` — Linux/Windows **GREEN**
+구현 branch: `dev/0.6.2-human-aftermath` / 검증 보완 branch: `fix/0.6.2-aftermath-validation`  
+PR: #12 + #13  
+최종 보완 검증 GitHub Actions: run `35679587205` — Linux/Windows **GREEN**
 
-- Linux import / GDScript parse: **PASS**
+- Linux import / 전체 GDScript parse / main scene boot: **PASS**
+- Windows validation / UI smoke / main scene boot: **PASS**
 - Core model: **49,255 checks PASS**
 - Campaign: **106 checks PASS**
+- voyage regression: **656 checks PASS**
+- story consistency: **419 checks PASS**
+- FIRST CONTACT: **259 checks PASS**
+- reset safety: **22 checks PASS**
+- NPC vote regression: **19,086 checks PASS**
 - HUMAN TRACE: **326 checks PASS**
-- HUMAN AFTERMATH: **138 checks PASS**
+- HUMAN AFTERMATH: **150 checks PASS**
+- HUMAN AFTERMATH 500-loop simulation: **13 checks PASS**
+- human-readable editorial report: **PASS**
+- dedicated aftermath UI smoke 1366×768: **PASS**
+- dedicated aftermath UI smoke 1920×1080: **PASS**
+- aftermath visual capture artifact: **PASS**
 - Content Audit: **0 FAIL / 0 WARN**
 - deduction bot (--games=40): smart **79%** / random **19%** / passive **0%**
 - bot gate: smart-random **+60%p**, passive < 20% — **PASS**
-- UI smoke: Linux **PASS**, Windows **PASS**
-- Windows validation / main scene boot: **PASS**
 - save schema: **v11**, migration 없음
 - authored voyage/reactive library: **608**, 신규 scene 0 / 삭제 scene 0
 - 정식 Windows packaging: **DEFERRED**
 - v0.6.2 tag / GitHub Release / release asset: **DEFERRED**
-- 1920×1080 별도 visual capture: **NOT RUN** (기존 `visual_qa.gd`는 두 해상도를 지원하지만 이번 CI gate에서는 별도 실행하지 않음)
+
+500-loop HUMAN AFTERMATH 측정:
+- meaningful choice: **500**
+- immediate reaction exposure: **500**
+- next-day consequence exposure: **242**
+- next-loop callback exposure: **166**
+- duplicate feedback exposure: **0**
+- zero-aftermath meaningful choice: **0**
+- ordinary optional starvation: **0**
+- unrelated new-thread count: **0**
+- visible continuation: **166**
+- unreachable callback IDs: **0**
+- repeat-resolution compression: **5/6 chapter probes**
+- immediate reaction speaker distribution: noa 138 / sena 56 / vale 56 / eli 56 / lyra 56 / dax 83 / rho 28 / mira 27
+- callback speaker distribution: vale 28 / noa 82 / eli 28 / sena 28
+
+실제 UI 검증 중 RED_SHIFT next-loop residue의 행동 주체가 노아인데 base resolution speaker가 남아 초상/화자가 어긋날 수 있는 경로를 발견했다. callback별 visible speaker를 authored residue 행동과 일치시키도록 수정하고 1366×768/1920×1080 회귀로 고정했다. 테스트 기준/기존 threshold는 낮추지 않았다.
 
 # QA REPORT — ASTRA 0.6.1 HUMAN TRACE
 
