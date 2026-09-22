@@ -1,4 +1,6 @@
-# ASTRA 0.5.6 인물 — ECHOES
+# ASTRA 인물 (0.7.0 SECOND WATCH 기준 갱신, 원문은 0.5.6 ECHOES)
+
+0.7.0은 각 인물의 성격/말투/관계를 바꾸지 않는다. 새로 추가된 것은 첫 등장 시 화면에 잠깐 스쳐 가는 FIRST IMPRESSION 표시(이름·직책·관찰 가능한 행동 한 줄, `AstraCrewCatalog.GLIMPSE`)와, 이 문서 아래 각 인물 섹션에 이미 기술된 개인 micro-arc가 ACT II(Day 8~13)에서도 계속 진행된다는 점뿐이다.
 
 | 표시 이름 | 저장 ID / 자산 ID | 역할 | baseline과 말투 |
 |---|---|---|---|
@@ -56,7 +58,7 @@ Hidden role은 사람의 기본 성격을 바꾸지 않는다. Null이 된 캐�
 - 강제 romance confession
 - 다른 chapter spotlight 독점
 
-0.5.5 authored speaker scene은 **98개**, private event는 **13개**다. 하지만 ECHO WARD 이후 일반 loop의 optional Mira scene은 최대 4개로 제한한다.
+authored speaker scene은 **100개**(0.7.0 기준), private event는 **13개**다. 하지만 ECHO WARD 이후 일반 loop의 optional Mira scene은 최대 4개로 제한한다.
 
 ### 미라의 관계 tone
 

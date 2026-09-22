@@ -6,8 +6,11 @@ extends RefCounted
 # those systems authored moments that make the change visible. Most content is
 # mid/late-game so the first thirty minutes stay light.
 
-const MID_CHAPTERS := ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"]
-const LATE_CHAPTERS := ["SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"]
+# 0.7.0: extended to ACT II — see storylets_052.gd's MID_CHAPTERS comment.
+const MID_CHAPTERS := ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT",
+    "SECOND_WATCH","BORROWED_DAYS","BLIND_DECK","THREE_MINUTES_DARK","CONTINUITY","THRESHOLD"]
+const LATE_CHAPTERS := ["SILENT_ORBIT","RED_SHIFT","LAST_LIGHT",
+    "SECOND_WATCH","BORROWED_DAYS","BLIND_DECK","THREE_MINUTES_DARK","CONTINUITY","THRESHOLD"]
 
 # [group, tag, category, family, action, line, metadata]
 const MIRA_PACKS := [

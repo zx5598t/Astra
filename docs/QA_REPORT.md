@@ -1,3 +1,42 @@
+# 0.7.0 SECOND WATCH QA — 2026-09-22
+
+로컬 검증만 수행 (GitHub Actions CI 미실행 — 이 리포지토리는 이번 작업 세션에서 zip 추출본으로 시작해 git 이력이 없었고, `git init`으로 새 baseline을 만들었다). 검증 환경: `C:\Users\user\Desktop\Codex\tools\godot-4.7.2\Godot_v4.7.2-stable_win64_console.exe` (Godot 4.7.2.stable.official.ed1daf0bf), Windows 11, 각 테스트를 단독 프로세스로 순차 실행(동시 실행 시 같은 `user://` 저장 경로를 두고 경합이 발생해 응답이 멈춘 것처럼 보이는 문제를 개발 중 직접 겪었다 — 상세는 아래 "개발 중 발견한 문제" 참고).
+
+- Linux import: 미실행 (Windows 전용 환경)
+- 전체 GDScript parse / import: **PASS** (`godot --headless --path . --import`, 매 변경 후 재실행)
+- content_audit: **0 FAIL / 0 WARN**, authored scene **622개**, pairing **21개**
+- story_consistency_tests: **419 checks PASS**
+- campaign_tests: **202 checks PASS** (기존 106 → 캠페인 6→12개 확장에 맞춰 두 배)
+- voyage_tests: **745 checks PASS**
+- storylet_scheduler_tests: **119 checks PASS**
+- human_trace_061_tests: **326 checks PASS**
+- human_aftermath_062_tests: **150 checks PASS**
+- mira_content_tests: **36 checks PASS** (Mira authored scene 100, 최대치 80~100 범위 내 유지)
+- **신규** story_070_consistency: **278 checks PASS**
+- **신규** act2_070_tests: **26 checks PASS**
+- **신규** character_arc_070_tests: **115 checks PASS**
+- **신규** act2_070_simulation (20 seed): **520 checks PASS**, dead-end **0**, THRESHOLD 필수 reveal 도달 **20/20**
+- ui_smoke (전체 12 case, 양쪽 save slot, DEAD_AIR·SECOND_WATCH 1366×768/1920×1080 레이아웃 확인 포함): **PASS**
+- deduction bot (`--games=40`, 전체 12 case × 3 protocol = 1440게임): smart **79%** / random **19%** / passive **0%**, **99,523 checks PASS**
+- bot gate: smart-random **+60%p** (기준 +30%p 이상), passive **0%** (기준 <20%) — **PASS**, 0.6.2 기록(smart 79%/random 19%/passive 0%)과 정확히 동일해 회귀 없음
+- save schema: **v11 유지**, migration 없음 (ACT는 derived value, 새 저장 필드 없음)
+- authored voyage/reactive library: **622**, 신규 14 / 재작성 3(ECHO_WARD·SILENT_ORBIT·RED_SHIFT RESOLUTION_BEATS 확장, 라인 수만 증가) / 삭제 0
+- 정식 Windows packaging / EXE boot: **미실행** (export template 설치가 이 세션 환경에 없음 — 아래 "남은 작업" 참고)
+- v0.7.0 tag / GitHub Release / release asset: **DEFERRED** (사용자가 별도 요청하지 않음, 기존 정책 유지)
+
+## 개발 중 발견한 문제
+
+1. **ACT II fact-tag 버그(실제 콘텐츠 버그, 수정 완료).** `CHAPTERS[...]["fact"]`에 `duty_log` 같은 새 문자열을 쓰면, investigation point가 `AstraVoyageContent.ROOMS`의 고정 8개 공유 태그(power/signal/destination/security/archive/arrival/everyday/sample)만 갖고 있어 해당 fact를 절대 만들어낼 수 없고, 그 결과 `goal_done`이 영원히 true가 되지 않아 EXPLORE phase에서 캠페인이 멈췄다. 전체 캠페인 UI 구동 검증(`ui_smoke.gd`) 중 발견했다. 6일 모두 기존 태그로 재매핑하고, 재발 방지 회귀를 `story_070_consistency.gd`에 추가했다.
+2. **테스트 하드코딩(실제 버그, 수정 완료).** `voyage_tests.gd`와 `campaign_tests.gd`가 캠페인 길이 6(+CALIBRATION=7)을 배열 리터럴/매직넘버로 가정하고 있어 12로 확장하자 out-of-bounds로 죽었다. `AstraCaseCatalog.CAMPAIGN.size()`에서 동적으로 계산하도록 고쳤다. `first_contact_058_tests.gd`는 자체 case 목록을 따로 갖고 있어 영향받지 않음을 확인했다.
+3. **개발 환경 문제(코드 버그 아님).** 위 두 버그로 스크립트가 `_initialize()` 중간에 크래시하면 `quit()`을 호출하지 못해 Godot 프로세스가 종료되지 않고 대기 상태로 남았다. 여러 백그라운드 실행을 동시에 두면 같은 기본 `user://` 저장 경로를 두고 경합해 두 프로세스 모두 응답이 멈춘 것처럼 보였다. 모든 프로세스를 종료하고 테스트 전용 저장 파일을 정리한 뒤 단독·순차 실행으로 전환해 해결했다. 향후 회귀 실행은 동시 실행을 피하는 것을 권장한다.
+
+## 남은 작업
+
+- 정식 Windows export template이 이 세션 환경에 설치되어 있지 않아 `ASTRA.exe` 빌드/부팅 검증을 하지 못했다. `tools/build_windows.ps1` / `tools/fetch_template.py`로 이후 실행 가능하다.
+- GitHub Actions CI(Linux/Windows validation, release-candidate)는 이 리포지토리에 git 원격이 없어 실행하지 못했다. 사용자가 원격을 연결하면 기존 `.github/workflows/godot-ci.yml` 그대로 사용 가능하다.
+- `AGENTS.md`는 이미 0.5.5/save v9 기준으로 낡아 있었다(이번 작업 시작 전부터). 이번 세션에서 고치지 않았다 — 별도로 갱신이 필요하다.
+- Soren(소렌)·Lucan(루칸)이 8명 중 가장 적은 authored scene(65/63)을 유지한다. `content_audit.gd`의 spread 기준은 통과하지만, 스펙이 명시적으로 우려한 "조용한 캐릭터가 묻히는" 위험이므로 다음 패스에서 우선 검토 대상이다.
+
 # 0.6.2 HUMAN AFTERMATH QA — 2026-09-22
 
 구현 branch: `dev/0.6.2-human-aftermath` / 검증 보완 branch: `fix/0.6.2-aftermath-validation`  

@@ -1,3 +1,19 @@
+# 0.7.0 · SECOND WATCH · 2026-09-22
+
+ACT I(Day 1~7) 재구축 + ACT II(Day 8~13) 신설. 실제 리포지토리를 먼저 감사한 뒤 진행했다: 거의 모든 서사 지원 시스템(Knowledge/Decision/Routine/Consequence/Motive/Incident/Codex/Claim Ledger/relationship 3계층/storylet scheduler)이 이미 구현되어 있었고, 8명 전원이 이미 4단계 개인 micro-arc를 갖고 있었다. 새 manager를 추가하지 않고 기존 API를 확장했다.
+
+**ACT I 재구축.** CALIBRATION은 authored `trace_steps: 1`이 `get_case()`에서 무조건 2로 덮어써지던 버그를 수정했다(하루 1건 대신 2건 조사를 유도하던 실제 버그). Day 1~5의 첫 등장 대사에 있던 "저는 의무관 미라예요" 식 자기소개를 제거하고, 캐릭터 첫 등장 시 초상화 근처에 이름·직책·관찰 가능한 행동 한 줄이 몇 초간 스쳐 가는 비모달 FIRST IMPRESSION을 추가했다(모달/확인 버튼/게임 정지 없음). 슬롯별로 한 캠페인에 한 번만 보이며(`AstraMetaProgress.slot_crew_glimpsed`), 새 캠페인에서는 다시 보인다. Day 1~3은 선택적 pair/observation 장면이 전혀 없어 캠페인 전체에서 가장 빠르게 느껴지던 문제였다 — storylets_052~055.gd의 공유 게이트는 그대로 두고, Day 2(노아·다렌 cross-check, 미라 self-neglect 예고)·Day 3(준/세나 병렬 관찰)에 명시적 `chapters` 오버라이드를 가진 신규 장면만 추가했다. Day 4/5/6의 RESOLUTION_BEATS를 확장했다: 소렌의 자기 목소리 분석에 전문적 청취 근거를, SILENT_ORBIT에 세 번째 근거(system time)와 평범한 정비 기록 발견을, RED_SHIFT의 "내 필체" reveal을 단발성 outro 대신 실제 beat로 승격했다.
+
+**ACT II 신설.** LAST_LIGHT 다음에 SECOND WATCH·BORROWED DAYS·BLIND DECK·THREE MINUTES DARK·CONTINUITY·THRESHOLD 6일을 추가해 `AstraCaseCatalog.CAMPAIGN`이 6개에서 12개가 됐다. ACT는 저장 값이 아니라 campaign day에서 파생되며(`AstraVoyageContent.act_for`), Day 8 잠금 해제는 기존 슬롯별 이전-장 완료 체인을 그대로 쓰므로 새 save 필드가 없다(schema v11 유지). storylets_052~055.gd의 MID_CHAPTERS/LATE 게이트와 incident_model.gd의 모든 incident "chapters" 목록에 ACT II 6일을 추가해, 기존 608개 personality/relationship 장면과 8종 incident가 LAST_LIGHT 이후에도 계속 등장하도록 했다(신규 시스템 없이 기존 라이브러리 재사용). THREE_MINUTES_DARK의 "동시다발 문제" 연출은 엔진이 `active_incident`를 한 번에 하나만 지원한다는 제약을 그대로 인정하고, 서사적으로는 동시 발생으로 서술하되 기계적으로는 하나만 직접 처리·나머지는 기존 NPC 자율 판단 시스템으로 위임했다.
+
+**개발 중 발견/수정한 버그 1건.** ACT II 6일의 `CHAPTERS[...]["fact"]`에 새 문자열(`duty_log` 등)을 썼더니 investigation point가 그 fact를 절대 만들어내지 못해 `goal_done`이 영원히 true가 되지 않는 버그가 있었다 — investigation point는 `AstraVoyageContent.ROOMS`의 고정된 8개 공유 태그(power/signal/destination/security/archive/arrival/everyday/sample)만 사용하는 전역 공유 pool이었다. 전체 캠페인 UI 구동 검증(ui_smoke.gd)으로 발견했으며, 6일 모두 기존 태그로 재매핑해 해결했다. 이 재발을 막는 회귀 테스트를 `tests/story_070_consistency.gd`에 추가했다.
+
+**캐릭터 심화.** `storylets_054.gd`의 8개 4단계 개인 arc(미라 자기방치·준 실수·다렌 실패한 모델·노아 개인 사본·세나 과잉보호·소렌 청취피로·루칸 위험경로·마렌 표본보존)가 이미 설계 의도와 거의 정확히 일치해 새로 만들지 않았다. `content_audit.gd`의 pair 분포 리포트로 확인한, 대사가 전혀 없던 4개 조합(준-소렌, 세나-노아, 마렌-소렌, 루칸-노아)에 장면 1개씩과 `AstraCrewCatalog.PAIR_CANDIDATES` 이력을 새로 추가했다.
+
+authored voyage/reactive scene library는 **622개**(신규 14개: ACT I 텍스처 4 + BLIND DECK 동행 관찰 6 + 미탐색 pair 4)이며, 인물별로는 미라 100 / 준 84 / 다렌 75 / 노아 80 / 세나 74 / 소렌 65 / 루칸 63 / 마렌 81이다. 21개 서로 다른 pair 조합(이전 17개).
+
+전용 0.7.0 회귀는 `story_070_consistency.gd`(278건, 필수 reveal 존재 여부 포함), `act2_070_tests.gd`(26건, 슬롯별 순차 잠금 해제), `character_arc_070_tests.gd`(115건), `act2_070_simulation.gd`(20 seed, 520건, dead-end 0건, THRESHOLD reveal 20/20 도달)이다. 기존 test suite 전체(story_consistency/campaign_tests/voyage_tests/storylet_scheduler_tests/human_trace_061/human_aftermath_062/mira_content_tests/content_audit/ui_smoke/run_tests bot gate)를 로컬 Godot 4.7.2로 개별 실행해 확인했으며 기존 threshold를 낮추지 않았다(bot gate smart 80%/random 20%/passive 0%, Phase 1 baseline과 동일). save schema는 **v11**을 유지하고, 정식 Windows package/tag/GitHub Release는 사용자 요청 전까지 보류한다.
+
 # 0.6.2 · HUMAN AFTERMATH · 2026-09-22
 
 HUMAN TRACE의 선택→반응→story hook 흐름에 player-facing aftermath ownership과 source provenance를 명시했다. 중요한 residue는 ordinary optional content와 섞이지 않도록 continuation으로 표시하며, 반응은 dialogue, loop residue는 character action, 다음 mystery는 story hook이 각각 primary presentation을 맡는다. 새 relationship/memory/consequence 시스템은 추가하지 않았고 save schema v11을 유지한다.

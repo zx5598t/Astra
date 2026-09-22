@@ -182,7 +182,13 @@ const PAIR_CANDIDATES := {
     "dax:rho": ["professional_conflict", "old_colleagues", "past_failure"],
     "mira:sena": ["saved_each_other", "professional_conflict", "old_colleagues"],
     "dax:lyra": ["professional_conflict", "past_failure", "first_mission"],
-    "noa:vale": ["shared_secret", "quiet_trust", "record_only_history"]
+    "noa:vale": ["shared_secret", "quiet_trust", "record_only_history"],
+    # 0.7.0: four pairs the design brief calls out as unexplored (§25) — first
+    # dedicated PAIR_CANDIDATES entries, matched to plausible working history.
+    "rho:vale": ["first_mission", "quiet_trust", "shared_signal_route"],
+    "noa:sena": ["first_mission", "professional_conflict", "record_only_history"],
+    "lyra:vale": ["first_mission", "quiet_trust", "once_close"],
+    "eli:noa": ["old_colleagues", "quiet_trust", "shared_signal_route"]
 }
 const CANDIDATES_DEFAULT := ["first_mission", "old_colleagues", "professional_conflict", "record_only_history"]
 
@@ -215,6 +221,24 @@ static func latin_name(npc_id: String) -> String:
 
 static func accent(npc_id: String) -> Color:
     return Color(str(CREW.get(npc_id, {}).get("accent", "ffffff")))
+
+# 0.7.0 FIRST IMPRESSION (§6): the one observable action shown the moment the
+# player first actually sees this person, never a spoken self-introduction.
+# Job title comes from CREW[...]["job"]; this is the second half — what they
+# are doing with their hands or attention right now, not who they are.
+const GLIMPSE := {
+    "mira": "본인 상태보다 다른 사람의 상태부터 살피고 있다.",
+    "rho": "누가 시키기도 전에 꺼진 패널에 손을 넣고 있다.",
+    "dax": "사람들 말보다 표시값이 실제와 맞는지 먼저 보고 있다.",
+    "noa": "누가 입을 열기도 전에 지금 시각부터 적어 두고 있다.",
+    "sena": "문이 열리는 쪽부터 살피고, 뒤는 남에게 맡긴다.",
+    "vale": "경보음과 낯선 신호음을 조용히 구분해 듣고 있다.",
+    "eli": "서두르는 사람들 사이에서 화면 시각부터 맞추고 있다.",
+    "lyra": "물 한 모금보다 시료 상태표를 먼저 찾고 있다."
+}
+
+static func glimpse_line(npc_id: String) -> String:
+    return str(GLIMPSE.get(npc_id, ""))
 
 static func group_members(category: String, group: String) -> Array:
     return TRAIT_CATEGORIES.get(category, {}).get("groups", {}).get(group, {}).get("members", [])

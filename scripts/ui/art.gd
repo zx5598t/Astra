@@ -9,9 +9,11 @@ const ROOM_ART := {
     "security": "security", "hub": "security", "shield": "security",
     "archive": "archive", "records": "archive", "storage": "archive", "vault": "archive",
     "garden": "garden", "hydroponics": "garden", "medical": "medical", "medbay": "medical", "clinic": "medical", "cryo": "medical",
-    "lounge": "lounge", "quarters": "lounge", "corridor": "breach", "airlock": "breach", "water": "engine", "relay": "bridge", "beacon": "security", "galley": "lounge"
+    "lounge": "lounge", "quarters": "lounge", "corridor": "breach", "airlock": "breach", "water": "engine", "relay": "bridge", "beacon": "security", "galley": "lounge",
+    "service": "breach"
 }
-const CHAPTER_ART := {"DEAD_AIR": "bridge", "ECHO_WARD": "medical", "GLASS_GARDEN": "garden", "SILENT_ORBIT": "engine", "RED_SHIFT": "archive", "LAST_LIGHT": "breach"}
+const CHAPTER_ART := {"DEAD_AIR": "bridge", "ECHO_WARD": "medical", "GLASS_GARDEN": "garden", "SILENT_ORBIT": "engine", "RED_SHIFT": "archive", "LAST_LIGHT": "breach",
+    "SECOND_WATCH": "archive", "BORROWED_DAYS": "lounge", "BLIND_DECK": "breach", "THREE_MINUTES_DARK": "engine", "CONTINUITY": "garden", "THRESHOLD": "bridge"}
 static func background(id: String) -> String:
     return ROOT + "backgrounds/" + id + ".webp"
 static func room(id: String) -> String:

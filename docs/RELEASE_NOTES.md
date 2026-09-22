@@ -1,3 +1,19 @@
+# ASTRA 0.7.0 — SECOND WATCH
+
+## ACT I 재구축, ACT II 신설
+
+0.6.2까지의 캠페인은 사건 자체는 좋지만 Day 1~3에 선택적 pair/observation 장면이 전혀 없어 “7개의 큰 단서를 빠르게 확인했다”는 체감이 강했다. 이번 버전은 그 문제를 구조부터 다시 짰다: CALIBRATION의 authored `trace_steps: 1`을 무시하고 항상 2로 덮어쓰던 버그를 고치고, Day 1~5의 자기소개 대사(“저는 의무관 미라예요”)를 비모달 FIRST IMPRESSION 표시로 대체하고, Day 2(투아·다렌 cross-check)·Day 3(준/세나 병렬 관찰)에 새 장면을 추가했다. Day 4~6의 RESOLUTION_BEATS도 더 깊어졌다: 소렌의 자기 목소리 분석은 이제 전문적 청취 근거를 먼저 보여 준 뒤에야 부정하기 어려워지고, SILENT_ORBIT은 세 번째 근거(system time)와 평범한 정비 기록을 더하고, RED_SHIFT의 “내 필체” reveal은 단발성 대사가 아니라 실제 beat가 됐다.
+
+LAST_LIGHT 다음에는 ACT II — SECOND WATCH · BORROWED DAYS · BLIND DECK · THREE MINUTES DARK · CONTINUITY · THRESHOLD 6일이 새로 이어진다. 도착 이후에도 승무원들이 정상적으로 근무하고 생활했다는 기록을 조사하며, THRESHOLD에서 “적어도 일부 history에서는 도착 이후 정상적으로 살다가 다시 장기수면에 들어갔다”는 새 사실을 확인하고 다음 질문(왜 다시 잠들었는가, 누가 그 잠을 시작했는가)을 남긴 채 끝난다. ACT III는 만들지 않는다.
+
+## 새로 만들지 않고 확장한 것들
+
+개발 전 실제 리포지토리를 감사한 결과 Knowledge/Decision/Routine/Consequence/Motive/Incident/Codex/Claim Ledger 같은 서사 지원 시스템과, 8명 전원의 4단계 개인 micro-arc가 이미 구현되어 있었다. 새 manager는 만들지 않고 다음만 확장했다: storylets_052~055.gd의 MID_CHAPTERS/LATE 게이트와 incident_model.gd의 모든 incident에 ACT II 6일을 추가해 기존 608개 라이브러리와 8종 incident가 LAST_LIGHT 이후에도 계속 등장하게 했고, `AstraCrewCatalog.PAIR_CANDIDATES`에 이전까지 대사가 전혀 없던 4개 조합(준-소렌, 세나-노아, 마렌-소렌, 루칸-노아)을 추가했다. ACT는 저장 값이 아니라 campaign day에서 파생되므로(`AstraVoyageContent.act_for`) save schema는 **v11**을 그대로 유지한다.
+
+개발 중 실제로 발견해 고친 버그가 하나 있다: ACT II 6일의 fact에 새 문자열을 썼다가, investigation point가 `AstraVoyageContent.ROOMS`의 고정된 8개 공유 태그만 사용한다는 사실을 몰라 goal_done이 영원히 true가 되지 않는 문제를 전체 캠페인 UI 구동 검증으로 발견하고 고쳤다. 재발 방지 회귀 테스트를 추가했다.
+
+authored voyage/reactive library는 **622개**(신규 14개)이며, 정식 Windows packaging과 v0.7.0 tag, GitHub Release는 사용자 요청 전까지 보류한다.
+
 # ASTRA 0.6.2 — HUMAN AFTERMATH
 
 0.6.1 HUMAN TRACE의 후속 패스다. 새 대형 시스템이나 scene pack 대신 기존 resolution reaction, next-loop residue, story hook의 역할을 분리했다. player-facing primary owner를 명시해 같은 consequence를 여러 surface가 설명하는 방향을 피하고, residue에는 실제 source handling tag를 남겨 다음 loop callback의 provenance를 검증할 수 있게 했다.

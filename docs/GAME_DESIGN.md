@@ -1,4 +1,4 @@
-# ASTRA 0.5.7 설계 — CLEAR SIGNAL
+# ASTRA 설계 (0.7.0 SECOND WATCH 기준 갱신, 원문은 0.5.7 CLEAR SIGNAL)
 
 ## 핵심 판타지
 
@@ -14,17 +14,33 @@ ASTRA는 “AI NPC 8명이 랜덤 문장을 말하는 마피아 게임”이 아
 
 ## Chapter와 spotlight
 
-| 호환 챕터 ID | 중심 mystery | 주요 human spotlight |
-|---|---|---|
-| CALIBRATION | 잠금 해제 기록과 첫 반복 | 미라와 첫 인간적 연결 |
-| DEAD_AIR | 서로 다른 목적지 원본 | 노아 / 다렌, 미라의 귀환 기억 |
-| GLASS_GARDEN | 순찰·배치 기억 불일치 | 세나 + 준 |
-| ECHO_WARD | 수면 중 소렌의 음성 | 소렌 |
-| SILENT_ORBIT | 19년 전 도착 완료 기록 | 루칸 |
-| RED_SHIFT | 출항보다 오래된 시료 | 마렌 |
-| LAST_LIGHT | 서로 다른 사본 보존 | 전체 관계 + main mystery |
+0.7.0부터 캠페인은 ACT I(Day 1~7)과 ACT II(Day 8~13) 두 막으로 나뉜다. ACT는 저장되는 값이 아니라 campaign day에서 파생된다(`AstraVoyageContent.act_for`). ACT III는 이 버전에서 만들지 않는다.
 
-미라는 Emotional Anchor이지만 다른 chapter의 주인공 자리를 빼앗지 않는다. 메인 미스터리의 해답 담당자가 아니라 “이 상황 속 사람들이 어떻게 버티는가”를 가장 자주 보여 주는 인물이다.
+| 호환 챕터 ID | Day | 중심 mystery | 주요 human spotlight |
+|---|---|---|---|
+| CALIBRATION | 1 | 잠금 해제 기록과 첫 반복 | 미라와 첫 인간적 연결 |
+| DEAD_AIR | 2 | 서로 다른 목적지 원본 | 노아 / 다렌, 미라의 귀환 기억 |
+| GLASS_GARDEN | 3 | 순찰·배치 기억 불일치 | 세나 + 준 |
+| ECHO_WARD | 4 | 수면 중 소렌의 음성 | 소렌 |
+| SILENT_ORBIT | 5 | 19년 전 도착 완료 기록 | 루칸 |
+| RED_SHIFT | 6 | 출항보다 오래된 시료 | 마렌 |
+| LAST_LIGHT | 7 | 서로 다른 사본 보존 — ACT I 결말 | 전체 관계 + main mystery |
+| SECOND_WATCH | 8 | 도착 이후 근무 일지 — ACT II 시작 | 노아 + 세나 |
+| BORROWED_DAYS | 9 | 몸에 남은 습관과 어긋난 관계 기록 | 세나 + 준 |
+| BLIND_DECK | 10 | 지도에서 지워진 정비 구역 | 루칸 + 노아 |
+| THREE_MINUTES_DARK | 11 | 동시다발 문제, 직접 목격 vs 전언 | 루칸 + 노아 |
+| CONTINUITY | 12 | 재난이 아니라 평범한 일상 기록 | 미라 + 마렌 |
+| THRESHOLD | 13 | 도착→생활→재수면 — ACT II 결말 | 노아 + 다렌 |
+
+미라는 Emotional Anchor이지만 다른 chapter의 주인공 자리를 빼앗지 않는다. 메인 미스터리의 해답 담당자가 아니라 “이 상황 속 사람들이 어떻게 버티는가”를 가장 자주 보여 주는 인물이다. ACT II에서도 미라가 optional content를 독점하지 않도록 CONTINUITY의 스포트라이트를 마렌과 나눴다.
+
+### ACT II 게임 디자인 원칙
+
+ACT II는 “ACT I보다 단서가 어려운 버전”이 아니다. 새 stat system이나 새 manager 없이, 기존 시스템이 이미 지원하는 능력을 다르게 조합해서 체감을 바꾼다.
+
+- THREE_MINUTES_DARK: 엔진은 `active_incident`를 한 번에 하나만 지원한다. “동시다발”은 서사적으로 세 곳에서 동시에 문제가 발생했다고 서술하고, 기계적으로는 플레이어가 하나만 직접 처리하며 나머지는 기존 NPC 자율 판단(DecisionTrace/PersonalMotive/relationship 가중치) 시스템이 처리한다. 새 hidden-Null 지름길이 아니다.
+- BLIND_DECK: 동행에 따라 2차 관찰(미라=의료 흔적, 준=배선, 다렌=시스템 구성, 세나=출입 흔적, 소렌=통신/잡음, 마렌=생태 흔적)이 달라지지만, core fact는 어떤 동행이든 기존 investigation point로 도달 가능하다.
+- storylets_052~055.gd의 MID_CHAPTERS/LATE 게이트와 incident_model.gd의 모든 incident에 ACT II 6일을 추가했다. 기존 608개 personality/relationship 라이브러리와 8종 incident가 새로 만들지 않아도 ACT II에서 계속 등장한다.
 
 ## CLEAR SIGNAL: player-visible narrative focus
 

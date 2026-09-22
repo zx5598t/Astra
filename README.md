@@ -1,3 +1,9 @@
+# ASTRA 0.7.0 — SECOND WATCH
+
+ACT I(Day 1~7)을 다시 짜고 ACT II(Day 8~13)를 새로 만든 캠페인 구조 개편입니다. Day 1~3에는 선택적 pair/observation 장면이 전혀 없어 "7개의 큰 단서를 빠르게 확인했다"는 느낌이 강했던 문제를 CALIBRATION의 잘못된 trace_steps 버그 수정, 자기소개 대사 대신 화면 하단에 짧게 스쳐 가는 FIRST IMPRESSION 표시, Day 2~3 전용 pair/observation 장면으로 보강했습니다. LAST_LIGHT 이후에는 도착 이후에도 승무원들이 정상적으로 근무·생활한 기록을 조사하는 ACT II(SECOND WATCH · BORROWED DAYS · BLIND DECK · THREE MINUTES DARK · CONTINUITY · THRESHOLD)가 이어지며, 캠페인은 CALIBRATION 이후 12개 사건(기존 6 + 신규 6)으로 늘었습니다.
+
+ACT는 저장되는 값이 아니라 campaign day에서 파생됩니다(`AstraVoyageContent.act_for`). Day 8의 잠금 해제도 기존 슬롯별 이전-장 완료 체인을 그대로 사용해 save schema는 **v11**을 유지하며 새 마이그레이션이 없습니다. 기존 608개 authored library와 8종 incident, MID_CHAPTERS 게이트를 다시 만들지 않고 ACT II 6일을 그 안에 포함시켜, 기존 personality/relationship 장면과 incident가 LAST_LIGHT 이후에도 계속 등장합니다. 정식 Windows 배포/tag/Release는 아직 만들지 않습니다.
+
 # ASTRA 0.6.2 — HUMAN AFTERMATH
 
 중요한 선택의 결과를 더 많이 설명하는 대신, **반응은 대화에서, 다음 loop의 흔적은 행동에서, 다음 mystery는 story hook에서** 읽히도록 기존 HUMAN TRACE 연결을 정리한 patch입니다. next-loop residue에는 실제 source handling provenance가 남고 CLEAR SIGNAL selector에는 continuation으로 전달됩니다. save schema는 v11을 유지하며 정식 0.6.2 Windows 배포/tag/Release는 아직 만들지 않습니다.
@@ -22,13 +28,22 @@ ASTRA의 탐사요원으로서 기록과 현장을 확인하고, 반복될 때�
 
 처음에는 미라·준·다렌·노아 네 명만 깨어 있습니다. 첫 접속 **CALIBRATION**은 의료실 한 곳에서 전원 패널을 확인하고 미라와 직접 이야기하는 짧은 도입입니다.
 
+**ACT I**
 - CALIBRATION — 전원 패널 + 미라와 직접 대화. 회의/투표/밤 없음.
-- DEAD AIR — 조사와 대화에 집중.
-- GLASS GARDEN — 짧은 공개 확인 도입. 세나와 준이 중심.
+- DEAD AIR — 조사와 대화에 집중. 노아·다렌의 investigate→cross-check 장면.
+- GLASS GARDEN — 세나(전력반)·준(잠긴 구역) 병렬 관찰. 세나와 준이 중심.
 - ECHO WARD — 소렌의 신호, 첫 장기수면 격리 투표와 밤 행동.
 - SILENT ORBIT — 루칸과 19년 전 도착 기록.
 - RED SHIFT — 마렌과 출항보다 오래된 시료.
-- LAST LIGHT — 기록과 사람에 대한 판단이 합쳐지는 후반.
+- LAST LIGHT — 기록과 사람에 대한 판단이 합쳐지는 ACT I 후반.
+
+**ACT II — SECOND WATCH (0.7.0 신설, Day 8~13)**
+- SECOND WATCH — 도착 이후 근무 일지 발견. 동시 경보 중 하나는 직접, 하나는 위임 처리.
+- BORROWED DAYS — 몸에 남은 습관이 지금의 관계 기록과 어긋난다.
+- BLIND DECK — 지도에서 지워진 정비 구역. 동행에 따라 2차 관찰이 달라진다.
+- THREE MINUTES DARK — 동시다발 문제 중 하나만 직접 목격, 나머지는 동료 판단을 믿어야 한다.
+- CONTINUITY — 재난 기록이 아니라 평범한 일상 기록이 증거가 된다.
+- THRESHOLD — ACT II 결말. 도착 → 생활 → 재수면이라는 새 질문을 남기고 ACT III 없이 끝난다.
 
 아직 배우지 않은 시스템은 미리 전부 보여 주지 않습니다. 0.5.7에서도 기존 Routine/Consequence/Micro-Arc는 본격 노출을 ECHO WARD 이후에 두며, CALIBRATION에는 routine narration을 추가하지 않아 첫 30분의 필수 텍스트량을 늘리지 않습니다.
 
@@ -64,18 +79,18 @@ NPC의 중요한 행동은 가능한 한 “왜”가 남습니다.
 - CALIBRATION에서는 observation을 정상 저장하되 연속 Codex 토스트는 띄우지 않습니다.
 - save schema는 **v11**이며 v9/legacy 저장은 안전하게 hydrate하고, resume 뒤 동일 Codex를 새 기록으로 다시 보고하지 않습니다.
 
-현재 authored voyage/reactive scene library는 **608개**입니다.
+현재 authored voyage/reactive scene library는 **622개**입니다(0.7.0에서 storylets_070.gd로 14개 추가: ACT I Day 2~3 텍스처 4개, ACT II BLIND DECK 동행 관찰 6개, §25 미탐색 pair 4개).
 
 | 인물 | authored scene |
 |---|---:|
-| 미라 | **98** |
-| 준 | 81 |
-| 다렌 | 74 |
-| 노아 | 79 |
-| 세나 | 71 |
-| 소렌 | 64 |
-| 루칸 | 62 |
-| 마렌 | 79 |
+| 미라 | **100** |
+| 준 | 84 |
+| 다렌 | 75 |
+| 노아 | 80 |
+| 세나 | 74 |
+| 소렌 | 65 |
+| 루칸 | 63 |
+| 마렌 | 81 |
 
 0.5.5 신규 authored/reactive scene은 **71개**입니다. Personal Motive 25 / Cooperative Investigation 18 / Foreknowledge reaction 8 / post-arrival canon record 4 / incident follow-up 8 / delegation report 8로 구성됩니다. 소렌과 루칸은 cooperative observation을 한 개씩 더 받아 중후반 전문성을 보강했습니다.
 

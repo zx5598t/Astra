@@ -200,34 +200,11 @@ func show_session_screen() -> void:
         _set_screen(screen)
         screen.setup(self,session,fx)
 
-# Anyone the player has not seen before gets one card before the case starts,
-# one at a time. Eight dossiers at once is the thing that made 0.3.1's opening
-# unreadable (§21, §64).
-func _introduce_new_faces(game: AstraGameSession) -> void:
-    var fresh := meta.unseen_people(game.roster)
-    if fresh.is_empty():
-        return
-    _queue_intro_cards(fresh, game)
-
-func _queue_intro_cards(queue: Array, game: AstraGameSession) -> void:
-    if queue.is_empty():
-        meta.save_data()
-        return
-    var npc_id := str(queue[0])
-    var rest: Array = queue.slice(1)
-    meta.meet_person(npc_id)
-    var info := AstraCrewCatalog.info(npc_id)
-    var card := AstraUI.intro_card(
-        npc_id,
-        AstraCrewCatalog.display_name(npc_id),
-        str(info.get("job", "")),
-        AstraStory.first_line(npc_id),
-        AstraCrewCatalog.accent(npc_id)
-    )
-    var label := "다음 사람" if not rest.is_empty() else "시작"
-    AstraModal.open(_overlay_root, "", card, [[label, AstraUI.CYAN]], func(_choice: int):
-        _queue_intro_cards(rest, game)
-    , 760.0)
+# 0.7.0: the blocking dossier-card flow this comment used to describe was
+# built but never wired to a call site, and used the wrong (global,
+# destructive-reset-only) known_people scope besides. It is replaced by the
+# non-modal FIRST IMPRESSION glimpse in voyage_view.gd, which is scoped per
+# save slot via AstraMetaProgress.has_glimpsed/mark_glimpsed (§6).
 
 # ---------------------------------------------------------------- save slots
 #

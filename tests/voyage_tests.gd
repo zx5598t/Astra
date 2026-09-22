@@ -25,9 +25,12 @@ func close_scene(s: AstraGameSession) -> void:
             s.voyage_next()
 func _initialize() -> void:
     test_exploration_consequences()
-    # 0.6.0 authored calendar: one crewmate joins on Days 2-5.
-    var expected := [4,5,6,7,8,8,8]
+    # 0.6.0 authored calendar: one crewmate joins on Days 2-5, then everyone
+    # already awake stays at 8 for the rest of the campaign (ACT II included).
+    var expected := [4,5,6,7]
     var ids := ["CALIBRATION"] + AstraCaseCatalog.CAMPAIGN
+    while expected.size() < ids.size():
+        expected.append(8)
     var memory := {}
     for i in range(ids.size()):
         var s := AstraGameSession.new()

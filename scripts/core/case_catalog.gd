@@ -6,7 +6,11 @@ extends RefCounted
 # clues exist in which room.
 
 const CALIBRATION := "CALIBRATION"
-const CAMPAIGN := ["DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD", "SILENT_ORBIT", "RED_SHIFT", "LAST_LIGHT"]
+# Day 1-7 is ACT I (0.7.0 "SECOND WATCH" reforge). Day 8-13 is ACT II, unlocked
+# through the same completion chain as every other case (LAST_LIGHT must be
+# finished first) — see AstraVoyageContent.act_for(). No ACT III this version.
+const CAMPAIGN := ["DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD", "SILENT_ORBIT", "RED_SHIFT", "LAST_LIGHT",
+    "SECOND_WATCH", "BORROWED_DAYS", "BLIND_DECK", "THREE_MINUTES_DARK", "CONTINUITY", "THRESHOLD"]
 
 # The crew relives six incidents aboard ASTRA with the same eight people.
 # Roles are regenerated per seed: a past culprit is never evidence in a new case.
@@ -291,6 +295,162 @@ const CASES := {
         ],
         "context": {"room": "medbay", "title": "현재 생체·동력 동기화", "text": "전력 재배분과 손상 기록 복구는 54초 간격으로 겹친다. 두 곳은 3분 거리다."},
         "decoy_traces": 3, "mutual_alibi_chance": 0.7, "tamper_chance": 0.85, "sightings": 1
+    },
+    "SECOND_WATCH": {
+        "code": "INCIDENT SIX", "title": "SECOND WATCH", "title_ko": "두 번째 근무",
+        "chapter": "07 · 두 번째 근무", "theme": "도착 이후 근무 일지 · 동시에 울린 두 경보", "difficulty": 5,
+        "accent": "9fd6c8", "environment": "res://assets/art031/backgrounds/archive.webp",
+        "subject": "복구된 근무 일지", "subject_role": "출처 확인 중", "window_start": 610, "window_end": 614,
+        "hook": "10:10, 기록보관실에서 도착 이후 날짜가 찍힌 근무 일지 전체가 발견된다. 필체와 서명은 지금의 승무원들과 일치한다.",
+        "card_line": "우리가 이 시간을 살았다는 기록이, 우리 손글씨로 남아 있다.",
+        "objective": "근무 일지를 남긴 실행자와, 아무도 이 시간을 기억하지 못하는 이유를 확인한다.",
+        "story_intro": "노아가 근무 일지 더미를 정리하다 손을 멈춘다. 필체가 낯설지 않다.",
+        "story_outro": "노아가 근무 일지 마지막 장을 넘긴다. 다음 장은 없다. 대신 완전히 다른 날짜의 첫 장이 시작된다.",
+        "dispatches": ["근무 일지의 필체부터 대조하자.", "같은 시각 두 곳에서 경보가 울렸다. 하나는 직접, 하나는 위임으로 처리됐다.", "확신이 있어도 검증 전에는 공개하지 않는다.", "짧게 의견을 모아 보자."],
+        "mission": {"title": "근무 일지 열람 단말 복구", "description": "기록보관실의 열람 단말을 되살립니다. 오늘부터 매일 개인 대화 행동력이 1 증가합니다.", "room": "archive", "effect": "talk", "reward": "매일 대화 행동력 +1 · 임무 점수 +180"},
+        "challenge": {"id": "records", "label": "근무 일지·경보 기록 확보", "target": 2},
+        "rooms": [
+            {"id": "archive", "name": "기록보관실", "desc": "도착 이후 근무 일지가 쌓여 있는 곳."},
+            {"id": "security", "name": "보안허브", "desc": "동시에 울린 두 경보 중 하나가 기록된 곳."},
+            {"id": "medbay", "name": "의료실", "desc": "도착 이후 진료 기록이 남은 곳."}
+        ],
+        "commons": [{"id": "quarters", "name": "승무원 선실 구역"}, {"id": "lounge", "name": "중앙 라운지"}],
+        "ops": [
+            {"id": "duty_log", "room": "archive", "name": "근무 일지 열람", "minute": 611, "second": 40, "record_title": "근무 일지 열람 기록", "record_text": "10:11:40, 기록보관실에서 도착 이후 근무 일지가 열람됐다. 열람자 서명은 지금의 승무원과 일치한다."},
+            {"id": "alarm_pair", "room": "security", "name": "동시 경보 기록 확인", "minute": 612, "second": 5, "record_title": "동시 경보 대응 기록", "record_text": "10:12:05, 보안허브에서 동시 경보 중 한 건의 대응 기록이 확인됐다. 대응자와 위임자가 함께 표시된다."}
+        ],
+        "context": {"room": "archive", "title": "근무 일지 동기화 기록", "text": "근무 일지와 동시 경보 기록은 같은 시간대에 겹친다. 위조 흔적은 없다."},
+        "decoy_traces": 3, "mutual_alibi_chance": 0.65, "tamper_chance": 0.8, "sightings": 1
+    },
+    "BORROWED_DAYS": {
+        "code": "INCIDENT SEVEN", "title": "BORROWED DAYS", "title_ko": "빌려 온 나날",
+        "chapter": "08 · 빌려 온 나날", "theme": "몸에 남은 습관 · 서로 다른 관계 기록", "difficulty": 5,
+        "accent": "e3b8ff", "environment": "res://assets/art031/backgrounds/lounge.webp",
+        "subject": "관계 기록과 행동 습관", "subject_role": "불일치 확인 중", "window_start": 780, "window_end": 784,
+        "hook": "13:00, 근무 일지 속 오래된 습관들이 지금의 행동과 겹친다. 정작 당사자들은 그 습관이 어디서 왔는지 설명하지 못한다.",
+        "card_line": "기록은 하나를 고르는데, 몸은 둘 다 기억한다.",
+        "objective": "습관을 남긴 실행자와, 관계 기록이 서로 다른 이유를 확인한다.",
+        "story_intro": "라운지에서 사소한 습관 하나가 눈에 띈다. 근무 기록에는 그 습관을 설명할 근거가 없다.",
+        "story_outro": "세나가 준에게 공구를 건넨다. 묻지 않고, 정확한 것을 건넨다. 둘 다 그 사실을 알아차리지 못한다.",
+        "dispatches": ["몸에 남은 습관부터 목록으로 만들자.", "적어도 두 사람은 서로 다른 관계 기록을 가진 것 같다.", "당사자에게 직접 확인하지 않아도 된다.", "판단은 서두르지 않아도 된다."],
+        "mission": {"title": "공용 라운지 조명 복구", "description": "라운지의 공용 조명을 되살립니다. 오늘부터 매일 공개 회의 발언권이 1 증가합니다.", "room": "lounge", "effect": "meeting", "reward": "매일 회의 발언권 +1 · 임무 점수 +180"},
+        "challenge": {"id": "traces", "label": "몸에 남은 습관 흔적 대조", "target": 2},
+        "rooms": [
+            {"id": "lounge", "name": "중앙 라운지", "desc": "습관적인 행동이 가장 먼저 눈에 띄는 곳."},
+            {"id": "medbay", "name": "의료실", "desc": "관계 기록 원본이 남아 있는 곳."},
+            {"id": "garden", "name": "수목구역", "desc": "함께 일했다는 기록이 겹치는 또 다른 구역."}
+        ],
+        "commons": [{"id": "quarters", "name": "승무원 선실 구역"}, {"id": "galley", "name": "식당"}],
+        "ops": [
+            {"id": "habit_trace", "room": "lounge", "name": "습관 흔적 대조", "minute": 781, "second": 22, "record_title": "행동 습관 대조 기록", "record_text": "13:01:22, 라운지에서 설명되지 않는 행동 습관이 기록됐다. 기록상 근거가 없다."},
+            {"id": "pair_record", "room": "medbay", "name": "관계 기록 재조회", "minute": 782, "second": 50, "record_title": "관계 기록 재조회 로그", "record_text": "13:02:50, 의료실에서 두 사람의 관계 기록이 다시 조회됐다. 이전 판본과 내용이 다르다."}
+        ],
+        "context": {"room": "lounge", "title": "습관·관계 기록 동기화", "text": "습관 흔적과 관계 기록 갱신은 같은 시간대에 겹친다. 위조 흔적은 없다."},
+        "decoy_traces": 3, "mutual_alibi_chance": 0.65, "tamper_chance": 0.8, "sightings": 1
+    },
+    "BLIND_DECK": {
+        "code": "INCIDENT EIGHT", "title": "BLIND DECK", "title_ko": "보이지 않는 갑판",
+        "chapter": "09 · 보이지 않는 갑판", "theme": "지도에서 지워진 통로 · 정비 구역", "difficulty": 5,
+        "accent": "7a8fa6", "environment": "res://assets/art031/backgrounds/breach.webp",
+        "subject": "지워진 정비 구역", "subject_role": "위치 확인 중", "window_start": 900, "window_end": 904,
+        "hook": "15:00, 도착 이후 기록에는 있지만 지금의 선내 지도에는 없는 정비 구역 하나가 있다. 위치는 알아도 통로가 지도에서 지워져 있다.",
+        "card_line": "지도에 없다고, 없는 곳은 아니다.",
+        "objective": "통로를 지운 실행자와, 그 구역이 지워진 이유를 확인한다.",
+        "story_intro": "루칸이 옛 지도와 지금 지도를 겹쳐 본다. 통로 하나만 사라져 있다.",
+        "story_outro": "다렌이 지도 갱신 이력을 끝까지 거슬러 올라간다. 그 구역이 지워진 시점 바로 다음 줄부터, 기록이 다시 촘촘해진다.",
+        "dispatches": ["지워진 통로의 좌표부터 확인하자.", "지도 갱신 이력을 복구하면 조사 시간이 늘어난다.", "안으로 들어가야 나머지를 알 수 있다.", "짧게 판단을 모아 보자."],
+        "mission": {"title": "정비 구역 조사등 복구", "description": "보이지 않는 갑판의 조사등을 되살립니다. 다음 날부터 매일 현장 조사 행동력이 1 증가합니다.", "room": "service", "effect": "investigation", "reward": "다음 날부터 조사 행동력 +1 · 임무 점수 +180"},
+        "challenge": {"id": "records", "label": "지워진 통로 기록 확보", "target": 2},
+        "rooms": [
+            {"id": "service", "name": "정비 구역", "desc": "지도에서 지워졌던 좁은 정비 통로."},
+            {"id": "archive", "name": "기록보관실", "desc": "지도 갱신 이력이 보관된 곳."},
+            {"id": "navigation", "name": "항법실", "desc": "옛 지도와 지금 지도를 겹쳐 볼 수 있는 곳."}
+        ],
+        "commons": [{"id": "quarters", "name": "승무원 선실 구역"}, {"id": "deck", "name": "관측 데크"}],
+        "ops": [
+            {"id": "route_erase", "room": "service", "name": "지워진 통로 기록 복원", "minute": 901, "second": 15, "record_title": "통로 복원 기록", "record_text": "15:01:15, 정비 구역에서 지워졌던 통로 기록이 복원됐다. 삭제자 서명은 남아 있지 않다."},
+            {"id": "map_log", "room": "archive", "name": "지도 갱신 이력 조회", "minute": 902, "second": 33, "record_title": "지도 갱신 이력", "record_text": "15:02:33, 기록보관실에서 지도 갱신 이력이 조회됐다. 특정 시점 이후 갱신이 다시 촘촘해진다."}
+        ],
+        "context": {"room": "service", "title": "통로·지도 동기화 기록", "text": "통로 복원 기록과 지도 갱신 이력은 같은 시간대에 겹친다. 위조 흔적은 없다."},
+        "decoy_traces": 3, "mutual_alibi_chance": 0.65, "tamper_chance": 0.8, "sightings": 1
+    },
+    "THREE_MINUTES_DARK": {
+        "code": "INCIDENT NINE", "title": "THREE MINUTES DARK", "title_ko": "어둠 속 세 갈래",
+        "chapter": "10 · 어둠 속 세 갈래", "theme": "동시다발 경보 · 직접 목격과 전언의 무게", "difficulty": 6,
+        "accent": "ff6a6a", "environment": "res://assets/art031/backgrounds/engine.webp",
+        "subject": "동시 발생 경보", "subject_role": "원인 확인 중", "window_start": 130, "window_end": 134,
+        "hook": "02:10, 전력이 흔들리는 사이 세 곳에서 동시에 문제가 생긴다. 직접 확인할 수 있는 곳은 하나뿐이다. 나머지는 동료들이 각자 판단해서 처리한다.",
+        "card_line": "한 곳만 직접 볼 수 있다. 나머지는 믿어야 한다.",
+        "objective": "전력을 흔든 실행자와, 직접 보지 못한 판단들의 근거를 확인한다.",
+        "story_intro": "경보 세 개가 동시에 울린다. 당신은 하나만 직접 볼 수 있다.",
+        "story_outro": "세 개의 판단이 남는다. 하나는 당신이 본 것, 둘은 동료의 말과 기록으로 전해진 것. 무게가 다르다는 걸, 이제는 안다.",
+        "dispatches": ["직접 볼 곳부터 정하자.", "나머지는 동료의 판단과 기록을 믿어야 한다.", "직접 본 것, 기록, 전언을 나눠서 정리하자.", "판단은 서두르지 않아도 된다."],
+        "mission": {"title": "심장로 차폐벽 보강", "description": "심장로의 임시 차폐벽을 보강합니다. 다음 밤의 침입 시도 한 번을 자동으로 막습니다.", "room": "reactor", "effect": "shelter", "reward": "다음 밤 구역 보호 · 임무 점수 +180"},
+        "challenge": {"id": "presented", "label": "회의에서 판단 근거 공개", "target": 3},
+        "rooms": [
+            {"id": "reactor", "name": "심장로", "desc": "전력이 흔들리는 동안 경보가 시작된 곳."},
+            {"id": "security", "name": "보안허브", "desc": "동시 경보 중 한 건이 기록된 곳."},
+            {"id": "medbay", "name": "의료실", "desc": "판단 근거를 나눠 정리할 수 있는 곳."}
+        ],
+        "commons": [{"id": "quarters", "name": "승무원 선실 구역"}, {"id": "lounge", "name": "중앙 라운지"}],
+        "ops": [
+            {"id": "concurrent", "room": "reactor", "name": "동시 경보 원인 확인", "minute": 131, "second": 8, "record_title": "동시 경보 원인 기록", "record_text": "02:11:08, 심장로에서 동시 경보의 원인이 확인됐다. 실행자 서명은 없다."},
+            {"id": "delegate_log", "room": "security", "name": "위임 판단 기록 확인", "minute": 132, "second": 44, "record_title": "위임 판단 기록", "record_text": "02:12:44, 보안허브에서 동료의 위임 판단 기록이 확인됐다. 판단 근거가 함께 남아 있다."}
+        ],
+        "context": {"room": "reactor", "title": "동시 경보 동기화 기록", "text": "세 경보는 같은 시간대에 겹친다. 위조 흔적은 없다."},
+        "decoy_traces": 3, "mutual_alibi_chance": 0.65, "tamper_chance": 0.8, "sightings": 1
+    },
+    "CONTINUITY": {
+        "code": "INCIDENT TEN", "title": "CONTINUITY", "title_ko": "이어진 나날",
+        "chapter": "11 · 이어진 나날", "theme": "평범한 일과 기록 · 비슷한 하루의 모양", "difficulty": 6,
+        "accent": "bfe36a", "environment": "res://assets/art031/backgrounds/garden.webp",
+        "subject": "도착 이후 일상 기록", "subject_role": "비교 확인 중", "window_start": 700, "window_end": 704,
+        "hook": "11:40, 재난 기록이 아니라 식사·진료·정원 관리 같은 평범한 기록들이 쌓여 있다. 모두 도착 이후 날짜다.",
+        "card_line": "가장 오래 이어진 흔적은, 가장 평범한 하루였다.",
+        "objective": "일상 기록을 남긴 실행자와, 서로 다른 과거가 비슷한 하루로 이어진 이유를 확인한다.",
+        "story_intro": "노아가 일지 더미를 정리한다. 재난이 아니라 그냥 하루하루의 기록이다.",
+        "story_outro": "노아가 일지 더미를 다 정리하고도 마지막 장을 넘기지 못한다. 다음 장부터는 완전히 다른 필체다.",
+        "dispatches": ["일상 기록부터 날짜순으로 정리하자.", "평범한 기록도 증거다. 재난 기록만 찾지 않는다.", "확신이 있어도 마지막 장은 서두르지 않는다.", "짧게 의견을 모아 보자."],
+        "mission": {"title": "생태 구역 예비 기록 백업", "description": "생태 구역의 예비 배터리를 가동합니다. 바로 다음 밤의 기록 손실을 한 번 막습니다.", "room": "garden", "effect": "backup", "reward": "다음 밤 기록 보호 · 임무 점수 +180"},
+        "challenge": {"id": "presented", "label": "평범한 기록 회의에서 공개", "target": 3},
+        "rooms": [
+            {"id": "garden", "name": "수목구역", "desc": "정원 관리 일지가 가장 촘촘히 남은 곳."},
+            {"id": "archive", "name": "기록보관실", "desc": "일상 기록 더미가 쌓여 있는 곳."},
+            {"id": "medbay", "name": "의료실", "desc": "진료 순서 기록이 남은 곳."}
+        ],
+        "commons": [{"id": "quarters", "name": "승무원 선실 구역"}, {"id": "galley", "name": "식당"}],
+        "ops": [
+            {"id": "daily_log", "room": "garden", "name": "평범한 일과 기록 수합", "minute": 701, "second": 27, "record_title": "일상 기록 수합", "record_text": "11:41:27, 수목구역에서 평범한 일과 기록이 수합됐다. 전부 도착 이후 날짜다."},
+            {"id": "final_page", "room": "archive", "name": "마지막 장 확인", "minute": 702, "second": 51, "record_title": "일지 마지막 장 확인", "record_text": "11:42:51, 기록보관실에서 일지 더미의 마지막 장이 확인됐다. 다음 장은 다른 필체로 시작된다."}
+        ],
+        "context": {"room": "garden", "title": "일상 기록 동기화", "text": "일상 기록들은 서로 다른 날짜에도 비슷한 모양을 보인다. 위조 흔적은 없다."},
+        "decoy_traces": 3, "mutual_alibi_chance": 0.65, "tamper_chance": 0.8, "sightings": 1
+    },
+    "THRESHOLD": {
+        "code": "INCIDENT ELEVEN", "title": "THRESHOLD", "title_ko": "문턱",
+        "chapter": "12 · 문턱", "theme": "다시 시작된 장기수면 · 끝나는 지점", "difficulty": 6,
+        "accent": "ffe9a8", "environment": "res://assets/art031/backgrounds/bridge.webp",
+        "subject": "일상 기록의 공백 구간", "subject_role": "경계 확인 중", "window_start": 1400, "window_end": 1404,
+        "hook": "23:20, 평범한 기록은 어느 날짜를 기점으로 완전히 멈춘다. 그 뒤에는 아주 긴 공백과, 지금 우리가 깨어난 기록이 이어진다.",
+        "card_line": "우리는 한 번도 깨지 않은 게 아니다. 살다가, 다시 잠들었다.",
+        "objective": "공백의 경계를 확인하고, 지금까지의 기록이 만나는 지점을 찾는다.",
+        "story_intro": "일상 기록이 어느 날짜에서 완전히 끊긴다. 다음은 아주 긴 공백이다.",
+        "story_outro": "노아가 마지막 장을 넘긴다. 글씨가 없다. 대신 짧은 문장 하나. ‘다시 눈을 뜬다.’ 그것이 이 배에서 몇 번째인지는, 아직 아무도 모른다.",
+        "dispatches": ["공백이 시작되는 경계부터 확인하자.", "공백 뒤에 남은 재수면 기록을 대조하자.", "결론을 서두르기보다 근거부터 남기자.", "마지막 판단을 준비하자."],
+        "mission": {"title": "손상된 공백 구간 복원", "description": "기록보관실에서 훼손된 구간 하나를 복원해 확보합니다. 훼손된 구간이 없으면 아직 찾지 못한 신호 기록을 확보합니다.", "room": "archive", "effect": "recover", "reward": "손상 구간 1개 복원·확보 · 임무 점수 +180"},
+        "challenge": {"id": "presented", "label": "마지막 공백 구간 공개", "target": 3},
+        "rooms": [
+            {"id": "archive", "name": "기록보관실", "desc": "일상 기록이 멈추는 경계가 남은 곳."},
+            {"id": "bridge", "name": "함교", "desc": "재수면 개시 기록이 확인된 곳."},
+            {"id": "core", "name": "코어실", "desc": "가장 오래된 관측 기록이 보관된 곳."}
+        ],
+        "commons": [{"id": "quarters", "name": "승무원 선실 구역"}, {"id": "deck", "name": "관측 데크"}],
+        "ops": [
+            {"id": "gap_record", "room": "archive", "name": "공백 구간 경계 확인", "minute": 1401, "second": 19, "record_title": "공백 구간 경계 기록", "record_text": "23:21:19, 기록보관실에서 일상 기록이 멈추는 경계가 확인됐다. 서명은 유효하다."},
+            {"id": "resleep_log", "room": "bridge", "name": "재수면 개시 기록 확인", "minute": 1402, "second": 46, "record_title": "재수면 개시 기록", "record_text": "23:22:46, 함교에서 재수면 개시 기록이 확인됐다. 개시자 서명은 없다."}
+        ],
+        "context": {"room": "archive", "title": "공백 구간 동기화 기록", "text": "일상 기록의 끝과 재수면 개시 기록은 같은 시간대에 겹친다. 위조 흔적은 없다."},
+        "decoy_traces": 3, "mutual_alibi_chance": 0.65, "tamper_chance": 0.8, "sightings": 1
     }
 }
 
@@ -309,7 +469,15 @@ const AP_PROFILE := {
     "ECHO_WARD": {"investigation": 3, "talk": 3, "meeting": 1},
     "SILENT_ORBIT": {"investigation": 3, "talk": 4, "meeting": 2},
     "RED_SHIFT": {"investigation": 3, "talk": 4, "meeting": 2},
-    "LAST_LIGHT": {"investigation": 3, "talk": 4, "meeting": 2}
+    "LAST_LIGHT": {"investigation": 3, "talk": 4, "meeting": 2},
+    # ACT II keeps the same 3/4/2 baseline (§15: no new complexity, the
+    # difference is what happens with the budget, not the size of it).
+    "SECOND_WATCH": {"investigation": 3, "talk": 4, "meeting": 2},
+    "BORROWED_DAYS": {"investigation": 3, "talk": 4, "meeting": 2},
+    "BLIND_DECK": {"investigation": 3, "talk": 4, "meeting": 2},
+    "THREE_MINUTES_DARK": {"investigation": 3, "talk": 4, "meeting": 2},
+    "CONTINUITY": {"investigation": 3, "talk": 4, "meeting": 2},
+    "THRESHOLD": {"investigation": 3, "talk": 4, "meeting": 2}
 }
 
 # Story-driven phase flow. Early chapters deliberately omit systems the player
@@ -321,7 +489,13 @@ const PHASE_FLOW := {
     "ECHO_WARD": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
     "SILENT_ORBIT": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
     "RED_SHIFT": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
-    "LAST_LIGHT": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"]
+    "LAST_LIGHT": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
+    "SECOND_WATCH": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
+    "BORROWED_DAYS": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
+    "BLIND_DECK": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
+    "THREE_MINUTES_DARK": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
+    "CONTINUITY": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
+    "THRESHOLD": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"]
 }
 
 static func ap_profile(case_id: String, fallback: Dictionary) -> Dictionary:
@@ -344,7 +518,9 @@ static func get_case(case_id: String) -> Dictionary:
     data["roster"] = AstraVoyageContent.awake_roster(case_id)
     # ECHO_WARD is the first formal vote, so it teaches one Null before later two-Null cases.
     data["null_count"] = 1 if data["roster"].size() < 7 or case_id == "ECHO_WARD" else 2
-    data["trace_steps"] = 2
+    # CALIBRATION is authored for one inference instead of two stacked (see the
+    # "trace_steps": 1 comment above) — only later cases force the full two-step trace.
+    data["trace_steps"] = 1 if case_id == CALIBRATION else 2
     data["max_days"] = 2 if data["roster"].size() < 7 else 4
     data["ops"] = data.get("ops",[]).slice(0,data["null_count"])
     data["title_ko"] = story["title"]

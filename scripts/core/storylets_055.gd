@@ -4,7 +4,9 @@ extends RefCounted
 # ASTRA 0.5.5 — FAULT LINES
 # 71 authored/reactive scenes. Required action count per loop does not increase.
 
-const LATE := ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"]
+# 0.7.0: extended to ACT II — see storylets_052.gd's MID_CHAPTERS comment.
+const LATE := ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT",
+    "SECOND_WATCH","BORROWED_DAYS","BLIND_DECK","THREE_MINUTES_DARK","CONTINUITY","THRESHOLD"]
 
 const MOTIVE_LINES := {
     "mira":{

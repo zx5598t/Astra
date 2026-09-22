@@ -115,6 +115,7 @@ func _draw() -> void:
             portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
             portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
             stage.add_child(portrait)
+            _maybe_glimpse(stage,speaker)
         if scene.has("target"):
             var other := AstraUI.thumb(AstraCrewCatalog.dot_path(str(scene["target"])),Vector2(90,90))
             other.position = Vector2(12,12)
@@ -201,6 +202,44 @@ func _draw() -> void:
             if session.finish_voyage() and session.phase != "RESULT": app.show_session_screen()
         )
         bottom.add_child(next)
+
+# 0.7.0 FIRST IMPRESSION (§6): the moment a crew member's portrait is first
+# shown this campaign, a small non-modal name/role/behavior chip appears near
+# it and fades away on its own — no modal, no confirm button, no pause. Never
+# re-shown for the same npc in this slot's campaign (loop resets included);
+# a new campaign in the slot resets the seen-set via reset_intro_for_slot.
+func _maybe_glimpse(stage: Control, npc_id: String) -> void:
+    if npc_id == "" or app == null or app.meta.has_glimpsed(app.active_slot,npc_id):
+        return
+    app.meta.mark_glimpsed(app.active_slot,npc_id)
+    app.meta.save_data()
+    var accent := AstraCrewCatalog.accent(npc_id)
+    var card := PanelContainer.new()
+    card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    card.add_theme_stylebox_override("panel",AstraUI.style(Color(0.03,0.05,0.09,0.92),Color(accent,0.7),8,1,10))
+    card.anchor_left = 0.0
+    card.anchor_right = 0.0
+    card.anchor_top = 1.0
+    card.anchor_bottom = 1.0
+    card.offset_left = 16.0
+    card.offset_right = 288.0
+    card.offset_top = -92.0
+    card.offset_bottom = -16.0
+    var box := AstraUI.vbox(3)
+    card.add_child(box)
+    var job := str(AstraCrewCatalog.info(npc_id).get("job",""))
+    box.add_child(AstraUI.label(AstraCrewCatalog.display_name(npc_id)+" · "+job,AstraUI.T_META,accent))
+    box.add_child(AstraUI.prose(AstraCrewCatalog.glimpse_line(npc_id),AstraUI.T_META,AstraUI.TEXT))
+    stage.add_child(card)
+    card.modulate.a = 0.0
+    var tween := card.create_tween()
+    tween.tween_interval(0.4)
+    tween.tween_property(card,"modulate:a",1.0,0.25)
+    tween.tween_interval(3.0)
+    tween.tween_property(card,"modulate:a",0.0,0.45)
+    tween.tween_callback(func():
+        if is_instance_valid(card): card.queue_free()
+    )
 
 func _hotspots(stage: Control) -> void:
     var calibration := session.case_id == "CALIBRATION"

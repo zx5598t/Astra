@@ -6,8 +6,11 @@ extends RefCounted
 # consequence and opinion-change scenes. The point is not volume; each new
 # scene either reacts, changes what happens next, or makes a baseline legible.
 
-const MID := ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"]
-const LATE := ["SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"]
+# 0.7.0: extended to ACT II — see storylets_052.gd's MID_CHAPTERS comment.
+const MID := ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT",
+    "SECOND_WATCH","BORROWED_DAYS","BLIND_DECK","THREE_MINUTES_DARK","CONTINUITY","THRESHOLD"]
+const LATE := ["SILENT_ORBIT","RED_SHIFT","LAST_LIGHT",
+    "SECOND_WATCH","BORROWED_DAYS","BLIND_DECK","THREE_MINUTES_DARK","CONTINUITY","THRESHOLD"]
 
 const ARC_PACKS := {
     "mira":[

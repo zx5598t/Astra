@@ -92,6 +92,88 @@ const CHAPTERS := {
         "outro": "다음 신호가 들어온다. 이번에는 아무도 혼자 듣지 않는다. 좌표 칸은 여전히 비어 있다.",
         "awake": "",
         "room": "archive"
+    },
+    "SECOND_WATCH": {
+        "title": "두 번째 근무",
+        "goal": "도착 이후 근무 기록의 출처를 확인한다.",
+        "situation": "LAST_LIGHT에서 복구된 기록 조각 아래, 도착 이후 날짜가 찍힌 근무 일지 전체가 발견된다. 승무원들은 이 시기를 기억하지 못한다.",
+        "resolved": "복구된 근무 일지는 위조가 아니다. 도착 이후 최소 여러 주간, 지금의 승무원들과 이름이 같은 사람들이 정상적으로 근무했다.",
+        "open_question": "우리는 이 시간을 살았는데, 왜 아무도 기억하지 못할까?",
+        "next_hook": "같은 시간대에 두 곳에서 벌어진 일이 동시에 기록에 남는다. 하나는 직접 보고, 하나는 나중에 전해 듣는다.",
+        # Investigation points are a shared, stage-gated pool (AstraVoyageContent.ROOMS)
+        # reused across every case — "fact" must be one of its existing tags
+        # (power/signal/destination/security/archive/arrival/everyday/sample),
+        # never a new string, or goal_done can never become true (§35 review).
+        "fact": "archive",
+        "discovery": "도착 이후 날짜의 근무 일지 전체가 복구됐다. 필체와 서명은 지금의 승무원들과 일치한다.",
+        "outro": "노아가 근무 일지 마지막 장을 넘긴다. 다음 장은 없다. 대신 완전히 다른 날짜의 첫 장이 시작된다.",
+        "awake": "",
+        "room": "archive"
+    },
+    "BORROWED_DAYS": {
+        "title": "빌려 온 나날",
+        "goal": "몸에 남은 습관과 지금의 관계 기록을 대조한다.",
+        "situation": "근무 일지 속 오래된 습관들이 지금의 행동과 겹친다. 정작 당사자들은 그 습관이 어디서 왔는지 설명하지 못한다.",
+        "resolved": "적어도 두 사람은 서로 다른 관계 기록을 갖고 있었다. 지금의 기록은 그중 하나일 뿐이며, 몸은 다른 쪽도 함께 기억한다.",
+        "open_question": "기록은 하나를 선택하는데, 습관은 왜 둘 다 남을까?",
+        "next_hook": "이 어긋남을 처음 알아챈 사람은 승무원이 아니라 당신이다. 아무도 그걸 이상하게 여기지 않는다.",
+        "fact": "signal",
+        "discovery": "같은 컵을 같은 자리에 놓는 습관, 부르지 않아도 돕는 손. 지금의 근무 기록에는 그 이유가 없다.",
+        "outro": "세나가 준에게 공구를 건넨다. 묻지 않고, 정확한 것을 건넨다. 둘 다 그 사실을 알아차리지 못한다.",
+        "awake": "",
+        "room": "lounge"
+    },
+    "BLIND_DECK": {
+        "title": "보이지 않는 갑판",
+        "goal": "현재 지도에 없는 구역의 존재를 확인한다.",
+        "situation": "도착 이후 기록에는 있지만 지금의 선내 지도에는 없는 정비 구역 하나가 있다. 위치는 알아도 통로가 지도에서 지워져 있다.",
+        "resolved": "그 구역은 실제로 존재한다. 통로가 지워진 건 사고가 아니라, 어느 시점부터 지도 갱신에서 의도적으로 빠졌기 때문이다.",
+        "open_question": "왜 이 구역만 지도에서 지워졌을까?",
+        "next_hook": "그 구역 안에서 발견된 흔적은 재난의 흔적이 아니라 누군가 머물렀던 흔적이다.",
+        "fact": "security",
+        "discovery": "정비 구역으로 가는 통로 하나가 현재 지도에는 없다. 도착 이후 기록에는 정상적으로 표시되어 있다.",
+        "outro": "다렌이 지도 갱신 이력을 끝까지 거슬러 올라간다. 그 구역이 지워진 시점 바로 다음 줄부터, 기록이 다시 촘촘해진다.",
+        "awake": "",
+        "room": "service"
+    },
+    "THREE_MINUTES_DARK": {
+        "title": "어둠 속 세 갈래",
+        "goal": "동시에 발생한 문제들 중 무엇을 직접 볼지 정한다.",
+        "situation": "전력이 흔들리는 사이 세 곳에서 동시에 문제가 생긴다. 당신은 한 곳만 직접 볼 수 있다. 나머지는 동료들이 각자 판단해서 처리한다.",
+        "resolved": "직접 보지 못한 곳의 판단은 각 동료의 근거로 남는다. 누구도 숨은 사실만으로 움직이지 않았다.",
+        "open_question": "내가 보지 못한 곳에서, 저들은 무엇을 근거로 그렇게 판단했을까?",
+        "next_hook": "회의에서는 내가 본 것과 기록으로 확인한 것과 전해 들은 것이 서로 다른 무게로 다뤄진다.",
+        "fact": "power",
+        "discovery": "세 구역에서 동시에 경보가 울렸다. 직접 확인할 수 있는 곳은 하나뿐이다.",
+        "outro": "세 개의 판단이 남는다. 하나는 당신이 본 것, 둘은 동료의 말과 기록으로 전해진 것. 무게가 다르다는 걸, 이제는 안다.",
+        "awake": "",
+        "room": "reactor"
+    },
+    "CONTINUITY": {
+        "title": "이어진 나날",
+        "goal": "도착 이후의 평범한 기록들을 한데 모은다.",
+        "situation": "재난 기록이 아니라 식사, 진료, 청소, 정원 관리 같은 평범한 기록들이 쌓여 있다. 모두 도착 이후 날짜다.",
+        "resolved": "평범한 기록들은 서로 다른 history에서도 목적지와 관계, 작은 과거만 다를 뿐 일상의 모양은 비슷하다.",
+        "open_question": "왜 서로 다른 과거를 산 사람들이, 이토록 비슷한 하루를 보냈을까?",
+        "next_hook": "이 조용한 일상 기록들이 가장 오래 이어진 흔적이라는 사실이, 다음 질문의 무게를 바꾼다.",
+        "fact": "everyday",
+        "discovery": "식사 배급표, 진료 순서, 정원 관리 일지. 전부 도착 이후 날짜이며, 전부 평범하다.",
+        "outro": "노아가 일지 더미를 다 정리하고도 마지막 장을 넘기지 못한다. 다음 장부터는 완전히 다른 필체다.",
+        "awake": "",
+        "room": "garden"
+    },
+    "THRESHOLD": {
+        "title": "문턱",
+        "goal": "도착 이후 기록이 다시 끊기는 지점을 확인한다.",
+        "situation": "평범한 기록은 어느 날짜를 기점으로 완전히 멈춘다. 그 뒤에는 아주 긴 공백과, 지금 우리가 깨어난 기록이 이어진다.",
+        "resolved": "적어도 일부 history에서는 도착 이후 정상적으로 살다가, 다시 긴 장기수면에 들어간 기록이 확인된다. 우리는 출항 이후 한 번도 깨지 않은 게 아니다.",
+        "open_question": "도착한 뒤에 우리는 무엇을 했고, 왜 다시 잠들었을까. 그리고 누가 그 잠을 시작했을까.",
+        "next_hook": "서로 다른 history들이 전부 비슷한 지점으로 수렴한다. 그 이유는 아직 아무도 모른다.",
+        "fact": "arrival",
+        "discovery": "평범한 기록이 멈춘 지점 바로 다음 줄에, 장기수면 재개 기록이 있다. 그 뒤가 지금이다.",
+        "outro": "노아가 마지막 장을 넘긴다. 글씨가 없다. 대신 짧은 문장 하나. ‘다시 눈을 뜬다.’ 그것이 이 배에서 몇 번째인지는, 아직 아무도 모른다.",
+        "awake": "",
+        "room": "bridge"
     }
 }
 # Local answers are delivered in play, not invented by the Result screen.
@@ -123,8 +205,11 @@ const RESOLUTION_BEATS := {
     "ECHO_WARD": {
         "payoff_type":"REALITY_CONTRADICTION","participants":["vale","mira"],
         "action":"재생 버튼을 누른 소렌이 자기 숨소리가 나오자 손을 뗀다. 미라는 같은 시각의 포드 생체 기록을 화면에 고정한다.",
-        "lines":[["vale","…제 목소리예요. 합성 흔적도 없고, 숨 쉬는 버릇까지 같아요. 듣고 있으니까 더 싫네요."],
-            ["mira","그 시간에 포드도 닫혀 있었어요. 생체 기록까지 실제라면 어느 한쪽을 없던 일로 만들 수 없어요."]],
+        "lines":[["vale","숨 쉬는 위치부터 볼게요. 문장 끊는 습관, 잡음 새는 지점까지… 전부 제 거예요."],
+            ["vale","합성이면 이 지점 잡음이 없어야 해요. 있어요. 실제 마이크로 녹음됐다는 뜻이에요."],
+            ["vale","…그래서 더 부정하기가 어렵네요."],
+            ["mira","그 시간, 포드 생체 기록도 같이 있어요. 소렌은 분명히 자고 있었어요."],
+            ["mira","둘 다 진짜라면, 어느 한쪽을 없던 일로 만들 수 없어요."]],
         "choices":[
             {"label":"신호 원본을 손대지 않고 별도 보존한다.","effect":"keep_copy","memory_tag":"echo_ward_preserve_signal"},
             {"label":"소렌에게 녹음 전체를 끝까지 들려준다.","effect":"share","share_scope":"speaker","memory_tag":"echo_ward_play_signal_for_soren"},
@@ -135,7 +220,9 @@ const RESOLUTION_BEATS := {
         "payoff_type":"FACTUAL","participants":["eli","dax"],
         "action":"루칸은 항로 끝점과 관측창의 별을 번갈아 본다. 다렌은 말없이 시스템 시각과 서명 검증을 다시 돌린다.",
         "lines":[["eli","도착 표시는 장식이 아니야. 항로 끝점과 별 위치가 같이 맞아."],
-            ["dax","서명도 유효해. 날짜는 지금보다 약 19년 전. 정식 선내 기록이라는 조건은 피할 수 없어."],
+            ["dax","시스템 시각도 확인했어. 세 군데 기록이 전부 같은 날짜를 가리켜."],
+            ["eli","그런데 이건 뭐지. 도착 날짜보다 늦은 필터 교체 기록이 하나 있어."],
+            ["dax","재난 로그가 아니야. 그냥 정비 일지야. 누군가 도착한 뒤에도 이 배를 계속 돌봤다는 뜻이지."],
             ["eli","그럼 지금 움직이고 있다는 화면부터 다시 의심해야겠네."]],
         "choices":[
             {"label":"19년 전 도착 기록을 공개한다.","effect":"share","memory_tag":"silent_orbit_public_arrival"},
@@ -148,6 +235,9 @@ const RESOLUTION_BEATS := {
         "action":"마렌은 시료 봉투를 다시 열어 뿌리 상태부터 확인한다. 노아는 그 옆에서 독립 보관 기록의 날짜만 조용히 맞춘다.",
         "lines":[["lyra","이건 숫자만 이상한 게 아니에요. 실제로 자란 시간이 있고, 채집 장소도 목적지를 가리켜요."],
             ["noa","보관 기록도 같은 날짜예요. 한 사람이 잘못 적은 기록으로 처리할 수 없어요."],
+            ["lyra","그리고… 이 이름표, 필체 좀 봐 주실래요?"],
+            ["noa","이건…"],
+            ["lyra","당신 필체 맞아요. 이 시료, 당신이 직접 분류했다는 뜻이에요."],
             ["lyra","그런데 이 생명은 그 시간을 지나왔어요. 우리가 기억하지 못한다고 없어지는 건 아니죠."]],
         "choices":[
             {"label":"시료 기록을 승무원들과 공유한다.","effect":"share","memory_tag":"red_shift_preserve_sample_record"},
@@ -166,6 +256,84 @@ const RESOLUTION_BEATS := {
             {"label":"사람들의 기억과 기록을 함께 보존한다.","effect":"record","memory_tag":"last_light_people_and_records"},
             {"label":"검증 가능한 자료부터 우선 사본으로 남긴다.","effect":"keep_copy","memory_tag":"last_light_verified_first"},
             {"label":"서로 다른 history를 하나로 합치지 않고 병렬 보존한다.","effect":"withhold","memory_tag":"last_light_parallel_histories"}
+        ]
+    },
+    "SECOND_WATCH": {
+        "payoff_type":"FACTUAL","participants":["noa","sena"],
+        "action":"노아가 근무 일지의 필체를 화면에 띄우고, 세나는 같은 시각 두 구역에서 동시에 발생한 경보 기록을 나란히 놓는다.",
+        "lines":[["noa","필체 대조 결과가 나왔어요. 지금 우리와 완전히 같은 사람들의 손글씨예요."],
+            ["sena","같은 시각에 경보가 두 곳에서 울렸어. 한쪽은 누군가 직접 처리했고, 다른 쪽은 기록만 남기고 넘어갔어."],
+            ["noa","그래서 근무 일지에 '위임'이라는 말이 자주 나와요. 전부 혼자 하지 않았다는 뜻이에요."],
+            ["sena","그 방식이 낯설지가 않네. 요즘 우리가 하는 거랑 비슷해."]],
+        "choices":[
+            {"label":"근무 일지를 승무원 전체와 공유한다.","effect":"share","memory_tag":"second_watch_public_duty_log"},
+            {"label":"노아가 먼저 검증한 뒤에 공개한다.","effect":"record","memory_tag":"second_watch_verify_first"},
+            {"label":"세나의 위임 기록부터 우선 정리한다.","effect":"procedure","memory_tag":"second_watch_delegation_precedent"}
+        ]
+    },
+    "BORROWED_DAYS": {
+        "payoff_type":"HUMAN","participants":["sena","rho"],
+        "action":"세나가 준에게 공구를 건넨다. 묻지 않고, 정확한 공구를 건넨다. 노아가 그 장면과 근무 기록을 나란히 띄운다.",
+        "lines":[["noa","지금 기록에는 두 분이 이번 항해에서 처음 만났다고 되어 있어요."],
+            ["sena","그런데 방금 나는 뭘 건네야 하는지 묻지도 않았어."],
+            ["rho","나도 놀라긴 했는데… 이상하게 놀랍지가 않아. 이게 뭐지."],
+            ["noa","몸이 다른 기록을 갖고 있는 것 같아요. 지금 문서에는 없는 기록을요."]],
+        "choices":[
+            {"label":"이 습관을 기록에 함께 남긴다.","effect":"record","memory_tag":"borrowed_days_record_habit"},
+            {"label":"세나와 준에게 서로 물어보게 한다.","effect":"confront","memory_tag":"borrowed_days_ask_each_other"},
+            {"label":"지금은 설명하지 않고 지켜본다.","effect":"wait","memory_tag":"borrowed_days_watch_quietly"}
+        ]
+    },
+    "BLIND_DECK": {
+        "payoff_type":"FACTUAL","participants":["eli","noa"],
+        "action":"루칸이 지워진 통로의 좌표를 옛 지도 위에 겹치고, 노아는 그 구역의 정비 기록 형식을 지금 기록과 비교한다.",
+        "lines":[["eli","좌표는 정확해. 통로가 없는 게 아니라, 지도에서만 지워졌어."],
+            ["noa","기록 형식도 달라요. 이 구역만 다른 시기의 양식으로 적혀 있어요."],
+            ["eli","누가 지웠는지는 몰라도, 이유 없이 지우진 않았을 거야."],
+            ["noa","안으로 들어가야 나머지를 알 수 있겠어요."]],
+        "choices":[
+            {"label":"통로를 승무원 전체에게 알린다.","effect":"share","memory_tag":"blind_deck_public_route"},
+            {"label":"루칸과 먼저 안쪽까지 확인한다.","effect":"confront","memory_tag":"blind_deck_scout_first"},
+            {"label":"지도 갱신 기록만 우선 보존한다.","effect":"keep_copy","memory_tag":"blind_deck_preserve_map_log"}
+        ]
+    },
+    "THREE_MINUTES_DARK": {
+        "payoff_type":"REALITY_CONTRADICTION","participants":["eli","noa"],
+        "action":"루칸이 자신이 직접 본 것부터 말하고, 노아는 그 옆에 기록으로 확인된 것과 전해 들은 말을 나눠 적는다.",
+        "lines":[["eli","내가 본 건 하나뿐이야. 나머지는 다른 사람 판단을 믿어야 해."],
+            ["noa","그래서 나눠 적을게요. 직접 본 것, 기록으로 남은 것, 전해 들은 것. 무게가 다르니까요."],
+            ["eli","그게 맞아. 다 같은 확신으로 말하면 나중에 뭐가 진짜였는지 못 찾아."],
+            ["noa","동료들 판단이 틀렸다는 뜻은 아니에요. 근거가 다르다는 뜻이에요."]],
+        "choices":[
+            {"label":"세 판단을 구분해서 함께 기록한다.","effect":"record","memory_tag":"three_minutes_dark_separate_sources"},
+            {"label":"직접 보지 못한 판단부터 당사자에게 다시 확인한다.","effect":"confront","memory_tag":"three_minutes_dark_confirm_delegate"},
+            {"label":"지금은 결론을 미루고 근거만 모아 둔다.","effect":"wait","memory_tag":"three_minutes_dark_hold_conclusion"}
+        ]
+    },
+    "CONTINUITY": {
+        "payoff_type":"HUMAN","participants":["mira","lyra"],
+        "action":"미라가 진료 순서표를, 마렌이 정원 관리 일지를 나란히 편다. 둘 다 도착 이후 날짜다.",
+        "lines":[["mira","진료 순서도 지금이랑 비슷해요. 급한 사람부터, 그다음은 기다린 순서대로."],
+            ["lyra","물 주는 순서도 똑같아요. 이 구역 먼저, 저 구역 나중에. 이유가 다 있는 순서예요."],
+            ["mira","다른 역사를 살았다는 사람들이, 왜 이렇게 비슷한 하루를 보냈을까요."],
+            ["lyra","살아 있는 건 원래 비슷한 걸 필요로 하니까요. 목적지가 달라도 물은 다 필요해요."]],
+        "choices":[
+            {"label":"평범한 기록을 승무원들과 함께 읽는다.","effect":"share","memory_tag":"continuity_share_ordinary"},
+            {"label":"미라와 마렌의 해석을 먼저 기록한다.","effect":"record","memory_tag":"continuity_back_interpretation"},
+            {"label":"마지막 장은 아직 공개하지 않는다.","effect":"withhold","memory_tag":"continuity_hide_last_page"}
+        ]
+    },
+    "THRESHOLD": {
+        "payoff_type":"FACTUAL","participants":["noa","dax"],
+        "action":"노아가 멈춘 기록과 재개된 장기수면 기록을 나란히 놓는다. 다렌은 그 사이의 공백을 한 번 더 확인한다.",
+        "lines":[["noa","평범한 기록은 여기서 끝나요. 바로 다음 줄이 장기수면 재개 기록이에요."],
+            ["dax","공백 기간은 길어. 서명도 유효하고, 형식도 정상이야. 조작으로 볼 순 없어."],
+            ["noa","그러니까… 우리는 계속 잠들어 있던 게 아니에요. 살다가, 다시 잠든 거예요."],
+            ["dax","누가 그 잠을 시작했는지는 이 기록만으로는 몰라. 그건 다음 질문이겠지."]],
+        "choices":[
+            {"label":"이 사실을 모두에게 알린다.","effect":"share","memory_tag":"threshold_share_second_sleep"},
+            {"label":"공백 구간부터 더 파헤친다.","effect":"confront","memory_tag":"threshold_dig_gap"},
+            {"label":"지금은 기록만 보존하고 결론은 미룬다.","effect":"keep_copy","memory_tag":"threshold_preserve_only"}
         ]
     }
 }
@@ -188,7 +356,25 @@ const RESOLUTION_REACTIONS := {
     "red_shift_hide_handwriting":{"speaker":"noa","text":"노아는 공개본의 빈 칸을 보고도 바로 묻지 않는다. 대신 원본 보존 여부만 확인한다."},
     "last_light_people_and_records":{"speaker":"noa","text":"노아가 기록 묶음 옆에 사람별 증언 표식을 붙인다. “둘 중 하나만 남기면 또 절반만 남아요.”"},
     "last_light_verified_first":{"speaker":"dax","text":"다렌이 검증된 사본부터 전원 보호 영역으로 옮긴다. “해석은 나중에도 할 수 있어. 근거부터 살리자.”"},
-    "last_light_parallel_histories":{"speaker":"noa","text":"노아가 두 묶음 사이에 선을 긋지 않는다. “같아질 때까지 기다리지 말고, 다른 채로 남겨요.”"}
+    "last_light_parallel_histories":{"speaker":"noa","text":"노아가 두 묶음 사이에 선을 긋지 않는다. “같아질 때까지 기다리지 말고, 다른 채로 남겨요.”"},
+    "second_watch_public_duty_log":{"speaker":"sena","text":"세나가 근무 일지를 공용 게시판에 올린다. “다들 알아야지. 이상해도 같이 봐야 할 거 아냐.”"},
+    "second_watch_verify_first":{"speaker":"noa","text":"노아가 검증 도장을 하나씩 찍는다. “확실한 것부터 보여드릴게요.”"},
+    "second_watch_delegation_precedent":{"speaker":"sena","text":"세나가 위임 기록 옆에 자기 이름을 나란히 적는다. “이번에도 내가 먼저 맡을게.”"},
+    "borrowed_days_record_habit":{"speaker":"noa","text":"노아가 습관 목록에 새 줄을 더한다. “기록에 없다고 없던 일은 아니니까요.”"},
+    "borrowed_days_ask_each_other":{"speaker":"rho","text":"준이 세나에게 어색하게 묻는다. “우리… 원래 이랬어?” 세나도 확신 없이 웃는다."},
+    "borrowed_days_watch_quietly":{"speaker":"noa","text":"노아는 묻지 않고 다음 습관이 나타나길 기다린다."},
+    "blind_deck_public_route":{"speaker":"eli","text":"루칸이 새 통로를 지도에 다시 그려 넣는다. “이제 아무도 헤매지 않겠네.”"},
+    "blind_deck_scout_first":{"speaker":"eli","text":"루칸이 먼저 안으로 들어선다. “뒤는 따라와. 앞은 내가 볼게.”"},
+    "blind_deck_preserve_map_log":{"speaker":"dax","text":"다렌이 지도 갱신 이력만 따로 사본을 남긴다. “원본이 또 지워져도 이건 남아.”"},
+    "three_minutes_dark_separate_sources":{"speaker":"noa","text":"노아가 세 개의 색으로 판단을 구분해 적는다. “섞이면 나중에 다시 못 나눠요.”"},
+    "three_minutes_dark_confirm_delegate":{"speaker":"eli","text":"루칸이 판단한 동료를 찾아가 근거부터 묻는다. “틀렸다는 게 아니야. 알고 싶어서 그래.”"},
+    "three_minutes_dark_hold_conclusion":{"speaker":"noa","text":"노아는 결론 칸을 비워 둔 채 근거 칸만 채운다."},
+    "continuity_share_ordinary":{"speaker":"lyra","text":"마렌이 일지를 승무원들 앞에 펼친다. “거창한 건 없어요. 그래서 더 보여주고 싶어요.”"},
+    "continuity_back_interpretation":{"speaker":"mira","text":"미라가 두 사람의 해석을 기록 옆에 나란히 붙인다. “해석도 근거가 될 수 있어요.”"},
+    "continuity_hide_last_page":{"speaker":"lyra","text":"마렌은 마지막 장을 덮어 둔 채 나머지만 정리한다."},
+    "threshold_share_second_sleep":{"speaker":"dax","text":"다렌이 공백 구간을 공개 기록에 그대로 남긴다. “빈 곳도 사실이야. 채우지 말고 두자.”"},
+    "threshold_dig_gap":{"speaker":"noa","text":"노아가 공백의 경계부터 다시 파고든다. “끝과 시작, 두 지점만 정확히 알면 돼요.”"},
+    "threshold_preserve_only":{"speaker":"dax","text":"다렌이 검증된 구간만 우선 봉인한다. “해석은 나중에. 근거부터 살리자.”"}
 }
 
 static func resolution_thread(case_id: String, memory_tags: Array = []) -> Dictionary:
@@ -205,7 +391,13 @@ static func resolution_thread(case_id: String, memory_tags: Array = []) -> Dicti
         "ECHO_WARD":["echo_ward_preserve_signal","소렌은 재생 전에 먼저 원본 잠금 상태부터 확인한다.","vale"],
         "SILENT_ORBIT":["silent_orbit_private_recheck","루칸은 항법 화면보다 관측창을 먼저 본다.","eli"],
         "RED_SHIFT":["red_shift_hide_handwriting","노아가 공개 기록의 빈 부분에서 잠깐 시선을 멈춘다. 이유를 단정하지는 않는다.","noa"],
-        "LAST_LIGHT":["last_light_parallel_histories","노아는 서로 다른 사본을 합치지 않고 처음부터 두 묶음으로 펼친다.","noa"]
+        "LAST_LIGHT":["last_light_parallel_histories","노아는 서로 다른 사본을 합치지 않고 처음부터 두 묶음으로 펼친다.","noa"],
+        "SECOND_WATCH":["second_watch_verify_first","노아가 이번에도 공개 전에 검증 도장부터 찍는다. 손에 익은 순서다.","noa"],
+        "BORROWED_DAYS":["borrowed_days_watch_quietly","노아는 이번에도 묻지 않고 다음 습관을 기다린다.","noa"],
+        "BLIND_DECK":["blind_deck_scout_first","루칸은 이번에도 먼저 안으로 들어선다.","eli"],
+        "THREE_MINUTES_DARK":["three_minutes_dark_separate_sources","노아는 이번에도 판단을 색으로 나눠 적는다.","noa"],
+        "CONTINUITY":["continuity_hide_last_page","마렌은 이번에도 마지막 장을 덮어 둔다.","lyra"],
+        "THRESHOLD":["threshold_preserve_only","다렌은 이번에도 검증된 구간부터 먼저 봉인한다.","dax"]
     }
     if callback_map.has(case_id):
         var spec: Array = callback_map[case_id]
@@ -3617,6 +3809,7 @@ static func all_scenes() -> Array:
     result.append_array(AstraStorylets053.scenes())
     result.append_array(AstraStorylets054.scenes())
     result.append_array(AstraStorylets055.scenes())
+    result.append_array(AstraStorylets070.scenes())
     return result
 
 static func scene(id: String) -> Dictionary:
@@ -3630,9 +3823,16 @@ static func awake_roster(id: String) -> Array:
 
 # Calendar contract is authored explicitly, independently of CAMPAIGN indices.
 # A case has its own local days; replays return to the chapter's campaign date.
-const CAMPAIGN_DATES := {"CALIBRATION":1,"DEAD_AIR":2,"GLASS_GARDEN":3,"ECHO_WARD":4,"SILENT_ORBIT":5,"RED_SHIFT":6,"LAST_LIGHT":7}
+const CAMPAIGN_DATES := {"CALIBRATION":1,"DEAD_AIR":2,"GLASS_GARDEN":3,"ECHO_WARD":4,"SILENT_ORBIT":5,"RED_SHIFT":6,"LAST_LIGHT":7,
+    "SECOND_WATCH":8,"BORROWED_DAYS":9,"BLIND_DECK":10,"THREE_MINUTES_DARK":11,"CONTINUITY":12,"THRESHOLD":13}
 static func campaign_day(id: String) -> int:
     return int(CAMPAIGN_DATES.get(id,1))
+
+# 0.7.0: ACT is derived from the campaign day, not stored state. Day 8 unlocks
+# through the existing per-case unlock chain (LAST_LIGHT must be completed
+# first), so there is nothing new to persist here (§35 of the design notes).
+static func act_for(id: String) -> int:
+    return 2 if campaign_day(id) >= 8 else 1
 
 const FIRST_RECORD := "포드 전원 공급은 정상이다. 장기수면 중인 동료는 네 명이다. 잠금 해제 이력의 실행자 칸이 비어 있다."
 const FIRST_CONTRIBUTIONS := {
@@ -3644,10 +3844,10 @@ const FIRST_CONTRIBUTIONS := {
 const FIRST_THREADS := {
     "first_wake": {
         "action":"수면에서 깨어난 당신을 미라가 의료실에서 살핀다. 옆에서 세 동료가 각성 점검을 돕고 있다.",
-        "lines":[["mira","저는 의무관 미라예요. 장기수면 뒤에는 여기서 상태를 확인해요. 당신은 ASTRA의 탐사요원이고요."],
-            ["rho","기관 담당 준이야. 손은 천천히 움직여. 공구는 내가 들게."],
-            ["dax","다렌. 시스템 설계자야. 남은 포드를 열기 전에 전원 상태를 확인해야 해."],
-            ["noa","기록관 노아예요. 확인한 것만 적을게요. 먼저 포드 제어 패널을 눌러 주세요."]],"choices":[]},
+        "lines":[["mira","괜찮아요? 무리하지 말고 그대로 있어요."],
+            ["rho","일어났다! 손 줘, 잡아 줄게. 나머지는 내가 정리할게."],
+            ["dax","포드 표시등 두 개가 꺼져 있어. 전원부터 확인하자."],
+            ["noa","각성 순서만 적을게요. 당신은 탐사요원, 지금은 04시 20분대예요. 먼저 포드 제어 패널을 눌러 주세요."]],"choices":[]},
     "first_panel": {
         "requires_fact":"power","action":"당신이 연 포드 제어 패널을 네 동료가 함께 본다. 전원 표시와 잠금 이력은 서로 다른 칸이다.",
         "lines":[["rho","공급 전원은 정상이야. 지금 포드가 닫혀 있는 걸 정전 탓으로 볼 수는 없어."],
@@ -3669,24 +3869,24 @@ const FIRST_THREADS := {
 }
 const ARRIVALS := {
     "sena": {"action":"전날 확인한 전원으로 보안 담당 포드의 순차 각성이 끝난다. 세나가 일어나 출입문부터 살핀다.",
-        "lines":[["sena","보안 책임자 세나야. 문이 열리는 쪽부터 확인할게. 준, 뒤쪽 봐 줘."],["rho","알았어. 잠깐만, 공구부터 챙기고."],
+        "lines":[["sena","문이 열리는 쪽부터 확인할게. 준, 뒤쪽 봐 줘."],["rho","알았어. 잠깐만, 공구부터 챙기고."],
             ["sena","통신실까지 통로는 안전해. 기록을 가져올 수 있어. 잠금 이력은 사용자 칸과 열림 상태를 나눠 봐야 해."],
             ["noa","통로 확인은 세나의 관찰로 남길게요. 빈 서명의 이유는 아직 몰라요."],
             ["sena","이상하네. 준이랑 같이 근무한 기억이 있는데… 그 기록은 일 끝나고 같이 보자."]]},
     "vale": {"action":"확인된 통로를 통해 다음 포드 점검이 끝난다. 소렌은 눈을 뜨자 경보음과 수신음을 따로 줄인다.",
-        "lines":[["vale","통신관 소렌이에요. 지금 나는 소리는 경보예요. 누군가 말하는 신호와는 달라요."],
+        "lines":[["vale","지금 나는 소리는 경보예요. 누군가 말하는 신호와는 달라요."],
             ["sena","좋아. 보안 구역의 알림이 어디서 오는지 같이 확인하자."],
             ["vale","발신 장치와 재생 장치를 따로 적어 둘게요. 같은 소리라고 같은 출처는 아니니까요."],
             ["noa","오늘 구역 점검 기록에 그 기준을 붙일게요."],
             ["vale","수면 중에 제 이름을 들은 것 같아요. 기억뿐이라, 녹음이 있는지부터 찾아볼게요."]]},
     "eli": {"action":"순차 각성 점검이 항법 담당 포드에 도달한다. 루칸은 난간을 잡고 창과 항로 화면을 번갈아 본다.",
-        "lines":[["eli","항법사 루칸이야. 서두르지 마. 화면 시각부터 맞추자."],
+        "lines":[["eli","서두르지 마. 화면 시각부터 맞추자."],
             ["vale","신호 기록과 포드 기록을 대조하려고 해요. 시각 기준을 봐 줄래요?"],
             ["eli","두 장치의 시계를 따로 적어. 가까운 시각을 같다고 합치면 없던 모순도 생겨."],
             ["noa","각 장치의 출처도 붙여 둘게요."],
             ["eli","내가 만든 항로 사본이 있을 거야. 원본과 왜 따로 뒀는지는 직접 확인하고 말할게."]]},
     "lyra": {"action":"마지막 순차 각성 포드가 열린다. 마렌이 물컵을 받아 들고 생태 구역 상태표부터 찾는다.",
-        "lines":[["lyra","생태학자 마렌이에요. 물은 조금이면 돼요. 시료 보관 상태도 같이 볼까요?"],
+        "lines":[["lyra","물은 조금이면 돼요. 시료 보관 상태도 같이 볼까요?"],
             ["mira","먼저 한 모금 마셔요. 상태표는 가져다 드릴게요."],
             ["lyra","고마워요. 오래된 도착 기록을 볼 때 보관 기간도 대조해요. 시료가 지낸 시간은 문장과 별도로 확인할 수 있어요."],
             ["eli","좋아. 오늘 항로 기록 옆에 그 기준을 남기자."],

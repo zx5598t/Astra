@@ -5,7 +5,11 @@ extends RefCounted
 # increasing the mandatory first-30-minute reading load. RNG only selects among
 # already-authored storylets; it never writes dialogue.
 
-const MID_CHAPTERS := ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"]
+# 0.7.0: extended to ACT II (Day 8-13) so the existing personality/relationship
+# library keeps appearing after LAST_LIGHT instead of going silent — these are
+# ongoing character beats, not ACT I-specific plot content (§2, §22, §25).
+const MID_CHAPTERS := ["ECHO_WARD","SILENT_ORBIT","RED_SHIFT","LAST_LIGHT",
+    "SECOND_WATCH","BORROWED_DAYS","BLIND_DECK","THREE_MINUTES_DARK","CONTINUITY","THRESHOLD"]
 
 # [tag, category, family, action, line, optional metadata]
 # Counts intentionally differ by speaker. The library is not a quota spreadsheet.

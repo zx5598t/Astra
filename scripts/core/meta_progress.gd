@@ -48,6 +48,11 @@ var slot_voyage_memory: Dictionary = {}
 # 0.5.1 onboarding state. Intro is scoped to save slot rather than the PC-wide
 # settings file; feature help is profile-wide and can always be reopened with H.
 var slot_intro_seen: Dictionary = {}
+# 0.7.0 FIRST IMPRESSION (§6-5): npc ids the player has already glimpsed in
+# this slot's current campaign, keyed like slot_intro_seen. Reset alongside it
+# on a fresh campaign so a new game shows every glimpse again; never reset by
+# a loop reset within the same campaign.
+var slot_crew_glimpsed: Dictionary = {}
 var seen_help: Array[String] = []
 # 0.5.6 permanent observation Codex. IDs only; entry text remains authored in AstraCodex.
 var codex_entries_unlocked: Array[String] = []
@@ -62,6 +67,7 @@ func load_data() -> void:
     voyage_memory = _dict(cfg.get_value("progress","voyage_memory",{}))
     slot_voyage_memory = _dict(cfg.get_value("progress","slot_voyage_memory",{}))
     slot_intro_seen = _dict(cfg.get_value("progress","slot_intro_seen",{}))
+    slot_crew_glimpsed = _dict(cfg.get_value("progress","slot_crew_glimpsed",{}))
     _load_string_list(seen_help, cfg.get_value("progress","seen_help",[]))
     total_insight = int(cfg.get_value("progress", "total_insight", 0))
     total_cases_completed = int(cfg.get_value("progress", "total_cases_completed", 0))
@@ -103,6 +109,7 @@ func save_data() -> bool:
     cfg.set_value("progress","voyage_memory",voyage_memory)
     cfg.set_value("progress","slot_voyage_memory",slot_voyage_memory)
     cfg.set_value("progress","slot_intro_seen",slot_intro_seen)
+    cfg.set_value("progress","slot_crew_glimpsed",slot_crew_glimpsed)
     cfg.set_value("progress","seen_help",seen_help)
     cfg.set_value("progress","codex_entries_unlocked",codex_entries_unlocked)
     cfg.set_value("progress", "total_insight", total_insight)
@@ -164,6 +171,7 @@ func reset() -> void:
     voyage_memory.clear()
     slot_voyage_memory.clear()
     slot_intro_seen.clear()
+    slot_crew_glimpsed.clear()
     seen_help.clear()
     codex_entries_unlocked.clear()
 
@@ -418,6 +426,20 @@ func mark_intro_seen_for_slot(slot: int) -> void:
 
 func reset_intro_for_slot(slot: int) -> void:
     slot_intro_seen.erase(str(maxi(0, slot)))
+    slot_crew_glimpsed.erase(str(maxi(0, slot)))
+
+# 0.7.0 FIRST IMPRESSION (§6-5): has this npc already been glimpsed in this
+# slot's current campaign? Reset by reset_intro_for_slot on a fresh campaign;
+# untouched by a loop reset within the same campaign.
+func has_glimpsed(slot: int, npc_id: String) -> bool:
+    return npc_id in Array(slot_crew_glimpsed.get(str(maxi(0, slot)), []))
+
+func mark_glimpsed(slot: int, npc_id: String) -> void:
+    var key := str(maxi(0, slot))
+    var seen: Array = Array(slot_crew_glimpsed.get(key, []))
+    if npc_id not in seen:
+        seen.append(npc_id)
+        slot_crew_glimpsed[key] = seen
 
 func has_seen_help(feature: String) -> bool:
     return feature in seen_help
