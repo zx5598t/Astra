@@ -132,6 +132,9 @@ func _relationship_samples() -> void:
         var speaker := str(scene.get("speaker",""))
         if speaker in used_speakers and candidates.size() > 2:
             continue
+        var choices: Array = scene.get("choices",[])
+        if choices.is_empty():
+            continue
         _print_sample(
             "RELATIONSHIP-SENSITIVE %d" % (found + 1),
             str(scene.get("action","")),
