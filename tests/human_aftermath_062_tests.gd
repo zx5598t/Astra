@@ -72,7 +72,7 @@ func test_selector_priority() -> void:
     check(AstraStoryletScheduler.salience(ordinary) not in ["MANDATORY","FOLLOWUP"], "ordinary content is not promoted to aftermath")
 
 func test_character_safety() -> void:
-    var inactive := ["rho","dax","noa","sena","vale","eli","lyra"]
+    var inactive := ["rho","dax","noa","sena","eli","lyra"]
     var reaction := AstraVoyageContent.resolution_reaction("ECHO_WARD","echo_ward_preserve_signal",inactive)
     check(reaction.is_empty(), "inactive callback speaker cannot speak")
     var active := inactive + ["vale"]
