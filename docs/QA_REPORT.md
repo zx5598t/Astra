@@ -1,3 +1,41 @@
+# 0.7.1 VISUAL STORY PASS QA — 2026-09-22
+
+기준: `main @ 4e7099458e2e3d7db3722c15ddce3eac133ab94f` (ASTRA 0.7.0 SECOND WATCH)  
+작업 브랜치: `feature/0.7.1-visual-pass`
+
+## 구현 범위
+
+- 신규 scene art: **5장** — SECOND_WATCH / BLIND_DECK / THREE_MINUTES_DARK / CONTINUITY / THRESHOLD
+- 자산 형식/크기: SVG, **1280×720**, baked text 없음, 신규 캐릭터 얼굴 정의 없음
+- hookup: 기존 `AstraArt` + `AstraVoyageView` stage 재사용
+- 표시 시점: 선택된 5개 장의 `story_resolution_*` thread에 한정
+- fallback: 미매핑/누락 자산은 기존 room art + portrait
+- 콘텐츠: 선택된 5개 chapter situation/outro + resolution action/dialogue 편집
+- canonical fact / handling choice / chapter order / progression: 변경 없음
+- save schema: **v11 유지**, migration 없음
+- 신규 시스템/manager: **0**
+
+## 검증 결과
+
+GitHub Actions PR run **35703454042** (PR #14) — Linux `validate` / Windows `windows-validate` **GREEN**, release-candidate job은 개발 PR 정책대로 **SKIPPED**.
+
+- Linux/Windows Godot 4.7.2 import / script validation: **PASS**
+- `--games=40`: **99,523 checks PASS**, smart **79%** / random **19%** / passive **0%** — 기존 gate 유지
+- campaign: **202 checks PASS**
+- story consistency: **419 checks PASS**
+- voyage regression: **745 checks PASS**
+- Linux / Windows full `ui_smoke.gd`: **PASS**
+- 0.7.0 story consistency: **278 checks PASS**
+- 0.7.0 ACT II regression: **26 checks PASS**
+- **0.7.1 visual story regression: 49 checks PASS**
+- content audit: **0 FAIL / 0 WARN**
+- Linux / Windows main-scene boot: **PASS**
+- save schema: **v11 유지**, migration 없음
+- 신규 시스템/manager: **0**
+- 정식 Windows packaging / tag / GitHub Release: **미실행** — 이번 요청은 0.7.1 소규모 코드/자산 패치 반영이며 기존 개발/릴리스 분리 정책 유지
+
+기존 assertion/threshold는 낮추지 않았다. 신규 SVG 5장은 양쪽 OS import를 통과했고, 전체 UI smoke가 selected ACT II resolution까지 실제로 진행되어 이미지 삽입 뒤에도 대화 진행과 캠페인 흐름이 막히지 않음을 확인했다.
+
 # 0.7.0 SECOND WATCH QA — 2026-09-22
 
 로컬 검증만 수행 (GitHub Actions CI 미실행 — 이 리포지토리는 이번 작업 세션에서 zip 추출본으로 시작해 git 이력이 없었고, `git init`으로 새 baseline을 만들었다). 검증 환경: `C:\Users\user\Desktop\Codex\tools\godot-4.7.2\Godot_v4.7.2-stable_win64_console.exe` (Godot 4.7.2.stable.official.ed1daf0bf), Windows 11, 각 테스트를 단독 프로세스로 순차 실행(동시 실행 시 같은 `user://` 저장 경로를 두고 경합이 발생해 응답이 멈춘 것처럼 보이는 문제를 개발 중 직접 겪었다 — 상세는 아래 "개발 중 발견한 문제" 참고).

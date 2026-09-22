@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+<title>Three Minutes Dark</title>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#07111d"/><stop offset="1" stop-color="#142333"/></linearGradient>
+  <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#173246" stop-opacity=".9"/><stop offset="1" stop-color="#0b1724" stop-opacity=".68"/></linearGradient>
+  <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101d28"/><stop offset="1" stop-color="#05090d"/></linearGradient>
+</defs>
+<rect width="1280" height="720" fill="url(#bg)"/>
+
+<rect y="500" width="1280" height="220" fill="#060a0f"/><path d="M0 0H1280V720H0Z" fill="#140d10" opacity=".25"/><rect x="70" y="86" width="1140" height="402" rx="16" fill="#09131c" stroke="#5c4c50" stroke-width="3"/>
+<g fill="#101a22" stroke="#704b51" stroke-opacity=".7"><rect x="112" y="128" width="304" height="300" rx="10"/><rect x="488" y="128" width="304" height="300" rx="10"/><rect x="864" y="128" width="304" height="300" rx="10"/></g>
+<g fill="#b05b5b" opacity=".8"><circle cx="148" cy="164" r="9"/><circle cx="524" cy="164" r="9"/><circle cx="900" cy="164" r="9"/></g>
+<g fill="#7d8f91" opacity=".4"><rect x="145" y="204" width="222" height="8" rx="4"/><rect x="145" y="234" width="172" height="8" rx="4"/><rect x="145" y="264" width="196" height="8" rx="4"/><rect x="521" y="204" width="211" height="8" rx="4"/><rect x="521" y="234" width="235" height="8" rx="4"/><rect x="521" y="264" width="145" height="8" rx="4"/><rect x="897" y="204" width="196" height="8" rx="4"/><rect x="897" y="234" width="232" height="8" rx="4"/><rect x="897" y="264" width="166" height="8" rx="4"/></g>
+<g fill="none" stroke="#ad555b" stroke-width="4" opacity=".7"><path d="M145 355L185 326 225 366 271 304 319 341 368 285"/><path d="M521 350L562 301 604 338 647 292 690 365 746 319"/><path d="M897 353L936 333 978 286 1023 350 1070 306 1127 364"/></g>
+<path d="M70 69H1210" stroke="#9b4b52" stroke-width="7" opacity=".55"/><path d="M170 69L215 22M640 69V17M1110 69L1065 22" stroke="#9b4b52" stroke-width="10" opacity=".45"/><ellipse cx="640" cy="598" rx="318" ry="68" fill="#0b0e12"/><rect x="460" y="516" width="360" height="32" rx="12" fill="#17232a"/>
+<rect x="1" y="1" width="1278" height="718" fill="none" stroke="#6b8998" stroke-opacity=".12"/>
+</svg>

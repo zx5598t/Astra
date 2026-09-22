@@ -3,6 +3,7 @@ extends RefCounted
 
 const ROOT := "res://assets/art031/"
 const ROOT_040 := "res://assets/art040/"
+const ROOT_071 := "res://assets/art071/"
 const ROOM_ART := {
     "comms": "bridge", "bridge": "bridge", "navigation": "bridge", "antenna": "bridge", "deck": "bridge", "observatory": "bridge",
     "engine": "engine", "reactor": "engine", "core": "engine", "power": "engine", "coolant": "engine",
@@ -14,12 +15,25 @@ const ROOM_ART := {
 }
 const CHAPTER_ART := {"DEAD_AIR": "bridge", "ECHO_WARD": "medical", "GLASS_GARDEN": "garden", "SILENT_ORBIT": "engine", "RED_SHIFT": "archive", "LAST_LIGHT": "breach",
     "SECOND_WATCH": "archive", "BORROWED_DAYS": "lounge", "BLIND_DECK": "breach", "THREE_MINUTES_DARK": "engine", "CONTINUITY": "garden", "THRESHOLD": "bridge"}
+const STORY_ART_071 := {
+    "SECOND_WATCH": "second_watch",
+    "BLIND_DECK": "blind_deck",
+    "THREE_MINUTES_DARK": "three_minutes_dark",
+    "CONTINUITY": "continuity",
+    "THRESHOLD": "threshold"
+}
 static func background(id: String) -> String:
     return ROOT + "backgrounds/" + id + ".webp"
 static func room(id: String) -> String:
     return background(str(ROOM_ART.get(id, "bridge")))
 static func chapter(id: String) -> String:
     return background(str(CHAPTER_ART.get(id, "bridge")))
+static func story_scene(id: String) -> String:
+    var key := str(STORY_ART_071.get(id, ""))
+    if key == "":
+        return ""
+    var path := ROOT_071 + key + ".svg"
+    return path if ResourceLoader.exists(path) else ""
 static func item(id: String) -> String:
     return ROOT + "items/" + id + ".webp"
 static func clue(clue_data: Dictionary) -> String:

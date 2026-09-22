@@ -96,14 +96,21 @@ func _draw() -> void:
     stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
     stage.clip_contents = true
     body.add_child(stage)
-    var art := AstraUI.thumb(AstraArt.room(room),Vector2.ZERO)
+    var scene: Dictionary = state.get("scene",{})
+    # 0.7.1 keeps the existing voyage stage and dialogue flow. Only the five
+    # authored ACT II resolution threads may replace the room art; if an asset
+    # is absent, story_scene() returns "" and the normal room/portrait path wins.
+    var story_art := ""
+    if str(scene.get("id","")).begins_with("story_resolution_"):
+        story_art = AstraArt.story_scene(session.case_id)
+    var stage_art_path := story_art if story_art != "" else AstraArt.room(room)
+    var art := AstraUI.thumb(stage_art_path,Vector2.ZERO)
     art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     stage.add_child(art)
     stage.add_child(AstraArt.shade())
-    var scene: Dictionary = state.get("scene",{})
     if scene.is_empty():
         _hotspots(stage)
-    else:
+    elif story_art == "":
         var speaker := str(scene.get("speaker",""))
         var line_index := int(state.get("line",-1))
         if line_index >= 0 and line_index < scene.get("lines",[]).size():

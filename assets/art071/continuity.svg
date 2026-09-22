@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+<title>Continuity</title>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#07111d"/><stop offset="1" stop-color="#142333"/></linearGradient>
+  <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#173246" stop-opacity=".9"/><stop offset="1" stop-color="#0b1724" stop-opacity=".68"/></linearGradient>
+  <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#101d28"/><stop offset="1" stop-color="#05090d"/></linearGradient>
+</defs>
+<rect width="1280" height="720" fill="url(#bg)"/>
+
+<rect y="460" width="1280" height="260" fill="url(#floor)"/><ellipse cx="640" cy="590" rx="470" ry="118" fill="#0a1116"/><polygon points="268,442 1012,442 1110,656 170,656" fill="#1a292e" stroke="#465b5e" stroke-width="3"/>
+<rect x="310" y="424" width="254" height="150" rx="7" fill="#17262c" stroke="#597070" stroke-opacity=".65"/><g fill="#87a6a1" opacity=".46"><rect x="335" y="452" width="170" height="7" rx="3"/><rect x="335" y="477" width="198" height="7" rx="3"/><rect x="335" y="502" width="150" height="7" rx="3"/><rect x="335" y="527" width="186" height="7" rx="3"/></g>
+<rect x="680" y="410" width="248" height="158" rx="7" fill="#17262c" stroke="#597070" stroke-opacity=".65"/><g fill="#87a6a1" opacity=".42"><rect x="705" y="442" width="177" height="7" rx="3"/><rect x="705" y="467" width="142" height="7" rx="3"/><rect x="705" y="492" width="191" height="7" rx="3"/><rect x="705" y="517" width="164" height="7" rx="3"/></g>
+<ellipse cx="616" cy="516" rx="57" ry="21" fill="#3c4a47"/><ellipse cx="616" cy="511" rx="48" ry="16" fill="#152229"/><path d="M664 507C704 496 710 530 675 535" fill="none" stroke="#3c4a47" stroke-width="10"/><circle cx="616" cy="511" r="13" fill="#6b4e3e" opacity=".5"/>
+<g transform="translate(942 332)"><rect y="75" width="134" height="156" rx="8" fill="#152329" stroke="#4f6766"/><path d="M68 82C43 54 32 28 46 0C70 14 79 42 68 82Z" fill="#496b5a"/><path d="M68 82C95 55 105 28 92 4C70 17 60 46 68 82Z" fill="#3e6254"/><path d="M68 80V173" stroke="#547360" stroke-width="5"/><path d="M31 210C52 181 82 178 105 210" fill="#31463d"/></g>
+<rect x="194" y="283" width="226" height="106" rx="9" fill="#0d1b24" stroke="#4f666b" stroke-opacity=".45"/><g fill="#819b9a" opacity=".4"><rect x="219" y="309" width="130" height="7" rx="4"/><rect x="219" y="334" width="171" height="7" rx="4"/><rect x="219" y="359" width="112" height="7" rx="4"/></g>
+<rect x="1" y="1" width="1278" height="718" fill="none" stroke="#6b8998" stroke-opacity=".12"/>
+</svg>
