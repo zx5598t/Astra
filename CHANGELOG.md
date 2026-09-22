@@ -1,3 +1,10 @@
+## 0.7.3 — HUMAN SIGNAL
+
+- Added five exact micro-arc / relationship visual beats for Sena, Noa, Soren + Lucan, Daren + Jun, and Maren using the existing voyage-stage art path.
+- Polished those five action/dialogue beats so pose, exchange, blocking, correction, and preservation carry character meaning without extra clicks.
+- Added `assets/art073/` as 1280×720 SVG scene art while retaining all 0.7.1 and 0.7.2 visual mappings and room/portrait fallback.
+- Added Linux + Windows HUMAN SIGNAL regression coverage; save schema remains v11 with no migration or new persistent fields.
+
 # 0.7.2 · ACT I VISUAL STORY PASS · 2026-09-22
 
 ACT I의 기억점 5장에 신규 1280×720 SVG 장면 아트를 추가했다: **CALIBRATION / ECHO_WARD / SILENT_ORBIT / RED_SHIFT / LAST_LIGHT**. DEAD_AIR는 LAST_LIGHT의 병렬 기록 이미지와 역할이 겹쳐 제외했고, 초반 5~10분의 기억점을 위해 CALIBRATION을 선택했다.
