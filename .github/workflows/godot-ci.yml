@@ -77,6 +77,18 @@ jobs:
           grep -q "ASTRA 0.6.2 HUMAN AFTERMATH TESTS OK" human-aftermath-062.log
           if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" human-aftermath-062.log; then exit 1; fi
 
+      - name: 0.6.2 HUMAN AFTERMATH simulation, editorial and UI
+        run: |
+          set +e
+          ./godot --headless --path . --script res://tests/human_aftermath_062_simulation.gd 2>&1 | tee human-aftermath-sim-062.log
+          ./godot --headless --path . --script res://tests/editorial_062_report.gd 2>&1 | tee editorial-062.log
+          ./godot --headless --path . --script res://tests/aftermath_ui_062.gd 2>&1 | tee aftermath-ui-062.log
+          set -e
+          grep -q "ASTRA 0.6.2 HUMAN AFTERMATH SIMULATION OK" human-aftermath-sim-062.log
+          grep -q "ASTRA 0.6.2 HUMAN AFTERMATH EDITORIAL REPORT OK" editorial-062.log
+          grep -q "ASTRA 0.6.2 AFTERMATH UI SMOKE OK" aftermath-ui-062.log
+          if grep -E "SCRIPT ERROR|Parse Error|Compile Error|Failed to load script" human-aftermath-sim-062.log editorial-062.log aftermath-ui-062.log; then exit 1; fi
+
       - name: Headless UI smoke test (title -> full case -> result)
         run: |
           set -o pipefail
@@ -301,6 +313,15 @@ jobs:
           & $env:GODOT --headless --path . --script res://tests/human_aftermath_062_tests.gd 2>&1 | Tee-Object -FilePath windows-human-aftermath-062.log
           if (-not (Select-String -Path windows-human-aftermath-062.log -Pattern 'ASTRA 0.6.2 HUMAN AFTERMATH TESTS OK')) { throw 'Windows HUMAN AFTERMATH 0.6.2 tests did not pass.' }
           if (Select-String -Path windows-human-aftermath-062.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows HUMAN AFTERMATH 0.6.2 tests reported script errors.' }
+
+      - name: Run 0.6.2 HUMAN AFTERMATH simulation and UI on Windows
+        shell: pwsh
+        run: |
+          & $env:GODOT --headless --path . --script res://tests/human_aftermath_062_simulation.gd 2>&1 | Tee-Object -FilePath windows-human-aftermath-sim-062.log
+          if (-not (Select-String -Path windows-human-aftermath-sim-062.log -Pattern 'ASTRA 0.6.2 HUMAN AFTERMATH SIMULATION OK')) { throw 'Windows HUMAN AFTERMATH simulation did not pass.' }
+          & $env:GODOT --headless --path . --script res://tests/aftermath_ui_062.gd 2>&1 | Tee-Object -FilePath windows-aftermath-ui-062.log
+          if (-not (Select-String -Path windows-aftermath-ui-062.log -Pattern 'ASTRA 0.6.2 AFTERMATH UI SMOKE OK')) { throw 'Windows HUMAN AFTERMATH UI smoke did not pass.' }
+          if (Select-String -Path windows-human-aftermath-sim-062.log,windows-aftermath-ui-062.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows HUMAN AFTERMATH validation reported script errors.' }
 
       - name: Run story consistency, FIRST CONTACT and reset gates on Windows
         shell: pwsh
