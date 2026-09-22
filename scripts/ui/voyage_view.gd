@@ -97,12 +97,15 @@ func _draw() -> void:
     stage.clip_contents = true
     body.add_child(stage)
     var scene: Dictionary = state.get("scene",{})
-    # 0.7.1 keeps the existing voyage stage and dialogue flow. Only the five
-    # authored ACT II resolution threads may replace the room art; if an asset
-    # is absent, story_scene() returns "" and the normal room/portrait path wins.
+    # 0.7.2 reuses the same non-modal stage replacement from 0.7.1.
+    # ACT I art appears only at authored reveal beats; CALIBRATION uses the
+    # first-wake beat as its early memory point. Missing assets still fall back.
     var story_art := ""
-    if str(scene.get("id","")).begins_with("story_resolution_"):
+    var scene_id := str(scene.get("id",""))
+    if scene_id.begins_with("story_resolution_"):
         story_art = AstraArt.story_scene(session.case_id)
+    elif session.case_id == "CALIBRATION" and scene_id == "first_wake":
+        story_art = AstraArt.story_scene("CALIBRATION")
     var stage_art_path := story_art if story_art != "" else AstraArt.room(room)
     var art := AstraUI.thumb(stage_art_path,Vector2.ZERO)
     art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
