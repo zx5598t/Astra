@@ -198,13 +198,14 @@ static func resolution_thread(case_id: String, memory_tags: Array = []) -> Dicti
     var participants: Array = data.get("participants",[]).duplicate()
     var callback := ""
     var callback_source_tag := ""
+    var callback_speaker := ""
     var callback_map := {
-        "DEAD_AIR":["dead_air_public_dual_destination","노아가 두 문서를 나란히 놓는다. 이상하게도 처음부터 함께 봐야 할 것 같은 배치다."],
-        "GLASS_GARDEN":["glass_garden_keep_conflict_open","세나가 두 기록 창을 겹치지 않고 나란히 띄운다. 그 방식이 낯설지 않다."],
-        "ECHO_WARD":["echo_ward_preserve_signal","소렌은 재생 전에 먼저 원본 잠금 상태부터 확인한다."],
-        "SILENT_ORBIT":["silent_orbit_private_recheck","루칸은 항법 화면보다 관측창을 먼저 본다."],
-        "RED_SHIFT":["red_shift_hide_handwriting","노아가 공개 기록의 빈 부분에서 잠깐 시선을 멈춘다. 이유를 단정하지는 않는다."],
-        "LAST_LIGHT":["last_light_parallel_histories","노아는 서로 다른 사본을 합치지 않고 처음부터 두 묶음으로 펼친다."]
+        "DEAD_AIR":["dead_air_public_dual_destination","노아가 두 문서를 나란히 놓는다. 이상하게도 처음부터 함께 봐야 할 것 같은 배치다.","noa"],
+        "GLASS_GARDEN":["glass_garden_keep_conflict_open","세나가 두 기록 창을 겹치지 않고 나란히 띄운다. 그 방식이 낯설지 않다.","sena"],
+        "ECHO_WARD":["echo_ward_preserve_signal","소렌은 재생 전에 먼저 원본 잠금 상태부터 확인한다.","vale"],
+        "SILENT_ORBIT":["silent_orbit_private_recheck","루칸은 항법 화면보다 관측창을 먼저 본다.","eli"],
+        "RED_SHIFT":["red_shift_hide_handwriting","노아가 공개 기록의 빈 부분에서 잠깐 시선을 멈춘다. 이유를 단정하지는 않는다.","noa"],
+        "LAST_LIGHT":["last_light_parallel_histories","노아는 서로 다른 사본을 합치지 않고 처음부터 두 묶음으로 펼친다.","noa"]
     }
     if callback_map.has(case_id):
         var spec: Array = callback_map[case_id]
@@ -212,10 +213,13 @@ static func resolution_thread(case_id: String, memory_tags: Array = []) -> Dicti
             if str(stored).ends_with(":" + str(spec[0])) or str(stored) == str(spec[0]):
                 callback = str(spec[1])
                 callback_source_tag = str(spec[0])
+                callback_speaker = str(spec[2]) if spec.size() > 2 else ""
                 break
     if callback != "":
         data["action"] = callback + " " + str(data.get("action",""))
         data["human_trace_callback"] = true
+        if callback_speaker != "":
+            data["speaker"] = callback_speaker
         data["aftermath_owner"] = "character_action"
         data["aftermath_source_tag"] = callback_source_tag
         data["intent"] = "callback"
