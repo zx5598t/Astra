@@ -15,9 +15,26 @@
 - save schema: **v11 유지**, migration 없음
 - 신규 시스템/manager: **0**
 
-## 검증 상태
+## 검증 결과
 
-이 섹션의 GitHub Actions 수치는 PR CI 완료 후 실제 run 결과로 갱신한다. 기존 threshold를 낮추지 않았고, 0.7.1 전용 `visual_story_071_tests.gd`와 0.7.0 ACT II 회귀를 CI gate에 추가했다. 기존 `ui_smoke.gd`는 전체 캠페인을 플레이하며 selected resolution까지 진입하므로 art hookup도 기존 대화 진행과 함께 검증한다.
+GitHub Actions PR run **35703454042** (PR #14) — Linux `validate` / Windows `windows-validate` **GREEN**, release-candidate job은 개발 PR 정책대로 **SKIPPED**.
+
+- Linux/Windows Godot 4.7.2 import / script validation: **PASS**
+- `--games=40`: **99,523 checks PASS**, smart **79%** / random **19%** / passive **0%** — 기존 gate 유지
+- campaign: **202 checks PASS**
+- story consistency: **419 checks PASS**
+- voyage regression: **745 checks PASS**
+- Linux / Windows full `ui_smoke.gd`: **PASS**
+- 0.7.0 story consistency: **278 checks PASS**
+- 0.7.0 ACT II regression: **26 checks PASS**
+- **0.7.1 visual story regression: 49 checks PASS**
+- content audit: **0 FAIL / 0 WARN**
+- Linux / Windows main-scene boot: **PASS**
+- save schema: **v11 유지**, migration 없음
+- 신규 시스템/manager: **0**
+- 정식 Windows packaging / tag / GitHub Release: **미실행** — 이번 요청은 0.7.1 소규모 코드/자산 패치 반영이며 기존 개발/릴리스 분리 정책 유지
+
+기존 assertion/threshold는 낮추지 않았다. 신규 SVG 5장은 양쪽 OS import를 통과했고, 전체 UI smoke가 selected ACT II resolution까지 실제로 진행되어 이미지 삽입 뒤에도 대화 진행과 캠페인 흐름이 막히지 않음을 확인했다.
 
 # 0.7.0 SECOND WATCH QA — 2026-09-22
 
