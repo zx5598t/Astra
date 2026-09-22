@@ -113,23 +113,27 @@ func _draw() -> void:
     stage.add_child(AstraArt.shade())
     if scene.is_empty():
         _hotspots(stage)
-    elif story_art == "":
+    else:
         var speaker := str(scene.get("speaker",""))
         var line_index := int(state.get("line",-1))
         if line_index >= 0 and line_index < scene.get("lines",[]).size():
             var line: Array = scene["lines"][line_index]
             if str(line[0]) != "": speaker = str(line[0])
+        # FIRST IMPRESSION is presentation-independent: authored story art may
+        # replace the portrait, but it must never suppress the one-time glimpse.
         if speaker != "":
-            var mood: String = {"danger":"afraid","trust":"smile","suspected":"suspicious","conflict":"annoyed","grief":"sad","relief":"happy","night":"tired"}.get(str(scene.get("tag","")),"neutral")
-            var portrait := AstraUI.thumb(AstraCrewCatalog.cast_path(speaker,mood),Vector2.ZERO)
-            portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-            portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-            stage.add_child(portrait)
             _maybe_glimpse(stage,speaker)
-        if scene.has("target"):
-            var other := AstraUI.thumb(AstraCrewCatalog.dot_path(str(scene["target"])),Vector2(90,90))
-            other.position = Vector2(12,12)
-            stage.add_child(other)
+        if story_art == "":
+            if speaker != "":
+                var mood: String = {"danger":"afraid","trust":"smile","suspected":"suspicious","conflict":"annoyed","grief":"sad","relief":"happy","night":"tired"}.get(str(scene.get("tag","")),"neutral")
+                var portrait := AstraUI.thumb(AstraCrewCatalog.cast_path(speaker,mood),Vector2.ZERO)
+                portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+                portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+                stage.add_child(portrait)
+            if scene.has("target"):
+                var other := AstraUI.thumb(AstraCrewCatalog.dot_path(str(scene["target"])),Vector2(90,90))
+                other.position = Vector2(12,12)
+                stage.add_child(other)
     var panel := AstraUI.reading_panel(AstraUI.CYAN,0.97)
     panel.custom_minimum_size.x = 480
     panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
