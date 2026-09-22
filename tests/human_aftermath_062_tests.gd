@@ -41,19 +41,23 @@ func test_reaction_ownership() -> void:
 
 func test_residue_provenance() -> void:
     var probes := {
-        "DEAD_AIR":"dead_air_public_dual_destination",
-        "GLASS_GARDEN":"glass_garden_keep_conflict_open",
-        "ECHO_WARD":"echo_ward_preserve_signal",
-        "SILENT_ORBIT":"silent_orbit_private_recheck",
-        "RED_SHIFT":"red_shift_hide_handwriting",
-        "LAST_LIGHT":"last_light_parallel_histories"
+        "DEAD_AIR":["dead_air_public_dual_destination","noa"],
+        "GLASS_GARDEN":["glass_garden_keep_conflict_open","sena"],
+        "ECHO_WARD":["echo_ward_preserve_signal","vale"],
+        "SILENT_ORBIT":["silent_orbit_private_recheck","eli"],
+        "RED_SHIFT":["red_shift_hide_handwriting","noa"],
+        "LAST_LIGHT":["last_light_parallel_histories","noa"]
     }
     for case_id in probes:
-        var tag := str(probes[case_id])
+        var spec: Array = probes[case_id]
+        var tag := str(spec[0])
+        var expected_speaker := str(spec[1])
         var callback := AstraVoyageContent.resolution_thread(case_id,[tag])
         check(bool(callback.get("human_trace_callback",false)), "%s: residue callback is reachable" % case_id)
         check(str(callback.get("aftermath_source_tag","")) == tag, "%s: residue names its source event" % case_id)
         check(str(callback.get("aftermath_owner","")) == "character_action", "%s: residue is shown as action, not duplicate explanation" % case_id)
+        check(str(callback.get("speaker","")) == expected_speaker, "%s: residue portrait/speaker matches visible actor" % case_id)
+        check(expected_speaker in Array(callback.get("participants",[])), "%s: residue speaker belongs to authored active participants" % case_id)
         check(str(callback.get("intent","")) == "callback" and bool(callback.get("continuation",false)), "%s: residue is selector-visible continuation" % case_id)
         var serialized := JSON.stringify(callback)
         check(not serialized.contains("raw_relationship") and not serialized.contains("null_id") and not serialized.contains("motive_id"), "%s: residue contains no hidden selector truth" % case_id)
