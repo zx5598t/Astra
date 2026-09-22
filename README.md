@@ -117,7 +117,7 @@ Notebook은 정답표가 아니라 기억 보조입니다.
 - --games=40 TOTAL: smart **79%** / random **19%** / passive **0%**
 - deduction gate: smart - random **60%p**, passive < 20% 유지
 - Linux/Windows UI smoke 및 main-scene boot: **PASS**
-- content audit: **0 FAIL / 1 WARN** (반복 opener 편집 경고)
+- content audit: **0 FAIL / 0 WARN** (후속 opener 정리 CI #541)
 - authored voyage/reactive scene library: **608개**
 - save schema: **v11**, migration 없음
 
