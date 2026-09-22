@@ -535,3 +535,5 @@ ZIP은 패키징 시각 등 archive metadata 때문에 동일 소스의 재빌�
 1. action prose opener 반복 WARN 1건.
 2. 473개 authored scene 전체를 사람이 직접 수동 플레이로 전부 검수한 것은 아니다. 자동 coverage와 coherence audit은 이를 보완하지만 완전한 인간 편집 검수와 동일하지는 않다.
 3. 공식 GitHub Release는 이 문서 작성 시점까지 과거 공개 버전에 머물러 있다. 0.5.3 release branch의 최종 green/Windows artifact 확인 후 main/tag 단계에서 정리한다.
+
+<!-- CI retry marker: HUMAN TRACE deterministic ownership coverage -->
