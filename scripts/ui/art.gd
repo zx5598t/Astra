@@ -5,6 +5,7 @@ const ROOT := "res://assets/art031/"
 const ROOT_040 := "res://assets/art040/"
 const ROOT_071 := "res://assets/art071/"
 const ROOT_072 := "res://assets/art072/"
+const ROOT_073 := "res://assets/art073/"
 const ROOM_ART := {
     "comms": "bridge", "bridge": "bridge", "navigation": "bridge", "antenna": "bridge", "deck": "bridge", "observatory": "bridge",
     "engine": "engine", "reactor": "engine", "core": "engine", "power": "engine", "coolant": "engine",
@@ -22,6 +23,13 @@ const STORY_ART_072 := {
     "SILENT_ORBIT": "silent_orbit",
     "RED_SHIFT": "red_shift",
     "LAST_LIGHT": "last_light"
+}
+const STORYLET_ART_073 := {
+    "054_sena_overprotection_2": "sena_overprotection",
+    "054_noa_private_copy_2": "noa_private_copy",
+    "054_vale_vale_eli_direction": "soren_lucan_direction",
+    "054_dax_failed_model_3": "daren_jun_failed_model",
+    "054_lyra_save_sample_2": "maren_save_sample"
 }
 const STORY_ART_071 := {
     "SECOND_WATCH": "second_watch",
@@ -45,6 +53,12 @@ static func story_scene(id: String) -> String:
     if key == "":
         return ""
     var path := root + key + ".svg"
+    return path if ResourceLoader.exists(path) else ""
+static func storylet_scene(id: String) -> String:
+    var key := str(STORYLET_ART_073.get(id, ""))
+    if key == "":
+        return ""
+    var path := ROOT_073 + key + ".svg"
     return path if ResourceLoader.exists(path) else ""
 static func item(id: String) -> String:
     return ROOT + "items/" + id + ".webp"
