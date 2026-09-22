@@ -5090,11 +5090,9 @@ func voyage_choose(index: int) -> bool:
             voyage["memory_tags"].append("mira:promise_broken:tell_injury")
         voyage["promise_history"].append({"who":"mira","promise":"tell_injury","loop":int(voyage.get("loop",0)),"state":"broken"})
     var last_fact := str(voyage.get("last_fact",""))
-    # A mandatory resolution always handles its chapter's canonical fact. An
-    # incidental scene may have updated last_fact immediately beforehand.
-    if bool(scene.get("story_resolution",false)):
-        last_fact = str(AstraVoyageContent.chapter(case_id).get("fact",""))
-    if last_fact != "" and effect in ["share","record","open_records"]:
+    # Story resolutions handle their canonical chapter fact explicitly below.
+    # Never let an incidental last_fact leak into resolution ownership.
+    if last_fact != "" and effect in ["share","record","open_records"] and not bool(scene.get("story_resolution",false)):
         var ownership: Dictionary = voyage.get("evidence_ownership",{})
         var evidence: Dictionary = ownership.get(last_fact,{"found_by":"player","knows":["player"],"public":false})
         var knowers: Array = evidence.get("knows",[])
