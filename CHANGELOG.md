@@ -1,3 +1,10 @@
+## 0.7.4 — PLAYBACK
+
+- Audited the existing narrative scheduler and kept the 622-scene authored library intact rather than adding another manager or content layer.
+- Added a short player-visible pacing guard: a newly shown MANDATORY/FOLLOWUP/FOCUS beat gets one action of breathing room before an unrelated dynamic incident may open another thread. Explicit player-directed conversations remain available.
+- Added PLAYBACK regression coverage for pacing, save v11, player-safe selector context, and all 0.7.1/0.7.2/0.7.3 visual mappings.
+- Updated stale 0.7.2/0.7.3 project documentation. No new visual assets and no save migration.
+
 ## 0.7.3 — HUMAN SIGNAL
 
 - Added five exact micro-arc / relationship visual beats for Sena, Noa, Soren + Lucan, Daren + Jun, and Maren using the existing voyage-stage art path.
