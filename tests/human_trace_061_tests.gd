@@ -99,11 +99,25 @@ func test_choice_progression() -> void:
             close_scene(s)
             var fact := str(AstraVoyageContent.chapter(case_id).get("fact",""))
             s._voyage_fact(fact,str(AstraVoyageContent.chapter(case_id).get("discovery","")),"DIRECT")
+            # Simulate an optional fact being seen immediately before the
+            # mandatory resolution. Resolution ownership must still stay on
+            # the chapter's canonical fact, never this incidental last_fact.
+            s._voyage_fact("optional_decoy","priority/provenance regression probe","RUMOR")
             s._voyage_scene(authored)
             var scene: Dictionary = s.voyage.get("scene",{})
             while int(s.voyage.get("line",-1)) < scene.get("lines",[]).size()-1:
                 s.voyage_next()
                 scene = s.voyage.get("scene",{})
+            var priority_probe := case_id == "DEAD_AIR" and choice_index == 0
+            if priority_probe:
+                var action_index := int(s.voyage.get("actions",0))
+                s.voyage["consequence_queue"] = AstraConsequenceModel.enqueue(
+                    s.voyage.get("consequence_queue",[]),[{
+                        "id":"human_trace_priority_probe","timing":"IMMEDIATE",
+                        "due_action":action_index,"expires_action":action_index + 1,
+                        "note":"mandatory chain priority probe","source_scene":"human_trace_test"
+                    }]
+                )
             check(s.voyage_choose(choice_index),"%s/%d: resolution choice accepted" % [case_id,choice_index])
             check(bool(s.voyage.get("story_resolution_seen",false)),"%s/%d: resolution marked seen" % [case_id,choice_index])
             check(str(s.story_recap().get("resolved","")) == canonical,"%s/%d: canonical resolved fact unchanged" % [case_id,choice_index])
@@ -114,13 +128,32 @@ func test_choice_progression() -> void:
                 check(Array(after_choice.get("choices",[])).is_empty(),"%s/%d: reaction has no second decision" % [case_id,choice_index])
             var ownership: Dictionary = s.voyage.get("evidence_ownership",{}).get(fact,{})
             var effect := str(authored.get("choices",[])[choice_index].get("effect",""))
+            var source_value = s.voyage.get("information_sources",{}).get(fact,"")
+            check(typeof(source_value) == TYPE_STRING and str(source_value) == "DIRECT",
+                "%s/%d: resolution handling preserves information source schema" % [case_id,choice_index])
+            if effect in ["share","record"]:
+                check(not AstraKnowledgeModel.knows(s.flags,str(authored.get("speaker","")),"optional_decoy"),
+                    "%s/%d: incidental last_fact is never shared by resolution handling" % [case_id,choice_index])
             if effect == "share" and str(authored.get("choices",[])[choice_index].get("share_scope","public")) != "speaker":
                 check(bool(ownership.get("public",false)),"%s/%d: public share updates evidence ownership" % [case_id,choice_index])
+            elif effect == "share":
+                var resolution_speaker := str(authored.get("speaker",""))
+                check(not bool(ownership.get("public",false)),"%s/%d: speaker share does not become public" % [case_id,choice_index])
+                check(AstraKnowledgeModel.knows(s.flags,resolution_speaker,fact),
+                    "%s/%d: speaker share reaches the intended speaker" % [case_id,choice_index])
             elif effect == "keep_copy":
                 check(bool(ownership.get("player_copy",false)),"%s/%d: keep-copy updates evidence ownership" % [case_id,choice_index])
             elif effect == "withhold":
                 check(not bool(ownership.get("public",false)),"%s/%d: withhold keeps evidence non-public" % [case_id,choice_index])
+            if priority_probe:
+                check(Array(s.voyage.get("consequence_queue",[])).any(
+                    func(event): return str(event.get("id","")) == "human_trace_priority_probe"
+                ),"mandatory reaction/hook keeps an immediate consequence queued")
             close_scene(s)
+            if priority_probe:
+                check(Array(s.voyage.get("consequence_history",[])).any(
+                    func(event): return str(event.get("id","")) == "human_trace_priority_probe"
+                ),"deferred immediate consequence survives and applies after the story hook")
             check(bool(s.voyage.get("story_hook_seen",false)),"%s/%d: reaction path reaches story hook" % [case_id,choice_index])
             check(s.voyage_can_finish(),"%s/%d: no EXPLORE soft-lock" % [case_id,choice_index])
             check(str(s.story_recap().get("open_question","")) == str(AstraVoyageContent.chapter(case_id).get("open_question","")),
@@ -164,7 +197,9 @@ func test_canon_guards() -> void:
     check(AstraMetaProgress.SAVE_VERSION == 11,"save schema remains current v11")
     for case_id in IDS:
         var beat := AstraVoyageContent.resolution_thread(case_id)
-        check(not JSON.stringify(beat).contains("player") or not JSON.stringify(beat).contains("NULL"),"%s: Player != Null guard not contradicted" % case_id)
+        var serialized := JSON.stringify(beat)
+        check(not serialized.contains("Player = Null") and not serialized.contains("Player == Null"),
+            "%s: Player != Null guard not contradicted" % case_id)
     var last := AstraVoyageContent.chapter("LAST_LIGHT")
     check(str(last.get("resolved","")).contains("서로 다른 기록 사본"),"LAST_LIGHT keeps multiple valid histories")
     check(str(last.get("resolved","")).contains("Null 사건만으로는"),"LAST_LIGHT keeps Null-not-total-cause canon")
