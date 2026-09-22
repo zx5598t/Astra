@@ -138,7 +138,7 @@ func test_canon_guards() -> void:
     check(AstraMetaProgress.SAVE_VERSION == 11,"save schema remains current v11")
     for case_id in IDS:
         var beat := AstraVoyageContent.resolution_thread(case_id)
-        check(not JSON.stringify(beat).contains("\\"player\\":\\"NULL\\""),"%s: Player != Null guard not contradicted" % case_id)
+        check(not JSON.stringify(beat).contains("player") or not JSON.stringify(beat).contains("NULL"),"%s: Player != Null guard not contradicted" % case_id)
     var last := AstraVoyageContent.chapter("LAST_LIGHT")
     check(str(last.get("resolved","")).contains("서로 다른 기록 사본"),"LAST_LIGHT keeps multiple valid histories")
     check(str(last.get("resolved","")).contains("Null 사건만으로는"),"LAST_LIGHT keeps Null-not-total-cause canon")
