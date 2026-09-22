@@ -1,3 +1,27 @@
+# QA REPORT — ASTRA 0.6.1 HUMAN TRACE
+
+검증 환경: Godot 4.7.2 stable · GitHub Actions Linux/Windows validation  
+작업 브랜치: `dev/0.6.1-human-trace`
+
+## 개발 업데이트 정책
+
+Windows packaging / tag / GitHub Release는 최종 배포 시점까지 의도적으로 보류한다. latest formal GitHub Release가 v0.5.7인 것은 개발 실패가 아니다. 일반 PR/main Godot CI와 Windows validation은 계속 gate로 사용한다.
+
+## 구현 범위
+
+- DEAD_AIR~LAST_LIGHT: canonical fact 이후 authored handling choice 연결
+- 기존 voyage choice / DialogueMemory / memory tag / KnowledgeModel / ownership 재사용
+- 선택 뒤 최대 1회 HUMAN reaction 후 story hook 복귀
+- 다음 loop residue callback 및 repeat-resolution compression
+- release.yml: main push packaging 제거, v* tag + workflow_dispatch 유지
+- save schema: **v11 유지**, migration 없음
+
+## 검증 결과
+
+PR CI 완료 후 실제 check 수, bot 비율, content audit FAIL/WARN, Linux/Windows validation 결과를 이 섹션에 기록한다. 기존 threshold는 완화하지 않는다.
+
+---
+
 # QA REPORT — ASTRA 0.6.0 FIRST CONTACT / STORY LOOP
 
 검증 환경: Godot 4.7.2 stable · Linux + Windows x86_64  
