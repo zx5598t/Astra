@@ -135,7 +135,7 @@ func test_calibration_untouched() -> void:
     check(str(s.voyage.get("scene",{}).get("id","")) == "first_wake","CALIBRATION opening remains FIRST CONTACT")
 
 func test_canon_guards() -> void:
-    check(AstraGameSession.SAVE_VERSION == 10,"save schema remains v10")
+    check(AstraMetaProgress.SAVE_VERSION == 11,"save schema remains current v11")
     for case_id in IDS:
         var beat := AstraVoyageContent.resolution_thread(case_id)
         check(not JSON.stringify(beat).contains("player":"NULL"),"%s: Player != Null guard not contradicted" % case_id)
