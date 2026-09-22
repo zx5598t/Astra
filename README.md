@@ -1,3 +1,7 @@
+# ASTRA 0.6.2 — HUMAN AFTERMATH
+
+중요한 선택의 결과를 더 많이 설명하는 대신, **반응은 대화에서, 다음 loop의 흔적은 행동에서, 다음 mystery는 story hook에서** 읽히도록 기존 HUMAN TRACE 연결을 정리한 patch입니다. next-loop residue에는 실제 source handling provenance가 남고 CLEAR SIGNAL selector에는 continuation으로 전달됩니다. save schema는 v11을 유지하며 정식 0.6.2 Windows 배포/tag/Release는 아직 만들지 않습니다.
+
 # ASTRA 0.6.1 — HUMAN TRACE
 
 같은 배에서 깨어났지만, 우리는 서로 다른 목적지를 기억한다.  
