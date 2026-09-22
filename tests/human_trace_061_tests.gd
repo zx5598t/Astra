@@ -83,12 +83,24 @@ func test_choice_progression() -> void:
         var case_id: String = IDS[case_index]
         var canonical := str(AstraVoyageContent.chapter(case_id).get("resolved",""))
         var authored := AstraVoyageContent.resolution_thread(case_id)
+        # One end-to-end discovery path per chapter proves the mandatory local
+        # answer is reachable. Individual handling branches are then exercised
+        # from that exact authored resolution so random ambient beats cannot
+        # make a branch test depend on its seed.
+        var path := AstraGameSession.new()
+        path.setup(case_id,61000 + case_index)
+        path.begin_voyage()
+        var reached := reach_resolution(path)
+        check(bool(reached.get("story_resolution",false)),"%s: discovery reaches mandatory resolution" % case_id)
         for choice_index in range(authored.get("choices",[]).size()):
             var s := AstraGameSession.new()
-            s.setup(case_id,61000 + case_index * 10 + choice_index)
+            s.setup(case_id,62000 + case_index * 10 + choice_index)
             s.begin_voyage()
-            var scene := reach_resolution(s)
-            check(bool(scene.get("story_resolution",false)),"%s/%d: reaches mandatory resolution" % [case_id,choice_index])
+            close_scene(s)
+            var fact := str(AstraVoyageContent.chapter(case_id).get("fact",""))
+            s._voyage_fact(fact,str(AstraVoyageContent.chapter(case_id).get("discovery","")),"DIRECT")
+            s._voyage_scene(authored)
+            var scene: Dictionary = s.voyage.get("scene",{})
             while int(s.voyage.get("line",-1)) < scene.get("lines",[]).size()-1:
                 s.voyage_next()
                 scene = s.voyage.get("scene",{})
@@ -100,6 +112,14 @@ func test_choice_progression() -> void:
                 "%s/%d: choice advances to at most one reaction or hook" % [case_id,choice_index])
             if bool(after_choice.get("story_reaction",false)):
                 check(Array(after_choice.get("choices",[])).is_empty(),"%s/%d: reaction has no second decision" % [case_id,choice_index])
+            var ownership: Dictionary = s.voyage.get("evidence_ownership",{}).get(fact,{})
+            var effect := str(authored.get("choices",[])[choice_index].get("effect",""))
+            if effect == "share" and str(authored.get("choices",[])[choice_index].get("share_scope","public")) != "speaker":
+                check(bool(ownership.get("public",false)),"%s/%d: public share updates evidence ownership" % [case_id,choice_index])
+            elif effect == "keep_copy":
+                check(bool(ownership.get("player_copy",false)),"%s/%d: keep-copy updates evidence ownership" % [case_id,choice_index])
+            elif effect == "withhold":
+                check(not bool(ownership.get("public",false)),"%s/%d: withhold keeps evidence non-public" % [case_id,choice_index])
             close_scene(s)
             check(bool(s.voyage.get("story_hook_seen",false)),"%s/%d: reaction path reaches story hook" % [case_id,choice_index])
             check(s.voyage_can_finish(),"%s/%d: no EXPLORE soft-lock" % [case_id,choice_index])
