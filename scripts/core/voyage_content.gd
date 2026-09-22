@@ -491,7 +491,16 @@ const RESET_FRAMING := {
     "ECHO_WARD": {"title": "겹쳐진 시간", "detail": "재생 목록에는 방금 들은 구간이 없다."},
     "SILENT_ORBIT": {"title": "움직이지 않는 별", "detail": "항법 화면의 좌표만 다시 흐르기 시작한다."},
     "RED_SHIFT": {"title": "다른 과거", "detail": "근무 기록의 잉크는 이미 말라 있다."},
-    "LAST_LIGHT": {"title": "손상된 다음 줄", "detail": "코어의 표시등이 다시 깜빡이기 시작한다."}
+    "LAST_LIGHT": {"title": "손상된 다음 줄", "detail": "코어의 표시등이 다시 깜빡이기 시작한다."},
+    # PLAYBACK: ACT II must leave residue from the chapter the player actually
+    # finished. Falling back to CALIBRATION here repeated the old bandage beat
+    # after every ACT II chapter and made the second act feel disconnected.
+    "SECOND_WATCH": {"title": "끝나지 않은 근무", "detail": "접힌 교대표 아래에도 다음 날짜의 근무표가 이어져 있다."},
+    "BORROWED_DAYS": {"title": "몸이 기억한 순서", "detail": "다시 손을 뻗자, 묻지 않고 같은 공구를 집어 든다."},
+    "BLIND_DECK": {"title": "지도 밖의 길", "detail": "벽 너머 통로의 마모 자국은 지도에서만 사라져 있다."},
+    "THREE_MINUTES_DARK": {"title": "세 줄의 기록", "detail": "직접 본 것, 시스템 기록, 전해 들은 판단이 서로 다른 표식으로 남아 있다."},
+    "CONTINUITY": {"title": "평범한 흔적", "detail": "식사표의 컵 자국과 정원 일지의 마른 잎은 그대로 남아 있다."},
+    "THRESHOLD": {"title": "다시 잠든 자리", "detail": "공백 끝에는 장기수면 재개 기록이 있고, 그 뒤가 지금이다."}
 }
 static func reset_framing(case_id: String) -> Dictionary:
     return RESET_FRAMING.get(case_id, RESET_FRAMING["CALIBRATION"])

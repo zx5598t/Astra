@@ -1,7 +1,10 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **0.7.4** (PLAYBACK). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- Version **0.7.4** (PLAYBACK completion). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- PLAYBACK is a pacing/continuity pass: reuse `AstraGameSession`, `AstraStoryletScheduler`, consequence and chapter APIs. Do not add a Narrative/Story/Playback/Flow/Cutscene manager.
+- Strong-scene breathing room controls system interruption only; explicit player conversation/topic choice must remain available.
+- ACT II result residue must remain chapter-specific; do not let SECOND_WATCH–THRESHOLD fall back to CALIBRATION reset framing.
 - GitHub-first, CI-validated. Every release branch must pass `Godot CI` before it is promoted to `main`.
 
 ## Architecture rules (why 0.2.0 was a rebuild)

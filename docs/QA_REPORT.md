@@ -1,34 +1,32 @@
-# 0.7.4 PLAYBACK QA — 2026-09-22
+# 0.7.4 PLAYBACK FULL COMPLETION QA — 2026-09-22
 
-기준: `main @ 5056a1decd5086caaf4875ee1937ec2170c6a771` (ASTRA 0.7.3 HUMAN SIGNAL)  
-작업 브랜치: `feature/0.7.4-playback`
+기준: `main @ 1099b3b3efe12e655dae595011176a54c6847520` (PR #17 merge 이후의 부분 구현 0.7.4)  
+작업 브랜치: `feature/0.7.4-playback-completion`
 
-## 저장소 감사
+## 저장소 재감사
 
-- 시작 VERSION: **0.7.3**
-- save schema: **v11**
-- authored voyage/reactive library: 최신 기록 기준 **622개**
-- 0.7.1 / 0.7.2 / 0.7.3 visual mapping: 각 **5개 유지**
-- `docs/QA_REPORT.md` 최상단이 0.7.2로 남아 있던 문서 drift 확인
-- `AGENTS.md` current target이 0.7.2로 남아 있던 drift 확인
-- 신규 manager / 신규 persistent field / 신규 visual asset: **0**
+- 시작 VERSION: **0.7.4** — 이번 completion에서도 **0.7.5로 올리지 않음**
+- save schema: **v11 유지**
+- 기존 authored voyage/reactive library: **622개**, 이번 신규/삭제 authored scene **0 / 0**
+- art071 / art072 / art073: 각 **5개**, 총 15개 유지; 신규 visual asset **0**
+- 기존 scheduler의 continuation / focus-family budget / speaker exposure / consequence priority 재사용
+- 신규 manager **0**, 신규 persistent field **0**
 
-## PLAYBACK 변경
+## 실제 발견 및 수정
 
-실제 scheduler는 이미 continuation priority, focus-family soft budget, speaker exposure, consequence priority를 갖고 있었다. 따라서 새 NarrativeManager/CutsceneManager를 만들지 않았다.
+1. PR #17의 breathing-room guard는 의도대로 작지만 전용 회귀가 FOCUS probe 한 종류에 치우쳐 있어 MANDATORY/FOLLOWUP, player agency, consequence callback, chapter transition을 completion gate로 고정하지 못했다.
+2. `AstraVoyageContent.RESET_FRAMING`이 ACT I의 LAST_LIGHT까지만 존재해, ACT II의 SECOND_WATCH~THRESHOLD 결과 화면이 전부 CALIBRATION의 “같은 목소리/반창고” 문구로 fallback했다.
+3. Night/Briefing은 이미 즉시 consequence와 지속 social interpretation을 분리하는 구현이 있으므로 새 feedback system을 만들지 않고 회귀로 보호했다.
 
-확인된 pacing gap은 dynamic incident가 일반 action tick에서 due consequence 다음, 다른 ambient/deferred feedback보다 먼저 실행되어 방금 본 high-salience 장면 직후 관계없는 incident가 새 thread를 열 수 있다는 점이다. `AstraGameSession`의 player-visible `loop_focus_events`만 사용해 최근 MANDATORY/FOLLOWUP/FOCUS 장면 뒤 **1 action** 동안 unrelated dynamic incident를 늦춘다. explicit conversation/topic 선택은 이 guard를 거치지 않아 player agency를 유지한다.
+수정:
+- ACT II 6개 chapter에 각 장의 기존 canon에서 파생한 고유 reset residue 추가
+- `tests/playback_074_tests.gd`를 completion regression으로 확대
+- MANDATORY/FOLLOWUP/FOCUS breathing-room, 직접 conversation/topic, micro-arc continuation와 delayed consequence, LAST_LIGHT→SECOND_WATCH→THRESHOLD, ACT II reset residue, Night/Briefing 분리, v11 legacy slot hydration, 8인 authored exposure, art071/072/073 15개, FIRST IMPRESSION 독립성, player-safe selector를 검증
+- 기존 assertion / bot threshold 완화 없음
 
-## 검증
+## 검증 상태
 
-- 전용 회귀: `tests/playback_074_tests.gd`
-- save v11 유지
-- hidden Null / motive / raw relationship 값은 pacing selector 입력에 추가하지 않음
-- 0.7.1 ACT II visual 5 / 0.7.2 ACT I visual 5 / 0.7.3 HUMAN SIGNAL visual 5 유지
-- 기존 test assertion / threshold 완화 없음
-- Linux/Windows CI에 PLAYBACK 회귀 추가
-
-GitHub Actions와 main merge 결과는 PR 실행 후 실제 값으로 확정한다. 실행되지 않은 수치는 PASS로 기록하지 않는다.
+GitHub Actions의 Linux/Windows full gate는 completion PR에서 실제 실행값으로 갱신한다. 기존 CI는 `playback_074_tests.gd`를 양쪽 OS에서 직접 실행하므로 새 completion assertions도 동일 release gate에 포함된다. 실행 전 수치는 PASS로 기록하지 않는다.
 
 # 0.7.2 ACT I VISUAL STORY PASS QA — 2026-09-22
 
