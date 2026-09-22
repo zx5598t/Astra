@@ -2,7 +2,7 @@
 
 HUMAN TRACE의 선택→반응→story hook 흐름에 player-facing aftermath ownership과 source provenance를 명시했다. 중요한 residue는 ordinary optional content와 섞이지 않도록 continuation으로 표시하며, 반응은 dialogue, loop residue는 character action, 다음 mystery는 story hook이 각각 primary presentation을 맡는다. 새 relationship/memory/consequence 시스템은 추가하지 않았고 save schema v11을 유지한다.
 
-전용 HUMAN AFTERMATH regression은 authored handling reaction, source event, inactive speaker, hidden selector truth, continuation priority, save contract를 검사한다. 정식 Windows package/tag/GitHub Release는 사용자 정책에 따라 보류한다.
+전용 HUMAN AFTERMATH regression은 authored handling reaction, source event, inactive speaker, hidden selector truth, continuation priority, save contract를 검사한다. 500-loop simulation, human-readable editorial report, 1366×768/1920×1080 전용 UI smoke와 visual capture를 추가했다. RED_SHIFT residue의 행동 주체와 speaker/portrait가 어긋날 수 있던 callback presentation 1건을 수정했다. 정식 Windows package/tag/GitHub Release는 사용자 정책에 따라 보류한다.
 
 # 0.6.1 · HUMAN TRACE · 2026-09-22
 
