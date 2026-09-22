@@ -124,7 +124,8 @@ func simulate_500_loops() -> void:
         var case_id := str(IDS[run % IDS.size()])
         var beat := AstraVoyageContent.resolution_thread(case_id)
         var choices: Array = beat.get("choices",[])
-        var choice: Dictionary = choices[run % choices.size()]
+        var choice_index := int(run / IDS.size()) % choices.size()
+        var choice: Dictionary = choices[choice_index]
         var tag := str(choice.get("memory_tag",""))
         meaningful_choice_count += 1
 
@@ -168,7 +169,7 @@ func simulate_500_loops() -> void:
                 var arc_choices: Array = scene.get("choices",[])
                 if arc_choices.is_empty():
                     break
-                var arc_choice: Dictionary = arc_choices[run % arc_choices.size()]
+                var arc_choice: Dictionary = arc_choices[int(run / IDS.size()) % arc_choices.size()]
                 for event in AstraConsequenceModel.from_choice(arc_choice,str(scene.get("speaker","")),str(scene.get("id","")),4,run % 9,1):
                     if str(event.get("timing","")) == "NEXT_DAY":
                         next_day_consequence_exposure += 1
