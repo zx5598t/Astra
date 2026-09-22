@@ -1,14 +1,14 @@
-# ASTRA 0.6.0 — FIRST CONTACT / STORY LOOP
+# ASTRA 0.6.1 — HUMAN TRACE
 
 같은 배에서 깨어났지만, 우리는 서로 다른 목적지를 기억한다.  
 ASTRA의 탐사요원으로서 기록과 현장을 확인하고, 반복될 때마다 조금씩 달라지는 여덟 동료의 관계와 행동을 읽는 싱글플레이 SF 사회추리 미스터리입니다.
 
-0.6.0은 미완성 상태였던 FIRST CONTACT와 장별 story loop를 실제 런타임에 연결해 완성한 릴리스입니다. CALIBRATION의 4인 첫날과 직접 조사 1회, 순차 합류, 명시적 ballot 상태를 유지하면서 각 장의 situation → 직접 발견 → resolution/reaction → open question → next hook이 Result 요약 전에 실제 플레이로 이어집니다.
+0.6.1은 0.6.0의 직접 조사와 canonical resolution을 유지하면서, DEAD AIR부터 LAST LIGHT까지 발견한 사실을 **어떻게 다룰지** 플레이어가 결정하게 하는 개발 업데이트입니다. 각 장의 사실은 고정되지만 공개·보존·재검증·분리 같은 선택이 기존 Knowledge/DialogueMemory/Consequence 경로에 남고, 짧은 인간 반응과 다음 loop의 작은 흔적으로 돌아옵니다.
 
 기존 Living Crew / Knowledge / DecisionTrace / Routine / Consequence / Motive / Incident / CLEAR SIGNAL 선택기는 다시 만들지 않았습니다. Player != Null이며 Null을 전체 사건의 최종 원인으로 확정하지 않습니다. LAST_LIGHT는 서로 다른 내부적으로 유효한 history가 공존하고 현재 Null 사건만으로 그 모순을 설명할 수 없다는 기존 canon을 유지합니다.
 
 - [플레이 안내](START_HERE.md)
-- [0.6.0 변경 사항](docs/RELEASE_NOTES.md)
+- [0.6.1 변경 사항](docs/RELEASE_NOTES.md)
 - [설계와 저장 호환](docs/GAME_DESIGN.md)
 - [인물 설정](docs/CHARACTERS.md)
 - [이미지 출처와 변환](docs/ASSET_AUDIT.md)
@@ -58,7 +58,7 @@ NPC의 중요한 행동은 가능한 한 “왜”가 남습니다.
 - Crew Archive에는 STABLE 14 / OBSERVED 10 / ECHO 8, 총 **32개** observation이 있으며 8명 모두 4개씩입니다.
 - OBSERVED/ECHO는 실제 scene 또는 visible relationship milestone을 본 경우에만 해금합니다.
 - CALIBRATION에서는 observation을 정상 저장하되 연속 Codex 토스트는 띄우지 않습니다.
-- save schema는 **v10**이며 v9/legacy 저장은 안전하게 hydrate하고, resume 뒤 동일 Codex를 새 기록으로 다시 보고하지 않습니다.
+- save schema는 **v11**이며 v9/legacy 저장은 안전하게 hydrate하고, resume 뒤 동일 Codex를 새 기록으로 다시 보고하지 않습니다.
 
 현재 authored voyage/reactive scene library는 **608개**입니다.
 
