@@ -135,7 +135,7 @@ const EXTRA_PACKS := {
     "lyra":[
         ["routine","DAILY","lyra_leaf_sort","마렌은 마른 잎과 살아 있는 잎을 한 번에 버리지 않고 따로 나눈다.","죽은 부분이 있다고 전부 죽은 건 아니니까요.",{}],
         ["reaction","RELATIONSHIP","lyra_people_first","마렌은 배급표보다 먼저 사람 수를 다시 세고 당신에게 고개를 끄덕인다.","당신도 늘 사람부터 세네요.",{"requires":{"player_axis":"people_first"}}],
-        ["work","WORK","lyra_resource_trade","마렌은 의료 산소와 생태 순환량을 같은 표에 놓는다.","한쪽만 살리면 결국 둘 다 오래 못 가요.",{}],
+        ["work","WORK","lyra_resource_trade","마렌은 산소 배분량과 생태 순환량을 같은 표에 놓는다.","한쪽만 살리면 결국 둘 다 오래 못 가요.",{}],
         ["opinion","RELATIONSHIP","lyra_opinion_change","마렌은 의심하던 사람의 표본 처리 기록을 다시 읽고 표시 색을 바꾼다.","숨긴 건 맞지만, 망가뜨리려고 한 건 아닌 것 같아요.",{"opinion_change":{"reason":"new_evidence"}}]
     ]
 }
