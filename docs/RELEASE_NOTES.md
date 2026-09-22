@@ -1,3 +1,11 @@
+# ASTRA 0.7.2 — ACT I VISUAL STORY PASS
+
+ACT II의 다섯 이미지에 이어 ACT I에서 플레이어가 오래 기억해야 할 다섯 순간을 같은 비모달 stage 방식으로 시각화했다. CALIBRATION은 첫 각성의 정상적인 의료실과 비어 있는 실행 기록, ECHO_WARD는 소렌의 파형 검증, SILENT_ORBIT은 정지한 별과 정상적인 도착/정비 기록, RED_SHIFT는 오래된 시료 라벨과 현재의 필기 습관, LAST_LIGHT는 서로 모순되지만 각각 검증되는 기록을 한 화면에 잡는다.
+
+DEAD_AIR는 두 유효 목적지 문서라는 구도가 LAST_LIGHT와 겹쳐 이번 패스에서는 제외했다. 이미지는 결론을 대신하지 않으며, 대사는 그림을 낭독하지 않고 인물의 검증 과정과 판단을 담당한다. 기존 canon, ACT II, handling choice, progression, save schema v11은 그대로다.
+
+기술적으로는 0.7.1의 `AstraArt` 매핑과 `AstraVoyageView` stage를 재사용한다. 신규 컷신/아트/save 시스템은 없다. 0.7.0의 CI 직접 실행 누락 테스트도 함께 연결했으며 0.7.2 전용 visual story 회귀를 추가했다.
+
 # ASTRA 0.7.1 — VISUAL STORY PASS
 
 ## ACT II의 다섯 장면을 실제로 보이게
