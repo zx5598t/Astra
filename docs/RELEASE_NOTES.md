@@ -1,3 +1,11 @@
+# ASTRA 0.7.4 — PLAYBACK
+
+0.7.4는 콘텐츠 추가보다 **장면 사이의 연결**을 다듬는다. 기존 CLEAR SIGNAL scheduler가 가진 continuation/focus-family/speaker-exposure 규칙과 HUMAN TRACE/HUMAN AFTERMATH consequence 경로를 그대로 사용한다.
+
+실제 코드 감사에서 dynamic incident가 일반 action tick의 앞쪽에서 실행되어, 방금 본 중요한 관계·micro-arc·mandatory beat의 여운 직후 전혀 다른 사건이 끼어들 수 있는 경로를 확인했다. 새 시스템 대신 현재 loop의 player-visible focus event에 action index를 기록하고, 최근 high-salience beat 뒤 한 action 동안 unrelated incident만 늦춘다. 플레이어가 특정 인물을 찾아가거나 topic을 고르는 행동은 제한하지 않는다.
+
+신규 authored scene **0**, 삭제 scene **0**, 신규 visual asset **0**, save schema **v11 유지**. art071/art072/art073의 기존 15개 visual mapping은 유지한다.
+
 # ASTRA 0.7.2 — ACT I VISUAL STORY PASS
 
 ACT II의 다섯 이미지에 이어 ACT I에서 플레이어가 오래 기억해야 할 다섯 순간을 같은 비모달 stage 방식으로 시각화했다. CALIBRATION은 첫 각성의 정상적인 의료실과 비어 있는 실행 기록, ECHO_WARD는 소렌의 파형 검증, SILENT_ORBIT은 정지한 별과 정상적인 도착/정비 기록, RED_SHIFT는 오래된 시료 라벨과 현재의 필기 습관, LAST_LIGHT는 서로 모순되지만 각각 검증되는 기록을 한 화면에 잡는다.
