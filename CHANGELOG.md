@@ -1,9 +1,11 @@
 ## 0.7.4 — PLAYBACK
 
-- Audited the existing narrative scheduler and kept the 622-scene authored library intact rather than adding another manager or content layer.
-- Added a short player-visible pacing guard: a newly shown MANDATORY/FOLLOWUP/FOCUS beat gets one action of breathing room before an unrelated dynamic incident may open another thread. Explicit player-directed conversations remain available.
-- Added PLAYBACK regression coverage for pacing, save v11, player-safe selector context, and all 0.7.1/0.7.2/0.7.3 visual mappings.
-- Updated stale 0.7.2/0.7.3 project documentation. No new visual assets and no save migration.
+- Completed the PLAYBACK pass on top of the merged breathing-room guard without introducing a Narrative/Playback/Cutscene manager or new persistent state.
+- Preserved one-action breathing room after MANDATORY/FOLLOWUP/FOCUS beats while keeping player-directed conversation and explicit topic selection available.
+- Fixed ACT II result continuity: SECOND_WATCH through THRESHOLD now have chapter-specific reset residue instead of falling back to CALIBRATION's bandage framing.
+- Expanded `tests/playback_074_tests.gd` across strong-scene collision, player agency, continuation/consequence reachability, LAST_LIGHT → SECOND_WATCH → THRESHOLD progression, Night/Briefing feedback ownership, save-v11 legacy hydration, character exposure and all 15 existing visual mappings.
+- Kept the authored library, visual assets and save schema unchanged: new scenes **0**, deleted scenes **0**, new images **0**, new persistent fields **0**, save **v11**.
+- Existing campaign simulations, story/editorial regressions, UI smoke and bot gates remain CI-owned; thresholds were not weakened.
 
 ## 0.7.3 — HUMAN SIGNAL
 
