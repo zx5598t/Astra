@@ -26,6 +26,7 @@ func _initialize() -> void:
     if failures.is_empty():
         print("ASTRA 0.6.2 HUMAN AFTERMATH SIMULATION OK · %d checks" % checks)
         quit(0)
+        return
     printerr("ASTRA 0.6.2 HUMAN AFTERMATH SIMULATION FAILED · %d/%d" % [failures.size(),checks])
     quit(1)
 
