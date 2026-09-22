@@ -1,3 +1,35 @@
+# 0.7.4 PLAYBACK QA — 2026-09-22
+
+기준: `main @ 5056a1decd5086caaf4875ee1937ec2170c6a771` (ASTRA 0.7.3 HUMAN SIGNAL)  
+작업 브랜치: `feature/0.7.4-playback`
+
+## 저장소 감사
+
+- 시작 VERSION: **0.7.3**
+- save schema: **v11**
+- authored voyage/reactive library: 최신 기록 기준 **622개**
+- 0.7.1 / 0.7.2 / 0.7.3 visual mapping: 각 **5개 유지**
+- `docs/QA_REPORT.md` 최상단이 0.7.2로 남아 있던 문서 drift 확인
+- `AGENTS.md` current target이 0.7.2로 남아 있던 drift 확인
+- 신규 manager / 신규 persistent field / 신규 visual asset: **0**
+
+## PLAYBACK 변경
+
+실제 scheduler는 이미 continuation priority, focus-family soft budget, speaker exposure, consequence priority를 갖고 있었다. 따라서 새 NarrativeManager/CutsceneManager를 만들지 않았다.
+
+확인된 pacing gap은 dynamic incident가 일반 action tick에서 due consequence 다음, 다른 ambient/deferred feedback보다 먼저 실행되어 방금 본 high-salience 장면 직후 관계없는 incident가 새 thread를 열 수 있다는 점이다. `AstraGameSession`의 player-visible `loop_focus_events`만 사용해 최근 MANDATORY/FOLLOWUP/FOCUS 장면 뒤 **1 action** 동안 unrelated dynamic incident를 늦춘다. explicit conversation/topic 선택은 이 guard를 거치지 않아 player agency를 유지한다.
+
+## 검증
+
+- 전용 회귀: `tests/playback_074_tests.gd`
+- save v11 유지
+- hidden Null / motive / raw relationship 값은 pacing selector 입력에 추가하지 않음
+- 0.7.1 ACT II visual 5 / 0.7.2 ACT I visual 5 / 0.7.3 HUMAN SIGNAL visual 5 유지
+- 기존 test assertion / threshold 완화 없음
+- Linux/Windows CI에 PLAYBACK 회귀 추가
+
+GitHub Actions와 main merge 결과는 PR 실행 후 실제 값으로 확정한다. 실행되지 않은 수치는 PASS로 기록하지 않는다.
+
 # 0.7.2 ACT I VISUAL STORY PASS QA — 2026-09-22
 
 기준: `main @ 9519464c8916a2f9def58a641c81ffcca30037b1` (ASTRA 0.7.1)  

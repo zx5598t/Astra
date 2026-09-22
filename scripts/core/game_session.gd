@@ -4508,7 +4508,8 @@ func _record_focus_exposure(scene: Dictionary) -> void:
         "salience":level,
         "speaker":str(scene.get("speaker","")),
         "continuation":continuation,
-        "source":"visible_scene"
+        "source":"visible_scene",
+        "action_index":int(voyage.get("actions",0))
     }
     voyage["loop_focus_events"].append(event)
     while voyage["loop_focus_events"].size() > 24:
@@ -5391,7 +5392,21 @@ func _maybe_autonomous_beat(room: String) -> bool:
     })
     return true
 
+func _recent_focus_needs_space() -> bool:
+    # PLAYBACK: after a visible high-salience beat, let its authored
+    # continuation/consequence breathe before an unrelated incident opens a
+    # new thread. Explicit player conversations are never blocked by this.
+    var events: Array = voyage.get("loop_focus_events",[])
+    if events.is_empty():
+        return false
+    var last: Dictionary = events.back()
+    if str(last.get("salience","")) not in ["MANDATORY","FOLLOWUP","FOCUS"]:
+        return false
+    return int(voyage.get("actions",0)) - int(last.get("action_index",-99)) <= 1
+
 func _maybe_trigger_incident() -> bool:
+    if _recent_focus_needs_space():
+        return false
     var loop_index := int(voyage.get("loop",0))
     var actions := int(voyage.get("actions",0))
     if not AstraIncidentModel.should_trigger(seed_value,loop_index,case_id,actions,voyage.get("incident_history",[]),voyage.get("active_incident",{})):

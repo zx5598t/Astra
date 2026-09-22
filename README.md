@@ -1,3 +1,9 @@
+# ASTRA 0.7.4 — PLAYBACK
+
+0.7.4는 0.7.0~0.7.3에서 만든 스토리·관계·visual beat를 새 시스템으로 늘리지 않고 실제 플레이 흐름에서 더 자연스럽게 잇는 narrative-flow polish입니다. 기존 continuation/focus/consequence 경로를 유지하면서, 방금 본 중요한 장면 직후 관계없는 dynamic incident가 즉시 새 스레드를 여는 경우만 한 action 동안 늦춥니다. 플레이어가 직접 인물을 찾아가거나 질문을 고르는 행동은 막지 않습니다.
+
+authored library는 **622개**, save schema는 **v11**, 신규 visual asset은 **0개**입니다. 0.7.1/0.7.2/0.7.3 visual mapping은 그대로 유지합니다.
+
 # ASTRA 0.7.0 — SECOND WATCH
 
 ACT I(Day 1~7)을 다시 짜고 ACT II(Day 8~13)를 새로 만든 캠페인 구조 개편입니다. Day 1~3에는 선택적 pair/observation 장면이 전혀 없어 "7개의 큰 단서를 빠르게 확인했다"는 느낌이 강했던 문제를 CALIBRATION의 잘못된 trace_steps 버그 수정, 자기소개 대사 대신 화면 하단에 짧게 스쳐 가는 FIRST IMPRESSION 표시, Day 2~3 전용 pair/observation 장면으로 보강했습니다. LAST_LIGHT 이후에는 도착 이후에도 승무원들이 정상적으로 근무·생활한 기록을 조사하는 ACT II(SECOND WATCH · BORROWED DAYS · BLIND DECK · THREE MINUTES DARK · CONTINUITY · THRESHOLD)가 이어지며, 캠페인은 CALIBRATION 이후 12개 사건(기존 6 + 신규 6)으로 늘었습니다.

@@ -1,7 +1,7 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **0.7.2** (ACT I VISUAL STORY PASS). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- Version **0.7.4** (PLAYBACK). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
 - GitHub-first, CI-validated. Every release branch must pass `Godot CI` before it is promoted to `main`.
 
 ## Architecture rules (why 0.2.0 was a rebuild)
@@ -38,8 +38,8 @@ walking the node tree. Do not reintroduce that pattern.
 
 ## Balance guardrails
 `tests/run_tests.gd` plays hundreds of cases with three bots. Keep, across all cases/protocols:
-- deduction bot win rate ≥ random bot + 30 percentage points (currently ~87% vs ~16%)
-- passive bot (never investigates, always abstains) < 20% (currently ~10%)
+- deduction bot win rate ≥ random bot + 30 percentage points (latest recorded full gate: 79% vs 19%)
+- passive bot (never investigates, always abstains) < 20% (latest recorded full gate: 0%)
 If a change moves these, retune numbers in `game_session.gd` / `case_catalog.gd` rather than the tests.
 
 ## Before pushing
