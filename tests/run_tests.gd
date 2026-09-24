@@ -526,6 +526,24 @@ func test_meta_progress() -> void:
     check(meta.is_case_unlocked_for_slot("CALIBRATION", 1), "Stage 1 always open")
     check(not meta.is_case_unlocked_for_slot("DEAD_AIR", 1), "a fresh slot starts at Stage 1")
     check(AstraUnlocks.has(meta.unlocked_features(), "meeting"), "core meeting feature available")
+
+    # ATTEMPTED is statistics only. A loss must never become campaign progress.
+    meta.calibration_completed = true
+    meta.record_case_result("DEAD_AIR", "NONE", {"outcome": "LOSE"}, false)
+    check(int(meta.case_counts.get("DEAD_AIR", 0)) == 1, "a loss is retained as an attempt")
+    check(int(meta.case_wins.get("DEAD_AIR", 0)) == 0, "a loss is not a clear")
+    check(not meta.is_case_unlocked("GLASS_GARDEN"), "global archive cannot unlock the next Stage from a loss")
+    check(meta.completed_campaign_cases() == 0 and not meta.campaign_complete(), "campaign completion counts clears, not attempts")
+
+    meta.record_case_result("DEAD_AIR", "NONE", {"outcome": "WIN"}, false)
+    check(int(meta.case_wins.get("DEAD_AIR", 0)) == 1, "a win records a clear")
+    check(meta.is_case_unlocked("GLASS_GARDEN"), "a real clear unlocks the next historical replay")
+
+    var slot0 := {"chapters": ["CALIBRATION", "DEAD_AIR"]}
+    meta.set_voyage_memory_for_slot(0, slot0)
+    check(meta.is_case_unlocked_for_slot("GLASS_GARDEN", 0), "slot clear opens its next Stage")
+    check(not meta.is_case_unlocked_for_slot("GLASS_GARDEN", 1), "another slot never inherits that clear")
+    check(not meta.deep_unlocked(), "attempts and early clears never unlock Deep")
     DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 # ---------------------------------------------------------------- balance (§1–§3)
