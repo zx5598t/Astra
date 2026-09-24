@@ -197,7 +197,7 @@ func _run() -> void:
     # Archive uses slot-scoped progress and the core protocol list.
     app.active_slot = 1
     var archive_memory: Dictionary = app.meta.voyage_memory_for_slot(1)
-    archive_memory["chapters"] = AstraCaseCatalog.STAGE_ORDER.slice(0, 4)
+    archive_memory["chapters"] = AstraCaseCatalog.STAGE_ORDER.slice(0, 5)
     app.meta.set_voyage_memory_for_slot(1, archive_memory)
     app.show_archive()
     await _wait(3)
