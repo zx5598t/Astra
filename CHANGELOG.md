@@ -1,3 +1,14 @@
+## 0.8.1 — CONTAINMENT TUNING
+
+Stabilization pass over 0.8.0. No new mode, character, lore branch or protocol.
+
+- Archive protocol selection now reads the authoritative `AstraGameSession.protocols_for_stage()` list: Stage 5 auto-equips GUARDIAN, Stage 6 offers GUARDIAN/ANALYST, Stage 7+ adds EMPATH, and legacy AUDITOR is never player-facing.
+- Archive replay and campaign availability are slot-scoped. A failed attempt remains history/statistics but no longer counts as a clear or unlocks the next Stage.
+- Global historical completion uses `case_wins`; Deep completion is derived from actual campaign clears while preserving a legitimate old completion flag.
+- Removed known always-pass assertions (`or true`, `ties >= 0`) and added progression/Archive regressions.
+- Meeting evidence ownership is stricter: private records, witnesses and hearsay are substantially less likely to surface untouched, while facts the explorer first drew out are more likely to enter the public room. Public evidence telemetry records whether prior player contact existed.
+- Added a same-seed Stage 3 agency probe requiring player contact to change whether at least one fact reaches the public meeting.
+
 ## 0.8.0 — CONTAINMENT
 
 Social-deduction core rebuild. One Stage = one game; a Day is a round inside it.
