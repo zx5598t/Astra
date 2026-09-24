@@ -124,7 +124,7 @@ func test_death_ends_reconstruction() -> void:
     var scene := s.story_scene()
     check(str(scene.get("kind", "")) == "failure", "a failure scene plays before the result")
     var post_mortem: Dictionary = Dictionary(s.final_report.get("post_mortem", {}))
-    var post_mortem_built := not Array(post_mortem.get("danger", [])).is_empty() or not Array(post_mortem.get("vote_mistake", [])).is_empty() or not Array(post_mortem.get("missed_lead", [])).is_empty()
+    var post_mortem_built := not Array(post_mortem.get("danger", [])).is_empty() or not Array(post_mortem.get("innocent_lies", [])).is_empty() or not Array(post_mortem.get("missed_clues", [])).is_empty()
     check(post_mortem_built, "post-mortem contains concrete failure evidence")
     var memory := s.voyage_memory()
     var echo: Dictionary = memory.get("death_echo", {})
