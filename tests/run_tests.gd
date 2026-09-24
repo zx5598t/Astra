@@ -257,7 +257,7 @@ func test_vote_rules() -> void:
         check(s.vote_cast and s.isolations.size() == 1, "exactly one isolation")
         var text := str(s.last_vote.get("isolation_text", "")) + str(s.last_vote.get("aftermath", []))
         check(not ("Null" in text and "이었다" in text) and "NULL" not in text, "isolation reveals no role")
-    check(ties >= 0, "runoffs handled")
+    check(ties > 0, "deterministic vote fixtures exercise at least one runoff")
 
 # ---------------------------------------------------------------- night
 
@@ -525,7 +525,7 @@ func test_meta_progress() -> void:
     var meta := AstraMetaProgress.new(path)
     check(meta.is_case_unlocked_for_slot("CALIBRATION", 1), "Stage 1 always open")
     check(not meta.is_case_unlocked_for_slot("DEAD_AIR", 1), "a fresh slot starts at Stage 1")
-    check(AstraUnlocks.has(meta.unlocked_features(), "meeting") or true, "core features available")
+    check(AstraUnlocks.has(meta.unlocked_features(), "meeting"), "core meeting feature available")
     DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 # ---------------------------------------------------------------- balance (§1–§3)
