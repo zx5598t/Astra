@@ -1,10 +1,10 @@
-# ASTRA 0.8.0 — CONTAINMENT
+# ASTRA 0.8.1 — CONTAINMENT TUNING
 
 같은 배에서 깨어났지만, 우리는 서로 다른 목적지를 기억한다.
 ASTRA의 탐사요원이 되어 승무원 사이에 숨은 **Null**을 찾는 싱글플레이 SF 사회추리 게임입니다.
 사람과 이야기하고, 누구의 말이 어긋나는지 비교하고, 회의에서 따지고, 투표로 한 사람을 장기수면 포드에 재웁니다.
 
-0.8.0은 방·조사 지점 중심이던 게임을 **사람 중심의 사회추리**로 다시 만든 버전입니다.
+0.8.1은 0.8.0의 사람 중심 사회추리를 안정화하고, 실패/클리어 진행 상태와 회의 정보 공개의 플레이어 영향력을 바로잡은 버전입니다.
 
 - [플레이 안내](START_HERE.md) · [변경 사항](CHANGELOG.md) · [릴리스 노트](docs/RELEASE_NOTES.md)
 - [설계](docs/GAME_DESIGN.md) · [인물](docs/CHARACTERS.md) · [스토리 원장](docs/STORY_LEDGER_080.md) · [검증](docs/QA_REPORT.md)
@@ -30,7 +30,7 @@ STAGE가 끝나면 배의 기록이 다시 맞춰지고(재동기화) 모두가 
 
 ## 실행과 빌드
 
-Windows: `ASTRA-0.8.0-windows.zip`을 풀고 `ASTRA/ASTRA.exe`를 실행합니다. 선택형 AI를 켜지 않으면 네트워크가 필요 없습니다.
+Windows: `ASTRA-0.8.1-windows.zip`을 풀고 `ASTRA/ASTRA.exe`를 실행합니다. 선택형 AI를 켜지 않으면 네트워크가 필요 없습니다.
 
 소스에서:
 
