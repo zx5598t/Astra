@@ -22,6 +22,7 @@ func _initialize() -> void:
     test_residual_echo()
     test_echo_lines_never_name_roles()
     test_finale()
+    test_player_contact_changes_public_room()
     if failures.is_empty():
         print("ASTRA CAMPAIGN 080 TESTS OK · %d checks" % checks)
         quit()
@@ -122,7 +123,9 @@ func test_death_ends_reconstruction() -> void:
     check(str(s.final_report.get("title", "")) == "재구성 실패", "the result reads as a lost reconstruction")
     var scene := s.story_scene()
     check(str(scene.get("kind", "")) == "failure", "a failure scene plays before the result")
-    check(not Array(Dictionary(s.final_report.get("post_mortem", {})).get("danger", [])).is_empty() or true, "post-mortem is built")
+    var post_mortem: Dictionary = Dictionary(s.final_report.get("post_mortem", {}))
+    var post_mortem_built := not Array(post_mortem.get("danger", [])).is_empty() or not Array(post_mortem.get("innocent_lies", [])).is_empty() or not Array(post_mortem.get("missed_clues", [])).is_empty()
+    check(post_mortem_built, "post-mortem contains concrete failure evidence")
     var memory := s.voyage_memory()
     var echo: Dictionary = memory.get("death_echo", {})
     check(str(echo.get("case_id", "")) == "RED_SHIFT" and str(echo.get("line", "")) != "", "the explorer carries one line into the retry")
@@ -230,3 +233,42 @@ func test_echo_lines_never_name_roles() -> void:
     for pool in [AstraStageStory.RESYNC_LOST, AstraStageStory.RESYNC_ISOLATED, AstraStageStory.RESYNC_QUIET]:
         for text in pool:
             check("Null" not in str(text), "re-sync line never names a role")
+
+
+# Same Stage/seed, same meeting RNG. The only changed input is whether the
+# explorer first drew a private fragment out of its owner. That contact must
+# materially increase the chance that the fact reaches the public room.
+func test_player_contact_changes_public_room() -> void:
+    var found := false
+    for seed in range(100, 260):
+        var passive := AstraGameSession.new()
+        passive.setup("GLASS_GARDEN", seed)
+        passive.begin_voyage({})
+        _to_conversation(passive)
+        var packet: Dictionary = passive.current_packet()
+        var chosen: Dictionary = {}
+        for item in packet.get("fragments", []):
+            if str(item.get("type", "")) in ["SYSTEM_RECORD", "DIRECT_WITNESS", "HEARSAY"] and str(item.get("owner", "")) != "":
+                chosen = item
+                break
+        if chosen.is_empty():
+            continue
+        var active := AstraGameSession.new()
+        active.setup("GLASS_GARDEN", seed)
+        active.begin_voyage({})
+        _to_conversation(active)
+        var fact_id := str(chosen.get("id", ""))
+        AstraKnowledgeModel.share_with(active.flags, fact_id, "player", active.day, str(chosen.get("owner", "")))
+        active._mark_read(fact_id)
+        passive.advance()
+        active.advance()
+        passive._finish_meeting()
+        active._finish_meeting()
+        var passive_public := AstraKnowledgeModel.is_public(passive.flags, fact_id)
+        var active_public := AstraKnowledgeModel.is_public(active.flags, fact_id)
+        if active_public and not passive_public:
+            var active_log: Array = active.stage_state().get("public_log", [])
+            check(active_log.any(func(row): return str(row.get("fact", "")) == fact_id and bool(row.get("player_contact", false))), "public telemetry attributes the exposed fact to prior player contact")
+            found = true
+            break
+    check(found, "same-seed probe finds a Stage 3 room changed by player contact")

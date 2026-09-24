@@ -257,7 +257,7 @@ func test_vote_rules() -> void:
         check(s.vote_cast and s.isolations.size() == 1, "exactly one isolation")
         var text := str(s.last_vote.get("isolation_text", "")) + str(s.last_vote.get("aftermath", []))
         check(not ("Null" in text and "이었다" in text) and "NULL" not in text, "isolation reveals no role")
-    check(ties >= 0, "runoffs handled")
+    check(ties > 0, "deterministic vote fixtures exercise at least one runoff")
 
 # ---------------------------------------------------------------- night
 
@@ -382,17 +382,28 @@ func test_protocols() -> void:
         if str(option.get("intent", "")) == "EMPATHY":
             has_empathy = true
     check(has_empathy, "EMPATH offers one extra read")
-    var a := AstraGameSession.new()
-    a.setup("LAST_LIGHT", 5, "ANALYST")
-    _finish_morning(a)
-    a.advance()
-    for npc_id in a.living_ids().slice(0, 2):
-        a.ask(str(npc_id), "STATEMENT")
-    var items := a.analyst_candidates()
-    if items.size() >= 2:
-        var r := a.analyst_compare(str(items[0]["ref"]), str(items[1]["ref"]))
+    var analyst_fixture: AstraGameSession = null
+    var items: Array = []
+    for seed_value in range(5, 45):
+        var candidate := AstraGameSession.new()
+        candidate.setup("RED_SHIFT", seed_value, "ANALYST")
+        _finish_morning(candidate)
+        candidate.advance()
+        for npc_id in candidate.living_ids().slice(0, 3):
+            candidate.ask(str(npc_id), "STATEMENT")
+        var candidate_items := candidate.analyst_candidates()
+        if candidate_items.size() >= 2:
+            analyst_fixture = candidate
+            items = candidate_items
+            break
+    check(analyst_fixture != null, "bounded ANALYST fixture produces at least two candidates")
+    check(items.size() >= 2, "ANALYST candidate generation cannot silently skip comparison")
+    if analyst_fixture != null and items.size() >= 2:
+        check(analyst_fixture.analyst_available(), "ANALYST is available before the daily comparison")
+        var r := analyst_fixture.analyst_compare(str(items[0]["ref"]), str(items[1]["ref"]))
+        check(bool(r.get("ok", false)), "ANALYST comparison executes")
         check(str(r.get("result", "")) in ["CONSISTENT", "CONFLICT", "INSUFFICIENT"], "ANALYST returns one of three verdicts")
-        check(not a.analyst_available(), "ANALYST is once a Day")
+        check(not analyst_fixture.analyst_available(), "ANALYST is once a Day")
 
 # ---------------------------------------------------------------- story consistency (§79)
 
@@ -525,7 +536,25 @@ func test_meta_progress() -> void:
     var meta := AstraMetaProgress.new(path)
     check(meta.is_case_unlocked_for_slot("CALIBRATION", 1), "Stage 1 always open")
     check(not meta.is_case_unlocked_for_slot("DEAD_AIR", 1), "a fresh slot starts at Stage 1")
-    check(AstraUnlocks.has(meta.unlocked_features(), "meeting") or true, "core features available")
+    check(AstraUnlocks.has(meta.unlocked_features(), "meeting"), "core meeting feature available")
+
+    # ATTEMPTED is statistics only. A loss must never become campaign progress.
+    meta.calibration_completed = true
+    meta.record_case_result("DEAD_AIR", "NONE", {"outcome": "LOSE"}, false)
+    check(int(meta.case_counts.get("DEAD_AIR", 0)) == 1, "a loss is retained as an attempt")
+    check(int(meta.case_wins.get("DEAD_AIR", 0)) == 0, "a loss is not a clear")
+    check(not meta.is_case_unlocked("GLASS_GARDEN"), "global archive cannot unlock the next Stage from a loss")
+    check(meta.completed_campaign_cases() == 0 and not meta.campaign_complete(), "campaign completion counts clears, not attempts")
+
+    meta.record_case_result("DEAD_AIR", "NONE", {"outcome": "WIN"}, false)
+    check(int(meta.case_wins.get("DEAD_AIR", 0)) == 1, "a win records a clear")
+    check(meta.is_case_unlocked("GLASS_GARDEN"), "a real clear unlocks the next historical replay")
+
+    var slot0 := {"chapters": ["CALIBRATION", "DEAD_AIR"]}
+    meta.set_voyage_memory_for_slot(0, slot0)
+    check(meta.is_case_unlocked_for_slot("GLASS_GARDEN", 0), "slot clear opens its next Stage")
+    check(not meta.is_case_unlocked_for_slot("GLASS_GARDEN", 1), "another slot never inherits that clear")
+    check(not meta.deep_unlocked(), "attempts and early clears never unlock Deep")
     DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 # ---------------------------------------------------------------- balance (§1–§3)

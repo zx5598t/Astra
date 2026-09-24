@@ -342,7 +342,7 @@ func _new_stage_state() -> Dictionary:
         "night_log": [], "shield_used": false,
         "story_queue": [], "story_index": 0, "story_line": 0, "story_seen": [],
         "confessions": {}, "admissions": {}, "analyses": [],
-        "public_accusations": [], "public_defenses": [], "public_presented": [],
+        "public_accusations": [], "public_defenses": [], "public_presented": [], "public_log": [],
         "player_confronted": {}, "outcome_reason": "", "result_story": false,
         "recovered": []
     }
@@ -2592,7 +2592,9 @@ func _plan_threads() -> Array:
         if kind == "" or seen.has(kind):
             continue
         seen[kind] = true
-        scored.append({"kind": kind, "p": base + (0.4 if player_knows(id) else 0.0) + _pick("plan:" + kind) * 0.35})
+        # Player contact should make a thread more likely to enter the room; an
+        # untouched private fact must not receive the same agenda priority.
+        scored.append({"kind": kind, "p": base + (0.55 if player_knows(id) else -0.12) + _pick("plan:" + kind) * 0.28})
     if not Dictionary(current_packet().get("benign", {})).is_empty():
         scored.append({"kind": "benign", "p": 0.42 + _pick("plan:benign") * 0.35})
     if day > 1:
@@ -2716,7 +2718,7 @@ func _thread_hearsay() -> bool:
         if not original.is_empty() and AstraKnowledgeModel.is_public(flags, str(original.get("id", ""))) and not bool(item.get("distorted", false)):
             continue
         var told := player_knows(id)
-        var chance := 0.85 if told else float(MEETING_SHARE.get(owner, 0.6)) * 0.75
+        var chance := 0.92 if told else float(MEETING_SHARE.get(owner, 0.6)) * 0.45
         if _pick("heard:" + id) >= chance:
             continue
         _publish_fragment(item, owner)
@@ -2774,7 +2776,7 @@ func _thread_record() -> bool:
         # What the explorer never drew out mostly stays with its keeper; what
         # they already heard, the keeper is ready to stand behind in public.
         var told := player_knows(id)
-        var share_chance := 0.88 if told else float(MEETING_SHARE.get(owner, 0.6)) * 0.42
+        var share_chance := 0.94 if told else float(MEETING_SHARE.get(owner, 0.6)) * 0.24
         if _pick("share:%s:%s" % [owner, id]) >= share_chance:
             continue
         _publish_fragment(item, owner)
@@ -2825,7 +2827,7 @@ func _thread_witness() -> bool:
         if not is_alive(owner):
             continue
         var told := player_knows(id)
-        var chance := 0.85 if told else float({"sena":0.85, "rho":0.8, "lyra":0.75, "mira":0.65, "dax":0.55, "eli":0.55, "noa":0.45, "vale":0.4}.get(owner, 0.6)) * 0.45 * (0.5 if deep_modifier() == "STATIC" else 1.0)
+        var chance := 0.94 if told else float({"sena":0.85, "rho":0.8, "lyra":0.75, "mira":0.65, "dax":0.55, "eli":0.55, "noa":0.45, "vale":0.4}.get(owner, 0.6)) * 0.26 * (0.5 if deep_modifier() == "STATIC" else 1.0)
         if _pick("witness:" + id) >= chance:
             continue
         _publish_fragment(item, owner)
@@ -3210,6 +3212,11 @@ func _publish_fragment(item: Dictionary, speaker: String) -> void:
     AstraKnowledgeModel.make_public(flags, id, active_participants(), day, speaker)
     if id not in stage_state().get("public_presented", []):
         stage_state()["public_presented"].append(id)
+    var public_log: Array = stage_state().get("public_log", [])
+    public_log.append({"day": day, "fact": id, "speaker": speaker, "player_contact": player_knows(id)})
+    while public_log.size() > 80:
+        public_log.pop_front()
+    stage_state()["public_log"] = public_log
 
 func _mark_public_conflict(key: String, targets: Array, detail: String) -> void:
     if public_contradiction_keys.has(key):
