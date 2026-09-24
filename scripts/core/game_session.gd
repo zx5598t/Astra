@@ -342,7 +342,7 @@ func _new_stage_state() -> Dictionary:
         "night_log": [], "shield_used": false,
         "story_queue": [], "story_index": 0, "story_line": 0, "story_seen": [],
         "confessions": {}, "admissions": {}, "analyses": [],
-        "public_accusations": [], "public_defenses": [], "public_presented": [],
+        "public_accusations": [], "public_defenses": [], "public_presented": [], "public_log": [],
         "player_confronted": {}, "outcome_reason": "", "result_story": false,
         "recovered": []
     }
