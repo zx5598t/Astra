@@ -220,6 +220,12 @@ func _run() -> void:
         stage7_names.append(str(child.name))
     _expect("Protocol_GUARDIAN" in stage7_names and "Protocol_ANALYST" in stage7_names and "Protocol_EMPATH" in stage7_names, "Stage 7+ uses all authoritative protocols")
     _expect("Protocol_AUDITOR" not in stage7_names, "AUDITOR is never player-facing")
+    archive._select_case("RED_SHIFT")
+    await _wait(2)
+    app.selected_protocol = "ANALYST"
+    archive._start_selected()
+    await _wait(3)
+    _expect(app.session != null and app.session.case_id == "RED_SHIFT" and app.session.protocol == "ANALYST", "Archive starts the selected Stage with the selected protocol in the active slot")
     app.show_title()
     await _wait(2)
 
