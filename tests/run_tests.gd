@@ -382,17 +382,28 @@ func test_protocols() -> void:
         if str(option.get("intent", "")) == "EMPATHY":
             has_empathy = true
     check(has_empathy, "EMPATH offers one extra read")
-    var a := AstraGameSession.new()
-    a.setup("LAST_LIGHT", 5, "ANALYST")
-    _finish_morning(a)
-    a.advance()
-    for npc_id in a.living_ids().slice(0, 2):
-        a.ask(str(npc_id), "STATEMENT")
-    var items := a.analyst_candidates()
-    if items.size() >= 2:
-        var r := a.analyst_compare(str(items[0]["ref"]), str(items[1]["ref"]))
+    var analyst_fixture: AstraGameSession = null
+    var items: Array = []
+    for seed_value in range(5, 45):
+        var candidate := AstraGameSession.new()
+        candidate.setup("RED_SHIFT", seed_value, "ANALYST")
+        _finish_morning(candidate)
+        candidate.advance()
+        for npc_id in candidate.living_ids().slice(0, 3):
+            candidate.ask(str(npc_id), "STATEMENT")
+        var candidate_items := candidate.analyst_candidates()
+        if candidate_items.size() >= 2:
+            analyst_fixture = candidate
+            items = candidate_items
+            break
+    check(analyst_fixture != null, "bounded ANALYST fixture produces at least two candidates")
+    check(items.size() >= 2, "ANALYST candidate generation cannot silently skip comparison")
+    if analyst_fixture != null and items.size() >= 2:
+        check(analyst_fixture.analyst_available(), "ANALYST is available before the daily comparison")
+        var r := analyst_fixture.analyst_compare(str(items[0]["ref"]), str(items[1]["ref"]))
+        check(bool(r.get("ok", false)), "ANALYST comparison executes")
         check(str(r.get("result", "")) in ["CONSISTENT", "CONFLICT", "INSUFFICIENT"], "ANALYST returns one of three verdicts")
-        check(not a.analyst_available(), "ANALYST is once a Day")
+        check(not analyst_fixture.analyst_available(), "ANALYST is once a Day")
 
 # ---------------------------------------------------------------- story consistency (§79)
 
