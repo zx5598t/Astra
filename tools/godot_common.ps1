@@ -38,7 +38,13 @@ function Invoke-AstraGodot([string]$Executable, [string[]]$Arguments, [string]$L
     try { & $Executable @Arguments 2>&1 | Tee-Object -FilePath $LogPath | ForEach-Object { Write-Host "$_" }; $exitCode = $LASTEXITCODE }
     finally { $ErrorActionPreference = $oldPreference }
     $log = Get-Content -LiteralPath $LogPath -Raw
-    $hasScriptError = $log -match 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script|ERROR:'
+    $fatalPattern = 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script'
+    # Marker-gated SceneTree tests are judged like CI: an explicit PASS marker
+    # plus no script/parse/compile failure. Godot 4.7.2 can print renderer RID
+    # cleanup lines prefixed with ERROR on Windows even after quit(0); those are
+    # diagnostics, not a failed authored test. Import/export/boot remain strict.
+    if (-not $SuccessMarker) { $fatalPattern += '|ERROR:' }
+    $hasScriptError = $log -match $fatalPattern
     $hasSuccessMarker = -not $SuccessMarker -or $log -match [regex]::Escape($SuccessMarker)
     # SceneTree test runners can print their explicit success marker and call quit(0),
     # yet Godot 4.7.2 on Windows may still surface a non-zero native process code.
