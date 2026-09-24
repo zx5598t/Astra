@@ -113,7 +113,7 @@ const FEATURES := {
     "protocols": {
         "order": 5, "needs_cases": 4,
         "title": "조사 방식",
-        "blurb": "분석관·공감관·감사관 중에서 시작 방식을 고릅니다.",
+        "blurb": "가디언·애널리스트·엠패스 중 이 Stage에서 열린 방식을 고릅니다.",
         "flavor": "접속 방식을 직접 고를 수 있을 만큼 연결이 안정됐습니다."
     },
     "relationship_events": {
@@ -125,12 +125,12 @@ const FEATURES := {
 }
 
 # Order matters for the "what is next" hint on the title screen.
+# 0.8.1: only features that still have a real player-facing surface belong in
+# the reveal queue. Legacy ids stay in FEATURES for old-save/help compatibility,
+# but must never promise removed investigation systems to current players.
 const REVEAL_ORDER := [
-    "marks",
     "meeting", "claim_search", "difficulty_select", "case_select",
-    "vote", "night",
-    "private_talk", "theory_report", "night_tactics",
-    "hypothesis", "protocols", "relationship_events"
+    "vote", "night", "protocols", "relationship_events"
 ]
 
 static func unlocked(calibration_done: bool, campaign_cases_played: int) -> Array:
