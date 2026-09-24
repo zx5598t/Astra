@@ -12,7 +12,7 @@ var _continue: Button
 
 func setup(app_node) -> void:
     app = app_node
-    _selected_case = app.meta.recommended_case_id()
+    _selected_case = app.meta.recommended_case_id_for_slot(app.active_slot)
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     var root := AstraUI.vbox(18)
     var margin := AstraUI.margin(root, 36, 24, 36, 24)
@@ -96,7 +96,7 @@ func _refresh_cases() -> void:
     for case_id in AstraCaseCatalog.CAMPAIGN:
         number += 1
         var data := AstraCaseCatalog.get_case(str(case_id))
-        var unlocked: bool = app.meta.is_case_unlocked(str(case_id))
+        var unlocked: bool = app.meta.is_case_unlocked_for_slot(str(case_id), app.active_slot)
         var selected := _selected_case == str(case_id)
         var color := AstraUI.CYAN if selected else AstraUI.MUTED
         var button := AstraUI.button("%02d   %s\n        %s" % [number, str(data.get("title", "")), str(data.get("title_ko", "")) + ("  ·  잠김" if not unlocked else "")], color, 16, 69, selected)
@@ -115,7 +115,7 @@ func _refresh_detail() -> void:
     AstraUI.clear(_detail)
     var data := AstraCaseCatalog.get_case(_selected_case)
     var accent := Color(str(data.get("accent", "80e4db")))
-    var unlocked: bool = app.meta.is_case_unlocked(_selected_case)
+    var unlocked: bool = app.meta.is_case_unlocked_for_slot(_selected_case, app.active_slot)
     var hero := AstraUI.panel(AstraUI.PANEL, AstraUI.BORDER, 12, 0)
     hero.clip_contents = true
     hero.custom_minimum_size = Vector2(0, 210)
@@ -161,6 +161,7 @@ func _refresh_detail() -> void:
     dossier.add_child(AstraUI.label(_case_goal_line(_selected_case), 13, AstraUI.DIM, true))
     _continue.text = "%s   →" % ("STAGE 시작 · " + str(AstraVoyageContent.chapter(_selected_case).get("title", data.get("title_ko", ""))) if unlocked else app.meta.unlock_hint(_selected_case))
     _continue.disabled = not unlocked
+    _refresh_protocols()
 
 func _case_goal_line(case_id: String) -> String:
     match case_id:
@@ -179,12 +180,31 @@ func _case_goal_line(case_id: String) -> String:
     return str(AstraCaseCatalog.get_case(case_id).get("card_line", "기록과 기억이 어긋난 이유를 확인하세요."))
 
 func _refresh_protocols() -> void:
+    if _protocol_row == null:
+        return
     AstraUI.clear(_protocol_row)
-    for protocol_id in ["ANALYST", "EMPATH", "AUDITOR"]:
-        var spec: Dictionary = AstraGameSession.PROTOCOLS[protocol_id]
+    var stage := AstraCaseCatalog.stage_index(_selected_case)
+    var available: Array = AstraGameSession.protocols_for_stage(stage)
+    if available.is_empty():
+        app.selected_protocol = "NONE"
+        _protocol_row.visible = false
+        return
+    if available.size() == 1:
+        app.selected_protocol = str(available[0])
+        _protocol_row.visible = false
+        return
+    _protocol_row.visible = true
+    if app.selected_protocol not in available:
+        app.selected_protocol = str(available[0])
+    for raw_id in available:
+        var protocol_id := str(raw_id)
+        var spec: Dictionary = AstraGameSession.PROTOCOLS.get(protocol_id, {})
+        if spec.is_empty():
+            continue
         var selected: bool = app.selected_protocol == protocol_id
         var color := AstraUI.CYAN if selected else AstraUI.MUTED
         var card := AstraUI.button(("●  " if selected else "○  ") + str(spec.get("name", "")) + "   /   " + str(spec.get("summary", "")), color, 15, 60, selected)
+        card.name = "Protocol_" + protocol_id
         card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         card.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         card.tooltip_text = str(spec.get("detail", ""))
