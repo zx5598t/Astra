@@ -194,6 +194,35 @@ func _run() -> void:
     app.show_title()
     await _wait(3)
     _expect(app._current is AstraTitleScreen, "title screen")
+    # Archive uses slot-scoped progress and the core protocol list.
+    app.active_slot = 1
+    var archive_memory: Dictionary = app.meta.voyage_memory_for_slot(1)
+    archive_memory["chapters"] = AstraCaseCatalog.STAGE_ORDER.slice(0, 4)
+    app.meta.set_voyage_memory_for_slot(1, archive_memory)
+    app.show_archive()
+    await _wait(3)
+    _expect(app._current is AstraArchiveScreen, "Archive screen instantiates")
+    var archive: AstraArchiveScreen = app._current
+    archive._select_case("SILENT_ORBIT")
+    await _wait(2)
+    _expect(app.selected_protocol == "GUARDIAN" and not archive._protocol_row.visible, "Stage 5 auto-selects its single Guardian protocol")
+    archive._select_case("RED_SHIFT")
+    await _wait(2)
+    var stage6_names: Array = []
+    for child in archive._protocol_row.get_children():
+        stage6_names.append(str(child.name))
+    _expect("Protocol_GUARDIAN" in stage6_names and "Protocol_ANALYST" in stage6_names, "Stage 6 offers Guardian and Analyst")
+    _expect("Protocol_EMPATH" not in stage6_names and "Protocol_AUDITOR" not in stage6_names, "Stage 6 hides locked and legacy protocols")
+    archive._select_case("LAST_LIGHT")
+    await _wait(2)
+    var stage7_names: Array = []
+    for child in archive._protocol_row.get_children():
+        stage7_names.append(str(child.name))
+    _expect("Protocol_GUARDIAN" in stage7_names and "Protocol_ANALYST" in stage7_names and "Protocol_EMPATH" in stage7_names, "Stage 7+ uses all authoritative protocols")
+    _expect("Protocol_AUDITOR" not in stage7_names, "AUDITOR is never player-facing")
+    app.show_title()
+    await _wait(2)
+
     # A slot that has cleared Part I opens Stage 5 (slot-scoped progress).
     var memory: Dictionary = app.meta.voyage_memory_for_slot(1)
     memory["chapters"] = AstraCaseCatalog.STAGE_ORDER.slice(0, 4)
