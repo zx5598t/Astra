@@ -253,9 +253,7 @@ func _crew_archive() -> void:
 # With three slots a new case does not overwrite anything unless all three are
 # full, so the old "this will erase your progress" warning is gone.
 func _start_selected() -> void:
-    var free_slot: int = app.first_free_slot()
-    if free_slot >= 0:
-        app.start_case(_selected_case, app.selected_protocol, free_slot)
-        return
-    var text := AstraUI.prose("저장 슬롯 세 개가 모두 차 있습니다. 타이틀 화면에서 자리를 하나 비우거나 덮어쓸 자리를 고르세요.", AstraUI.T_BODY, AstraUI.TEXT)
-    AstraModal.open(app.overlay_root(), "빈 저장 자리가 없습니다", text, [["타이틀로", AstraUI.CYAN]], func(_choice: int): app.show_title(), 560.0)
+    # Archive is a replay surface for the active campaign slot. Never route a
+    # replay through an unrelated free slot, which would bypass slot progress.
+    if app.meta.is_case_unlocked_for_slot(_selected_case, app.active_slot):
+        app.start_case(_selected_case, app.selected_protocol, app.active_slot)
