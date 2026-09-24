@@ -83,6 +83,7 @@ func setup(app_node) -> void:
         begin.pressed.connect(_begin_first_run)
         menu.add_child(begin)
         menu.add_child(AstraUI.prose("당신은 ASTRA의 탐사요원입니다. 네 명의 동료가 깨어 있고, 네 명은 아직 잠들어 있습니다.", AstraUI.T_META, AstraUI.MUTED))
+        _deep_entry(menu)
         if has_save:
             menu.add_child(_slot_section(slots))
     else:
@@ -90,15 +91,31 @@ func setup(app_node) -> void:
             menu.add_child(AstraUI.label("이어하기", AstraUI.T_HEAD, AstraUI.CYAN))
             menu.add_child(_slot_section(slots))
             menu.add_child(AstraUI.label("", AstraUI.T_META, AstraUI.DIM))
-        var fresh := AstraUI.primary_button("새로 시작   →")
+        var fresh := AstraUI.primary_button("새 캠페인   →" if has_save else "새로 시작   →")
         fresh.pressed.connect(_begin_new_case)
         menu.add_child(fresh)
-        menu.add_child(AstraUI.prose("다음 항해 기록을 따라갑니다. 지난번에 나눈 마음은 작은 행동으로 남습니다.", AstraUI.T_META, AstraUI.MUTED))
+        menu.add_child(AstraUI.prose("STAGE 1부터 새로 시작합니다. 네 사람이 먼저 깨어 있습니다.", AstraUI.T_META, AstraUI.MUTED))
         if app.meta.has_feature("case_select"):
-            var archive := AstraUI.secondary_button("사건 선택 · 항해 기록")
+            var archive := AstraUI.secondary_button("지난 STAGE 다시 하기")
             archive.pressed.connect(func(): app.show_archive())
             menu.add_child(archive)
+        _deep_entry(menu)
         menu.add_child(_progress_strip())
+
+# DEEP RECONSTRUCTION: always visible, dimmed and locked until the campaign is
+# complete (the unlock is archive-wide, not per slot).
+func _deep_entry(menu: VBoxContainer) -> void:
+    var deep := AstraUI.secondary_button("심층 재구성  ·  DEEP RECONSTRUCTION", AstraUI.VIOLET)
+    if app.meta.deep_unlocked():
+        deep.pressed.connect(func(): app.show_deep())
+        menu.add_child(deep)
+        return
+    deep.disabled = true
+    deep.text = "잠김 · 심층 재구성"
+    deep.tooltip_text = "캠페인을 완료하면 개방됩니다."
+    deep.modulate = Color(1, 1, 1, 0.55)
+    menu.add_child(deep)
+    menu.add_child(AstraUI.label("캠페인을 완료하면 개방됩니다.", AstraUI.T_META, AstraUI.DIM))
 
 # Three rows, always three, so the player can see how many saves they have.
 func _slot_section(slots: Array) -> Control:
@@ -126,9 +143,12 @@ func _slot_row(row: Dictionary) -> Control:
     if empty:
         text.add_child(AstraUI.label("비어 있음", AstraUI.T_BODY, AstraUI.DIM))
     else:
-        var case_data := AstraCaseCatalog.get_case(str(info.get("case_id", "")))
-        text.add_child(AstraUI.label(str(case_data.get("title_ko", info.get("case_id", ""))), AstraUI.T_BODY, AstraUI.TEXT))
-        var detail := "%d일째 · %s" % [int(info.get("day", 1)), AstraGameSession.PHASE_LABELS.get(str(info.get("phase", "")), "")]
+        var saved_id := str(info.get("case_id", ""))
+        var title := str(AstraVoyageContent.chapter(saved_id).get("title", AstraCaseCatalog.get_case(saved_id).get("title_ko", saved_id)))
+        text.add_child(AstraUI.label("STAGE %d · %s" % [AstraCaseCatalog.stage_index(saved_id), title], AstraUI.T_BODY, AstraUI.TEXT))
+        var detail := "DAY %d · %s" % [int(info.get("day", 1)), AstraGameSession.PHASE_LABELS.get(str(info.get("phase", "")), "")]
+        if bool(info.get("pending", false)):
+            detail = "이전 STAGE 완료 · 다음 STAGE 준비됨"
         var saved_at := str(info.get("saved_at", ""))
         if saved_at != "":
             # "2026-09-19T14:20:31" reads better as a date and a time, and the
@@ -143,13 +163,13 @@ func _slot_row(row: Dictionary) -> Control:
     var load_button := AstraUI.button("이어하기", AstraUI.CYAN, AstraUI.T_UI, 40, true)
     load_button.pressed.connect(func(): app.resume_case(slot))
     line.add_child(load_button)
-    var erase := AstraUI.button("삭제", AstraUI.MUTED, AstraUI.T_META, 40)
+    var erase := AstraUI.button("캠페인 삭제", AstraUI.MUTED, AstraUI.T_META, 40)
     erase.pressed.connect(_confirm_erase.bind(slot))
     line.add_child(erase)
     return card
 
 func _confirm_erase(slot: int) -> void:
-    var body := AstraUI.prose("%d번 저장을 지웁니다. 되돌릴 수 없습니다. 완료한 사건 기록은 그대로 남습니다." % (slot + 1), AstraUI.T_BODY, AstraUI.TEXT)
+    var body := AstraUI.prose("%d번 캠페인을 지웁니다. 진행 중인 Stage와 이 슬롯의 진행도가 사라지고, 되돌릴 수 없습니다." % (slot + 1), AstraUI.T_BODY, AstraUI.TEXT)
     var handler := func(choice: int) -> void:
         if choice == 1:
             AstraGameSession.delete_snapshot(app.slot_path(slot))
@@ -167,7 +187,7 @@ func _progress_strip() -> Control:
     var card := AstraUI.panel(Color(0.02, 0.05, 0.09, 0.85), Color(AstraUI.CYAN, 0.25), 10, 12)
     var box := AstraUI.vbox(6)
     card.add_child(box)
-    box.add_child(AstraUI.label("확인한 항해 기록  %d / %d" % [recovered, total], AstraUI.T_META, AstraUI.CYAN))
+    box.add_child(AstraUI.label("클리어한 STAGE  %d / %d" % [recovered, total], AstraUI.T_META, AstraUI.CYAN))
     var blocks := AstraUI.hbox(4)
     box.add_child(blocks)
     for index in range(total):
@@ -184,24 +204,25 @@ func _progress_strip() -> Control:
 func _begin_first_run() -> void:
     app.start_new_campaign(app.first_free_slot())
 
+# NEW GAME always means a new campaign: Stage 1, Day 1, four people awake.
 func _begin_new_case() -> void:
     var free_slot: int = app.first_free_slot()
     if free_slot >= 0:
-        app.start_case(app.meta.recommended_case_id_for_slot(free_slot), app.selected_protocol, free_slot)
+        app.start_new_campaign(free_slot)
         return
     # All three slots are in use, so the player has to say which one to reuse.
     var box := AstraUI.vbox(8)
-    box.add_child(AstraUI.prose("저장 슬롯 세 개가 모두 차 있습니다. 어느 자리에 새 사건을 넣을까요?", AstraUI.T_BODY, AstraUI.TEXT))
+    box.add_child(AstraUI.prose("캠페인 슬롯 세 개가 모두 차 있습니다. 어느 자리를 새 캠페인으로 덮어쓸까요?", AstraUI.T_BODY, AstraUI.TEXT))
     var holder := []
     for row in app.slot_infos():
         var slot := int(row["slot"])
         var info: Dictionary = row["info"]
         var case_data := AstraCaseCatalog.get_case(str(info.get("case_id", "")))
-        var button := AstraUI.button("%d번 · %s · %d일째" % [slot + 1, str(case_data.get("title_ko", "")), int(info.get("day", 1))], AstraUI.GOLD, AstraUI.T_UI, 46)
+        var button := AstraUI.button("%d번 · STAGE %d · DAY %d" % [slot + 1, AstraCaseCatalog.stage_index(str(info.get("case_id", ""))), int(info.get("day", 1))], AstraUI.GOLD, AstraUI.T_UI, 46)
         button.pressed.connect(func():
             if not holder.is_empty() and is_instance_valid(holder[0]):
                 holder[0].close(-1)
-            app.start_case(app.meta.recommended_case_id_for_slot(slot), app.selected_protocol, slot)
+            app.start_new_campaign(slot)
         )
         box.add_child(button)
     holder.append(AstraModal.open(app.overlay_root(), "덮어쓸 자리를 고르세요", box, [["취소", AstraUI.MUTED]], Callable(), 560.0))

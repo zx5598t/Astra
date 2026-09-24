@@ -33,6 +33,7 @@ func _init() -> void:
     _art = TextureRect.new()
     _art.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     _art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    _art.material = AstraUI.defringe_material()
     # FIT, not COVER. The cast art is 3:4 and the stage is wider than it is
     # tall, so covering cropped the head and the hands off — the two parts of a
     # half-body portrait worth showing. Fitting leaves margin instead.

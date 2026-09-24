@@ -8,10 +8,30 @@ const ORDER := ["mira", "rho", "dax", "noa", "sena", "vale", "eli", "lyra"]
 const ASSET_IDS := {"mira":"mira", "rho":"jun", "dax":"daren", "noa":"noa", "sena":"sena", "vale":"soren", "eli":"lucan", "lyra":"maren"}
 const INITIAL := ["mira", "rho", "dax", "noa"]
 const AWAKENING_ORDER := ["sena", "vale", "eli", "lyra"]
-const JOIN_DAY := {"mira":1,"rho":1,"dax":1,"noa":1,"sena":2,"vale":3,"eli":4,"lyra":5}
+# 0.8.0: a crew member joins when a new Stage begins, never because a Day
+# passed inside a Stage. JOIN_DAY is the legacy name of the same table (it always
+# meant chapter order).
+const JOIN_STAGE := {"mira":1,"rho":1,"dax":1,"noa":1,"sena":2,"vale":3,"eli":4,"lyra":5}
+const JOIN_DAY := JOIN_STAGE
 
+static func joined_on_stage(stage_index: int) -> Array:
+    return ORDER.filter(func(id): return int(JOIN_STAGE[id]) <= stage_index)
+
+# Legacy wrapper: "campaign day" was the Stage index.
 static func joined_on_day(campaign_day: int) -> Array:
-    return ORDER.filter(func(id): return int(JOIN_DAY[id]) <= campaign_day)
+    return joined_on_stage(campaign_day)
+
+# What each person can read first-hand. A system record is always owned by a
+# person (the one whose work produces it); a backup owner can recover it if the
+# first owner is gone. Used by the Day Packet generator and by conversation.
+const RECORD_DOMAIN := {"noa":"terminal", "sena":"door", "rho":"power", "vale":"comms", "eli":"motion", "mira":"vitals", "lyra":"environment", "dax":"system"}
+const RECORD_BACKUP := {"terminal":"dax", "door":"noa", "power":"dax", "comms":"noa", "motion":"sena", "vitals":"lyra", "environment":"mira", "system":"noa"}
+
+static func record_owner(record_type: String) -> String:
+    for npc_id in RECORD_DOMAIN:
+        if str(RECORD_DOMAIN[npc_id]) == record_type:
+            return str(npc_id)
+    return ""
 
 # Physical / procedural traits used by trace clues. Every crew member is
 # uniquely identified by at least one pair of categories, so each saboteur
@@ -55,8 +75,28 @@ const TRAIT_CATEGORIES := {
             "t7": {"label": "신형 T-7 단말", "members": ["mira", "sena", "dax"]},
             "custom": {"label": "개조 단말", "members": ["eli", "noa"]}
         }
+    },
+    # 0.8.0: coarser traits, so a small room still narrows to two or three
+    # people instead of naming one. What a passer-by sees from behind, and
+    # which cabin wing a corridor sensor reads from a crew tag.
+    "hair": {
+        "label": "머리 길이",
+        "groups": {
+            "long": {"label": "긴 머리", "members": ["mira", "sena", "lyra"]},
+            "short": {"label": "짧은 머리", "members": ["rho", "dax", "noa", "vale", "eli"]}
+        }
+    },
+    "wing": {
+        "label": "선실 구역",
+        "groups": {
+            "port": {"label": "좌현 선실 구역", "members": ["mira", "noa", "vale", "lyra"]},
+            "starboard": {"label": "우현 선실 구역", "members": ["rho", "dax", "sena", "eli"]}
+        }
     }
 }
+# The trait set the 0.4.x-0.7.x trace generator was built on; the old
+# generator keeps iterating exactly these so its output does not shift.
+const LEGACY_TRAIT_KEYS := ["clearance", "fiber", "shift", "hand", "terminal"]
 
 const CREW := {
     "mira": {
@@ -309,8 +349,9 @@ const EXPRESSION_ALIASES := {"calm":"neutral", "warm":"smile", "uneasy":"suspici
 static func asset_id(npc_id: String) -> String:
     return str(ASSET_IDS.get(npc_id, ""))
 
-# Known damaged expression crops fall back to the same character's intact neutral portrait.
-const DAMAGED_CROPS := {"vale":["angry","sad","shocked","suspicious","tired"],"dax":["tired"]}
+# 0.8.0 re-cut every damaged expression (tools/import_080_art.gd); nothing is
+# known broken any more. Kept as an empty table for the fallback path below.
+const DAMAGED_CROPS := {}
 
 static func portrait_path(npc_id: String, expression: String = "neutral") -> String:
     if not CREW.has(npc_id):
@@ -318,8 +359,6 @@ static func portrait_path(npc_id: String, expression: String = "neutral") -> Str
     var mood := str(EXPRESSION_ALIASES.get(expression, expression))
     if mood in DAMAGED_CROPS.get(npc_id,[]):
         mood = "neutral"
-    if npc_id == "lyra" and mood == "neutral":
-        return "res://assets/art050/portraits/maren.webp"
     var path := "res://assets/art050/expressions/%s/%s.webp" % [asset_id(npc_id), mood]
     return path if ResourceLoader.exists(path) else "res://assets/art050/portraits/%s.webp" % asset_id(npc_id)
 
@@ -370,3 +409,85 @@ static func dot_path(npc_id: String) -> String:
 
 static func sprite_path(npc_id: String) -> String:
     return dot_path(npc_id)
+
+# ---------------------------------------------------------------- 0.8.0 persona
+#
+# Seven axes per person (§9–§12 of the 0.8.0 final pass). The numeric side of
+# the same personalities lives in AstraDecisionModel.JUDGEMENT; the words that
+# carry them live in AstraSocialLines. Nothing here is shown as a stat.
+#   speech / judgement / need / under_pressure / flaw / contradiction / habit
+const PERSONA := {
+    "mira": {"speech":"짧은 해요체. 불안할수록 목소리가 더 차분해진다.",
+        "judgement":"확인된 것과 확인되지 않은 것을 먼저 나눈다.",
+        "need":"아무도 필요 없이 희생되지 않는 것.",
+        "under_pressure":"감정을 숨기고 사실 확인을 요구한다.",
+        "flaw":"확실하지 않으면 격리를 끝까지 미루다 결정을 남에게 넘긴다.",
+        "contradiction":"모두를 지키겠다면서 자기 상태는 늘 마지막에 본다.",
+        "habit":"대화 전에 상대 안색부터 살피고 물부터 권한다."},
+    "rho": {"speech":"밝고 빠른 반말. 위험하면 농담이 사라진다.",
+        "judgement":"기계가 물리적으로 그렇게 움직일 수 있는지부터 본다.",
+        "need":"고장 난 것과 동료를 같이 돌보는 것.",
+        "under_pressure":"말이 짧아지고 손이 먼저 움직인다.",
+        "flaw":"빨리 움직이다 첫날 오판하고, 친한 사람 말에 쉽게 기운다.",
+        "contradiction":"가벼운 태도 뒤에 책임 회피가 아니라 두려움을 숨긴다.",
+        "habit":"기계 얘기를 할 때 공구나 패널을 톡톡 두드린다."},
+    "dax": {"speech":"건조한 반말과 한 박자 늦은 유머.",
+        "judgement":"조건을 정리해 변수를 줄이고, 틀렸으면 인정한다.",
+        "need":"판단의 오류를 함께 확인하는 것.",
+        "under_pressure":"같은 계산을 처음부터 다시 한다.",
+        "flaw":"논리로 설명되지 않는 감정적 행동을 과소평가한다.",
+        "contradiction":"'모르면 모른다'고 하면서 자기 설계는 좀처럼 의심하지 않는다.",
+        "habit":"대답 전에 조건부터 번호 매겨 말한다. 식은 커피를 그냥 마신다."},
+    "noa": {"speech":"짧은 해요체. 남의 문장을 그대로 인용한다.",
+        "judgement":"누가 언제 말을 바꿨는지를 가장 무겁게 본다.",
+        "need":"사실이 보존되는 것.",
+        "under_pressure":"침묵이 길어지지만 확인된 문장만 말한다.",
+        "flaw":"기록을 너무 믿어서, 맥락 없는 기록에 끌려간다.",
+        "contradiction":"모든 걸 적지만 자기 이야기는 적지 않는다.",
+        "habit":"누가 말하기 전에 시각부터 적고, 방금 들은 문장을 무심코 되풀이한다."},
+    "sena": {"speech":"자신감 있는 반말. 위급하면 명령조가 된다.",
+        "judgement":"그 시간에 누가 혼자 움직였는지, 위험이 어디서 오는지를 본다.",
+        "need":"아무도 다치지 않게 앞에 서는 것.",
+        "under_pressure":"상대보다 먼저 위험한 쪽으로 움직인다.",
+        "flaw":"위험을 느끼면 과잉 대응하고, 책임감 때문에 누군가를 과하게 감싼다.",
+        "contradiction":"다 혼자 막으려 하면서 남에게 맡기는 걸 가장 두려워한다.",
+        "habit":"들어오자마자 문 쪽과 사람들 위치를 확인한다."},
+    "vale": {"speech":"차분하고 조용한 해요체. 신호 얘기가 나오면 길어진다.",
+        "judgement":"말의 내용보다 전달 경로와 말 사이의 간격을 기억한다.",
+        "need":"들은 것의 출처를 확인하는 것.",
+        "under_pressure":"대답을 미루고 같은 구간을 다시 듣는다.",
+        "flaw":"확신이 들 때까지 말을 너무 아껴서, 알고도 늦게 말한다.",
+        "contradiction":"사람보다 신호가 편하다면서 목소리의 떨림은 누구보다 먼저 알아챈다.",
+        "habit":"말하기 전에 한쪽 이어폰을 빼고 잠깐 듣는다."},
+    "eli": {"speech":"절제된 반말. 흥분해도 짧고 구체적이다.",
+        "judgement":"그 시각에 그 위치에 있을 수 있었는지, 동선의 물리적 정합성을 본다.",
+        "need":"항로 선택의 책임을 혼자 감당하는 것.",
+        "under_pressure":"말이 더 짧아지고 위험한 곳에 직접 간다.",
+        "flaw":"사람의 감정보다 물리적 정합성을 우선해서 사정을 놓친다.",
+        "contradiction":"혼자가 편하다면서 동료가 위험하면 가장 먼저 움직인다.",
+        "habit":"방에 들어오면 출구와 시계부터 확인하고, 시각 기준을 자기 시계로 맞춘다."},
+    "lyra": {"speech":"밝고 따뜻한 해요체. 자원을 나눌 때는 단호하다.",
+        "judgement":"사람의 말보다 평소와 달라진 행동에 먼저 반응한다.",
+        "need":"한정된 것으로 살아 있는 것을 지키는 것.",
+        "under_pressure":"포기할 것을 직접 고르고 책임진다.",
+        "flaw":"평소 모습을 믿는 탓에 친한 사람의 변화를 늦게 받아들인다.",
+        "contradiction":"냉정한 생존 판단을 하면서 폐기될 모종에 몰래 물을 준다.",
+        "habit":"조용한 사람에게 먼저 말을 걸고, 새로 난 잎을 보여 준다."}
+}
+
+# Where each person carries the Stage (§14). major = the Stage is about them;
+# secondary = they carry a thread; relationship = a pair Stage; mystery = they
+# move the larger ASTRA question.
+const SPOTLIGHT := {
+    "mira": {"major":["CALIBRATION"], "secondary":["CONTINUITY", "THREE_MINUTES_DARK"], "relationship":["DEAD_AIR"], "mystery":["SILENT_ORBIT", "THRESHOLD"]},
+    "rho": {"major":["BORROWED_DAYS"], "secondary":["LAST_LIGHT"], "relationship":["GLASS_GARDEN", "RED_SHIFT"], "mystery":["CALIBRATION"]},
+    "dax": {"major":["LAST_LIGHT"], "secondary":["CALIBRATION", "BLIND_DECK"], "relationship":["SILENT_ORBIT"], "mystery":["THRESHOLD", "ECHO_WARD"]},
+    "noa": {"major":["SECOND_WATCH"], "secondary":["CALIBRATION", "THREE_MINUTES_DARK"], "relationship":["BORROWED_DAYS"], "mystery":["DEAD_AIR", "RED_SHIFT", "THRESHOLD"]},
+    "sena": {"major":["DEAD_AIR"], "secondary":["SECOND_WATCH"], "relationship":["GLASS_GARDEN", "BORROWED_DAYS"], "mystery":["RED_SHIFT"]},
+    "vale": {"major":["ECHO_WARD"], "secondary":["GLASS_GARDEN", "THREE_MINUTES_DARK"], "relationship":["BLIND_DECK"], "mystery":["ECHO_WARD"]},
+    "eli": {"major":["BLIND_DECK"], "secondary":["ECHO_WARD", "THREE_MINUTES_DARK"], "relationship":["SILENT_ORBIT"], "mystery":["SILENT_ORBIT"]},
+    "lyra": {"major":["RED_SHIFT"], "secondary":["SILENT_ORBIT", "CONTINUITY"], "relationship":["CONTINUITY"], "mystery":["RED_SHIFT"]}
+}
+
+static func persona(npc_id: String) -> Dictionary:
+    return Dictionary(PERSONA.get(npc_id, {})).duplicate()

@@ -39,8 +39,8 @@ func setup(app_node) -> void:
     var nav := AstraUI.vbox(10)
     nav.custom_minimum_size = Vector2(276, 0)
     body.add_child(nav)
-    nav.add_child(AstraUI.section("항해 기록  /  CAMPAIGN"))
-    nav.add_child(AstraUI.label("사건을 선택하고, 진실에 한 걸음 더.", 13, AstraUI.MUTED))
+    nav.add_child(AstraUI.section("지난 STAGE  /  CAMPAIGN"))
+    nav.add_child(AstraUI.label("클리어한 STAGE를 다시 할 수 있습니다.", AstraUI.T_META, AstraUI.MUTED))
     _case_list = AstraUI.vbox(7)
     nav.add_child(AstraUI.scroll(_case_list))
     nav.add_child(AstraUI.label("1인용 추리 RPG  ·  오프라인 플레이\n매번 달라지는 범인 · 증거 · 알리바이", 12, AstraUI.DIM))
@@ -148,7 +148,7 @@ func _refresh_detail() -> void:
     _detail.add_child(AstraUI.scroll(dossier))
     var meta_row := AstraUI.hbox(8)
     dossier.add_child(meta_row)
-    meta_row.add_child(AstraUI.chip("CHAPTER %02d" % (AstraCaseCatalog.CAMPAIGN.find(_selected_case) + 1), accent))
+    meta_row.add_child(AstraUI.chip("STAGE %d" % AstraCaseCatalog.stage_index(_selected_case), accent))
     meta_row.add_child(AstraUI.label(str(data.get("theme", "")), 13, AstraUI.MUTED))
     meta_row.add_child(AstraUI.spacer())
     meta_row.add_child(AstraUI.label(app.meta.case_status(_selected_case), 13, AstraUI.GOLD if unlocked else AstraUI.DIM))
@@ -159,7 +159,7 @@ func _refresh_detail() -> void:
         dossier.add_child(AstraUI.label("선택 임무  /  " + str(mission.get("title", "")), 14, accent, true))
     dossier.add_child(AstraUI.prose(AstraCaseCatalog.CAMPAIGN_PREMISE, AstraUI.T_META, AstraUI.MUTED))
     dossier.add_child(AstraUI.label(_case_goal_line(_selected_case), 13, AstraUI.DIM, true))
-    _continue.text = "%s   →" % ("조사 시작 · " + str(data.get("title_ko", "")) if unlocked else app.meta.unlock_hint(_selected_case))
+    _continue.text = "%s   →" % ("STAGE 시작 · " + str(AstraVoyageContent.chapter(_selected_case).get("title", data.get("title_ko", ""))) if unlocked else app.meta.unlock_hint(_selected_case))
     _continue.disabled = not unlocked
 
 func _case_goal_line(case_id: String) -> String:

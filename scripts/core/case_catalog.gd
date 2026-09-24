@@ -454,55 +454,78 @@ const CASES := {
     }
 }
 
-# Base action budgets per chapter, before protocol/mission/difficulty bonuses
-# (still applied in game_session.gd). Difficulty is meant to come from what
-# has to be reasoned through, not from a bigger click count (§8), so these
-# scale up gently: DEAD_AIR asks for two searches and one conversation and
-# does not spend a meeting action at all; only from SILENT_ORBIT on does a
-# chapter use the historical 3/3/2 baseline.
-const AP_PROFILE := {
-    # 0.5.0 teaches one system at a time. Difficulty comes from ambiguity and
-    # social consequences, not from forcing more clicks in the opening hour.
-    "CALIBRATION": {"investigation": 1, "talk": 1, "meeting": 0},
-    "DEAD_AIR": {"investigation": 1, "talk": 2, "meeting": 0},
-    "GLASS_GARDEN": {"investigation": 2, "talk": 3, "meeting": 1},
-    "ECHO_WARD": {"investigation": 3, "talk": 3, "meeting": 1},
-    "SILENT_ORBIT": {"investigation": 3, "talk": 4, "meeting": 2},
-    "RED_SHIFT": {"investigation": 3, "talk": 4, "meeting": 2},
-    "LAST_LIGHT": {"investigation": 3, "talk": 4, "meeting": 2},
-    # ACT II keeps the same 3/4/2 baseline (§15: no new complexity, the
-    # difference is what happens with the budget, not the size of it).
-    "SECOND_WATCH": {"investigation": 3, "talk": 4, "meeting": 2},
-    "BORROWED_DAYS": {"investigation": 3, "talk": 4, "meeting": 2},
-    "BLIND_DECK": {"investigation": 3, "talk": 4, "meeting": 2},
-    "THREE_MINUTES_DARK": {"investigation": 3, "talk": 4, "meeting": 2},
-    "CONTINUITY": {"investigation": 3, "talk": 4, "meeting": 2},
-    "THRESHOLD": {"investigation": 3, "talk": 4, "meeting": 2}
+# ---------------------------------------------------------------- 0.8.0 stages
+#
+# Stage = one full containment game. Day = a round inside a Stage. The old
+# "campaign day" number was always the chapter order; 0.8.0 names it the
+# Stage index and keeps the case_id as the Stage id.
+#
+#   PART I   STAGE 1 CALIBRATION · 2 DEAD_AIR · 3 GLASS_GARDEN · 4 ECHO_WARD
+#   PART II  STAGE 5 SILENT_ORBIT ... STAGE 13 THRESHOLD
+#
+# A Stage ends only when every Null is contained (CLEAR), when the explorer is
+# killed, or when the Null side controls the vote (FAIL). There is no normal
+# TIMEOUT; MAX_INTERNAL_DAYS is a development safety net, never an ending.
+const STAGE_ORDER := ["CALIBRATION", "DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD", "SILENT_ORBIT", "RED_SHIFT",
+    "LAST_LIGHT", "SECOND_WATCH", "BORROWED_DAYS", "BLIND_DECK", "THREE_MINUTES_DARK", "CONTINUITY", "THRESHOLD"]
+const PART_II_FIRST_STAGE := 5
+const MAX_INTERNAL_DAYS := 12
+
+# Null count is authored per Stage instead of derived from roster size, so the
+# difficulty curve is visible in data: one Null through Part I, two from Part II.
+const STAGE_NULLS := {
+    "CALIBRATION": 1, "DEAD_AIR": 1, "GLASS_GARDEN": 1, "ECHO_WARD": 1,
+    "SILENT_ORBIT": 2, "RED_SHIFT": 2, "LAST_LIGHT": 2, "SECOND_WATCH": 2, "BORROWED_DAYS": 2,
+    "BLIND_DECK": 2, "THREE_MINUTES_DARK": 2, "CONTINUITY": 2, "THRESHOLD": 2
 }
 
-# Story-driven phase flow. Early chapters deliberately omit systems the player
-# has not learned yet instead of showing disabled/meaningless screens.
-const PHASE_FLOW := {
-    "CALIBRATION": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "RESULT"],
-    "DEAD_AIR": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "RESULT"],
-    "GLASS_GARDEN": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "RESULT"],
-    "ECHO_WARD": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
-    "SILENT_ORBIT": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
-    "RED_SHIFT": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
-    "LAST_LIGHT": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
-    "SECOND_WATCH": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
-    "BORROWED_DAYS": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
-    "BLIND_DECK": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
-    "THREE_MINUTES_DARK": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
-    "CONTINUITY": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"],
-    "THRESHOLD": ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"]
+# Core conversations per Day. A conversation is one person: their account plus
+# up to two follow-ups. The explorer cannot hear everyone, and that choice is
+# the point of the phase.
+const TALK_BUDGET := {
+    "CALIBRATION": 2, "DEAD_AIR": 2
 }
+const DEFAULT_TALK_BUDGET := 3
+const FOLLOWUPS_PER_CONVERSATION := 2
+const MEETING_INTERVENTIONS := 1
+# Optional record checks per Day (contextual, inside a conversation). Not a
+# progression requirement.
+const RECORD_CHECKS_PER_DAY := 1
 
-static func ap_profile(case_id: String, fallback: Dictionary) -> Dictionary:
-    return AP_PROFILE.get(case_id, fallback)
+# Internal flow. Player-facing labels: 아침 · 대화 · 회의 · 투표 · 밤.
+# INVESTIGATION is compatibility-only: a legacy save in that phase resumes in
+# INTERROGATION.
+const DAY_FLOW := ["BRIEFING", "INTERROGATION", "MEETING", "VOTE", "NIGHT"]
 
-static func phase_flow(case_id: String) -> Array:
-    return PHASE_FLOW.get(case_id, ["BRIEFING", "INVESTIGATION", "INTERROGATION", "MEETING", "VOTE", "NIGHT"]).duplicate()
+static func stage_index(case_id: String) -> int:
+    return STAGE_ORDER.find(case_id) + 1
+
+static func stage_id(index: int) -> String:
+    if index < 1 or index > STAGE_ORDER.size():
+        return ""
+    return str(STAGE_ORDER[index - 1])
+
+static func next_stage(case_id: String) -> String:
+    return stage_id(stage_index(case_id) + 1)
+
+static func part_for(case_id: String) -> int:
+    return 2 if stage_index(case_id) >= PART_II_FIRST_STAGE else 1
+
+static func part_label(case_id: String) -> String:
+    return "PART II" if part_for(case_id) == 2 else "PART I"
+
+static func stage_nulls(case_id: String) -> int:
+    return int(STAGE_NULLS.get(case_id, 1))
+
+static func talk_budget(case_id: String) -> int:
+    return int(TALK_BUDGET.get(case_id, DEFAULT_TALK_BUDGET))
+
+# Legacy API kept for callers that still ask for a per-chapter action profile.
+static func ap_profile(case_id: String, _fallback: Dictionary = {}) -> Dictionary:
+    return {"investigation": 0, "talk": talk_budget(case_id), "meeting": MEETING_INTERVENTIONS}
+
+static func phase_flow(_case_id: String = "") -> Array:
+    return DAY_FLOW.duplicate()
 
 static func has_phase(case_id: String, phase_id: String) -> bool:
     return phase_id in phase_flow(case_id)
@@ -516,12 +539,12 @@ static func get_case(case_id: String) -> Dictionary:
         return data
     var story := AstraVoyageContent.chapter(case_id)
     data["roster"] = AstraVoyageContent.awake_roster(case_id)
-    # ECHO_WARD is the first formal vote, so it teaches one Null before later two-Null cases.
-    data["null_count"] = 1 if data["roster"].size() < 7 or case_id == "ECHO_WARD" else 2
+    # 0.8.0: authored per Stage (PART I one Null, PART II two).
+    data["null_count"] = stage_nulls(case_id)
     # CALIBRATION is authored for one inference instead of two stacked (see the
     # "trace_steps": 1 comment above) — only later cases force the full two-step trace.
     data["trace_steps"] = 1 if case_id == CALIBRATION else 2
-    data["max_days"] = 2 if data["roster"].size() < 7 else 4
+    data["max_days"] = MAX_INTERNAL_DAYS
     data["ops"] = data.get("ops",[]).slice(0,data["null_count"])
     data["title_ko"] = story["title"]
     data["story_intro"] = story["goal"]
@@ -535,7 +558,6 @@ static func get_case(case_id: String) -> Dictionary:
     # Keep deterministic evidence templates; replace obsolete murder framing.
     data["dispatches"] = [story["goal"]]
     if case_id == CALIBRATION:
-        data["max_days"] = 2
         data["variants"] = []
         data["ops"] = [{"id":"power", "room":"medbay", "name":"포드 잠금 해제", "minute":457, "second":20,
             "record_title":"수면 포드 잠금 해제 로그", "record_text":"04:17:20, 의료실 포드의 생명유지 잠금이 수동으로 해제됐다. 실행자 칸은 비어 있다."}]
@@ -597,7 +619,7 @@ static func null_count(case_data: Dictionary) -> int:
     return clampi(int(case_data.get("null_count", 2)), 1, 2)
 
 static func max_days(case_data: Dictionary) -> int:
-    return clampi(int(case_data.get("max_days", 4)), 1, 6)
+    return clampi(int(case_data.get("max_days", MAX_INTERNAL_DAYS)), 1, MAX_INTERNAL_DAYS)
 
 static func is_calibration(case_id: String) -> bool:
     return str(get_case(case_id).get("tier", "")) == "calibration"

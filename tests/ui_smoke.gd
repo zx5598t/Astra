@@ -1,8 +1,9 @@
 extends SceneTree
 
-# Drives the real UI through a full case headlessly (title -> every phase ->
-# result -> overlays). CI fails on any SCRIPT ERROR in the log or a missing
-# success line. Uses separate save files so a player's archive is untouched.
+# Drives the real 0.8.0 UI headlessly: fresh start → opening → Stage 1 morning
+# → conversation by clicking a face → meeting moments → vote → isolation
+# scene → night → Day 2 → result → next Stage; plus title slots, resume,
+# notebook, glossary and the pause menu. Counts the clicks a player needs.
 #   godot --headless --path . --script res://tests/ui_smoke.gd
 
 const META_PATH := "user://astra_smoke_meta.cfg"
@@ -10,6 +11,9 @@ const SETTINGS_PATH := "user://astra_smoke_settings.cfg"
 
 var app
 var failures: Array[String] = []
+var clicks: int = 0
+var clicks_to_first_choice: int = -1
+var clicks_to_first_vote: int = -1
 
 func _initialize() -> void:
     _run.call_deferred()
@@ -23,265 +27,208 @@ func _expect(condition: bool, label: String) -> void:
         failures.append(label)
         printerr("UI SMOKE FAIL · " + label)
 
+func _screen() -> AstraGameScreen:
+    return app._current as AstraGameScreen
+
+func _view():
+    return _screen()._view if _screen() != null else null
+
+func _click() -> void:
+    clicks += 1
+
 func _run() -> void:
     for path in [META_PATH, SETTINGS_PATH]:
         DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
     app = load("res://scenes/main.tscn").instantiate()
     app.meta = AstraMetaProgress.new(META_PATH)
     app.settings = AstraSettings.new(SETTINGS_PATH)
+    for slot in range(3):
+        AstraGameSession.delete_snapshot(app.meta.save_path + ".session%d" % slot)
     root.add_child(app)
     await _wait(5)
-    # 0.4.0: a first run opens on the cold open instead of the title. That path
-    # gets its own check below; the rest of this run starts past it, the way a
-    # returning player does.
-    _expect(app._current is AstraOpeningView, "first run opens on the cold open")
-    app._current._finish()
-    await _wait(4)
-    for child in app.overlay_root().get_children():
-        if child.has_method("close"):
-            child.close(-1)
-    await _wait(3)
-    _expect(app._current is AstraVoyageView, "cold open enters real ship exploration")
-    app.show_title()
-    await _wait(3)
-    _expect(app.settings.intro_seen, "compatibility intro flag is still written")
-    _expect(app.meta.intro_seen_for_slot(app.active_slot), "finished opening is remembered for that save slot")
-    var first_slot: int = int(app.active_slot)
-    var second_slot: int = 1 if first_slot != 1 else 2
-    app.start_new_campaign(second_slot)
-    await _wait(3)
-    _expect(app._current is AstraOpeningView, "new save slot shows calibration opening again")
-    app._current._finish()
-    await _wait(4)
-    _expect(app.meta.intro_seen_for_slot(second_slot), "second save remembers its own opening")
-    app.show_title()
-    await _wait(2)
-    app.start_case(AstraCaseCatalog.CALIBRATION, "ANALYST", second_slot)
-    await _wait(3)
-    _expect(not (app._current is AstraOpeningView), "same save slot does not repeat calibration opening")
-    app.show_title()
-    await _wait(2)
-    app.active_slot = first_slot
-
-    # The tutorial case has to be playable end to end before the campaign opens.
-    await _play_case(AstraCaseCatalog.CALIBRATION, "ANALYST")
-    app.meta.calibration_completed = true
-
-    app.start_case("DEAD_AIR", "ANALYST")
-    await _finish_exploration()
-    app.session.advance()
-    app.session.perform_mission()
-    await _wait(3)
-    var saved_seed: int = app.session.seed_value
-    var saved_ap: int = app.session.investigation_ap
-    app.show_title()
-    await _wait(3)
-    app.resume_case()
-    await _wait(3)
-    _expect(app.session.seed_value == saved_seed and app.session.investigation_ap == saved_ap, "resume exact case and AP")
-    _expect(bool(app.session.flags.get("mission_complete", false)), "resume mission result")
-    for case_id in AstraCaseCatalog.CAMPAIGN:
-        app.meta.case_counts[case_id] = 1
-    var plan := []
-    for case_id in AstraCaseCatalog.CAMPAIGN:
-        plan.append([case_id, "ANALYST"])
-    for item in plan:
-        await _play_case(str(item[0]), str(item[1]))
-
-    app.show_help()
-    await _wait()
-    app.show_settings()
-    await _wait()
-    for child in app.overlay_root().get_children():
-        if child.has_method("close"):
-            child.close(-1)
-    await _wait()
-    app.show_title()
-    await _wait(4)
-    _expect(app._current is AstraTitleScreen, "returned to title")
-
-    AstraGameSession.delete_snapshot(app.snapshot_path())
-    DirAccess.remove_absolute(ProjectSettings.globalize_path(META_PATH))
-    DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
-
-    # Tear the screen down before quitting. 0.4.0 builds far more nodes per
-    # screen (relation cards, crew tags, sprite icons), and quitting with a full
-    # tree plus a queue of pending queue_free()s makes Godot report leaked RIDs
-    # at exit — which the release build treats as a failure.
-    root.remove_child(app)
-    app.free()
-    app = null
-    await _wait(4)
-
-    if failures.is_empty():
-        print("ASTRA UI SMOKE OK")
-        quit(0)
-    else:
-        quit(1)
-
-func _inside_viewport(control: Control, viewport_size: Vector2) -> bool:
-    if control == null or not control.is_visible_in_tree():
-        return false
-    var rect := control.get_global_rect()
-    return rect.size.x > 0.0 and rect.size.y > 0.0 and rect.position.x >= -2.0 and rect.position.y >= -2.0 and rect.end.x <= viewport_size.x + 2.0 and rect.end.y <= viewport_size.y + 2.0
-
-func _check_game_layout(screen: AstraGameScreen, size: Vector2i, label: String) -> void:
-    root.size = size
-    await _wait(5)
-    var viewport_size := Vector2(size)
-    _expect(_inside_viewport(screen._objective_panel, viewport_size), label + " objective visible in viewport")
-    _expect(_inside_viewport(screen._primary, viewport_size), label + " primary CTA visible in viewport")
-    _expect(_inside_viewport(screen._help_button, viewport_size), label + " help button visible in viewport")
-    _expect(_inside_viewport(screen._budget_panel, viewport_size), label + " remaining-action panel visible in viewport")
-    if screen.session.case_id in [AstraCaseCatalog.CALIBRATION, "DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD"]:
-        _expect("도움말" in screen._help_button.text, label + " early help button is text-labelled")
-
-func _play_case(case_id: String, protocol: String) -> void:
-    app.start_case(case_id, protocol)
-    await _wait(4)
-    # A fresh save slot owns its own calibration intro in 0.5.1. Complete that
-    # short opening before expecting the voyage/game screen.
-    if app._current is AstraOpeningView:
-        app._current._finish()
-        await _wait(4)
-    # First-appearance cards stack up in front of a new roster; dismiss them the
-    # way a player would before driving the case.
-    for _pass in range(12):
-        var open_modal := false
-        for child in app.overlay_root().get_children():
-            if child.has_method("close"):
-                child.close(0)
-                open_modal = true
-        if not open_modal:
-            break
+    # 0.8.0: a new campaign starts with 탐사요원 등록 (one confirm).
+    _expect(app._current is AstraPlayerSetup, "a fresh profile starts with explorer registration")
+    if app._current is AstraPlayerSetup:
+        _click()
+        app._current.confirmed.emit({"name": "", "preset": "p1"})
+        await _wait(5)
+    _expect(app._current is AstraOpeningView, "registration leads into the opening scene")
+    # Opening: three beats, one click each.
+    for i in range(3):
+        _click()
+        app._current._stage.finish_typing()
+        app._current._advance()
         await _wait(2)
-    await _finish_exploration()
-    if app.session.phase == "RESULT":
-        _expect(app.meta.calibration_completed,"first loop completes without voting")
-        return
-    var screen = app._current
-    _expect(screen is AstraGameScreen, "%s game screen" % case_id)
-    # The action budget intentionally does not exist during BRIEFING. 0.5.1's
-    # resolution smoke checked it one phase too early and therefore failed on
-    # both 1366x768 and 1080p even though the actual action screen was fine.
-    if screen is AstraGameScreen and case_id in ["DEAD_AIR", "SECOND_WATCH"]:
-        if app.session.phase == "BRIEFING":
-            app.session.advance()
-            await _wait(2)
-        await _check_game_layout(screen, Vector2i(1366, 768), "1366x768")
-        await _check_game_layout(screen, Vector2i(1920, 1080), "1920x1080")
+    await _wait(3)
+    _expect(_screen() != null, "opening leads straight into Stage 1")
     var s: AstraGameSession = app.session
+    _expect(s.case_id == "CALIBRATION" and s.day == 1 and s.active_roster().size() == 4, "fresh start is Stage 1 Day 1 with four crew")
+    _expect(s.phase == "BRIEFING", "Stage 1 opens on the morning scene")
+    # Morning: click through every beat.
     var guard := 0
+    while s.phase == "BRIEFING" and guard < 80:
+        guard += 1
+        _click()
+        var view = _view()
+        if view != null and view.has_method("consume_advance"):
+            view._stage.finish_typing()
+            view.consume_advance()
+        await _wait(2)
+    await _wait(3)
+    _expect(s.phase == "INTERROGATION", "morning ends in conversation without a start button")
+    clicks_to_first_choice = clicks
+    # Conversation: one click on a face starts talking.
+    var talk = _view()
+    var first := str(s.talk_leads().keys()[0]) if not s.talk_leads().is_empty() else str(s.living_ids()[0])
+    _click()
+    talk._on_person(first)
+    await _wait(3)
+    _expect(s.conversation_open(first), "one click on a face opens the conversation")
+    var options := s.question_options(first)
+    if not options.is_empty():
+        _click()
+        talk._ask(str(options[0]["intent"]), str(options[0].get("ref", "")))
+        await _wait(2)
+    for npc_id in s.living_ids():
+        if s.conversations_left() <= 0:
+            break
+        if not s.conversation_open(str(npc_id)):
+            _click()
+            talk._on_person(str(npc_id))
+            await _wait(2)
+    _screen().open_notebook()
+    await _wait(2)
+    _expect(app.modal_open(), "notebook opens")
+    for child in app.overlay_root().get_children():
+        if child.has_method("close"):
+            child.close(-1)
+    await _wait(2)
+    _screen().open_glossary()
+    await _wait(2)
+    _expect(app.modal_open(), "glossary opens")
+    for child in app.overlay_root().get_children():
+        if child.has_method("close"):
+            child.close(-1)
+    await _wait(2)
+    _click()
+    _screen().advance_phase()
+    await _wait(4)
+    _expect(s.phase == "MEETING", "conversation → meeting")
+    var meeting = _view()
+    _click()
+    meeting._reveal_all()
+    await _wait(2)
+    var moment_options := s.meeting_options()
+    _expect(moment_options.size() >= 1 and moment_options.size() <= 4, "meeting pauses with a few options")
+    guard = 0
+    while not s.meeting_over() and guard < 10:
+        guard += 1
+        _click()
+        meeting._continue()
+        await _wait(2)
+        meeting._reveal_all()
+    _click()
+    _screen().advance_phase()
+    await _wait(4)
+    _expect(s.phase == "VOTE", "meeting → vote")
+    clicks_to_first_vote = clicks
+    var vote = _view()
+    var target := str(s.eligible_vote_targets()[0])
+    _click()
+    vote._choice = target
+    vote.refresh()
+    _click()
+    vote._on_confirm()
+    await _wait(2)
+    vote.consume_advance()
+    await _wait(2)
+    guard = 0
+    while s.vote_stage() in ["RUNOFF", "TIEBREAK"] and not s.vote_cast and guard < 4:
+        guard += 1
+        vote._mode = "choose"
+        vote._choice = str(s.runoff_candidates()[0])
+        vote._on_confirm()
+        await _wait(2)
+        vote.consume_advance()
+        await _wait(2)
+    _expect(s.vote_cast, "one vote isolates someone")
+    _click()
+    _screen().advance_phase()
+    await _wait(4)
+    _expect(s.phase in ["BRIEFING", "RESULT"], "Part I night resolves on its own into the next morning or the result")
+    # Play the rest of Stage 1 through the UI-facing session calls.
+    guard = 0
     while s.phase != "RESULT" and guard < 80:
         guard += 1
-        var view = screen._view
         match s.phase:
-            "INVESTIGATION":
-                view._perform_mission()
-                await _wait(1)
-                for room_id in s.room_ids():
-                    if s.investigation_ap > 0:
-                        view._search(str(room_id))
-                        await _wait(1)
+            "BRIEFING":
+                s.story_skip()
+                await _wait(2)
             "INTERROGATION":
-                if not s.pending_event.is_empty():
-                    view._resolve_event(mini(1,s.pending_event["choices"].size()-1))
-                    await _wait(2)
-                for npc_id in s.living_ids():
-                    if s.talk_ap <= 0:
-                        break
-                    screen.select(str(npc_id))
-                    await _wait(1)
-                    screen._view._do_ask(str(npc_id), "ALIBI", "")
-                    await _wait(1)
+                _screen().advance_phase()
             "MEETING":
-                _expect("회의 자동 넘김" in view._auto_toggle.text, "%s meeting auto is clearly meeting-only" % case_id)
-                var auto_before: bool = app.settings.auto_advance
-                view._toggle_auto()
-                _expect(app.settings.auto_advance != auto_before, "%s meeting auto toggle changes state" % case_id)
-                view._toggle_auto()
-                _expect(app.settings.auto_advance == auto_before, "%s meeting auto toggle restores state" % case_id)
-                view._flush()
-                if not s.found_clues().is_empty():
-                    s.present_clue(str(s.found_clues()[0]["id"]))
-                screen.select(str(s.living_ids()[0]))
-                screen._view._accuse()
-                await _wait(2)
-                screen._view._flush()
+                s._finish_meeting()
+                _screen().advance_phase()
             "VOTE":
-                var ranked := AstraTestBots.ranked(s, true)
-                s.set_mark(str(ranked[0]), "null")
-                if ranked.size() > 1:
-                    s.set_mark(str(ranked[1]), "null")
-                screen.select(str(ranked[0]))
-                await _wait(1)
-                s.select_ballot("target",str(ranked[0]))
-                # The real UI opens a confirmation modal. Smoke tests exercise
-                # the ballot contract directly so a headless run cannot stall
-                # forever waiting for a human click inside that modal.
-                s.confirm_ballot()
-                await _wait(2)
+                s.cast_vote(str(s.eligible_vote_targets()[0]))
+                if s.vote_stage() == "RUNOFF": s.cast_vote(str(s.runoff_candidates()[0]))
+                if s.vote_stage() == "TIEBREAK": s.resolve_tiebreak(str(s.runoff_candidates()[0]))
+                _screen().advance_phase()
             "NIGHT":
-                screen.select(str(s.living_ids()[0]))
-                await _wait(1)
-                screen._view._choose("protect", str(s.living_ids()[0]))
-                await _wait(2)
-        s.advance()
+                s.choose_night_action("skip", "")
+                _screen().advance_phase()
         await _wait(2)
-    if s.phase != "RESULT":
-        printerr("UI SMOKE STATE · %s/%s phase=%s day=%d guard=%d outcome=%s blocked=%s pending=%s vote_cast=%s night_done=%s" % [case_id,protocol,s.phase,s.day,guard,s.outcome,s.tutorial_blocked_reason(),str(s.pending_event),str(s.vote_cast),str(s.night_done)])
-    _expect(s.phase == "RESULT", "%s/%s reached result" % [case_id, protocol])
-    await _wait(4)
-    _expect(not screen.archive_change.is_empty(), "%s/%s archive recorded" % [case_id, protocol])
-
-func _close_scene() -> void:
-    var s: AstraGameSession = app.session
-    var guard := 0
-    while not s.voyage.get("scene",{}).is_empty() and guard < 20:
+    _expect(s.phase == "RESULT", "Stage 1 reaches a result")
+    guard = 0
+    while not s.story_finished() and guard < 30:
         guard += 1
-        var scene: Dictionary = s.voyage["scene"]
-        if int(s.voyage["line"]) >= scene.get("lines",[]).size()-1 and not scene.get("choices",[]).is_empty():
-            s.voyage_choose(0)
+        if not Array(s.story_scene().get("choices", [])).is_empty():
+            s.story_choose(0)
         else:
-            s.voyage_next()
-    await _wait(2)
+            s.story_skip()
+        await _wait(2)
+    await _wait(3)
+    _expect(_view() != null and _view()._shown_summary, "result shows containment and story panels after the scenes")
 
-func _finish_exploration() -> void:
-    var s: AstraGameSession = app.session
-    if s.phase != "EXPLORE": return
-    await _close_scene()
-    if not s.voyage["goal_done"]:
-        # 0.6.0 makes the chapter fact a direct player investigation. Do not
-        # rely on the old ask-a-crewmate shortcut, especially in CALIBRATION
-        # where direct panel inspection is an explicit release gate.
-        var fact := str(AstraVoyageContent.chapter(s.case_id).get("fact",""))
-        var found_goal := false
-        for room_id in s.voyage_rooms():
-            if str(s.voyage.get("room","")) != str(room_id):
-                s.voyage_move(str(room_id),false)
-                await _close_scene()
-            for point in s.voyage_points():
-                if str(point[4]) == fact and s.voyage_inspect(str(point[0])):
-                    found_goal = true
-                    await _close_scene()
-                    break
-            if found_goal:
-                break
-        _expect(found_goal,"routine exploration exposes the chapter goal as a direct investigation")
-    # Optional conversations come after the mandatory fact so autonomous
-    # chatter cannot consume or obscure the direct-investigation smoke path.
-    if s.case_id != AstraCaseCatalog.CALIBRATION:
-        for who in s.roster:
-            s.voyage_visit_person(who)
-            await _close_scene()
-    if s.case_id != AstraCaseCatalog.CALIBRATION and s.voyage.get("visits",[]).size() < 2:
-        for room_id in s.voyage_rooms():
-            if str(room_id) not in s.voyage.get("visits",[]):
-                s.voyage_move(str(room_id),false)
-                await _close_scene()
-                break
-    _expect(s.voyage_can_finish(),"exploration has a reachable exit")
-    s.finish_voyage()
+    # Title: slots, resume, delete.
+    app.show_title()
     await _wait(3)
-    if s.phase != "RESULT": app.show_session_screen()
+    _expect(app._current is AstraTitleScreen, "title screen")
+    # A slot that has cleared Part I opens Stage 5 (slot-scoped progress).
+    var memory: Dictionary = app.meta.voyage_memory_for_slot(1)
+    memory["chapters"] = AstraCaseCatalog.STAGE_ORDER.slice(0, 4)
+    app.meta.set_voyage_memory_for_slot(1, memory)
+    _expect(not app.meta.is_case_unlocked_for_slot("SILENT_ORBIT", 2), "another slot does not inherit progress")
+    app.start_case("SILENT_ORBIT", "GUARDIAN", 1)
     await _wait(3)
+    var s5: AstraGameSession = app.session
+    _expect(s5.protocol == "GUARDIAN", "Stage 5 equips Guardian")
+    s5.story_skip()
+    await _wait(3)
+    _expect(s5.phase == "INTERROGATION", "Stage 5 morning plays through")
+    app.show_title()
+    await _wait(3)
+    app.resume_case(1)
+    await _wait(3)
+    _expect(app.session != null and app.session.case_id == "SILENT_ORBIT" and app.session.phase == "INTERROGATION", "resume restores the Stage and phase")
+    app.show_pause_menu()
+    await _wait(2)
+    _expect(app.modal_open(), "pause menu opens")
+    for child in app.overlay_root().get_children():
+        if child.has_method("close"):
+            child.close(-1)
+    await _wait(2)
+    app.show_title()
+    await _wait(2)
+    for slot in range(3):
+        AstraGameSession.delete_snapshot(app.slot_path(slot))
+    for path in [META_PATH, SETTINGS_PATH]:
+        DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+    print("UI CLICKS · first meaningful choice after %d clicks · first vote after %d clicks" % [clicks_to_first_choice, clicks_to_first_vote])
+    if failures.is_empty():
+        print("ASTRA UI SMOKE OK")
+    else:
+        printerr("ASTRA UI SMOKE FAILED · %d" % failures.size())
+    root.remove_child(app)
+    app.free()
+    quit(0 if failures.is_empty() else 1)

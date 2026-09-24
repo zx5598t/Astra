@@ -406,7 +406,7 @@ const LINES := {
             "{time}. {room} 쪽. {group} 차림이었어요."
         ],
         "evidence_self_crew": [
-            "제 이름이 있어요. 제 동선은 {pos}예요."
+            "제 이름이 있어요. 제 동선은 {pos|ieyo}."
         ],
         "evidence_self_null": [
             "저도 들어가네요. 이것만으로 정해진 건 아니죠."
@@ -442,7 +442,7 @@ const LINES := {
             "기록하고 다르네요. 하지만 저는 그렇게 기억해요."
         ],
         "contra_honest": [
-            "{pos}예요. 앞서 한 말과 같아요."
+            "{pos|ieyo}. 앞서 한 말과 같아요."
         ],
         "slip": [
             "{time}였어요. 아니, 시각은 아직."

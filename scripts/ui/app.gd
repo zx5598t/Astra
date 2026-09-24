@@ -13,6 +13,9 @@ var selected_protocol: String = "ANALYST"
 var session: AstraGameSession
 var ai_status: String = ""
 var active_slot: int = 0
+# DEEP RECONSTRUCTION: the run file is the truth; the session is one depth.
+var deep_run: Dictionary = {}
+var deep_active: bool = false
 
 var _screen_root: Control
 var _overlay_layer: CanvasLayer
@@ -30,7 +33,7 @@ func _ready() -> void:
     settings.apply_audio()
     settings.apply_display()
     settings.fit_window_to_screen()
-    selected_protocol = meta.last_protocol if AstraGameSession.PROTOCOLS.has(meta.last_protocol) else "ANALYST"
+    selected_protocol = meta.last_protocol if AstraGameSession.PROTOCOLS.has(meta.last_protocol) else "NONE"
 
     var bg := ColorRect.new()
     bg.color = AstraUI.BG
@@ -129,6 +132,7 @@ func _set_screen(node: Control) -> void:
 func show_title() -> void:
     _save_session()
     session = null
+    deep_active = false
     var title := AstraTitleScreen.new()
     _set_screen(title)
     title.setup(self)
@@ -138,6 +142,7 @@ func show_archive() -> void:
     _set_screen(archive)
     archive.setup(self)
 
+# A new campaign starts with 탐사요원 등록 (name and look), then Stage 1.
 func start_new_campaign(slot: int = -1) -> void:
     var chosen := slot
     if chosen < 0:
@@ -145,13 +150,114 @@ func start_new_campaign(slot: int = -1) -> void:
     if chosen < 0:
         chosen = 0
     active_slot = clampi(chosen, 0, SLOT_COUNT - 1)
+    var target := active_slot
+    var registration := AstraPlayerSetup.new()
+    _set_screen(registration)
+    registration.setup(meta.player_profile_for_slot(target))
+    registration.confirmed.connect(func(profile: Dictionary): begin_new_campaign(target, profile))
+    registration.cancelled.connect(show_title)
+
+func begin_new_campaign(slot: int, profile: Dictionary = {}) -> void:
+    active_slot = clampi(slot, 0, SLOT_COUNT - 1)
     AstraGameSession.delete_snapshot(slot_path(active_slot))
     meta.reset_intro_for_slot(active_slot)
     meta.clear_voyage_memory_for_slot(active_slot)
+    meta.set_player_profile_for_slot(active_slot, profile)
     meta.save_data()
-    start_case(AstraCaseCatalog.CALIBRATION, "ANALYST", active_slot)
+    start_case(AstraCaseCatalog.CALIBRATION, "NONE", active_slot)
+
+# ---------------------------------------------------------------- DEEP RECONSTRUCTION
+
+func show_deep(screen_mode: String = "", context: Dictionary = {}) -> void:
+    _save_session()
+    session = null if screen_mode != "between" else session
+    var screen := AstraDeepScreen.new()
+    _set_screen(screen)
+    screen.setup(self, screen_mode, context)
+
+func deep_start(protocol: String) -> void:
+    if not meta.deep_unlocked():
+        return
+    deep_run = AstraDeepRun.new_run(protocol)
+    AstraDeepRun.save_run(deep_run)
+    AstraGameSession.delete_snapshot(AstraDeepRun.SESSION_PATH)
+    _start_deep_depth()
+
+# Crash or quit mid-depth: the same depth comes back exactly as saved.
+func deep_resume() -> void:
+    deep_run = AstraDeepRun.active_run()
+    if deep_run.is_empty():
+        show_deep()
+        return
+    deep_active = true
+    if AstraGameSession.has_snapshot(AstraDeepRun.SESSION_PATH):
+        var restored := AstraGameSession.new()
+        if restored.load_snapshot(AstraDeepRun.SESSION_PATH):
+            session = restored
+            if session.outcome == "LOSE":
+                _close_deep_run(session)
+                show_deep("summary")
+                return
+            _connect_autosave()
+            show_session_screen()
+            return
+    if int(deep_run.get("depth_cleared", 0)) >= int(deep_run.get("depth", 1)):
+        deep_run["depth"] = int(deep_run.get("depth", 1)) + 1
+        AstraDeepRun.save_run(deep_run)
+    _start_deep_depth()
+
+func deep_abandon() -> void:
+    var run := AstraDeepRun.active_run()
+    if run.is_empty():
+        return
+    deep_run = run
+    deep_run["ended"] = true
+    meta.record_deep_run(maxi(0, int(deep_run.get("depth", 1)) - 1), AstraDeepRun.accuracy(deep_run))
+    meta.save_data()
+    AstraDeepRun.save_run(deep_run)
+    AstraGameSession.delete_snapshot(AstraDeepRun.SESSION_PATH)
+    show_deep()
+
+# After a cleared depth: one line from someone still standing, then deeper.
+func deep_next_depth() -> void:
+    var speaker := ""
+    if session != null:
+        var alive := session.living_crew_ids()
+        if not alive.is_empty():
+            speaker = str(alive[int(deep_run.get("depth", 1)) % alive.size()])
+    deep_run["depth"] = int(deep_run.get("depth", 1)) + 1
+    AstraDeepRun.save_run(deep_run)
+    var depth := int(deep_run["depth"])
+    var next_case := AstraDeepRun.case_for_depth(depth)
+    var awake := AstraCaseCatalog.roster(AstraCaseCatalog.resolve(next_case, 1)).size()
+    show_deep("between", {"speaker": speaker, "depth": depth, "awake": awake, "modifier": AstraDeepRun.modifier_for(int(deep_run.get("run_seed", 0)), depth)})
+
+func deep_continue() -> void:
+    _start_deep_depth()
+
+func _start_deep_depth() -> void:
+    deep_active = true
+    var depth := int(deep_run.get("depth", 1))
+    var run_seed := int(deep_run.get("run_seed", 0))
+    session = AstraGameSession.new()
+    session.setup_deep(AstraDeepRun.case_for_depth(depth), AstraDeepRun.depth_seed(run_seed, depth), str(deep_run.get("protocol", "NONE")), depth, AstraDeepRun.modifier_for(run_seed, depth), meta.difficulty_mode)
+    session.set_player_profile(meta.player_profile_for_slot(active_slot))
+    _connect_autosave()
+    show_session_screen()
+
+func _close_deep_run(finished: AstraGameSession) -> void:
+    if deep_run.is_empty() or bool(deep_run.get("ended", false)):
+        AstraGameSession.delete_snapshot(AstraDeepRun.SESSION_PATH)
+        return
+    AstraDeepRun.record_depth(deep_run, finished)
+    deep_run["ended"] = true
+    meta.record_deep_run(maxi(0, finished.deep_depth() - 1), AstraDeepRun.accuracy(deep_run))
+    meta.save_data()
+    AstraDeepRun.save_run(deep_run)
+    AstraGameSession.delete_snapshot(AstraDeepRun.SESSION_PATH)
 
 func start_case(case_id: String, protocol: String, slot: int = -1) -> void:
+    deep_active = false
     var target_slot := active_slot
     if slot >= 0:
         target_slot = clampi(slot, 0, SLOT_COUNT - 1)
@@ -164,10 +270,13 @@ func start_case(case_id: String, protocol: String, slot: int = -1) -> void:
         return
     active_slot = target_slot
     selected_protocol = protocol
+    # A retry of the same Stage is a new reconstruction: new seed, new Nulls.
+    var previous_seed := session.seed_value if session != null and session.case_id == case_id else -1
     session = AstraGameSession.new()
-    var seed_value := int(Time.get_unix_time_from_system() * 1000.0) % 2147483
+    var seed_value := AstraGameSession.fresh_seed(previous_seed)
     session.setup(case_id, seed_value, protocol, meta.difficulty_mode, meta.recent_null_history())
-    session.features = meta.unlocked_features()
+    session.set_player_profile(meta.player_profile_for_slot(active_slot))
+    session.features = meta.unlocked_features_for_slot(active_slot)
     session.set_tutorial(false)
     if AstraCaseCatalog.is_calibration(case_id) and not meta.intro_seen_for_slot(active_slot):
         _show_campaign_opening()
@@ -190,15 +299,13 @@ func clear_slot_state(slot: int) -> void:
     meta.clear_voyage_memory_for_slot(slot)
     meta.save_data()
 
+# 0.8.0: the voyage traversal screen is retired from the main flow; a Stage is
+# always played on the game screen. Old saves parked in EXPLORE are migrated
+# by AstraGameSession.load_snapshot before they get here.
 func show_session_screen() -> void:
-    if session.phase == "EXPLORE":
-        var voyage_screen := AstraVoyageView.new()
-        _set_screen(voyage_screen)
-        voyage_screen.setup(self,session)
-    else:
-        var screen := AstraGameScreen.new()
-        _set_screen(screen)
-        screen.setup(self,session,fx)
+    var screen := AstraGameScreen.new()
+    _set_screen(screen)
+    screen.setup(self,session,fx)
 
 # 0.7.0: the blocking dossier-card flow this comment used to describe was
 # built but never wired to a call site, and used the wrong (global,
@@ -220,6 +327,8 @@ func slot_path(slot: int) -> String:
     return meta.save_path + ".session%d" % clampi(slot, 0, SLOT_COUNT - 1)
 
 func snapshot_path() -> String:
+    if deep_active:
+        return AstraDeepRun.SESSION_PATH
     return slot_path(active_slot)
 
 # One row per slot for the title screen, empty slots included so the player can
@@ -229,6 +338,13 @@ func slot_infos() -> Array:
     var rows: Array = []
     for slot in range(SLOT_COUNT):
         var info := AstraGameSession.snapshot_info(slot_path(slot))
+        if info.is_empty():
+            # Between Stages there is no in-progress snapshot, but the campaign
+            # is still there: show it as ready to start its next Stage.
+            var chapters: Array = meta.voyage_memory_for_slot(slot).get("chapters", [])
+            if not chapters.is_empty():
+                var next_id := meta.recommended_case_id_for_slot(slot)
+                info = {"case_id": next_id, "phase": "BRIEFING", "day": 1, "stage": AstraCaseCatalog.stage_index(next_id), "pending": true}
         rows.append({"slot": slot, "info": info, "empty": info.is_empty()})
     return rows
 
@@ -292,6 +408,10 @@ func _connect_autosave() -> void:
     _save_session()
 
 func _save_session() -> void:
+    # A lost depth ends the run at once: nothing is left to reload (§44).
+    if session != null and deep_active and session.is_deep() and session.outcome == "LOSE":
+        _close_deep_run(session)
+        return
     if session != null and session.phase != "RESULT":
         if not session.save_snapshot(snapshot_path()):
             fx.toast("진행 저장에 실패했습니다. 저장 폴더의 여유 공간을 확인하세요.", AstraUI.RED)
@@ -299,12 +419,19 @@ func _save_session() -> void:
 func resume_case(slot: int = -1) -> void:
     if slot >= 0:
         active_slot = clampi(slot, 0, SLOT_COUNT - 1)
+    if not AstraGameSession.has_snapshot(snapshot_path()):
+        var chapters: Array = meta.voyage_memory_for_slot(active_slot).get("chapters", [])
+        if not chapters.is_empty():
+            start_case(meta.recommended_case_id_for_slot(active_slot), selected_protocol, active_slot)
+            return
     var restored := AstraGameSession.new()
     if not restored.load_snapshot(snapshot_path()):
-        fx.toast("진행 기록을 불러올 수 없습니다. 새 사건을 시작하세요.", AstraUI.RED)
+        fx.toast("진행 기록을 불러올 수 없습니다. 새 캠페인을 시작하세요.", AstraUI.RED)
         return
     session = restored
-    session.features = meta.unlocked_features()
+    if not restored.flags.has("player_profile"):
+        session.set_player_profile(meta.player_profile_for_slot(active_slot))
+    session.features = meta.unlocked_features_for_slot(active_slot)
     session.reconcile_codex_after_resume(meta.codex_entries_unlocked)
     selected_protocol = session.protocol
     _connect_codex_events()
@@ -312,6 +439,15 @@ func resume_case(slot: int = -1) -> void:
     show_session_screen()
 
 func record_result(finished: AstraGameSession) -> Dictionary:
+    if finished.is_deep():
+        if finished.outcome == "WIN":
+            AstraDeepRun.record_depth(deep_run, finished)
+            deep_run["depth_cleared"] = finished.deep_depth()
+            AstraDeepRun.save_run(deep_run)
+            AstraGameSession.delete_snapshot(AstraDeepRun.SESSION_PATH)
+        else:
+            _close_deep_run(finished)
+        return {}
     var memory := finished.voyage_memory()
     if not memory.is_empty():
         meta.set_voyage_memory_for_slot(active_slot, memory)
@@ -351,10 +487,9 @@ func quit_game() -> void:
 # ---------------------------------------------------------------- overlays
 
 func show_help() -> void:
-    var box := AstraUI.vbox(18)
-    box.add_child(AstraHelpPanel.codex(meta.unlocked_features()))
-    box.add_child(AstraHelpPanel.shortcuts())
-    AstraModal.open(_overlay_root, "기록 보관소 · 도움말", box, [["닫기", AstraUI.CYAN]], Callable(), 860.0)
+    var scroll := AstraUI.scroll(AstraHelpPanel.how_to())
+    scroll.custom_minimum_size.y = 500
+    AstraModal.open(_overlay_root, "플레이 방법", scroll, [["닫기", AstraUI.CYAN]], Callable(), 820.0)
 
 # The [?] in the corner of a game screen: this screen only.
 func show_screen_help(phase: String, objective: String, budget: Dictionary = {}) -> void:
@@ -499,8 +634,8 @@ func show_pause_menu() -> void:
         ["계속하기", AstraUI.CYAN, Callable()],
         ["플레이 방법", AstraUI.MUTED, show_help],
         ["설정", AstraUI.MUTED, show_settings],
-        ["이 사건 처음부터 (새 배치)", AstraUI.GOLD, func(): start_case(session.case_id, session.protocol, active_slot)],
-        ["아카이브로 나가기", AstraUI.RED, show_title]
+        ["이 Stage 처음부터", AstraUI.GOLD, func(): start_case(session.case_id, session.protocol, active_slot)],
+        ["타이틀로 나가기", AstraUI.RED, show_title]
     ]
     var modal_holder := []
     for spec in buttons:
@@ -513,7 +648,7 @@ func show_pause_menu() -> void:
                 action.call()
         )
         box.add_child(button)
-    box.add_child(AstraUI.label("진행 상황은 행동할 때마다 자동 저장됩니다. 타이틀의 ‘계속하기’로 돌아올 수 있습니다.", 12, AstraUI.DIM, true))
+    box.add_child(AstraUI.label("진행은 행동할 때마다 자동 저장됩니다. 타이틀의 ‘이어하기’로 돌아올 수 있습니다.", AstraUI.T_META, AstraUI.DIM, true))
     modal_holder.append(AstraModal.open(_overlay_root, "일시 정지", box, [], Callable(), 420.0))
 
 func _slider_row(title: String, value: float, min_value: float, max_value: float, step: float, on_change: Callable) -> Control:

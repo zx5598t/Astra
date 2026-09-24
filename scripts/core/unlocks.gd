@@ -16,6 +16,22 @@ extends RefCounted
 # 0.3.1 save that already finished three cases arrives with everything open.
 
 const ALWAYS := ["move", "investigate", "interrogate", "notebook_basic"]
+# 0.8.0: the core rules of a Day are never locked. Conversation, meeting, vote
+# and night exist from Stage 1, Day 1; only Part II protocols wait for their
+# Stage (AstraGameSession.protocols_for_stage).
+const CORE_080 := ["interrogate", "notebook_basic", "meeting", "vote", "night"]
+
+# What a given save slot has in front of it. Never reads another slot.
+static func for_slot_stage(highest_stage_cleared: int) -> Array:
+    var result: Array = CORE_080.duplicate()
+    if highest_stage_cleared >= 1:
+        result.append("difficulty_select")
+    if highest_stage_cleared >= 4:
+        result.append("case_select")
+    for id in ["GUARDIAN", "ANALYST", "EMPATH"]:
+        if highest_stage_cleared + 1 >= int(AstraGameSession.PROTOCOLS[id]["stage"]):
+            result.append("protocol_" + id.to_lower())
+    return result
 
 # `needs_calibration` — the tutorial case must be finished.
 # `needs_cases` — this many campaign cases must have been played to the end.

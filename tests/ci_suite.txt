@@ -1,0 +1,24 @@
+# One line per headless test run by CI and by tools/build_windows.ps1:
+#   script | success marker | extra user args (optional)
+# 0.8.0 CONTAINMENT: the 0.5.x-0.7.x exploration, voyage-traversal, abstain-vote
+# and investigation suites were retired with those systems (docs/QA_REPORT.md).
+run_tests.gd|ASTRA TESTS OK|--games=40
+ui_smoke.gd|ASTRA UI SMOKE OK|
+story_070_consistency.gd|ASTRA STORY 070 CONSISTENCY TESTS OK|
+act2_070_tests.gd|ASTRA ACT2 070 TESTS OK|
+character_arc_070_tests.gd|ASTRA CHARACTER ARC 070 TESTS OK|
+visual_story_071_tests.gd|ASTRA 0.7.1 VISUAL STORY TESTS OK|
+visual_story_072_tests.gd|ASTRA 0.7.2 VISUAL STORY TESTS OK|
+visual_story_073_tests.gd|ASTRA 0.7.3 HUMAN SIGNAL TESTS OK|
+human_aftermath_062_tests.gd|ASTRA 0.6.2 HUMAN AFTERMATH TESTS OK|
+codex_056_tests.gd|ASTRA 0.5.6 CODEX TESTS OK|
+fault_lines_055_tests.gd|ASTRA 0.5.5 FAULT LINES TESTS OK|
+knowledge_propagation_tests.gd|ASTRA 0.5.3 KNOWLEDGE PROPAGATION TESTS OK|
+storylet_scheduler_tests.gd|ASTRA 0.5.3 STORYLET SCHEDULER TESTS OK|
+routine_model_tests.gd|ASTRA 0.5.4 ROUTINE MODEL TESTS OK|
+meaningful_choice_tests.gd|ASTRA 0.5.4 MEANINGFUL CHOICE TESTS OK|
+curiosity_pin_tests.gd|ASTRA 0.5.4 CURIOSITY PIN TESTS OK|
+walkthrough_080.gd|ASTRA WALKTHROUGH 080 OK|
+campaign_080_tests.gd|ASTRA CAMPAIGN 080 TESTS OK|
+deep_080_tests.gd|ASTRA DEEP 080 TESTS OK|
+pixel_080_tests.gd|ASTRA PIXEL 080 TESTS OK|

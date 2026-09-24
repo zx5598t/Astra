@@ -14,7 +14,7 @@ const MODES := {
     "STORY": {
         "name": "스토리",
         "summary": "처음 하는 사람을 위한 속도",
-        "detail": "첫날 밤에는 아무도 잃지 않습니다. 추천 장소를 표시하고, 놓친 모순을 다시 확인할 수 있습니다.",
+        "detail": "첫 Stage의 첫날 밤에는 비상 격벽이 한 번 선실을 지킵니다. Null은 탐사요원을 덜 노립니다.",
         "first_night_safe": true,
         "decoy_scale": 0.5,
         "mutual_alibi_scale": 0.4,
@@ -23,12 +23,16 @@ const MODES := {
         "recommend_rooms": true,
         "contradiction_recheck": true,
         "extra_talk_ap": 1,
+        "player_target_scale": 0.5,
+        "conviction_scale": 0.85,
+        "bandwagon_scale": 0.8,
+        "null_persistence": 0.3,
         "hint_level": 2
     },
     "STANDARD": {
         "name": "표준",
         "summary": "사회추리 게임에 익숙한 사람",
-        "detail": "0.3.1과 같은 균형입니다. 힌트는 줄고, 승무원의 거짓말은 더 자연스러워집니다.",
+        "detail": "기본 균형입니다. 첫날 밤부터 누구든 위험합니다.",
         "first_night_safe": false,
         "decoy_scale": 1.0,
         "mutual_alibi_scale": 1.0,
@@ -37,12 +41,16 @@ const MODES := {
         "recommend_rooms": false,
         "contradiction_recheck": true,
         "extra_talk_ap": 0,
+        "player_target_scale": 0.72,
+        "conviction_scale": 1.0,
+        "bandwagon_scale": 1.0,
+        "null_persistence": 0.55,
         "hint_level": 1
     },
     "EXPERT": {
         "name": "전문가",
         "summary": "사람이 더 잘 속인다",
-        "detail": "서로를 보증하는 알리바이가 늘고, Null은 지적당해도 설명을 만들어 냅니다. 쓸모없는 단서를 늘려 어렵게 만들지는 않습니다.",
+        "detail": "두 Null이 서로를 보증하는 일이 늘고, Null은 당신을 더 적극적으로 노립니다. 쓸모없는 단서를 늘려 어렵게 만들지는 않습니다.",
         "first_night_safe": false,
         "decoy_scale": 1.0,
         "mutual_alibi_scale": 1.45,
@@ -51,6 +59,10 @@ const MODES := {
         "recommend_rooms": false,
         "contradiction_recheck": false,
         "extra_talk_ap": 0,
+        "player_target_scale": 0.9,
+        "conviction_scale": 1.15,
+        "bandwagon_scale": 1.15,
+        "null_persistence": 0.75,
         "hint_level": 0
     }
 }

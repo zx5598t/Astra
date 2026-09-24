@@ -209,9 +209,69 @@ static func texture(path: String) -> Texture2D:
         return load(path)
     return null
 
+# The character cut-outs carry a thin light halo left by background removal.
+# Eroding alpha by about one texel hides it without cropping, scaling or
+# otherwise changing the art (shape and proportions stay the source's).
+const DEFRINGE_SHADER := """
+shader_type canvas_item;
+void fragment() {
+    vec4 tex = texture(TEXTURE, UV);
+    vec2 texel = TEXTURE_PIXEL_SIZE;
+    // Sheet grid lines left at the very edge of a crop.
+    vec2 border = texel * 2.5;
+    float inside = step(border.x, UV.x) * step(UV.x, 1.0 - border.x) * step(border.y, UV.y) * step(UV.y, 1.0 - border.y);
+    // Smallest alpha on two rings around the pixel (sampled inline: TEXTURE
+    // cannot be handed to a helper function on every renderer).
+    vec2 dirs[8] = vec2[8](vec2(1.0, 0.0), vec2(-1.0, 0.0), vec2(0.0, 1.0), vec2(0.0, -1.0),
+        vec2(0.7, 0.7), vec2(-0.7, -0.7), vec2(0.7, -0.7), vec2(-0.7, 0.7));
+    float near = 1.0;
+    float far = 1.0;
+    for (int i = 0; i < 8; i++) {
+        near = min(near, texture(TEXTURE, UV + dirs[i] * texel * 1.5).a);
+        far = min(far, texture(TEXTURE, UV + dirs[i] * texel * 3.2).a);
+    }
+    float keep = tex.a > 0.001 ? min(tex.a, near) / tex.a : 0.0;
+    // Light pixels next to transparency are halo, not hair or cloth.
+    float luma = dot(tex.rgb, vec3(0.299, 0.587, 0.114));
+    float halo = smoothstep(0.62, 0.9, luma) * (1.0 - far);
+    COLOR.rgb *= mix(0.55, 1.0, near);
+    COLOR.a *= keep * (1.0 - halo * 0.85) * inside;
+}
+"""
+static var _defringe: ShaderMaterial
+
+static func defringe_material() -> ShaderMaterial:
+    if _defringe == null:
+        var shader := Shader.new()
+        shader.code = DEFRINGE_SHADER
+        _defringe = ShaderMaterial.new()
+        _defringe.shader = shader
+    return _defringe
+
+# The explorer's small face (from 탐사요원 등록), pixel-sharp.
+static func player_face(session, size: Vector2) -> TextureRect:
+    var preset := "p1"
+    if session != null and session.has_method("player_profile"):
+        preset = str(session.player_profile().get("preset", "p1"))
+    var rect := TextureRect.new()
+    rect.texture = texture("res://assets/pixel080/player/%s_face.png" % preset)
+    rect.custom_minimum_size = size
+    rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+    rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+    rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    return rect
+
+static func player_name(session) -> String:
+    if session != null and session.has_method("player_profile"):
+        return str(session.player_profile().get("name", "탐사요원"))
+    return "탐사요원"
+
 static func thumb(path: String, size: Vector2) -> TextureRect:
     var rect := TextureRect.new()
     rect.texture = texture(path)
+    if path.contains("/art050/"):
+        rect.material = defringe_material()
     rect.custom_minimum_size = size
     rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED

@@ -91,8 +91,22 @@ static func iya(word: String) -> String:
 static func ieyo(word: String) -> String:
     return word + ("이에요" if has_final(word) else "예요")
 
+# Casual "with" (이랑/랑), used in 반말 lines.
+static func rang(word: String) -> String:
+    return word + ("이랑" if has_final(word) else "랑")
+
+# "준이었어" / "노아였어" — the copula past stem.
+static func ieot(word: String) -> String:
+    return word + ("이었" if has_final(word) else "였")
+
+# "기관실이요" / "라운지요" — the polite short answer.
+static func iyo(word: String) -> String:
+    return word + ("이요" if has_final(word) else "요")
+
 static func attach(word: String, particle: String) -> String:
     match particle:
+        "ieot": return ieot(word)
+        "iyo": return iyo(word)
         "eun": return eun(word)
         "i": return i(word)
         "eul": return eul(word)
@@ -103,6 +117,7 @@ static func attach(word: String, particle: String) -> String:
         "ida": return ida(word)
         "iya": return iya(word)
         "ieyo": return ieyo(word)
+        "rang": return rang(word)
     return word
 
 # Replaces {key} and {key|particle} tokens, e.g. "{target|eul} 봤어요".

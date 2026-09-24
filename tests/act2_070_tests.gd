@@ -61,7 +61,7 @@ func test_save_schema_unchanged() -> void:
     # 0.7.0 deliberately adds no new save fields for ACT II itself (ACT is
     # derived from campaign_day, not persisted) — a save written before this
     # version's campaign extension must still load cleanly.
-    check(AstraMetaProgress.SAVE_VERSION == 11,"save schema stays v11 — ACT II needed no migration")
+    check(AstraMetaProgress.SAVE_VERSION >= 11,"save schema is at least v11 — ACT II needed no migration (0.8.0 moved to v12)")
     var meta := AstraMetaProgress.new(PATH)
     meta.calibration_completed = true
     meta.save_data()

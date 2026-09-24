@@ -52,6 +52,10 @@ static func make_entry(speaker: String, kind: String, day: int, phase: String, s
         "companions": data.get("companions", []).duplicate() if data.get("companions", null) is Array else [],
         "target": str(data.get("target", "")),
         "minute": int(data.get("minute", -1)),
+        # 0.8.0: which Day's incident this statement is about. A Stage has a new
+        # incident every Day, so "where were you" on Day 2 is a different
+        # question from Day 1 unless the speaker is retelling yesterday.
+        "about_day": int(data.get("about_day", day)),
         "retracted": false,
         "retracted_day": 0
     }
@@ -141,6 +145,8 @@ static func _conflict_reason(a: Dictionary, b: Dictionary) -> String:
         return ""
     var kind_a := str(a.get("kind", ""))
     var kind_b := str(b.get("kind", ""))
+    if int(a.get("about_day", a.get("day", 1))) != int(b.get("about_day", b.get("day", 1))):
+        return ""
     if kind_a == KIND_POSITION and kind_b == KIND_POSITION:
         var pos_a := str(a.get("position", ""))
         var pos_b := str(b.get("position", ""))

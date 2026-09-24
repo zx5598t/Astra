@@ -1,449 +1,308 @@
-extends VBoxContainer
+extends HBoxContainer
 
-# The public meeting.
-#
-# 0.3.1 played the whole meeting on a 0.55-second timer. Eight people spoke,
-# the feed scrolled, and by the time the player had read the third line the
-# eighth had already gone past. The information was all there and none of it
-# landed, which is why the meeting felt like log output rather than an argument.
-#
-# 0.4.0 reverses the default: nothing advances until the player asks for it.
-# Auto is available, and even on auto the lines that carry a contradiction, a
-# first appearance, a retraction or a death stop and wait (§20, §59).
-#
-# The feed still accumulates — a new line never replaces the last one — because
-# the entire skill of this phase is comparing what somebody just said with what
-# they said earlier.
+# Meeting. The room argues one point at a time: someone puts something on the
+# table, the named person answers, a third person weighs in — then it pauses.
+# At each pause the explorer can step in (2–3 options that fit this point) or
+# keep listening. Once the one intervention is used, the rest of the meeting
+# plays on its own and the vote follows (§24–§27, §47).
 
-const KIND_TAGS := {
-    "alibi": ["알리바이", AstraUI.MUTED],
-    "dispute": ["반박", AstraUI.RED],
-    "suspect": ["의심", AstraUI.GOLD],
-    "defense": ["해명", AstraUI.GREEN],
-    "react": ["반응", AstraUI.CYAN],
-    "mourn": ["애도", AstraUI.NIGHT],
-    "calm": ["중재", AstraUI.GREEN],
-    "record": ["기록 공개", AstraUI.PINK],
-    "player": ["탐사요원", AstraUI.CYAN]
-}
-
-# Lines the player is never allowed to blink past, even with auto on.
-const IMPORTANT_KINDS := ["dispute", "record", "defense"]
+const TONE_COLOR := {"calm": AstraUI.CYAN, "press": AstraUI.RED, "defend": AstraUI.GREEN, "redirect": AstraUI.GOLD, "confront": AstraUI.PINK}
+const REVEAL_DELAY := 0.95
 
 var screen
-var _header: RichTextLabel
-var _feed_box: VBoxContainer
+var _feed: VBoxContainer
 var _feed_scroll: ScrollContainer
-var _actions: HBoxContainer
-var _next_row: HBoxContainer
-var _next_button: Button
-var _auto_toggle: Button
+var _mood: Label
+var _board: VBoxContainer
+var _actions: VBoxContainer
 var _shown: int = 0
-var _queue: Array = []
 var _timer: Timer
-var _seen_speakers: Dictionary = {}
-var _paused_important: bool = false
+var _picker_open: bool = false
 
 func setup(game_screen) -> void:
     screen = game_screen
-    add_theme_constant_override("separation", 10)
-    size_flags_vertical = Control.SIZE_EXPAND_FILL
+    add_theme_constant_override("separation", 16)
+    var left := AstraUI.vbox(8)
+    left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    left.size_flags_stretch_ratio = 1.6
+    add_child(left)
+    _mood = AstraUI.label("", AstraUI.T_META, AstraUI.GOLD, true)
+    left.add_child(_mood)
+    var feed_panel := AstraUI.panel(Color(0.02, 0.035, 0.06, 0.9), AstraUI.BORDER, 12, 14)
+    feed_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    left.add_child(feed_panel)
+    _feed = AstraUI.vbox(10)
+    _feed_scroll = AstraUI.scroll(_feed)
+    feed_panel.add_child(_feed_scroll)
+    _feed_scroll.gui_input.connect(func(event: InputEvent):
+        if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+            _reveal_all()
+    )
 
-    var head_row := AstraUI.hbox(10)
-    add_child(head_row)
-    _header = AstraUI.rich(AstraUI.T_HEAD)
-    head_row.add_child(_header)
-    _auto_toggle = AstraUI.button("회의 자동 넘김 · 꺼짐", AstraUI.MUTED, AstraUI.T_META, 34)
-    _auto_toggle.tooltip_text = AstraCodex.tooltip("auto")
-    _auto_toggle.pressed.connect(_toggle_auto)
-    head_row.add_child(_auto_toggle)
-    var log_button := AstraUI.button("이전 발언 · 전체 기록", AstraUI.MUTED, AstraUI.T_META, 34)
-    log_button.tooltip_text = AstraCodex.tooltip("log")
-    log_button.pressed.connect(_open_log)
-    head_row.add_child(log_button)
-
-    var panel := AstraUI.panel(Color(AstraUI.BG, 0.62), AstraUI.BORDER, 10, 12)
-    panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    add_child(panel)
-    _feed_box = AstraUI.vbox(10)
-    _feed_scroll = AstraUI.scroll(_feed_box)
-    panel.add_child(_feed_scroll)
-
-    # The "next speaker" control is the primary action of this screen while
-    # anyone is still waiting to talk; the meeting actions sit below it and are
-    # only reachable once the room has finished speaking its current round.
-    _next_row = AstraUI.hbox(10)
-    add_child(_next_row)
-    _next_button = AstraUI.button("다음 발언  ▸", AstraUI.CYAN, AstraUI.T_UI, 46, true)
-    _next_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    _next_button.pressed.connect(_reveal_next)
-    _next_row.add_child(_next_button)
-    # Explicitly asking for the rest of the round is fine; having it happen on a
-    # timer is what 0.4.0 removes.
-    var all_button := AstraUI.button("남은 발언 모두 보기", AstraUI.MUTED, AstraUI.T_META, 46)
-    all_button.pressed.connect(_flush)
-    _next_row.add_child(all_button)
-
-    _actions = AstraUI.hbox(8)
-    add_child(_actions)
+    var right := AstraUI.vbox(10)
+    right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    right.custom_minimum_size.x = 400
+    add_child(right)
+    var board_panel := AstraUI.panel(Color(0.02, 0.035, 0.06, 0.88), AstraUI.BORDER, 12, 12)
+    right.add_child(board_panel)
+    var board_box := AstraUI.vbox(4)
+    board_panel.add_child(board_box)
+    board_box.add_child(AstraUI.label("모두가 말한 %s의 위치" % screen.session.incident_time(), AstraUI.T_META, AstraUI.CYAN))
+    _board = AstraUI.vbox(3)
+    board_box.add_child(_board)
+    var action_panel := AstraUI.panel(Color(0.03, 0.05, 0.08, 0.94), Color(AstraUI.GOLD, 0.4), 12, 12)
+    action_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    right.add_child(action_panel)
+    _actions = AstraUI.vbox(8)
+    action_panel.add_child(AstraUI.scroll(_actions))
 
     _timer = Timer.new()
-    _timer.one_shot = true
-    _timer.timeout.connect(_on_auto_tick)
+    _timer.one_shot = false
+    _timer.wait_time = 0.12 if AstraUI.reduce_motion else REVEAL_DELAY
+    _timer.timeout.connect(_reveal_next)
     add_child(_timer)
+    _timer.start()
     refresh()
 
-# How many statements are still waiting, so the objective line in the header can
-# say "listen" rather than "act" while the room is still talking.
 func pending_lines() -> int:
-    return _queue.size()
-
-# Called by the game screen so Space steps the transcript instead of skipping
-# the phase. Returns true when it consumed the key.
-func consume_advance() -> bool:
-    if _queue.is_empty():
-        return false
-    _reveal_next()
-    return true
-
-func _notify_screen() -> void:
-    if screen != null and screen.has_method("refresh_objective"):
-        screen.refresh_objective()
+    return maxi(0, screen.session.meeting_feed.size() - _shown)
 
 func refresh() -> void:
-    var session: AstraGameSession = screen.session
-    var waiting := _queue.size()
-    _header.text = "[b]공개 회의 · DAY %d[/b]" % session.day
-    var total := session.meeting_feed.size()
-    var pending := _shown + _queue.size()
-    if total < pending:
-        AstraUI.clear(_feed_box)
-        _shown = 0
-        _queue.clear()
-        pending = 0
-    for index in range(pending, total):
-        _queue.append(session.meeting_feed[index])
-    if waiting == 0 and not _queue.is_empty():
-        _schedule_auto()
-    _refresh_next_row(session)
-    _refresh_actions(session)
-
-func _refresh_next_row(_session: AstraGameSession) -> void:
-    var waiting := _queue.size()
-    _next_row.visible = waiting > 0
-    if waiting > 0:
-        if _paused_important:
-            _next_button.text = "계속  ▸   자동 일시정지 · 중요한 발언입니다"
-            AstraUI.set_tutorial_nudge(_next_button, true)
-        else:
-            _next_button.text = "다음 발언  ▸    (%d건 남음)" % waiting if waiting > 1 else "다음 발언  ▸    (마지막)"
-            AstraUI.set_tutorial_nudge(_next_button, false)
-
-func _toggle_auto() -> void:
-    var settings = screen.app.settings
-    settings.auto_advance = not settings.auto_advance
-    settings.save_data()
-    _auto_toggle.text = "회의 자동 넘김 · 켬" if settings.auto_advance else "회의 자동 넘김 · 꺼짐"
-    if settings.auto_advance:
-        _schedule_auto()
-    else:
-        _timer.stop()
-        _paused_important = false
-        _refresh_next_row(screen.session)
-
-func _schedule_auto() -> void:
-    var settings = screen.app.settings
-    if not settings.auto_advance or _queue.is_empty() or not is_inside_tree():
+    var s: AstraGameSession = screen.session
+    if s.phase != "MEETING":
         return
-    if settings.pause_on_important and _is_important(_queue[0]):
-        _paused_important = true
-        _refresh_next_row(screen.session)
-        return
-    _paused_important = false
-    # Longer lines get longer on screen. A fixed interval is what made the old
-    # meeting unreadable: a twelve-word accusation and a two-word grunt were
-    # given the same time.
-    var text := str(_queue[0].get("text", ""))
-    var seconds: float = clampf(1.4 + float(text.length()) * 0.055, 1.6, 6.0) * float(settings.auto_delay)
-    _timer.wait_time = seconds
-    _timer.start()
+    _mood.text = _mood_text()
+    _render_board()
+    if pending_lines() > 0 and _timer.is_stopped():
+        _timer.start()
+    _render_actions()
 
-func _on_auto_tick() -> void:
-    _reveal_next()
+func _mood_text() -> String:
+    var s: AstraGameSession = screen.session
+    # The first meeting's mood is already in its opening narration.
+    var mood := "말이 조금씩 날카로워진다."
+    match s.meeting_temperature():
+        "grief": mood = "사람 하나가 빠진 회의. 목소리가 낮다."
+        "low": return "오늘의 질문 · %s" % s.day_question()
+        "high": mood = "이제 아무도 돌려 말하지 않는다."
+    return "오늘의 질문 · %s   —   %s" % [s.day_question(), mood]
 
-func _is_important(entry: Dictionary) -> bool:
-    var session: AstraGameSession = screen.session
-    if str(entry.get("kind", "")) in IMPORTANT_KINDS:
-        return true
-    var speaker := str(entry.get("speaker", ""))
-    # A first hello is not important by itself. 0.4.x treated every person's
-    # first line as important, so enabling auto could pause before anything had
-    # visibly happened and looked broken.
-    return speaker != "player" and session.has_contradiction_on(speaker)
+func _render_board() -> void:
+    var s: AstraGameSession = screen.session
+    AstraUI.clear(_board)
+    var conflicted := {}
+    for item in s.manual_contradictions:
+        if int(item.get("day", 0)) == s.day:
+            for id in item.get("targets", []):
+                conflicted[str(id)] = true
+    for npc_id in s.living_ids():
+        if not s.public_claims.has(npc_id):
+            continue
+        var claim := s.current_claim(str(npc_id))
+        var mates: Array = claim.get("companions", [])
+        var row := AstraUI.hbox(6)
+        row.add_child(AstraUI.crew_dot(str(npc_id), 26))
+        row.add_child(AstraUI.label(s.name_of(str(npc_id)), AstraUI.T_META, AstraCrewCatalog.accent(str(npc_id))))
+        var where := s.room_name(str(claim.get("position", "")))
+        if str(claim.get("position", "")) == "cabin:" + str(npc_id):
+            where = "자기 선실"
+        var text := where + (" · " + AstraJosa.wa(s.names_of(mates)) + " 함께" if not mates.is_empty() else " · 혼자")
+        var label := AstraUI.label(text, AstraUI.T_META, AstraUI.TEXT)
+        label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        label.clip_text = true
+        row.add_child(label)
+        if conflicted.has(str(npc_id)):
+            row.add_child(AstraUI.label("말이 안 맞음", AstraUI.T_META - 2, AstraUI.RED))
+        _board.add_child(row)
 
 func _reveal_next() -> void:
-    _timer.stop()
-    _paused_important = false
-    if _queue.is_empty():
-        _refresh_next_row(screen.session)
+    var s: AstraGameSession = screen.session
+    if _shown >= s.meeting_feed.size():
+        _timer.stop()
+        _on_caught_up()
         return
-    _add_entry(_queue.pop_front())
-    _refresh_next_row(screen.session)
-    _refresh_actions(screen.session)
-    _notify_screen()
-    _schedule_auto()
-
-# Player-initiated: show everything that is still waiting. Used by the button
-# above and by the automated UI run.
-func _flush() -> void:
-    _timer.stop()
-    _paused_important = false
-    while not _queue.is_empty():
-        _add_entry(_queue.pop_front())
-    _refresh_next_row(screen.session)
-    _refresh_actions(screen.session)
-    _notify_screen()
-
-func _add_entry(entry: Dictionary) -> void:
-    var session: AstraGameSession = screen.session
-    AstraUI.clear(_feed_box)
+    var entry: Dictionary = s.meeting_feed[_shown]
     _shown += 1
+    var node := _line_node(entry)
+    _feed.add_child(node)
+    AstraUI.fade_in(node, 0.2)
+    screen.fx.play("tick")
+    call_deferred("_scroll_bottom")
+    screen.refresh_objective()
+    if _shown >= s.meeting_feed.size():
+        _timer.stop()
+        _on_caught_up()
+
+func _reveal_all() -> void:
+    while _shown < screen.session.meeting_feed.size():
+        var entry: Dictionary = screen.session.meeting_feed[_shown]
+        _shown += 1
+        _feed.add_child(_line_node(entry))
+    _timer.stop()
+    call_deferred("_scroll_bottom")
+    _on_caught_up()
+
+func consume_advance() -> bool:
+    if pending_lines() > 0:
+        _reveal_all()
+        return true
+    return false
+
+func _scroll_bottom() -> void:
+    if is_instance_valid(_feed_scroll):
+        _feed_scroll.scroll_vertical = int(_feed_scroll.get_v_scroll_bar().max_value)
+
+# Caught up with the room: if the explorer has nothing left to say, the room
+# simply carries on to the end of the meeting.
+func _on_caught_up() -> void:
+    var s: AstraGameSession = screen.session
+    if s.phase != "MEETING":
+        return
+    if s.meeting_actions_left <= 0 and not s.meeting_over():
+        s.meeting_continue()
+        _timer.start()
+        return
+    _render_actions()
+    screen.refresh_objective()
+
+func _line_node(entry: Dictionary) -> Control:
+    var s: AstraGameSession = screen.session
     var speaker := str(entry.get("speaker", ""))
-    var kind := str(entry.get("kind", ""))
-    var tag: Array = KIND_TAGS.get(kind, ["발언", AstraUI.MUTED])
-    var is_player := speaker == "player"
-    var accent: Color = AstraUI.CYAN if is_player else AstraCrewCatalog.accent(speaker)
-    if not is_player:
-        _seen_speakers[speaker] = true
-    if bool(entry.get("topic_transition", false)):
-        var topic_text := str(entry.get("topic_label", str(tag[0])))
-        var thread_label := str({"FACT_THREAD":"기록","RELATION_THREAD":"관계","DECISION_THREAD":"결정"}.get(str(entry.get("thread_type","")),"논점"))
-        var divider := AstraUI.label("────  %s · %s  ────" % [thread_label,topic_text], AstraUI.T_META, AstraUI.GOLD)
-        divider.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-        _feed_box.add_child(divider)
-    elif str(entry.get("reply_to", "")) != "":
-        var reply_context := str(entry.get("reply_context", ""))
-        if reply_context != "":
-            _feed_box.add_child(AstraUI.label(reply_context, AstraUI.T_META, AstraUI.DIM))
-    var card := AstraUI.speaker_card(
-        speaker,
-        "탐사요원" if is_player else "%s (%s)" % [session.name_of(speaker), AstraCrewCatalog.role_short(speaker)],
-        str(tag[0]), tag[1],
-        str(entry.get("text", "")),
-        accent, is_player
-    )
-    var focus := AstraUI.hbox(14)
-    _feed_box.add_child(focus)
-    if not is_player and speaker != "":
-        focus.add_child(AstraUI.thumb(AstraCrewCatalog.portrait_path(speaker,"tense" if kind == "dispute" else "calm"),Vector2(150,170)))
-    var target := str(entry.get("target",""))
-    if target != "" and target != speaker and target != "player":
-        focus.add_child(AstraUI.thumb(AstraCrewCatalog.dot_path(target),Vector2(100,100)))
-    card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    focus.add_child(card)
+    var text := str(entry.get("text", ""))
+    if speaker == "":
+        var n := AstraUI.prose(text, AstraUI.T_META, AstraUI.MUTED)
+        n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        return n
+    var anchor := str(entry.get("thread_role", "")) == "anchor"
+    var row := AstraUI.hbox(10)
+    if anchor:
+        row.add_theme_constant_override("separation", 10)
+    if speaker == "player":
+        var bubble := AstraUI.panel(Color(AstraUI.GOLD, 0.12), Color(AstraUI.GOLD, 0.6), 10, 12)
+        var box := AstraUI.vbox(2)
+        bubble.add_child(box)
+        box.add_child(AstraUI.label(AstraUI.player_name(s), AstraUI.T_META, AstraUI.GOLD))
+        box.add_child(AstraUI.prose(text, AstraUI.T_BODY, AstraUI.TEXT))
+        bubble.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        row.add_child(AstraUI.spacer())
+        row.add_child(bubble)
+        row.add_child(AstraUI.player_face(s, Vector2(58, 58)))
+        return row
+    var face := AstraUI.thumb(AstraCrewCatalog.portrait_path(speaker, _face_for(entry)), Vector2(58, 72))
+    face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+    row.add_child(face)
+    var accent: Color = AstraCrewCatalog.accent(speaker)
+    var bubble2 := AstraUI.panel(Color(accent, 0.07), Color(accent, 0.45 if anchor else 0.25), 10, 10)
+    bubble2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    var col := AstraUI.vbox(2)
+    bubble2.add_child(col)
+    var head := AstraUI.hbox(8)
+    col.add_child(head)
+    head.add_child(AstraUI.label(s.name_of(speaker), AstraUI.T_META, accent))
+    var context := str(entry.get("reply_context", ""))
+    if context != "" and not anchor:
+        head.add_child(AstraUI.label("· " + context, AstraUI.T_META - 2, AstraUI.DIM))
+    col.add_child(AstraUI.prose(text, AstraUI.T_BODY, AstraUI.TEXT))
+    row.add_child(bubble2)
+    return row
 
-    # When somebody has just contradicted themselves, the player gets a chance
-    # to say so on the spot. The game does not say "this is a lie" — it offers
-    # the move and leaves the reading to the player (§4, §28).
-    if not is_player and session.has_feature("claim_search"):
-        var changed: Array = session.changed_story(speaker)
-        if not changed.is_empty() and not _feed_box.has_meta("challenged_" + speaker):
-            _feed_box.set_meta("challenged_" + speaker, true)
-            _feed_box.add_child(_challenge_row(speaker, changed[0]))
+func _face_for(entry: Dictionary) -> String:
+    match str(entry.get("kind", "")):
+        "suspect", "dispute": return "determined"
+        "defense": return "annoyed"
+        "mourn": return "sad"
+        "calm": return "neutral"
+        "record": return "neutral"
+    return "neutral"
 
-    AstraUI.fade_in(card, 0.16)
-    screen.fx.play("alert" if kind == "dispute" else "talk")
-    _scroll_to_bottom.call_deferred()
-
-func _challenge_row(speaker: String, conflict: Dictionary) -> Control:
-    var session: AstraGameSession = screen.session
-    var card := AstraUI.panel(Color(AstraUI.GOLD, 0.08), Color(AstraUI.GOLD, 0.45), 8, 10)
-    var box := AstraUI.vbox(6)
-    card.add_child(box)
-    box.add_child(AstraUI.label("이전 발언과 다릅니다", AstraUI.T_META, AstraUI.GOLD))
-    box.add_child(AstraUI.prose(str(conflict.get("reason", "")), AstraUI.T_META, AstraUI.MUTED))
-    var row := AstraUI.hbox(8)
-    box.add_child(row)
-    var press := AstraUI.button("지금 짚는다", AstraUI.GOLD, AstraUI.T_UI, 38)
-    press.pressed.connect(func():
-        session.record_player_claim(AstraClaimLedger.KIND_WITNESS,
-            "%s|i 앞서 한 말과 지금 한 말이 다르다고 지적했다." % session.name_of(speaker), {"target": speaker})
-        session.accuse(speaker)
-        card.queue_free()
-    )
-    row.add_child(press)
-    var hold := AstraUI.button("일단 넘어간다", AstraUI.MUTED, AstraUI.T_UI, 38)
-    hold.pressed.connect(func(): card.queue_free())
-    row.add_child(hold)
-    return card
-
-func _open_log() -> void:
-    var session: AstraGameSession = screen.session
-    var box := AstraUI.vbox(8)
-    for entry in session.meeting_feed:
-        var speaker := str(entry.get("speaker", ""))
-        var line := AstraUI.prose("[%s] %s" % ["탐사요원" if speaker == "player" else session.name_of(speaker), str(entry.get("text", ""))], AstraUI.T_META, AstraUI.TEXT)
-        box.add_child(line)
-    var scroller := AstraUI.scroll(box)
-    scroller.custom_minimum_size.y = 460
-    AstraModal.open(screen.app.overlay_root(), "회의 기록 · DAY %d" % session.day, scroller, [["닫기", AstraUI.MUTED]], Callable(), 760.0)
-
-# Godot only knows how tall the feed is after the new card has been laid out,
-# so a single deferred call lands on the old maximum and leaves the newest line
-# below the fold. Waiting for the container to finish sorting, then scrolling,
-# is what makes "다음 발언" actually show the next speaker.
-# Godot only knows how tall the feed is after the new card has been laid out, so
-# the scroll is applied one more deferred hop later. This used to be an `await`
-# coroutine, which held a reference to the whole feed and leaked the UI tree at
-# shutdown when the view was freed mid-await.
-func _scroll_to_bottom() -> void:
-    if _feed_scroll == null or not is_instance_valid(_feed_scroll) or not is_inside_tree():
-        return
-    _apply_scroll.call_deferred()
-
-func _apply_scroll() -> void:
-    if _feed_scroll == null or not is_instance_valid(_feed_scroll) or not is_inside_tree():
-        return
-    var bar := _feed_scroll.get_v_scroll_bar()
-    _feed_scroll.scroll_vertical = int(bar.max_value)
-    if _feed_box.get_child_count() > 0:
-        var last := _feed_box.get_child(_feed_box.get_child_count() - 1)
-        if last is Control:
-            _feed_scroll.ensure_control_visible(last)
-
-func _refresh_actions(session: AstraGameSession) -> void:
+func _render_actions() -> void:
+    var s: AstraGameSession = screen.session
     AstraUI.clear(_actions)
-    # While people are still speaking, the meeting controls stay out of the way.
-    # The one thing to do right now is listen to the next person.
-    if not _queue.is_empty():
-        _actions.add_child(AstraUI.label("발언이 끝나면 개입할 수 있습니다.", AstraUI.T_META, AstraUI.DIM))
+    if pending_lines() > 0:
+        _actions.add_child(AstraUI.label("듣는 중…", AstraUI.T_UI, AstraUI.MUTED))
+        var skip := AstraUI.button("끝까지 보기  ▸▸", AstraUI.MUTED, AstraUI.T_META, 36)
+        skip.pressed.connect(_reveal_all)
+        _actions.add_child(skip)
         return
-    var left := session.meeting_actions_left > 0
-    var target: String = screen.selected_id()
-    var target_ok := left and session.is_alive(target)
-    var unpublished := 0
-    for clue in session.found_clues():
-        if not bool(clue.get("public", false)):
-            unpublished += 1
-
-    var present := AstraUI.button("단서 공개…", AstraUI.GOLD, AstraUI.T_UI, 46)
-    present.disabled = not left or unpublished == 0
-    present.tooltip_text = AstraCodex.tooltip("present")
-    present.pressed.connect(_present)
-    present.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    _actions.add_child(present)
-
-    var target_name := session.name_of(target) if target != "" else "?"
-    var accuse := AstraUI.button("지목 · " + target_name, AstraUI.RED, AstraUI.T_UI, 46)
-    accuse.disabled = not target_ok
-    accuse.tooltip_text = AstraCodex.tooltip("accuse")
-    accuse.pressed.connect(_accuse)
-    accuse.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    _actions.add_child(accuse)
-
-    var defend := AstraUI.button("변호 · " + target_name, AstraUI.GREEN, AstraUI.T_UI, 46)
-    defend.disabled = not target_ok
-    defend.tooltip_text = AstraCodex.tooltip("defend")
-    defend.pressed.connect(_defend)
-    defend.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    _actions.add_child(defend)
-
-    # The move that makes two people answer each other rather than answer you.
-    var candidates := session.confront_candidates(target)
-    var confront := AstraUI.button("대질 · " + target_name, AstraUI.VIOLET, AstraUI.T_UI, 46)
-    confront.disabled = not left or candidates.is_empty()
-    confront.tooltip_text = AstraCodex.tooltip("confront")
-    confront.pressed.connect(_confront)
-    confront.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    _actions.add_child(confront)
-
-    if session.has_feature("hypothesis"):
-        var hypothesis := AstraUI.button("나의 가설…", AstraUI.CYAN, AstraUI.T_UI, 46)
-        hypothesis.disabled = not left or session.hypotheses().is_empty()
-        hypothesis.pressed.connect(_hypothesis)
-        _actions.add_child(hypothesis)
-
-func _present() -> void:
-    var session: AstraGameSession = screen.session
-    var options: Array = []
-    for clue in session.found_clues():
-        if not bool(clue.get("public", false)):
-            options.append(clue)
-    screen.open_clue_picker("어떤 단서를 공개할까요?", options, func(clue_id: String):
-        if bool(session.present_clue(clue_id).get("ok", false)):
-            session.record_player_claim(AstraClaimLedger.KIND_WITNESS, "단서를 공개했다: " + str(session.clue_by_id(clue_id).get("title", "")))
-            screen.fx.play("clue")
-    )
-
-func _accuse() -> void:
-    var session: AstraGameSession = screen.session
-    var result := session.accuse(screen.selected_id())
-    if bool(result.get("ok", false)):
-        screen.fx.play("alert")
-        if float(result.get("support", 0.0)) < 0.25:
-            screen.fx.toast("몇 사람이 시선을 피한다. 아직 이들을 납득시키지 못한 듯하다.", AstraUI.MUTED)
-
-func _defend() -> void:
-    var session: AstraGameSession = screen.session
-    if bool(session.defend(screen.selected_id()).get("ok", false)):
-        screen.fx.play("save")
-
-func _hypothesis() -> void:
-    var session: AstraGameSession = screen.session
-    var box := AstraUI.vbox(8)
-    var holder := []
-    var links := session.hypotheses()
-    for index in range(links.size()):
-        var link: Dictionary = links[index]
-        var button := AstraUI.button(session.name_of(str(link["npc"])) + " / " + str(link["relation"]) + " / " + str(session.clue_by_id(str(link["clue"])).get("title", "")), AstraUI.CYAN, AstraUI.T_UI, 48)
-        button.disabled = not session.is_alive(str(link["npc"]))
-        button.pressed.connect(func():
-            if not holder.is_empty():
-                holder[0].close(-1)
-            session.present_hypothesis(index)
-        )
-        box.add_child(button)
-    var scroll := AstraUI.scroll(box)
-    scroll.custom_minimum_size.y = 360
-    holder.append(AstraModal.open(screen.app.overlay_root(), "어떤 가설을 말할까?", scroll, [["닫기", AstraUI.MUTED]], Callable(), 850))
-
-# Pick who to put opposite the selected person. Only people whose statement
-# actually touches theirs are offered, with the reason on the button, so the
-# player is choosing an argument rather than guessing at a pairing.
-func _confront() -> void:
-    var session: AstraGameSession = screen.session
-    var target: String = screen.selected_id()
-    var candidates := session.confront_candidates(target)
-    if candidates.is_empty():
+    if _picker_open:
+        _render_accuse_picker()
         return
-    var box := AstraUI.vbox(8)
-    box.add_child(AstraUI.prose("%s와 함께 다시 말하게 할 사람을 고르세요. 두 사람의 진술이 맞으면 오히려 둘 다 의심에서 멀어집니다." % session.name_of(target), AstraUI.T_BODY, AstraUI.TEXT))
-    var holder := []
-    for candidate in candidates:
-        var other := str(candidate["id"])
-        var row := AstraUI.vbox(1)
-        var button := AstraUI.button(session.name_of(other) + "  (" + AstraCrewCatalog.role_short(other) + ")", AstraUI.VIOLET, AstraUI.T_UI, 46)
-        button.icon = AstraUI.texture(AstraCrewCatalog.dot_path(other))
-        button.expand_icon = true
-        button.add_theme_constant_override("icon_max_width", 34)
-        button.pressed.connect(func():
-            if not holder.is_empty() and is_instance_valid(holder[0]):
-                holder[0].close(-1)
-            _do_confront(target, other)
-        )
-        row.add_child(button)
-        row.add_child(AstraUI.label(str(candidate["reason"]), AstraUI.T_META, AstraUI.DIM))
-        box.add_child(row)
-    holder.append(AstraModal.open(screen.app.overlay_root(), "누구와 대질할까요?", box, [["취소", AstraUI.MUTED]], Callable(), 620.0))
-
-func _do_confront(a_id: String, b_id: String) -> void:
-    var session: AstraGameSession = screen.session
-    var result := session.confront(a_id, b_id)
-    if not bool(result.get("ok", false)):
-        return
-    if bool(result.get("conflict", false)):
-        screen.fx.play("slip")
-        screen.fx.banner("진술 충돌", "%s와 %s의 말이 맞지 않는다." % [session.name_of(a_id), session.name_of(b_id)], AstraUI.RED, 1.3)
+    var options := s.meeting_options()
+    if not options.is_empty():
+        var title := "끼어들 수 있습니다  (%d번 남음)" % s.meeting_actions_left
+        _actions.add_child(AstraUI.label(title, AstraUI.T_UI, AstraUI.GOLD))
+        for option in options:
+            var kind := str(option.get("kind", ""))
+            var accent: Color = TONE_COLOR.get(str(option.get("tone", "calm")), AstraUI.CYAN)
+            var button := AstraUI.button(str(option.get("label", "")), accent, AstraUI.T_UI, 46)
+            button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+            button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+            button.tooltip_text = str(option.get("detail", ""))
+            if kind == "accuse":
+                button.pressed.connect(func():
+                    _picker_open = true
+                    _render_actions()
+                )
+            else:
+                button.pressed.connect(_intervene.bind(kind, str(option.get("ref", ""))))
+            _actions.add_child(button)
+            var detail := str(option.get("detail", ""))
+            if detail != "" and kind != "accuse":
+                var small := AstraUI.label(detail, AstraUI.T_META - 2, AstraUI.DIM, true)
+                small.max_lines_visible = 2
+                _actions.add_child(small)
+    if not s.meeting_over():
+        var listen := AstraUI.button("계속 듣는다  ▸", AstraUI.CYAN, AstraUI.T_UI, 44, true)
+        listen.pressed.connect(_continue)
+        _actions.add_child(listen)
     else:
-        screen.fx.play("save")
-        screen.fx.toast("두 사람의 말이 맞았다. 이제 둘을 몰아가기는 더 어려워졌다.", AstraUI.GREEN, 4.0)
+        _actions.add_child(AstraUI.prose("할 말은 다 나왔습니다. 이제 한 사람을 정해야 합니다.", AstraUI.T_META, AstraUI.MUTED))
+        var vote := AstraUI.primary_button("투표하러 가기  →", AstraUI.RED)
+        vote.custom_minimum_size.y = 52
+        vote.pressed.connect(func(): screen.advance_phase())
+        _actions.add_child(vote)
+
+func _render_accuse_picker() -> void:
+    var s: AstraGameSession = screen.session
+    _actions.add_child(AstraUI.label("누구를 지목할까요?", AstraUI.T_UI, AstraUI.PINK))
+    _actions.add_child(AstraUI.prose("당신을 믿는 사람일수록 이 지목에 따라 표를 옮깁니다. 근거가 없으면 믿음을 잃습니다.", AstraUI.T_META, AstraUI.MUTED))
+    var grid := GridContainer.new()
+    grid.columns = 2
+    grid.add_theme_constant_override("h_separation", 6)
+    grid.add_theme_constant_override("v_separation", 6)
+    _actions.add_child(grid)
+    for npc_id in s.living_ids():
+        var button := AstraUI.button(s.name_of(str(npc_id)), AstraCrewCatalog.accent(str(npc_id)), AstraUI.T_UI, 44)
+        button.icon = AstraUI.texture(AstraCrewCatalog.dot_path(str(npc_id)))
+        button.expand_icon = true
+        button.add_theme_constant_override("icon_max_width", 30)
+        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        button.pressed.connect(func():
+            _picker_open = false
+            _intervene("accuse", str(npc_id))
+        )
+        grid.add_child(button)
+    var back := AstraUI.button("취소", AstraUI.MUTED, AstraUI.T_META, 36)
+    back.pressed.connect(func():
+        _picker_open = false
+        _render_actions()
+    )
+    _actions.add_child(back)
+
+func _intervene(kind: String, ref: String) -> void:
+    var s: AstraGameSession = screen.session
+    var result := s.intervene(kind, ref)
+    if not bool(result.get("ok", false)):
+        screen.fx.toast("지금은 그렇게 할 수 없습니다.", AstraUI.GOLD)
+        return
+    screen.fx.play("select")
+    for shift in result.get("shifts", []):
+        screen.fx.toast(AstraJosa.i(s.name_of(str(shift.get("npc", "")))) + " 생각을 바꿨습니다.", AstraUI.CYAN, 2.2)
+    _timer.start()
+    _render_actions()
+
+func _continue() -> void:
+    screen.fx.play("click")
+    screen.session.meeting_continue()
+    _timer.start()
+    _render_actions()

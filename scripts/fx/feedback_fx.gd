@@ -49,16 +49,18 @@ func _ready() -> void:
     _banner_subtitle.add_theme_color_override("font_color", Color("c5d5ea"))
     box.add_child(_banner_subtitle)
 
+    # Toasts sit at the top over the one-line task bar, where they never cover
+    # the conversation or the buttons the player is about to press.
     _toast_box = VBoxContainer.new()
-    _toast_box.anchor_left = 1.0
-    _toast_box.anchor_right = 1.0
-    _toast_box.anchor_top = 1.0
-    _toast_box.anchor_bottom = 1.0
-    _toast_box.offset_left = -420.0
-    _toast_box.offset_right = -24.0
-    _toast_box.offset_top = -260.0
-    _toast_box.offset_bottom = -92.0
-    _toast_box.alignment = BoxContainer.ALIGNMENT_END
+    _toast_box.anchor_left = 0.5
+    _toast_box.anchor_right = 0.5
+    _toast_box.anchor_top = 0.0
+    _toast_box.anchor_bottom = 0.0
+    _toast_box.offset_left = -300.0
+    _toast_box.offset_right = 300.0
+    _toast_box.offset_top = 58.0
+    _toast_box.offset_bottom = 200.0
+    _toast_box.alignment = BoxContainer.ALIGNMENT_BEGIN
     _toast_box.add_theme_constant_override("separation", 8)
     _toast_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
     add_child(_toast_box)

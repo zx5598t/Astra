@@ -1,322 +1,203 @@
-extends VBoxContainer
+extends Control
 
-# Case closed: outcome, the full truth (who the Nulls were, who lied and why),
-# score breakdown, case theory review and archive progress.
+# End of a Stage: first the story (re-sync, the local answer, what is still
+# unknown — or the failure scene), then two short panels: CONTAINMENT RESULT
+# (who was Null, who was isolated, who was lost) and STORY RESULT (what this
+# Stage settled and what it opened). Then one clear next step.
 
 var screen
-var _body: VBoxContainer
+var _stage: AstraVNStage
+var _summary: Control
+var _shown_summary: bool = false
 
 func setup(game_screen) -> void:
     screen = game_screen
-    add_theme_constant_override("separation", 10)
-    size_flags_vertical = Control.SIZE_EXPAND_FILL
-    _body = AstraUI.vbox(14)
-    add_child(AstraUI.scroll(_body))
+    set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    _stage = AstraVNStage.new()
+    add_child(_stage)
+    _stage.advanced.connect(func():
+        screen.session.story_next()
+        screen.fx.play("click")
+    )
+    _stage.chose.connect(func(index: int):
+        screen.session.story_choose(index)
+    )
     refresh()
 
 func refresh() -> void:
-    var session: AstraGameSession = screen.session
-    var report := session.final_report
-    AstraUI.clear(_body)
-    if report.is_empty():
+    var s: AstraGameSession = screen.session
+    if s.phase != "RESULT":
         return
-    var outcome := str(report.get("outcome", ""))
-    var color := AstraUI.GREEN if outcome == "WIN" else (AstraUI.GOLD if outcome == "TIMEOUT" else AstraUI.RED)
-
-    var hero := AstraUI.panel(Color(color, 0.08), Color(color, 0.6), 14, 18)
-    _body.add_child(hero)
-    var hero_row := AstraUI.hbox(18)
-    hero.add_child(hero_row)
-    var hero_text := AstraUI.vbox(4)
-    hero_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    hero_row.add_child(hero_text)
-    hero_text.add_child(AstraUI.label("사건 종료 · DAY %d" % int(report.get("day", 1)), 13, AstraUI.MUTED))
-    hero_text.add_child(AstraUI.label(str(report.get("title", "")), 36, color))
-    hero_text.add_child(AstraUI.label(str(report.get("subtitle", "")), 16, AstraUI.TEXT, true))
-
-    if session.case_id == AstraCaseCatalog.CALIBRATION:
-        _calibration_result(session, report)
+    var scene := s.story_scene()
+    if not scene.is_empty():
+        _stage.visible = true
+        var lines: Array = scene.get("lines", [])
+        var index := clampi(s.story_line_index(), 0, maxi(0, lines.size() - 1))
+        var line: Array = lines[index] if not lines.is_empty() else ["", ""]
+        var speaker := str(line[0])
+        _stage.show_beat({
+            "art": AstraArt.beat_art(scene, s.case_id),
+            "dark": bool(scene.get("dark", false)),
+            "speaker": speaker if s.crew.has(speaker) else "",
+            "expression": "neutral",
+            "action": str(scene.get("action", "")) if index == 0 and not bool(scene.get("action_only", false)) else "",
+            "text": str(line[1]),
+            "choices": scene.get("choices", []) if index >= lines.size() - 1 else [],
+            "caption": "STAGE %d · 끝" % s.stage_index()
+        })
         return
-
-    _add_story_closure(session, outcome)
-
-    # What was different about *this* run, before any score appears. A player
-    # who just lost needs the story of the run, not a receipt (§29, §92).
-    var summary: Dictionary = report.get("loop_summary", {})
-    var summary_lines: Array = summary.get("lines", [])
-    if not summary_lines.is_empty():
-        var recap := AstraUI.panel(AstraUI.PANEL_2, Color(AstraUI.CYAN, 0.3), 12, 14)
-        _body.add_child(recap)
-        var recap_box := AstraUI.vbox(6)
-        recap.add_child(recap_box)
-        recap_box.add_child(AstraUI.label("이번 조사에서", AstraUI.T_META, AstraUI.CYAN))
-        for line in summary_lines:
-            recap_box.add_child(AstraUI.prose("· " + str(line), AstraUI.T_BODY, AstraUI.TEXT))
-
-    if outcome != "WIN":
-        var post: Dictionary = report.get("post_mortem", {})
-        var lesson := AstraUI.panel(Color(AstraUI.GOLD, 0.06), Color(AstraUI.GOLD, 0.38), 12, 14)
-        _body.add_child(lesson)
-        var lesson_box := AstraUI.vbox(6)
-        lesson.add_child(lesson_box)
-        lesson_box.add_child(AstraUI.label("놓친 것", AstraUI.T_META, AstraUI.GOLD))
-        if str(post.get("innocent_lie", "")) != "":
-            lesson_box.add_child(AstraUI.prose("· " + str(post["innocent_lie"]), AstraUI.T_BODY, AstraUI.TEXT))
-        if str(post.get("decisive_vote", "")) != "":
-            lesson_box.add_child(AstraUI.prose("· " + str(post["decisive_vote"]), AstraUI.T_BODY, AstraUI.TEXT))
-        for missed_clue in post.get("missed_clues", []):
-            lesson_box.add_child(AstraUI.prose("· 끝내 찾지 못한 기록 — %s (%s)" % [str(missed_clue.get("title", "")), str(missed_clue.get("room", ""))], AstraUI.T_META, AstraUI.MUTED))
-        # After a couple of losses the game offers the gentler speed itself
-        # rather than waiting for the player to find the settings menu.
-        if screen.app.meta.should_offer_assist():
-            var assist := AstraUI.button("조사 지원 켜기 (스토리 속도)", AstraUI.GREEN, AstraUI.T_UI, 42)
-            assist.pressed.connect(func():
-                screen.app.meta.difficulty_mode = "STORY"
-                screen.app.meta.save_data()
-                assist.text = "조사 지원이 켜졌습니다"
-                assist.disabled = true
+    if _shown_summary:
+        return
+    # After the campaign's last epilogue: credits, then DEEP RECONSTRUCTION.
+    if s.finale_tone() != "" and not _credits_done:
+        _stage.visible = false
+        if _credits == null:
+            # Full screen, over the Stage bar: credits belong to the story.
+            _credits = AstraCreditsView.new()
+            screen.add_child(_credits)
+            _credits.setup(s)
+            _credits.finished.connect(func():
+                _credits_done = true
+                _credits.queue_free()
+                _credits = null
+                refresh()
             )
-            lesson_box.add_child(assist)
+        return
+    _shown_summary = true
+    _stage.visible = false
+    _build_summary()
 
-    if bool(report.get("mission_complete", false)):
-        _body.add_child(AstraUI.chip("함선 복구 임무 완료 · 항해 기록에 저장됨", AstraUI.GREEN, 13))
-    if outcome == "WIN":
-        var fragment: Array = AstraStory.MEMENTOS.get(session.case_id,[])
-        if not fragment.is_empty():
-            var memory := AstraUI.hbox(16)
-            memory.add_child(AstraArt.icon(AstraArt.item(str(fragment[1])),Vector2(110,110)))
-            var text := AstraUI.vbox(8)
-            text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-            text.add_child(AstraUI.section("복구된 기억 · " + str(fragment[0])))
-            text.add_child(AstraUI.label(str(fragment[2]),16,AstraUI.TEXT,true))
-            memory.add_child(text)
-            _body.add_child(memory)
-    _body.add_child(AstraUI.section("그날의 기록 대조"))
-    for op in session.case_data.get("ops",[]):
-        var executor := ""
-        for id in session.truth["null_ops"]:
-            if str(session.truth["null_ops"][id]) == str(op["id"]):
-                executor = session.name_of(str(id))
-        _body.add_child(AstraUI.label("%s · %s\n%s %s 명령을 실행했다." % [AstraCaseCatalog.format_time(int(op.get("minute",0)),int(op.get("second",0))),session.room_name(str(op["room"])),AstraJosa.i(executor),str(op["name"])],16,AstraUI.TEXT,true))
-    var missed: Array[String] = []
-    for clue in session.clues:
-        if not bool(clue.get("found",false)) and str(clue.get("kind","")) in ["access_log","op_record","trace"]:
-            missed.append(str(clue.get("title","")) + " · " + session.room_name(str(clue.get("room",""))) + " · " + str(clue.get("time","")))
-    if not missed.is_empty():
-        var reveal := AstraUI.button("놓친 기록 살펴보기",AstraUI.MUTED,14,40)
-        var detail := AstraUI.label("\n".join(missed),14,AstraUI.MUTED,true)
-        detail.visible = false
-        reveal.pressed.connect(func(): detail.visible = not detail.visible)
-        _body.add_child(reveal)
-        _body.add_child(detail)
-    var left := _body
+var _credits: AstraCreditsView
+var _credits_done: bool = false
 
-    left.add_child(AstraUI.section("Null의 정체", AstraUI.RED))
-    var null_row := AstraUI.hbox(10)
-    left.add_child(null_row)
-    for null_id in report.get("nulls", []):
-        null_row.add_child(_null_card(session, str(null_id)))
+func consume_advance() -> bool:
+    if _credits != null and is_instance_valid(_credits):
+        return _credits.consume_advance()
+    if _stage.visible:
+        return _stage.consume_advance()
+    return false
 
-    var herring_id := str(report.get("herring", ""))
-    if herring_id != "":
-        var member := session.npc(herring_id)
-        left.add_child(AstraUI.section("거짓말했지만 Null이 아니었던 사람", AstraUI.GOLD))
-        var herring := AstraUI.panel(AstraUI.PANEL_2, Color(AstraUI.GOLD, 0.4), 10, 12)
-        var herring_box := AstraUI.vbox(4)
-        herring.add_child(herring_box)
-        herring_box.add_child(AstraUI.label("%s%s" % [member.display_name, " · 조사 중 사정을 밝혀냄" if member.secret_revealed else " · 끝내 숨긴 사정"], 16, member.accent))
-        herring_box.add_child(AstraUI.label("“%s”" % str(member.info.get("secret", "")), 14, AstraUI.TEXT, true))
-        left.add_child(herring)
+func _build_summary() -> void:
+    var s: AstraGameSession = screen.session
+    var report := s.final_report
+    var win := str(report.get("outcome", "")) == "WIN"
+    var bg := AstraUI.thumb(AstraArt.background(str(AstraStageStory.STAGE_ART.get(s.case_id, "bridge"))), Vector2.ZERO)
+    bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    bg.modulate = Color(0.3, 0.33, 0.42)
+    add_child(bg)
+    var root := AstraUI.vbox(12)
+    root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    root.offset_left = 30
+    root.offset_right = -30
+    root.offset_top = 16
+    root.offset_bottom = -16
+    add_child(root)
+    var head := AstraUI.hbox(14)
+    root.add_child(head)
+    head.add_child(AstraUI.label(str(report.get("title", "")), AstraUI.T_DISPLAY, AstraUI.GREEN if win else AstraUI.RED))
+    var sub := AstraUI.vbox(2)
+    sub.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    head.add_child(sub)
+    if s.is_deep():
+        sub.add_child(AstraUI.label("심층 재구성 · 깊이 %d" % s.deep_depth(), AstraUI.T_UI, AstraUI.MUTED))
+    else:
+        sub.add_child(AstraUI.label("%s · STAGE %d · %s" % [AstraCaseCatalog.part_label(s.case_id), s.stage_index(), str(AstraVoyageContent.chapter(s.case_id).get("title", s.case_data.get("title", "")))], AstraUI.T_UI, AstraUI.MUTED))
+    sub.add_child(AstraUI.prose(str(report.get("subtitle", "")), AstraUI.T_UI, AstraUI.TEXT))
+    var cols := AstraUI.hbox(16)
+    cols.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    root.add_child(cols)
 
-    left.add_child(AstraUI.section("진실 대조표"))
-    var grid := GridContainer.new()
-    grid.columns = 5
-    grid.add_theme_constant_override("h_separation", 12)
-    grid.add_theme_constant_override("v_separation", 4)
-    left.add_child(grid)
-    for header in ["이름", "정체", "실제 위치", "진술", "결말"]:
-        grid.add_child(AstraUI.label(header, 12, AstraUI.DIM))
-    for row in report.get("truth", []):
-        var npc_id := str(row.get("id", ""))
-        grid.add_child(AstraUI.label(session.name_of(npc_id), 14, AstraCrewCatalog.accent(npc_id)))
-        var is_null := str(row.get("role", "")) == "NULL"
-        grid.add_child(AstraUI.label("Null · " + str(row.get("op", "")) if is_null else "Crew", 13, AstraUI.RED if is_null else AstraUI.GREEN))
-        grid.add_child(AstraUI.label(str(row.get("true_position", "")), 13, AstraUI.TEXT))
-        grid.add_child(AstraUI.label(str(row.get("claim_position", "")) + (" (거짓)" if bool(row.get("lie", false)) else ""), 13, AstraUI.GOLD if bool(row.get("lie", false)) else AstraUI.MUTED))
-        var status := str(row.get("status", ""))
-        var status_text := "생존"
-        if status == AstraCrewMember.STATUS_ISOLATED:
-            status_text = "장기수면 격리"
-        elif status == AstraCrewMember.STATUS_OFFLINE:
-            status_text = "생체 신호 두절"
-        grid.add_child(AstraUI.label(status_text, 13, AstraUI.MUTED))
+    # CONTAINMENT RESULT
+    var left := AstraUI.reading_panel(AstraUI.GREEN if win else AstraUI.RED, 0.92)
+    left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    cols.add_child(left)
+    var lbox := AstraUI.vbox(8)
+    left.add_child(AstraUI.scroll(lbox))
+    lbox.add_child(AstraUI.label("격리 결과", AstraUI.T_HEAD, AstraUI.GREEN if win else AstraUI.RED))
+    var nulls: Array = report.get("nulls", [])
+    var null_row := AstraUI.hbox(8)
+    lbox.add_child(null_row)
+    null_row.add_child(AstraUI.label("이번 주기의 Null ·", AstraUI.T_UI, AstraUI.MUTED))
+    for id in nulls:
+        null_row.add_child(AstraUI.crew_tag(str(id), AstraUI.T_UI, false, 30))
+    for line in Dictionary(report.get("loop_summary", {})).get("lines", []):
+        lbox.add_child(AstraUI.prose("· " + str(line), AstraUI.T_UI, AstraUI.TEXT))
+    var pm: Dictionary = report.get("post_mortem", {})
+    for line in pm.get("innocent_lies", []):
+        lbox.add_child(AstraUI.prose("· " + str(line), AstraUI.T_META, AstraUI.MUTED))
+    if not win:
+        for line in pm.get("danger", []):
+            lbox.add_child(AstraUI.prose("· Null이 당신을 노린 이유: " + str(line), AstraUI.T_META, AstraUI.GOLD))
+    lbox.add_child(AstraUI.label("평가 %s · %d점" % [str(report.get("rank", "")), int(report.get("total", 0))], AstraUI.T_UI, AstraUI.GOLD))
 
-    var columns := AstraUI.hbox(18)
-    _body.add_child(columns)
-    var right := AstraUI.vbox(6)
+    # STORY RESULT
+    var right := AstraUI.reading_panel(AstraUI.VIOLET, 0.92)
     right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    columns.add_child(right)
-    var side := AstraUI.vbox(6)
-    side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    columns.add_child(side)
-    right.add_child(AstraUI.section("평가 · %s / %d점" % [str(report.get("rank","")),int(report.get("total",0))], AstraUI.MUTED))
-    var score_grid := GridContainer.new()
-    score_grid.columns = 2
-    score_grid.add_theme_constant_override("h_separation", 12)
-    right.add_child(score_grid)
-    for row in report.get("rows", []):
-        score_grid.add_child(AstraUI.label(str(row[0]), 13, AstraUI.MUTED))
-        var value := int(row[1])
-        var value_label := AstraUI.label(("+%d" % value) if value > 0 else str(value), 13, AstraUI.GREEN if value > 0 else (AstraUI.RED if value < 0 else AstraUI.DIM))
-        value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-        value_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        score_grid.add_child(value_label)
-
-    var theory: Dictionary = report.get("theory", {})
-    side.add_child(AstraUI.section("추리 보고서", AstraUI.GOLD))
-    var suspects: Array = theory.get("suspects", [])
-    if suspects.is_empty():
-        side.add_child(AstraUI.label("제출하지 않았습니다. 다음에는 투표 전에 실행자로 판단한 사람을 ‘N’으로 표시해 보세요.", 13, AstraUI.MUTED, true))
+    cols.add_child(right)
+    var rbox := AstraUI.vbox(8)
+    right.add_child(AstraUI.scroll(rbox))
+    var story: Dictionary = report.get("story", {})
+    if s.is_deep():
+        # Deep tells no story: only the run so far.
+        rbox.add_child(AstraUI.label("이번 도전", AstraUI.T_HEAD, AstraUI.VIOLET))
+        var run: Dictionary = screen.app.deep_run
+        var stats: Dictionary = run.get("stats", {})
+        rbox.add_child(AstraUI.prose("깊이 %d까지 · 격리한 Null %d · 당신의 표 정확도 %d%%" % [s.deep_depth(), int(stats.get("contained", 0)), AstraDeepRun.accuracy(run)], AstraUI.T_UI, AstraUI.TEXT))
+        if win:
+            var next_depth := s.deep_depth() + 1
+            var next_mod := AstraDeepRun.modifier_for(int(run.get("run_seed", 0)), next_depth)
+            rbox.add_child(AstraUI.prose("다음 · 깊이 %d%s" % [next_depth, (" · 조건 " + str(AstraDeepRun.MODIFIERS.get(next_mod, {}).get("name", ""))) if next_mod != "" else ""], AstraUI.T_UI, AstraUI.GOLD))
+        else:
+            rbox.add_child(AstraUI.prose("한 목숨이 끝났다. 이번 도전은 여기까지다.", AstraUI.T_UI, AstraUI.MUTED))
     else:
-        side.add_child(AstraUI.label("%s · %d점" % [str(theory.get("label", "")), int(theory.get("grade", 0))], 16, AstraUI.TEXT))
-        side.add_child(AstraUI.label("%d일째 제출 · %s · 적중 %d/2" % [int(theory.get("day", 1)), session.names_of(suspects), int(theory.get("matched", 0))], 13, AstraUI.MUTED, true))
+        rbox.add_child(AstraUI.label("이야기", AstraUI.T_HEAD, AstraUI.VIOLET))
+    if s.is_deep():
+        pass
+    elif win:
+        if str(story.get("resolved", "")) != "":
+            rbox.add_child(AstraUI.label("알게 된 것", AstraUI.T_META, AstraUI.GREEN))
+            rbox.add_child(AstraUI.prose(str(story.get("resolved", "")), AstraUI.T_UI, AstraUI.TEXT))
+        if str(story.get("open_question", "")) != "":
+            rbox.add_child(AstraUI.label("아직 모르는 것", AstraUI.T_META, AstraUI.GOLD))
+            rbox.add_child(AstraUI.prose(str(story.get("open_question", "")), AstraUI.T_UI, AstraUI.TEXT))
+    else:
+        rbox.add_child(AstraUI.prose("이번 재구성은 여기서 끝났다. 다시 시도하면 같은 STAGE가 새로 재구성된다. 다음 주기의 Null이 같은 사람이라는 보장은 없다. 기억하는 사람은 당신뿐이다.", AstraUI.T_UI, AstraUI.TEXT))
 
-    var change: Dictionary = screen.archive_change
-    if not change.is_empty():
-        side.add_child(AstraUI.section("아카이브", AstraUI.CYAN))
-        side.add_child(AstraUI.label("항해 기록에 이번 조사를 보관했습니다.", 14, AstraUI.TEXT))
-        if bool(change.get("new_best", false)):
-            side.add_child(AstraUI.chip("이 사건 최고 기록 갱신", AstraUI.GOLD, 13))
-        for case_id in change.get("unlocked", []):
-            side.add_child(AstraUI.chip("새 사건 해금 · " + screen.app.meta.case_display_name(str(case_id)), AstraUI.GREEN, 13))
-        for feature in change.get("new_features", []):
-            side.add_child(AstraUI.chip("새 기능 · " + AstraUnlocks.title_of(str(feature)), AstraUI.GOLD, 13))
-        var new_codex: Array = change.get("new_codex",[])
-        if not new_codex.is_empty():
-            side.add_child(AstraUI.label("새로 기록한 승무원 정보",AstraUI.T_META,AstraUI.CYAN))
-            var visible_count := mini(3,new_codex.size())
-            for index in range(visible_count):
-                var entry: Dictionary = new_codex[index]
-                var who := AstraCrewCatalog.display_name(str(entry.get("character","")))
-                side.add_child(AstraUI.prose("· %s — %s" % [who,str(entry.get("title",""))],AstraUI.T_META,AstraUI.TEXT))
-            if new_codex.size() > visible_count:
-                side.add_child(AstraUI.label("외 %d개 · 승무원 기록에서 확인" % (new_codex.size()-visible_count),AstraUI.T_META,AstraUI.MUTED))
-
-    var buttons := AstraUI.hbox(10)
-    _body.add_child(buttons)
-    var archive := AstraUI.button("아카이브로", AstraUI.MUTED, 16, 50)
-    archive.pressed.connect(screen.app.show_archive)
-    buttons.add_child(archive)
-    var retry := AstraUI.button("같은 사건 다시 (새 배치)", AstraUI.CYAN, 16, 50)
-    retry.pressed.connect(screen.restart_case)
-    buttons.add_child(retry)
+    var buttons := AstraUI.hbox(12)
+    root.add_child(buttons)
     buttons.add_child(AstraUI.spacer())
-    var next_id := _next_case(session.case_id)
-    if next_id != "":
-        var next := AstraUI.button("다음 사건 · %s →" % str(AstraCaseCatalog.get_case(next_id).get("title", "")), AstraUI.GREEN, 16, 50, true)
-        next.pressed.connect(screen.start_other_case.bind(next_id))
-        buttons.add_child(next)
-
-func _add_story_closure(session: AstraGameSession, outcome: String) -> void:
-    var chapter := AstraVoyageContent.chapter(session.case_id)
-    var recap := session.story_recap()
-    var panel := AstraUI.panel(Color(AstraUI.CYAN, 0.055), Color(AstraUI.CYAN, 0.36), 12, 14)
-    _body.add_child(panel)
-    var box := AstraUI.vbox(7)
-    panel.add_child(box)
-
-    if str(recap.get("resolved","")) != "":
-        box.add_child(AstraUI.label("이번에 확인한 사실", AstraUI.T_META, AstraUI.GREEN))
-        box.add_child(AstraUI.prose(str(recap["resolved"]), AstraUI.T_BODY, AstraUI.TEXT))
-        if str(recap.get("open_question","")) != "":
-            box.add_child(AstraUI.label("그래도 남은 질문", AstraUI.T_META, AstraUI.GOLD))
-            box.add_child(AstraUI.prose(str(recap["open_question"]), AstraUI.T_BODY, AstraUI.TEXT))
-        var question: Dictionary = recap.get("question",{})
-        if not question.is_empty():
-            var qstatus := str(question.get("status","OPEN"))
-            var status_text: String = str({"ANSWERED":"확인됨","PARTIAL":"부분 확인","REFUTED":"반증","CHANGED":"기록이 바뀜"}.get(qstatus,"아직 부족"))
-            box.add_child(AstraUI.label("Notebook 질문 상태 · " + status_text, AstraUI.T_META, AstraUI.MUTED))
-    else:
-        box.add_child(AstraUI.label("이번 기록은 여기서 끊겼다", AstraUI.T_META, AstraUI.GOLD))
-        box.add_child(AstraUI.prose("이번 loop에서 핵심 사실을 직접 확인하지 못했습니다. Result가 보지 않은 답을 대신 공개하지 않습니다.", AstraUI.T_BODY, AstraUI.MUTED))
-        box.add_child(AstraUI.label("아직 확인해야 할 것", AstraUI.T_META, AstraUI.CYAN))
-        box.add_child(AstraUI.prose(str(chapter.get("goal","")), AstraUI.T_BODY, AstraUI.TEXT))
-
-    if str(recap.get("outro","")) != "":
-        box.add_child(AstraUI.label("직접 본 마지막 장면", AstraUI.T_META, AstraUI.VIOLET))
-        box.add_child(AstraUI.prose(str(recap["outro"]), AstraUI.T_BODY, AstraUI.TEXT))
-    if str(recap.get("next_hook","")) != "":
-        box.add_child(AstraUI.label("다음에 이어지는 단서", AstraUI.T_META, AstraUI.CYAN))
-        box.add_child(AstraUI.prose(str(recap["next_hook"]), AstraUI.T_BODY, AstraUI.TEXT))
-
-func _calibration_result(session: AstraGameSession, report: Dictionary) -> void:
-    var chapter := AstraVoyageContent.chapter(session.case_id)
-    var recap := session.story_recap()
-    var learned := AstraUI.panel(Color(AstraUI.CYAN, 0.07), Color(AstraUI.CYAN, 0.38), 12, 14)
-    _body.add_child(learned)
-    var box := AstraUI.vbox(7)
-    learned.add_child(box)
-    box.add_child(AstraUI.label("이번에 확인한 사실", AstraUI.T_META, AstraUI.GREEN))
-    box.add_child(AstraUI.prose(str(recap.get("resolved","직접 확인한 사실이 아직 없습니다.")), AstraUI.T_BODY, AstraUI.TEXT))
-    box.add_child(AstraUI.label("그래도 남은 질문", AstraUI.T_META, AstraUI.GOLD))
-    box.add_child(AstraUI.prose(str(recap.get("open_question",chapter.get("goal",""))), AstraUI.T_BODY, AstraUI.TEXT))
-    if str(recap.get("outro","")) != "":
-        box.add_child(AstraUI.label("직접 본 마지막 장면", AstraUI.T_META, AstraUI.VIOLET))
-        box.add_child(AstraUI.prose(str(recap["outro"]), AstraUI.T_BODY, AstraUI.TEXT))
-
-    var next_id := _next_case(session.case_id)
-    if next_id != "":
-        var next_data := AstraCaseCatalog.get_case(next_id)
-        var next_panel := AstraUI.panel(AstraUI.PANEL_2, Color(AstraUI.GOLD, 0.35), 10, 12)
-        _body.add_child(next_panel)
-        var next_box := AstraUI.vbox(5)
-        next_panel.add_child(next_box)
-        next_box.add_child(AstraUI.label("다음에 이어지는 단서", AstraUI.T_META, AstraUI.GOLD))
-        next_box.add_child(AstraUI.prose(str(recap.get("next_hook", chapter.get("goal",""))), AstraUI.T_BODY, AstraUI.TEXT))
-        var next := AstraUI.primary_button("다음 사건 · %s →" % str(next_data.get("title", "")), AstraUI.GREEN)
-        next.pressed.connect(screen.start_other_case.bind(next_id))
-        next_box.add_child(next)
-
-    var buttons := AstraUI.hbox(10)
-    _body.add_child(buttons)
-    var archive := AstraUI.button("항해 기록으로", AstraUI.MUTED, 16, 48)
-    archive.pressed.connect(screen.app.show_archive)
-    buttons.add_child(archive)
-    var retry := AstraUI.button("CALIBRATION 다시 보기", AstraUI.CYAN, 16, 48)
-    retry.pressed.connect(screen.restart_case)
+    if s.is_deep():
+        # One life: a cleared depth goes deeper, a lost one closes the run.
+        var title_deep := AstraUI.button("타이틀로 (나중에 이어서)" if win else "타이틀로", AstraUI.MUTED, AstraUI.T_UI, 48)
+        title_deep.pressed.connect(func(): screen.exit_to_title())
+        buttons.add_child(title_deep)
+        var go := AstraUI.primary_button("다음 깊이   →" if win else "도전 기록 보기   →", AstraUI.VIOLET)
+        go.custom_minimum_size = Vector2(260, 52)
+        go.pressed.connect(func():
+            if win:
+                screen.app.deep_next_depth()
+            else:
+                screen.app.show_deep("summary")
+        )
+        buttons.add_child(go)
+        AstraUI.fade_in(root, 0.4)
+        return
+    var next_id := AstraCaseCatalog.next_stage(s.case_id)
+    var title_button := AstraUI.button("타이틀로", AstraUI.MUTED, AstraUI.T_UI, 48)
+    title_button.pressed.connect(func(): screen.exit_to_title())
+    buttons.add_child(title_button)
+    if not win:
+        # The failed reconstruction can still be read before it is let go.
+        var records := AstraUI.button("기록 확인", AstraUI.MUTED, AstraUI.T_UI, 48)
+        records.pressed.connect(func(): screen.open_notebook())
+        buttons.add_child(records)
+    # A retry is a new reconstruction: new seed, possibly new Nulls (§28).
+    var retry := AstraUI.button("이 Stage 다시" if win else "재구성 재시도", AstraUI.CYAN, AstraUI.T_UI, 48, not win)
+    retry.pressed.connect(func(): screen.restart_case())
     buttons.add_child(retry)
-
-func _null_card(session: AstraGameSession, npc_id: String) -> Control:
-    var member := session.npc(npc_id)
-    var card := AstraUI.panel(Color(AstraUI.RED, 0.07), Color(AstraUI.RED, 0.5), 10, 10)
-    card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    var row := AstraUI.hbox(10)
-    card.add_child(row)
-    row.add_child(AstraUI.thumb(str(member.info.get("portrait", "")), Vector2(64, 80)))
-    var box := AstraUI.vbox(3)
-    row.add_child(box)
-    box.add_child(AstraUI.label(member.display_name, 20, member.accent))
-    box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    box.add_child(AstraUI.label("담당 조작 · " + session.op_name(str(session.truth["null_ops"].get(npc_id, ""))), 13, AstraUI.TEXT, true))
-    var claim: Dictionary = session.truth["claims"].get(npc_id, {})
-    box.add_child(AstraUI.label("거짓 진술 · " + session.room_name(str(claim.get("position", ""))), 12, AstraUI.MUTED, true))
-    var fate := "장기수면 격리됨" if member.status == AstraCrewMember.STATUS_ISOLATED else "끝까지 숨어 있었음"
-    box.add_child(AstraUI.label(fate, 13, AstraUI.GREEN if member.status == AstraCrewMember.STATUS_ISOLATED else AstraUI.RED))
-    return card
-
-func _next_case(current: String) -> String:
-    var meta: AstraMetaProgress = screen.app.meta
-    var index := AstraCaseCatalog.CAMPAIGN.find(current)
-    for offset in range(1, AstraCaseCatalog.CAMPAIGN.size()):
-        var candidate := str(AstraCaseCatalog.CAMPAIGN[(index + offset) % AstraCaseCatalog.CAMPAIGN.size()])
-        if meta.is_case_unlocked_for_slot(candidate, screen.app.active_slot) and candidate != current:
-            return candidate
-    return ""
-
-func _rank_color(rank: String) -> Color:
-    match rank:
-        "S": return AstraUI.GOLD
-        "A": return AstraUI.GREEN
-        "B": return AstraUI.CYAN
-        "C": return AstraUI.MUTED
-    return AstraUI.RED
+    if win and next_id != "":
+        var next := AstraUI.primary_button("다음 STAGE  →", AstraUI.GREEN)
+        next.custom_minimum_size = Vector2(260, 52)
+        next.pressed.connect(func(): screen.start_other_case(next_id))
+        buttons.add_child(next)
+    AstraUI.fade_in(root, 0.4)

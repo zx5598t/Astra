@@ -36,7 +36,10 @@ static func generate(case_id: String, seed_value: int, null_history: Array = [],
     if data.is_empty():
         return {}
     var rng := RandomNumberGenerator.new()
-    rng.seed = seed_value
+    # Hashed with the Stage id: nearby seeds (time-based, or a test's
+    # arithmetic sequence) must not give correlated first draws, or the same
+    # faces come up as Null far more often than others.
+    rng.seed = absi(hash("%s|%d|stage" % [case_id, seed_value]))
 
     var crew: Array = AstraCaseCatalog.roster(data)
     var wanted_nulls := AstraCaseCatalog.null_count(data)
@@ -258,7 +261,7 @@ static func generate(case_id: String, seed_value: int, null_history: Array = [],
         var op_index := rng.randi_range(0, ops.size() - 1)
         var op: Dictionary = ops[op_index]
         var culprit := str(nulls[op_index])
-        var categories: Array = AstraCrewCatalog.TRAIT_CATEGORIES.keys()
+        var categories: Array = AstraCrewCatalog.LEGACY_TRAIT_KEYS.duplicate()
         _shuffle(categories, rng)
         var picked_category := ""
         var picked_group := ""
@@ -291,7 +294,7 @@ static func generate(case_id: String, seed_value: int, null_history: Array = [],
         var op: Dictionary = ops[target_index]
         var pair: Array = used_pairs.get(target_null, [])
         var candidates: Array = []
-        for category in AstraCrewCatalog.TRAIT_CATEGORIES.keys():
+        for category in AstraCrewCatalog.LEGACY_TRAIT_KEYS:
             if category in ["hand", "terminal", "clearance"]:
                 continue
             candidates.append(category)
@@ -431,3 +434,841 @@ static func _least_crowded(candidates: Array, population: Dictionary) -> String:
             best_count = count
             best = str(pos)
     return best
+
+# ================================================================ 0.8.0 DAY PACKET
+#
+# generate() above still produces the Stage truth: who the Nulls are (drawn with
+# history damping) for the whole Stage. The Null role never changes inside a
+# Stage. Everything that happens on one Day is a separate Day Packet:
+#
+#   * one incident (authored per Stage, AstraStageStory.INCIDENTS)
+#   * where every active crew member really was at the incident time
+#   * what each of them claims (honest crew tell the truth; the acting Null,
+#     a covering Null and at most one innocent with a benign secret do not)
+#   * three to six information fragments, each owned by the person who knows it
+#     (a witness, a record keeper, an expert, someone who heard it, or a Null's
+#     own deception)
+#
+# The packet is deterministic for (stage seed, day, active roster, living
+# Nulls) and is also stored in the snapshot, so a reload never re-rolls it.
+# Fairness contract (validate_day_packet):
+#   A  the acting Null is implicated by at least one fragment an innocent holds
+#   B  that evidence comes from two independent owners, or a record with a
+#      living backup owner, so one death cannot erase the only path
+#   C  on Day 1 at most one piece of actor evidence names the actor outright
+#   D  group-level evidence intersects to the actor (solvable in principle)
+#   E/F innocents can look guilty (benign lie, frame) and every such lie is
+#      catchable, so "lied" never simply equals "Null"
+
+const PACKET_VERSION := 1
+const WITNESS_CATEGORIES := ["fiber", "hand", "shift", "hair"]
+
+# What kind of social problem each Stage leans on (§71, §73). The rules are
+# the same everywhere; the pressure is not.
+#   CALIBRATION   one clear contradiction (few benign lies, little hearsay)
+#   DEAD_AIR      people hiding things for each other (benign lies)
+#   GLASS_GARDEN  direct sighting vs retold sighting (distorted hearsay)
+#   ECHO_WARD     time and place (more frames that place people wrongly)
+#   Part II       two Nulls; mixes of the above, heavier late
+const STAGE_THEMES := {
+    "CALIBRATION": {"benign_day1": 0.35, "benign_later": 0.3, "hearsay_chance": 0.3, "hearsay_distort": 0.0},
+    "DEAD_AIR": {"benign_day1": 0.95, "benign_later": 0.7, "hearsay_chance": 0.45, "hearsay_distort": 0.1},
+    "GLASS_GARDEN": {"benign_day1": 0.5, "benign_later": 0.45, "hearsay_chance": 0.9, "hearsay_overnight": 0.8, "hearsay_distort": 0.55},
+    "ECHO_WARD": {"benign_day1": 0.55, "benign_later": 0.5, "hearsay_chance": 0.6, "hearsay_distort": 0.25, "frame_bonus": 0.2},
+    "SILENT_ORBIT": {"hearsay_distort": 0.25, "frame_bonus": 0.1},
+    "RED_SHIFT": {"benign_day1": 0.75, "hearsay_distort": 0.3},
+    "LAST_LIGHT": {"hearsay_distort": 0.3, "frame_bonus": 0.15},
+    "SECOND_WATCH": {"benign_day1": 0.7, "hearsay_distort": 0.3},
+    "BORROWED_DAYS": {"benign_day1": 0.8, "benign_later": 0.6, "hearsay_distort": 0.25},
+    "BLIND_DECK": {"hearsay_chance": 0.7, "hearsay_distort": 0.4, "frame_bonus": 0.15},
+    "THREE_MINUTES_DARK": {"hearsay_chance": 0.85, "hearsay_overnight": 0.6, "hearsay_distort": 0.5},
+    "CONTINUITY": {"benign_day1": 0.75, "hearsay_distort": 0.3, "frame_bonus": 0.1},
+    "THRESHOLD": {"benign_day1": 0.7, "hearsay_distort": 0.4, "frame_bonus": 0.2}
+}
+# What a log can tell about whoever triggered it. Corridor motion sensors read
+# the cabin-wing field of a crew tag, not the person.
+const RECORD_CATEGORY := {"terminal":"terminal", "door":"clearance", "power":"clearance", "comms":"terminal",
+    "motion":"wing", "vitals":"shift", "environment":"shift", "system":"clearance"}
+const RECORD_DEVICE := {"terminal":"개인 단말 접속 기록", "door":"출입 인증 기록", "power":"분배반 조작 기록",
+    "comms":"통신 채널 접속 기록", "motion":"통로 이동 센서", "vitals":"생체 태그 기록",
+    "environment":"구역 대기 센서", "system":"시스템 감사 로그"}
+const BENIGN_REASONS := ["EMBARRASSMENT", "PROTECT_OTHER", "HIDE_MISTAKE", "KEEP_PROMISE", "PERSONAL_SECRET", "FEAR", "MISREMEMBERED"]
+
+static func generate_day_packet(case_id: String, stage_seed: int, day: int, active: Array, living_nulls: Array, difficulty: String = "STANDARD", heat: Dictionary = {}) -> Dictionary:
+    var last: Dictionary = {}
+    for attempt in range(80):
+        last = _build_day_packet(case_id, stage_seed, day, active, living_nulls, difficulty, heat, attempt)
+        if validate_day_packet(last, active, living_nulls).is_empty():
+            return last
+    return last
+
+static func _packet_rng(case_id: String, stage_seed: int, day: int, attempt: int) -> RandomNumberGenerator:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = absi(hash("%s|%d|day%d|%d" % [case_id, stage_seed, day, attempt]))
+    return rng
+
+static func _build_day_packet(case_id: String, stage_seed: int, day: int, active: Array, living_nulls: Array, difficulty: String, heat: Dictionary, attempt: int) -> Dictionary:
+    var rng := _packet_rng(case_id, stage_seed, day, attempt)
+    var incident := AstraStageStory.incident(case_id, day)
+    var room := str(incident.get("room", "medbay"))
+    var data := AstraCaseCatalog.get_case(case_id)
+    var loc_ids: Array = []
+    for entry in data.get("rooms", []):
+        if str(entry.get("id", "")) not in loc_ids:
+            loc_ids.append(str(entry.get("id", "")))
+    for entry in data.get("commons", []):
+        if str(entry.get("id", "")) not in loc_ids:
+            loc_ids.append(str(entry.get("id", "")))
+    if room not in loc_ids:
+        loc_ids.append(room)
+    if "quarters" not in loc_ids:
+        loc_ids.append("quarters")
+    var locations := {}
+    for id in loc_ids:
+        var name := AstraCaseCatalog.room_name(data, str(id))
+        locations[str(id)] = name if name != str(id) else AstraStageStory.location_name(str(id))
+    var others: Array = []
+    for id in loc_ids:
+        if str(id) != room:
+            others.append(str(id))
+    var time_text := AstraCaseCatalog.format_time(int(incident.get("minute", 0)))
+    var time_before := AstraCaseCatalog.format_time(int(incident.get("minute", 0)) - 2)
+
+    # ---- who acts today. Nulls alternate by Day, so in a two-Null Stage both
+    # of them act (and leave evidence) within two Days.
+    var nulls: Array = []
+    for id in AstraCrewCatalog.ORDER:
+        if id in living_nulls and id in active:
+            nulls.append(id)
+    var innocents: Array = []
+    for id in AstraCrewCatalog.ORDER:
+        if id in active and id not in nulls:
+            innocents.append(id)
+    if nulls.is_empty() or innocents.is_empty():
+        return {"version": PACKET_VERSION, "day": day, "incident": incident, "locations": locations, "positions": {}, "claims": {}, "fragments": [], "actor": "", "empty": true}
+    var order := nulls.duplicate()
+    var stage_rng := RandomNumberGenerator.new()
+    stage_rng.seed = absi(hash("%s|%d|actors" % [case_id, stage_seed]))
+    _shuffle(order, stage_rng)
+    var actor := str(order[(day - 1) % order.size()])
+    var cover := ""
+    for id in order:
+        if str(id) != actor:
+            cover = str(id)
+
+
+    # ---- true positions at the incident time
+    # At night most people are asleep in their own cabin, alone; during working
+    # hours they are at stations, often in pairs. A cabin is a location of its
+    # own ("준의 선실"), so sleeping alone is an alibi nobody can confirm, not a
+    # place two people can contradict each other about.
+    var minute := int(incident.get("minute", 0))
+    var night := minute < 360 or minute >= 1320
+    for id in active:
+        locations["cabin:" + str(id)] = "%s의 선실" % AstraCrewCatalog.display_name(str(id))
+    var positions := {}
+    positions[actor] = room
+    var pool := innocents.duplicate()
+    _shuffle(pool, rng)
+    var sizes: Array = []
+    var remaining := pool.size()
+    var need_alone := pool.size() >= 3
+    var pair_chance := 0.34 if night else 0.66
+    while remaining > 0:
+        var size := 1
+        if need_alone:
+            need_alone = false
+        elif remaining >= 2 and rng.randf() < pair_chance:
+            size = 2
+        sizes.append(size)
+        remaining -= size
+    _shuffle(sizes, rng)
+    var loc_order := others.duplicate()
+    _shuffle(loc_order, rng)
+    var cursor := 0
+    var station := 0
+    for index in range(sizes.size()):
+        if int(sizes[index]) == 1 and rng.randf() < (0.72 if night else 0.3):
+            var sleeper := str(pool[cursor])
+            positions[sleeper] = "cabin:" + sleeper
+            cursor += 1
+            continue
+        var loc := str(loc_order[station % loc_order.size()])
+        station += 1
+        for _k in range(int(sizes[index])):
+            positions[str(pool[cursor])] = loc
+            cursor += 1
+    if cover != "":
+        positions[cover] = "cabin:" + cover if rng.randf() < (0.6 if night else 0.25) else str(loc_order[rng.randi_range(0, loc_order.size() - 1)])
+
+    # ---- honest claims: exactly the truth, with everyone really in the same place
+    var claims := {}
+    for id in active:
+        var mates: Array = []
+        for other in active:
+            if other != id and str(positions.get(other, "")) == str(positions.get(id, "")):
+                mates.append(other)
+        claims[str(id)] = {"position": str(positions.get(id, "")), "companions": _ordered(mates), "lie": false, "kind": "honest", "reason": ""}
+
+    # ---- the acting Null's cover story. Mostly somewhere nobody can check
+    # (their own cabin at night, an empty station by day). Claiming a room
+    # someone else was in is a mistake a Null rarely makes.
+    var occupied := {}
+    for id in positions:
+        occupied[str(positions[id])] = true
+    var quiet: Array = []
+    for id in others:
+        if not occupied.has(id):
+            quiet.append(id)
+    if night or quiet.is_empty():
+        quiet.append("cabin:" + actor)
+        if night:
+            quiet.append("cabin:" + actor)
+    var crowded: Array = []
+    for id in others:
+        var count := 0
+        for other in innocents:
+            if str(positions.get(other, "")) == id:
+                count += 1
+        if count >= 1:
+            crowded.append(id)
+    var mutual_chance := 0.0
+    if cover != "":
+        mutual_chance = clampf(0.3 * AstraDifficulty.number(difficulty, "mutual_alibi_scale", 1.0), 0.0, 0.7)
+    # "Borrowed" (§12): the Null claims it was with someone who was really
+    # alone at a station. The other person honestly says they were alone, the
+    # same shape of contradiction a harmless liar leaves the other way round,
+    # so "the one whose company is denied is always innocent" stops being a rule.
+    var lonely: Array = []
+    for id in innocents:
+        var spot := str(positions.get(id, ""))
+        if spot.begins_with("cabin:") or spot == room:
+            continue
+        var together := 0
+        for other in innocents:
+            if str(positions.get(other, "")) == spot:
+                together += 1
+        if together == 1:
+            lonely.append(str(id))
+    var style := "quiet"
+    var roll := rng.randf()
+    if cover != "" and roll < mutual_chance:
+        style = "mutual"
+    elif not crowded.is_empty() and roll < mutual_chance + 0.14:
+        style = "crowded"
+    elif not lonely.is_empty() and roll < mutual_chance + 0.14 + 0.18:
+        style = "borrowed"
+    var actor_claim := str(quiet[rng.randi_range(0, quiet.size() - 1)])
+    if style == "crowded":
+        actor_claim = str(crowded[rng.randi_range(0, crowded.size() - 1)])
+    if style == "mutual":
+        var shared: Array = []
+        for id in others:
+            if not occupied.has(id):
+                shared.append(id)
+        actor_claim = str(shared[rng.randi_range(0, shared.size() - 1)]) if not shared.is_empty() else str(others[0])
+    var borrowed := ""
+    if style == "borrowed":
+        borrowed = str(lonely[rng.randi_range(0, lonely.size() - 1)])
+        actor_claim = str(positions[borrowed])
+    claims[actor] = {"position": actor_claim, "companions": [borrowed] if borrowed != "" else [], "lie": true, "kind": "null", "reason": "NULL"}
+    if style == "mutual":
+        claims[actor]["companions"] = [cover]
+        claims[cover] = {"position": actor_claim, "companions": [actor], "lie": str(positions[cover]) != actor_claim, "kind": "cover", "reason": "NULL_COVER"}
+    # ---- evidence against the actor: one witness, one record, independent owners
+    var fragments: Array = []
+    var witness_pool: Array = innocents.duplicate()
+    _shuffle(witness_pool, rng)
+    var witness := str(witness_pool[0])
+    var record_types: Array = Array(incident.get("records", ["system"])).duplicate()
+    _shuffle(record_types, rng)
+    # Ship-wide sensors are always there too; an incident's own logs come first.
+    var generic: Array = ["motion", "vitals", "environment", "terminal"]
+    _shuffle(generic, rng)
+    for type in generic:
+        if str(type) not in record_types:
+            record_types.append(str(type))
+    var incident_records: int = Array(incident.get("records", ["system"])).size()
+    var record_options: Array = []
+    for index in range(record_types.size()):
+        var type := str(record_types[index])
+        var owner := AstraCrewCatalog.record_owner(type)
+        var backup := str(AstraCrewCatalog.RECORD_BACKUP.get(type, ""))
+        if owner in innocents and owner != witness:
+            record_options.append({"type": type, "owner": owner, "backup": backup if backup in innocents and backup != owner else "", "generic": index >= incident_records})
+        elif backup in innocents and backup != witness:
+            record_options.append({"type": type, "owner": backup, "backup": "", "generic": index >= incident_records})
+    if record_options.is_empty():
+        # Nobody whose job produces a record is awake and trustworthy today:
+        # the audit log is pulled by whoever is left.
+        for id in witness_pool:
+            if str(id) != witness:
+                record_options.append({"type": "system", "owner": str(id), "backup": "", "generic": false})
+                break
+
+    # ---- the evidence curve (§3, §4). How far today's two traces narrow the
+    # room is drawn per Day, not fixed: Day 1 usually leaves two or three
+    # people, Day 2 one or two, later Days mostly one. Across Days the same
+    # actor sits in every set, so remembering yesterday narrows today's. A
+    # sighting or a log that names the actor outright is a rare gift, not the
+    # fallback for a small roster: the record and the kind of sighting are
+    # chosen together to land as close to the Day's curve as the roster allows.
+    var want := _narrow_target(case_id, day, rng)
+    var w_specific := rng.randf() < float([0.12, 0.18, 0.24][clampi(day - 1, 0, 2)])
+    var e_specific := rng.randf() < float([0.05, 0.12, 0.18][clampi(day - 1, 0, 2)])
+    if w_specific and e_specific:
+        e_specific = false
+    var record_type := ""
+    var record_owner := ""
+    var record_backup := ""
+    var w_group := {}
+    var e_group := {}
+    var best_cost := 99.0
+    for option in record_options:
+        var pick := _pick_groups(actor, active, str(option["type"]), w_specific, e_specific, want, rng)
+        var left := _left_after(pick, w_specific, e_specific)
+        # An incident's own log reads better than a ship-wide sensor.
+        var cost := absf(float(left - want)) + (0.1 if left > want else 0.0) + (0.05 if bool(option["generic"]) else 0.0)
+        if cost < best_cost:
+            best_cost = cost
+            record_type = str(option["type"])
+            record_owner = str(option["owner"])
+            record_backup = str(option["backup"])
+            w_group = pick.get("w", {})
+            e_group = pick.get("e", {})
+    # In a small room every log may name the actor (nobody else awake shares
+    # their credential). Then a second passer-by who noticed something else
+    # takes the log's place: two partial sightings that only together narrow
+    # the room, and testimony needs a second voice before the crew leans on it.
+    var second_witness := ""
+    var second_group := {}
+    if not w_specific and not e_specific and best_cost >= 1.0 and want >= 2:
+        var pair := _pick_second_sighting(actor, active, str(w_group.get("category", "")), want)
+        if not pair.is_empty():
+            for id in witness_pool:
+                if str(id) != witness:
+                    second_witness = str(id)
+                    break
+            if second_witness != "":
+                if w_group.is_empty():
+                    w_group = pair["first"]
+                second_group = pair["second"]
+                record_owner = ""
+    if not w_specific and w_group.is_empty():
+        w_specific = true
+    if not e_specific and e_group.is_empty():
+        e_specific = true
+    if w_specific and e_specific and not e_group.is_empty():
+        e_specific = false
+    fragments.append(_fragment_witness(witness, actor, w_specific, w_group, room, time_before, locations))
+    if second_witness != "":
+        fragments.append(_fragment_witness(second_witness, actor, false, second_group, room, time_text, locations))
+    elif record_owner != "":
+        fragments.append(_fragment_record(record_owner, record_backup, record_type, actor, e_specific, e_group, room, time_text, locations))
+
+    # ---- an expert who can say what the method really requires
+    var method := AstraStageStory.method(str(incident.get("method", "manual_console")))
+    for expert in method.get("experts", []):
+        if str(expert) in innocents and rng.randf() < 0.72:
+            fragments.append({"type":"EXPERT_INFERENCE", "owner":str(expert), "subject":"", "specific":false, "group":{},
+                "room":room, "time":time_text, "record_type":"", "strength":0.22, "category":"EXPERT_INFERENCE",
+                "points_to":[], "refutes":actor, "excuse":str(method.get("excuse", "remote")),
+                "text":str(method.get("fact", ""))})
+            break
+
+    # ---- hearsay: the witness told someone. Retold, a detail can change:
+    # the listener remembers the wrong kind of uniform (§73, Stage 3 theme).
+    # Asking the witness directly is how the player finds out.
+    var theme: Dictionary = STAGE_THEMES.get(case_id, {})
+    var w_mates: Array = claims[witness]["companions"]
+    var hearsay_pool: Array = w_mates.duplicate()
+    if hearsay_pool.is_empty() and rng.randf() < float(theme.get("hearsay_overnight", 0.0)):
+        for id in innocents:
+            if str(id) not in [witness, record_owner]:
+                hearsay_pool.append(str(id))
+    if not hearsay_pool.is_empty() and rng.randf() < float(theme.get("hearsay_chance", 0.55)):
+        var listener := str(hearsay_pool[rng.randi_range(0, hearsay_pool.size() - 1)])
+        if listener in innocents and listener != record_owner:
+            var heard_group := w_group.duplicate(true)
+            var heard_points: Array = [actor] if w_specific else Array(w_group.get("members", [])).duplicate()
+            var heard_subject := actor if w_specific else ""
+            var distorted := false
+            if not w_specific and not w_group.is_empty() and rng.randf() < float(theme.get("hearsay_distort", 0.2)):
+                var category := str(w_group.get("category", ""))
+                for group_id in Dictionary(AstraCrewCatalog.TRAIT_CATEGORIES.get(category, {}).get("groups", {})):
+                    if str(group_id) == str(w_group.get("group", "")):
+                        continue
+                    var others_in := AstraCrewCatalog.group_members_in(category, str(group_id), active)
+                    if others_in.size() >= 1 and actor not in others_in:
+                        heard_group = {"category": category, "group": str(group_id), "members": others_in}
+                        heard_points = others_in.duplicate()
+                        distorted = true
+                        break
+            fragments.append({"type":"HEARSAY", "owner":listener, "via":witness, "subject":heard_subject,
+                "specific":w_specific, "group":heard_group, "room":room, "time":time_before, "record_type":"", "strength":0.18,
+                "category":"HEARSAY", "points_to":heard_points, "distorted":distorted,
+                "refutes":"", "text":"%s의 전언: %s|i 그 시간쯤 %s %s 쪽으로 가는 걸 봤다고 했다." % [AstraCrewCatalog.display_name(listener), AstraCrewCatalog.display_name(witness),
+                    (AstraCrewCatalog.display_name(actor) + "|i") if w_specific else witness_phrase(str(heard_group.get("category", "")), str(heard_group.get("group", ""))),
+                    str(locations.get(room, room))]})
+
+    # ---- a Null's deception: framing an innocent with a false sighting
+    var framer := ""
+    var scapegoat := ""
+    var frame_chance := minf(0.88, 0.26 + 0.14 * day + float(theme.get("frame_bonus", 0.0)))
+    if rng.randf() < frame_chance:
+        framer = actor if cover == "" or rng.randf() < 0.55 else cover
+        var candidates: Array = []
+        for id in innocents:
+            if str(id) != witness:
+                candidates.append(str(id))
+        if candidates.is_empty():
+            candidates = innocents.duplicate()
+        # A Null frames someone nobody can vouch for: an alibi-less innocent
+        # is the safe target. The frame stays refutable through a record.
+        var jitter := {}
+        for id in candidates:
+            var alone := Array(claims[id]["companions"]).is_empty()
+            jitter[id] = float(heat.get(id, 0.0)) + rng.randf() * 0.2 + (0.6 if alone else 0.0)
+        candidates.sort_custom(func(a, b): return float(jitter[a]) > float(jitter[b]))
+        scapegoat = str(candidates[0])
+        fragments.append({"type":"NULL_DECEPTION", "owner":framer, "subject":scapegoat, "specific":true, "group":{},
+            "room":room, "time":time_before, "record_type":"", "strength":0.5, "category":"DIRECT_WITNESS",
+            "points_to":[scapegoat], "refutes":scapegoat, "false":true,
+            "text":"%s의 증언: %s쯤 %s|i %s 쪽으로 가는 것을 봤다." % [AstraCrewCatalog.display_name(framer), time_before, AstraCrewCatalog.display_name(scapegoat), str(locations.get(room, room))]})
+        # A frame must be refutable. With companions it already is; alone, a
+        # record keeps the scapegoat where they said they were.
+        if Array(claims[scapegoat]["companions"]).is_empty():
+            var keeper := _locating_keeper(scapegoat, innocents, [witness], rng)
+            if keeper != "":
+                var keeper_type := str(AstraCrewCatalog.RECORD_DOMAIN.get(keeper, "system"))
+                if keeper_type in ["power", "system"]:
+                    keeper_type = "system"
+                fragments.append({"type":"ALIBI_SUPPORT", "owner":keeper, "subject":scapegoat, "specific":true, "group":{},
+                    "room":str(positions[scapegoat]), "time":time_before, "record_type":keeper_type, "strength":0.45,
+                    "category":"TIMELINE", "points_to":[], "supports":scapegoat, "refutes":framer,
+                    "text":"%s · %s: %s|i %s에 있었다." % [str(RECORD_DEVICE.get(keeper_type, "기록")), time_before, AstraCrewCatalog.display_name(scapegoat), _place_of(scapegoat, str(positions[scapegoat]), locations)]})
+
+    # ---- at most one innocent with a benign reason to lie
+    var benign := {}
+    var benign_chance := float(theme.get("benign_day1", 0.62)) if day == 1 else float(theme.get("benign_later", 0.46))
+    var benign_pool: Array = []
+    for id in innocents:
+        if str(id) not in [witness, record_owner, scapegoat]:
+            benign_pool.append(str(id))
+    if not benign_pool.is_empty() and rng.randf() < benign_chance:
+        var liar := str(benign_pool[rng.randi_range(0, benign_pool.size() - 1)])
+        var reason := str(BENIGN_REASONS[rng.randi_range(0, BENIGN_REASONS.size() - 1)])
+        var true_pos := str(positions[liar])
+        var options: Array = []
+        for id in others:
+            if id != true_pos and id != room:
+                options.append(id)
+        var own_cabin := "cabin:" + liar
+        if true_pos != own_cabin:
+            # "I was asleep" is the lie that comes first to mind.
+            options.append(own_cabin)
+            options.append(own_cabin)
+        if not options.is_empty():
+            var fake := str(options[rng.randi_range(0, options.size() - 1)])
+            var misremembered := reason == "MISREMEMBERED"
+            claims[liar] = {"position": fake, "companions": [], "lie": not misremembered, "kind": "benign",
+                "reason": reason, "misremembered": misremembered, "true_position": true_pos}
+            benign = {"npc": liar, "reason": reason, "true_position": true_pos, "claimed": fake, "misremembered": misremembered}
+            var had_mates: Array = []
+            for other in innocents:
+                if str(other) != liar and str(positions.get(other, "")) == true_pos:
+                    had_mates.append(str(other))
+            if had_mates.is_empty():
+                var spotter := _alibi_keeper(liar, innocents, [witness, liar], rng)
+                if spotter != "":
+                    fragments.append({"type":"BENIGN_EXPOSURE", "owner":spotter, "subject":liar, "specific":true, "group":{},
+                        "room":true_pos, "time":time_before, "record_type":str(AstraCrewCatalog.RECORD_DOMAIN.get(spotter, "")),
+                        "strength":0.36, "category":"TIMELINE", "points_to":[liar], "refutes":liar,
+                        "text":"%s의 관찰: %s쯤 %s|i %s에 있었다." % [AstraCrewCatalog.display_name(spotter), time_before, AstraCrewCatalog.display_name(liar), _place_of(liar, true_pos, locations)]})
+
+    # ---- an honest mistake (§8): an innocent is sure they saw someone who
+    # was elsewhere, a look-alike in the dark (same uniform, hair or hand as
+    # the one who really went). Refutable exactly like a Null's false
+    # sighting, so "the sighting turned out false" no longer names the Null.
+    # One false sighting a Day at most: a Null's frame or an honest mistake.
+    if framer == "" and rng.randf() < 0.2 + float(theme.get("frame_bonus", 0.0)):
+        var seers: Array = []
+        for id in innocents:
+            if str(id) not in [witness, scapegoat, str(benign.get("npc", ""))]:
+                seers.append(str(id))
+        if not seers.is_empty():
+            var seer := str(seers[rng.randi_range(0, seers.size() - 1)])
+            var look_alikes: Array = []
+            for id in innocents:
+                if str(id) == seer or str(positions.get(id, "")) == room:
+                    continue
+                for category in ["fiber", "hair", "hand"]:
+                    if AstraCrewCatalog.group_of(str(id), category) == AstraCrewCatalog.group_of(actor, category):
+                        look_alikes.append(str(id))
+                        break
+            if not look_alikes.is_empty():
+                var mistaken := str(look_alikes[rng.randi_range(0, look_alikes.size() - 1)])
+                fragments.append({"type":"NULL_DECEPTION", "owner":seer, "subject":mistaken, "specific":true, "group":{},
+                    "room":room, "time":time_before, "record_type":"", "strength":0.45, "category":"DIRECT_WITNESS",
+                    "points_to":[mistaken], "refutes":mistaken, "false":true, "mistaken":true,
+                    "text":"%s의 증언: %s쯤 %s|i %s 쪽으로 가는 것을 봤다." % [AstraCrewCatalog.display_name(seer), time_before, AstraCrewCatalog.display_name(mistaken), str(locations.get(room, room))]})
+                if Array(claims[mistaken]["companions"]).is_empty():
+                    var keeper := _locating_keeper(mistaken, innocents, [seer], rng)
+                    if keeper != "":
+                        var keeper_type := str(AstraCrewCatalog.RECORD_DOMAIN.get(keeper, "system"))
+                        if keeper_type in ["power", "system"]:
+                            keeper_type = "system"
+                        fragments.append({"type":"ALIBI_SUPPORT", "owner":keeper, "subject":mistaken, "specific":true, "group":{},
+                            "room":str(positions[mistaken]), "time":time_before, "record_type":keeper_type, "strength":0.45,
+                            "category":"TIMELINE", "points_to":[], "supports":mistaken, "refutes":seer,
+                            "text":"%s · %s: %s|i %s에 있었다." % [str(RECORD_DEVICE.get(keeper_type, "기록")), time_before, AstraCrewCatalog.display_name(mistaken), _place_of(mistaken, str(positions[mistaken]), locations)]})
+
+    # ---- ordinary things people noticed a little earlier (§12): true and
+    # harmless, held by anyone awake, a Null included. They lend a little
+    # weight to someone's story, and keep "the one who saw nothing is the
+    # Null" from being a rule.
+    var routine_count := (1 if rng.randf() < 0.75 else 0) + (1 if active.size() >= 6 and rng.randf() < 0.45 else 0)
+    var holders := {}
+    for fragment in fragments:
+        holders[str(fragment.get("owner", ""))] = true
+    for _k in range(routine_count):
+        # A Day stays readable: at most nine pieces in all (a covering Null's
+        # trail can still follow).
+        if fragments.size() >= 8:
+            break
+        var observers: Array = []
+        for id in active:
+            if not holders.has(str(id)):
+                observers.append(str(id))
+        if observers.is_empty():
+            break
+        var observer := str(observers[rng.randi_range(0, observers.size() - 1)])
+        # A Null with nothing to say would stand out by its silence alone.
+        for id in nulls:
+            if str(id) in observers and rng.randf() < 0.5:
+                observer = str(id)
+                break
+        var seen_options: Array = []
+        for id in innocents:
+            var spot := str(positions.get(id, ""))
+            if str(id) == observer or spot == room or str(claims[id].get("kind", "honest")) != "honest":
+                continue
+            seen_options.append(str(id))
+        if seen_options.is_empty():
+            break
+        var seen := str(seen_options[rng.randi_range(0, seen_options.size() - 1)])
+        var earlier := AstraCaseCatalog.format_time(minute - rng.randi_range(9, 22))
+        holders[observer] = true
+        fragments.append({"type":"ROUTINE", "owner":observer, "subject":seen, "specific":true, "group":{},
+            "room":str(positions[seen]), "time":earlier, "record_type":"", "strength":0.2, "category":"CORROBORATED",
+            "points_to":[], "supports":seen, "refutes":"",
+            "text":"%s의 관찰: %s쯤 %s|i %s 쪽으로 가는 걸 봤다." % [AstraCrewCatalog.display_name(observer), earlier, AstraCrewCatalog.display_name(seen), _place_of(seen, str(positions[seen]), locations)]})
+
+    # ---- a covering Null leaves a thin trail of their own
+    if style == "mutual" and rng.randf() < 0.6:
+        var seer := _alibi_keeper(cover, innocents, [witness], rng)
+        if seer != "":
+            fragments.append({"type":"COVER_EXPOSURE", "owner":seer, "subject":cover, "specific":true, "group":{},
+                "room":str(positions[cover]), "time":time_before, "record_type":str(AstraCrewCatalog.RECORD_DOMAIN.get(seer, "")),
+                "strength":0.34, "category":"TIMELINE", "points_to":[cover], "refutes":cover,
+                "text":"%s의 관찰: %s쯤 %s|i %s에 있었다." % [AstraCrewCatalog.display_name(seer), time_before, AstraCrewCatalog.display_name(cover), _place_of(cover, str(positions[cover]), locations)]})
+
+    var index := 0
+    for fragment in fragments:
+        index += 1
+        fragment["id"] = "D%dF%d" % [day, index]
+        fragment["day"] = day
+        fragment["text"] = josa_inline(str(fragment.get("text", "")))
+    return {
+        "version": PACKET_VERSION, "day": day, "case_id": case_id,
+        "incident": incident, "time": time_text, "time_before": time_before,
+        "locations": locations, "positions": positions, "claims": claims,
+        "fragments": fragments, "actor": actor, "cover": cover, "cover_style": style,
+        "witness": witness, "record_owner": record_owner, "record_type": record_type,
+        "framer": framer, "scapegoat": scapegoat, "benign": benign
+    }
+
+# Someone other than `subject` who can honestly place them. Deterministic for
+# the packet rng.
+static func _alibi_keeper(subject: String, innocents: Array, exclude: Array, rng: RandomNumberGenerator) -> String:
+    var options: Array = []
+    for id in innocents:
+        if str(id) != subject and str(id) not in exclude:
+            options.append(str(id))
+    if options.is_empty():
+        return ""
+    return str(options[rng.randi_range(0, options.size() - 1)])
+
+# Two different things passers-by noticed (a uniform, a hand, a shift tag)
+# whose groups together leave the number of people closest to `want`.
+static func _pick_second_sighting(actor: String, active: Array, first_category: String, want: int) -> Dictionary:
+    var best := {}
+    var best_cost := 99.0
+    for c1 in WITNESS_CATEGORIES:
+        if first_category != "" and str(c1) != first_category:
+            continue
+        var m1 := AstraCrewCatalog.group_members_in(str(c1), AstraCrewCatalog.group_of(actor, str(c1)), active)
+        if m1.size() < 2:
+            continue
+        for c2 in WITNESS_CATEGORIES:
+            if str(c2) == str(c1):
+                continue
+            var m2 := AstraCrewCatalog.group_members_in(str(c2), AstraCrewCatalog.group_of(actor, str(c2)), active)
+            if m2.size() < 2:
+                continue
+            var left := 0
+            for id in m1:
+                if id in m2:
+                    left += 1
+            if left > 3:
+                continue
+            var cost := absf(float(left - want)) + (0.1 if left > want else 0.0)
+            if cost < best_cost:
+                best_cost = cost
+                best = {"first": {"category": str(c1), "group": AstraCrewCatalog.group_of(actor, str(c1)), "members": m1},
+                    "second": {"category": str(c2), "group": AstraCrewCatalog.group_of(actor, str(c2)), "members": m2}, "cost": cost}
+    if best.is_empty() or float(best["cost"]) >= 1.0:
+        return {}
+    return best
+
+# How many people a pick of traces leaves together.
+static func _left_after(pick: Dictionary, w_specific: bool, e_specific: bool) -> int:
+    var w: Dictionary = pick.get("w", {})
+    var e: Dictionary = pick.get("e", {})
+    if w_specific or w.is_empty() or e_specific:
+        return 1
+    if e.is_empty():
+        return 1
+    var left := 0
+    for id in w.get("members", []):
+        if id in Array(e.get("members", [])):
+            left += 1
+    return maxi(1, left)
+
+# How many people today's traces should leave, drawn per Day (§3, §4). The
+# first Stage teaches the loop, so its Day 1 lands on one person more often.
+const NARROW_CURVE := {
+    1: [0.15, 0.55, 0.30],
+    2: [0.45, 0.45, 0.10],
+    3: [0.70, 0.30, 0.00]
+}
+
+static func _narrow_target(case_id: String, day: int, rng: RandomNumberGenerator) -> int:
+    var weights: Array = NARROW_CURVE[clampi(day, 1, 3)]
+    if day == 1 and AstraCaseCatalog.stage_index(case_id) <= 1:
+        weights = [0.45, 0.55, 0.0]
+    var roll := rng.randf()
+    var acc := 0.0
+    for index in range(weights.size()):
+        acc += float(weights[index])
+        if roll < acc:
+            return index + 1
+    return 1
+
+# Witness category (what you see of someone passing) and record category (what
+# a log can tell about a credential). Each group-level trace holds at least two
+# people, or it would name the actor outright; together they leave the number
+# of people closest to `want` (never more than three).
+static func _pick_groups(actor: String, active: Array, record_type: String, w_specific: bool, e_specific: bool, want: int, rng: RandomNumberGenerator) -> Dictionary:
+    var e_category := str(RECORD_CATEGORY.get(record_type, "clearance"))
+    var e_members := AstraCrewCatalog.group_members_in(e_category, AstraCrewCatalog.group_of(actor, e_category), active)
+    var e_spec := {"category": e_category, "group": AstraCrewCatalog.group_of(actor, e_category), "members": e_members} if e_members.size() >= 2 else {}
+    if w_specific:
+        return {"w": {}, "e": e_spec}
+    var record_narrows := not e_specific and not e_spec.is_empty()
+    var w_options: Array = WITNESS_CATEGORIES.duplicate()
+    _shuffle(w_options, rng)
+    var best := {}
+    var best_cost := 99.0
+    for category in w_options:
+        var members := AstraCrewCatalog.group_members_in(str(category), AstraCrewCatalog.group_of(actor, str(category)), active)
+        if members.size() < 2:
+            continue
+        var left := 1
+        if record_narrows:
+            left = 0
+            for id in members:
+                if id in e_members:
+                    left += 1
+        elif not e_specific:
+            left = members.size()
+        if left > 3:
+            continue
+        var cost := absf(float(left - want)) + (0.1 if left > want else 0.0)
+        if cost < best_cost:
+            best_cost = cost
+            best = {"category": str(category), "group": AstraCrewCatalog.group_of(actor, str(category)), "members": members}
+    if best.is_empty() and record_narrows and e_members.size() <= 3:
+        # No sighting fits: the log alone narrows the room, and the witness
+        # saw the actor clearly enough to name them.
+        return {"w": {}, "e": e_spec}
+    return {"w": best, "e": e_spec if not e_specific else {}}
+
+static func _fragment_witness(witness: String, actor: String, specific: bool, group: Dictionary, room: String, time_text: String, locations: Dictionary) -> Dictionary:
+    var room_name := str(locations.get(room, room))
+    var text := ""
+    if specific:
+        text = "%s의 증언: %s쯤 %s|i %s 쪽으로 가는 것을 봤다." % [AstraCrewCatalog.display_name(witness), time_text, AstraCrewCatalog.display_name(actor), room_name]
+    else:
+        text = "%s의 증언: %s쯤 %s %s 쪽으로 가는 것을 봤다. 얼굴은 보지 못했다. 해당: %s." % [
+            AstraCrewCatalog.display_name(witness), time_text, witness_phrase(str(group.get("category", "")), str(group.get("group", ""))),
+            room_name, _names(group.get("members", []))]
+    return {"type":"DIRECT_WITNESS", "owner":witness, "subject":actor if specific else "", "specific":specific, "group":group,
+        "room":room, "time":time_text, "record_type":"", "strength":0.62 if specific else 0.34, "category":"DIRECT_WITNESS",
+        "points_to":[actor] if specific else Array(group.get("members", [])).duplicate(), "refutes":actor, "text":text}
+
+static func _fragment_record(owner: String, backup: String, record_type: String, actor: String, specific: bool, group: Dictionary, room: String, time_text: String, locations: Dictionary) -> Dictionary:
+    var device := str(RECORD_DEVICE.get(record_type, "기록"))
+    var room_name := str(locations.get(room, room))
+    var text := ""
+    if specific:
+        text = "%s · %s · %s: %s의 인증이 남아 있다." % [device, time_text, room_name, AstraCrewCatalog.display_name(actor)]
+    else:
+        var label := AstraCrewCatalog.group_label(str(group.get("category", "")), str(group.get("group", "")))
+        if str(group.get("category", "")) == "wing":
+            text = "%s · %s · %s 앞 통로: %s 거주자의 태그가 지나갔다. 해당: %s." % [device, time_text, room_name, label, _names(group.get("members", []))]
+        else:
+            text = "%s · %s · %s: %s 인증이 남아 있다. 해당: %s." % [device, time_text, room_name, label, _names(group.get("members", []))]
+    return {"type":"SYSTEM_RECORD", "owner":owner, "backup":backup, "subject":actor if specific else "", "specific":specific, "group":group,
+        "room":room, "time":time_text, "record_type":record_type, "device":device, "strength":0.7 if specific else 0.4,
+        "category":"HARD_RECORD", "points_to":[actor] if specific else Array(group.get("members", [])).duplicate(), "refutes":actor, "text":text}
+
+static func _names(ids: Array) -> String:
+    var names: Array = []
+    for id in ids:
+        names.append(AstraCrewCatalog.display_name(str(id)))
+    return ", ".join(PackedStringArray(names))
+
+# The same "Name|i" inline particle pass AstraGameSession uses, for static text.
+static func josa_inline(text: String) -> String:
+    var out := text
+    for particle in ["eun", "i", "eul", "wa", "ro"]:
+        var marker: String = "|" + str(particle)
+        var guard := 0
+        while out.find(marker) >= 0 and guard < 40:
+            guard += 1
+            var at := out.find(marker)
+            var start := at
+            while start > 0 and out.substr(start - 1, 1) not in [" ", "\n", "(", "“", "‘", ":"]:
+                start -= 1
+            var word := out.substr(start, at - start)
+            out = out.substr(0, start) + AstraJosa.attach(word, str(particle)) + out.substr(at + marker.length())
+    return out
+
+# Returns a list of fairness problems; empty means the packet is fair.
+static func validate_day_packet(packet: Dictionary, active: Array, living_nulls: Array) -> Array:
+    var issues: Array = []
+    if bool(packet.get("empty", false)):
+        return issues
+    var actor := str(packet.get("actor", ""))
+    if actor == "" or actor not in living_nulls or actor not in active:
+        issues.append("actor is not a living active Null")
+        return issues
+    var positions: Dictionary = packet.get("positions", {})
+    var claims: Dictionary = packet.get("claims", {})
+    for id in active:
+        if not claims.has(str(id)):
+            issues.append("missing claim " + str(id))
+    var owners: Array = []
+    var specific_count := 0
+    var group_sets: Array = []
+    var has_backup := false
+    for fragment in packet.get("fragments", []):
+        var text := str(fragment.get("text", ""))
+        if "Null" in text or "NULL" in text or "무고" in text:
+            issues.append("fragment leaks role: " + text)
+        if bool(fragment.get("false", false)):
+            continue
+        var type := str(fragment.get("type", ""))
+        if type not in ["DIRECT_WITNESS", "SYSTEM_RECORD"]:
+            continue
+        var owner := str(fragment.get("owner", ""))
+        if owner in living_nulls or owner not in active:
+            issues.append("actor evidence owned by a Null or inactive person")
+            continue
+        if actor not in Array(fragment.get("points_to", [])):
+            issues.append("actor evidence does not include actor")
+            continue
+        owners.append(owner)
+        if bool(fragment.get("specific", false)):
+            specific_count += 1
+        else:
+            group_sets.append(Array(fragment.get("points_to", [])))
+        if str(fragment.get("backup", "")) != "":
+            has_backup = true
+    if owners.is_empty():
+        issues.append("A: no innocent-held evidence against the actor")
+    var distinct := {}
+    for owner in owners:
+        distinct[owner] = true
+    if distinct.size() < 2 and not has_backup:
+        issues.append("B: single point of failure")
+    if int(packet.get("day", 1)) == 1 and specific_count > 1:
+        issues.append("C: Day 1 names the actor outright twice")
+    if specific_count == 0 and group_sets.size() >= 2:
+        var both: Array = []
+        for id in group_sets[0]:
+            if id in group_sets[1]:
+                both.append(id)
+        # The two traces leave the actor and at most two others (the evidence
+        # curve); across Days the actor is in every set, so the room narrows
+        # further for whoever remembers.
+        if not (actor in both and both.size() <= 3):
+            issues.append("D: group evidence does not narrow to the actor")
+    elif specific_count == 0 and (group_sets.is_empty() or Array(group_sets[0]).size() > 3):
+        issues.append("D: one group-level path that leaves too many people")
+    for id in claims:
+        var claim: Dictionary = claims[id]
+        var kind := str(claim.get("kind", "honest"))
+        if kind == "honest" and str(claim.get("position", "")) != str(positions.get(id, "")):
+            issues.append("honest claim differs " + str(id))
+        if kind == "null" and str(claim.get("position", "")) == str(positions.get(id, "")):
+            issues.append("Null claim equals truth")
+    var benign: Dictionary = packet.get("benign", {})
+    if not benign.is_empty():
+        var liar := str(benign.get("npc", ""))
+        var caught := false
+        for other in claims:
+            if str(other) != liar and liar in Array(claims[other].get("companions", [])):
+                caught = true
+        for fragment in packet.get("fragments", []):
+            if str(fragment.get("type", "")) == "BENIGN_EXPOSURE" and str(fragment.get("subject", "")) == liar:
+                caught = true
+        if not caught:
+            issues.append("F: benign lie cannot be caught")
+    return issues
+
+# What a passer-by actually sees of someone in a corridor, per trait group.
+const WITNESS_PHRASES := {
+    "fiber": {"heatproof":"내열 작업복을 입은 누군가가", "sterile":"멸균 가운을 입은 누군가가", "tactical":"전술 조끼를 입은 누군가가", "antistatic":"정전기 방지 작업복을 입은 누군가가"},
+    "hand": {"left":"왼손으로 문 패널을 누르는 누군가가", "right":"오른손으로 문 패널을 누르는 누군가가"},
+    "shift": {"alpha":"알파 교대 근무 태그를 단 누군가가", "beta":"베타 교대 근무 태그를 단 누군가가"},
+    "hair": {"long":"긴 머리의 누군가가", "short":"머리가 짧은 누군가가"}
+}
+
+static func witness_phrase(category: String, group: String) -> String:
+    return str(WITNESS_PHRASES.get(category, {}).get(group, AstraCrewCatalog.group_label(category, group) + " 차림의 누군가가"))
+
+# A keeper whose own records can place a person somewhere (doors, corridor
+# sensors, bio tags, air sensors, terminals, comms). Engine and audit logs do
+# not locate people, so their keepers are tried last.
+static func _locating_keeper(subject: String, innocents: Array, exclude: Array, rng: RandomNumberGenerator) -> String:
+    var preferred: Array = []
+    var fallback: Array = []
+    for id in innocents:
+        if str(id) == subject or str(id) in exclude:
+            continue
+        if str(AstraCrewCatalog.RECORD_DOMAIN.get(str(id), "")) in ["door", "motion", "vitals", "environment", "terminal", "comms"]:
+            preferred.append(str(id))
+        else:
+            fallback.append(str(id))
+    var pool := preferred if not preferred.is_empty() else fallback
+    if pool.is_empty():
+        return ""
+    return str(pool[rng.randi_range(0, pool.size() - 1)])
+
+# "노아가 자기 선실에 있었다", not "노아가 노아의 선실에 있었다".
+static func _place_of(subject: String, position: String, locations: Dictionary) -> String:
+    if position == "cabin:" + subject:
+        return "자기 선실"
+    return str(locations.get(position, position))

@@ -1,3 +1,72 @@
+## 0.8.0 — CONTAINMENT
+
+Social-deduction core rebuild. One Stage = one game; a Day is a round inside it.
+
+**Final pass — deduction, replay, campaign (latest)**
+- Evidence curve: how far a Day's two traces narrow the room is drawn per Day (Day 1 mostly 2–3 people, Day 2 1–2, Day 3+ mostly 1); record and sighting kind are chosen together; small rooms use a second sighting instead of a naming log; new traits (hair length, cabin wing via corridor sensors).
+- No single-shape formulas (measured by `tests/probe_replay_080.gd`): honest mistaken sightings, a Null's borrowed alibi, harmless true observations anyone (a Null too) can hold, Nulls slower to make the first accusation. First accuser is a Null 35% (was 62%); "holds no clue" 21% (base ≈ 18%).
+- Retold sightings now come up in the meeting; the explorer can ask the witness directly (“본 사람에게 직접 묻는다”); a hearsay stops counting once its source is heard.
+- Reasons are spoken by provenance (“내가 확인한 기록”, “루칸이 봤다는 것”, “제가 본 것과 말이 다른 점”), never “I saw it” for a log.
+- Night targets weigh threat, the Null's style, the shield rule and relationships; the explorer's threat fades by day like everyone's.
+- Aegis saves become a question the next morning (“왜 나였을까”, and someone may doubt what the shield caught).
+- Isolation words by situation (resigned / hurt by a friend's vote / confused / to the explorer); three distinct final pleas each.
+- Morning vignettes: someone suspected yesterday, someone whose vote sent an innocent to a pod (Part I only), small habits; at most one per morning.
+- 탐사요원 등록 (name + look, temporary looks p1–p6 until final art); face and name in meeting, vote and night screens.
+- Pixel pipeline `tools/import_pixel_080.gd`: 14 walking sheets normalised from the originals (alpha-bound cuts, one scale per character, feet anchored, fringe removed at export).
+- Nine interludes (Stages 2, 3, 4, 6, 8, 10, 11, 12, 13): small rooms, 1–3 minutes, tasks = signal trace, power routing, ordering, choosing one alarm. Failure or skipping never blocks.
+- Pixel characters move like people (`docs/PIXEL_ACTIONS_080.md`): made from the walking frames by whole-pixel band moves (head / upper body; legs planted, nothing redrawn or stretched) — breathing, walk weight, nods while talking, bow, tilt, head shake, sigh, start, joy jump, weight shift, work poses at consoles, sitting behind the lounge table; speech-bubble emotes (! ? … ♪, sweat). People work, notice the explorer when close (a start the first time), go back to work, pace, glance, look around; tasks end with reactions; the scene ends with a few steps to the door. Optional drawn action sheets (work / talk / sit / reactions) replace the made-up poses when added.
+- Failure flow: 재구성 실패, heavier “fracture” scene from Stage 9, 기록 확인 / 재구성 재시도 / 타이틀. Retry = new seed (never the previous one); load = same reconstruction. Death echo and Residual Echo (one beat of feeling, never a role).
+- Finale: one decision about the unsigned re-sleep order, epilogue in three tones (TRUST / FRACTURE / DISCOVERY), campaign callbacks, ASTRA's last line, credits, DEEP RECONSTRUCTION unlocked (archive-wide).
+- DEEP RECONSTRUCTION: one life, run-seeded depths, one announced modifier per depth from 4 (잡음 / 정전 / 분열 / 메아리 / 고요한 갑판), two Nulls from 7, local bests; a death closes the run before anything can be reloaded.
+- UI: no phase banners (they covered the first lines), no duplicate “new fact” toast, toasts over the task line, meeting mood shown once, vote rules explained once, later vote reveals faster; portrait fringe shader; analyst comparisons get a reaction from the person compared.
+- New tests: `campaign_080_tests.gd`, `deep_080_tests.gd`, `pixel_080_tests.gd`; walkthrough fails on any unformatted line.
+
+**Structure**
+- 13 Stages in two Parts. PART I (Stages 1–4): 4 → 5 → 6 → 7 crew, one Null. PART II (Stage 5+): all eight crew, two Nulls, one specialist protocol.
+- A Day is Morning → Conversation → Meeting → Vote → Night. The investigation phase and ship-exploration flow were removed from the main loop (old saves in `INVESTIGATION`/`EXPLORE` resume in Conversation).
+- Every Day isolates exactly one person. No abstention anywhere; a tie goes to a runoff between the tied; a tied runoff is decided by the explorer. The explorer's ballot weighs one.
+- Parity counts living non-Null crew plus the explorer. The explorer can be attacked at night; the explorer's death ends the Stage at once. No time-out.
+- No role is shown on isolation; the Stage result reveals the Nulls.
+
+**Day Packets and information**
+- Each Day generates a deterministic, snapshot-stable Day Packet (incident, 3–7 fragments held by people, 0–1 harmless lie, 0–1 Null deception) validated against a fairness contract (≤1% regeneration failures across 2,340 packets in tests).
+- Logs are unread until their keeper opens them; unopened logs that would expose a Null can be wiped overnight.
+- One person's sighting carries half weight until a second independent source agrees; an unanswered excuse softens a log.
+- Stage themes: Stage 2 concealment, Stage 3 distorted hearsay, Stage 4 time/place frames; Part II mixes them.
+
+**People**
+- NPCs judge from what they know (`AstraKnowledgeModel`) with per-person conviction, bandwagon and regard for the explorer; unsure people follow those they trust, including the explorer.
+- Nulls keep their own voice and choose a survival style (DEFLECTOR / QUIET / ALLY / COUNTERATTACK); two Nulls are not a perfect team.
+- Seven-axis persona and a Stage spotlight map for all eight crew (`AstraCrewCatalog.PERSONA`, `SPOTLIGHT`).
+- New voiced lines: second excuses, expert confirmations, character references from friends, first-person reasons, voiced ballots, final words (including “I hid something, but not what you think”), friend reactions to an isolation, callbacks to what the explorer did yesterday, small habits.
+
+**Conversation and meeting**
+- One click on a face starts a conversation; at most three follow-ups, built from what the explorer knows. Confrontations can be asked calmly or pressed.
+- The meeting plays one argument at a time and pauses; the explorer has one intervention (two with EMPATH) chosen from 2–3 options that fit that moment (re-check, press, defend, open a log, ask for the basis, accuse). Contested excuses, refutable frames and exposed baseless accusations change how the room votes.
+- A Day question ties the Day together and grows out of yesterday.
+
+**Protocols (PART II)**
+- GUARDIAN (Stage 5): Aegis field, 2 charges per Stage, not the same door twice in a row, self allowed; the report never names the attacker.
+- ANALYST (Stage 6): once a Day, CONSISTENT / CONFLICT / INSUFFICIENT.
+- EMPATH (Stage 7): once a Day, one extra follow-up or one extra meeting intervention.
+- Protocols are introduced and chosen inside the story; AUDITOR saves migrate to ANALYST (or NONE where it does not exist).
+
+**Presentation**
+- New in-Stage screen: one thin status bar (PART · STAGE · DAY, four-step stepper, who is awake), one instruction line, and views that carry their own next step. Onboarding modals, the separate bottom bar, the mark button and the hint strip were removed.
+- New visual-novel stage for the opening, mornings and results with large portraits and expressions; conversation, meeting, vote, night and result screens rebuilt around large faces.
+- Title: NEW GAME / CONTINUE per slot / DELETE CAMPAIGN; slot-scoped progress; a cleared campaign between Stages stays visible.
+- Glossary (용어) and a short how-to-play replace the old codex help; wording simplified.
+- The 0.7.x scene paintings (art071–073) return as backgrounds for resolutions and crew moments.
+
+**Art**
+- Sena and Maren fully replaced from the new artwork; all eight characters' cast/portrait/head/expression sets re-cut (`tools/import_080_art.gd`, `assets/art050/manifest_080.json`).
+
+**Tests**
+- New `tests/run_tests.gd` (rules, fairness, flow, conversation, meeting, vote, night, parity, knowledge, protocols, story and dialogue consistency, saves, balance, player contribution), new `tests/ui_smoke.gd`, `tests/walkthrough_080.gd`, `tests/visual_080.gd`, `tests/balance_probe.gd`. CI and the Windows build read one list, `tests/ci_suite.txt`.
+- Retired 37 legacy test scripts that exercised removed systems (exploration, voyage traversal, abstain votes, investigation, old meeting/aftermath UI).
+
+**Version**: 0.8.0 · meta save v12 (loads v11 and older) · session snapshot v4.
+
 ## 0.7.4 — PLAYBACK
 
 - Completed the PLAYBACK pass on top of the merged breathing-room guard without introducing a Narrative/Playback/Cutscene manager or new persistent state.

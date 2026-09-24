@@ -10,40 +10,16 @@ try {
     $logDir = Join-Path $AstraRoot 'build\logs'
     New-Item -ItemType Directory -Path $packageDir, $logDir -Force | Out-Null
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--import') "$logDir\import.log"
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/run_tests.gd', '--', '--games=40') "$logDir\rules.log" 'ASTRA TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/campaign_tests.gd') "$logDir\campaign.log" 'ASTRA CAMPAIGN TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/human_trace_061_tests.gd') "$logDir\human-trace-061.log" 'ASTRA 0.6.1 HUMAN TRACE TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/ui_smoke.gd') "$logDir\ui.log" 'ASTRA UI SMOKE OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/redesign_tests.gd') "$logDir\redesign.log" 'ASTRA REDESIGN TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/social_tests.gd') "$logDir\social.log" 'ASTRA SOCIAL TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/replay_variety.gd', '--', '--seeds=500') "$logDir\replay.log" 'ASTRA REPLAY VARIETY OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/voyage_tests.gd') "$logDir\voyage.log" 'ASTRA VOYAGE TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/stabilization_051_tests.gd') "$logDir\stabilization-051.log" 'ASTRA 0.5.1 STABILIZATION TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/living_crew_052_tests.gd') "$logDir\living-crew-052.log" 'ASTRA 0.5.2 LIVING CREW TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/living_crew_052_simulation.gd') "$logDir\simulation-052.log" 'ASTRA 0.5.2 SIMULATION OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/mira_content_tests.gd') "$logDir\mira-053.log" 'ASTRA 0.5.3 MIRA CONTENT TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/storylet_scheduler_tests.gd') "$logDir\scheduler-053.log" 'ASTRA 0.5.3 STORYLET SCHEDULER TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/npc_autonomy_tests.gd') "$logDir\autonomy-053.log" 'ASTRA 0.5.3 AUTONOMY TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/knowledge_propagation_tests.gd') "$logDir\knowledge-053.log" 'ASTRA 0.5.3 KNOWLEDGE PROPAGATION TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/relationship_callback_tests.gd') "$logDir\callbacks-053.log" 'ASTRA 0.5.3 RELATIONSHIP CALLBACK TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/heartbeat_053_simulation.gd') "$logDir\heartbeat-053.log" 'ASTRA 0.5.3 HEARTBEAT SIMULATION OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/clear_signal_057_tests.gd') "$logDir\clear-signal-057.log" 'ASTRA 0.5.7 CLEAR SIGNAL TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/clear_signal_057_simulation.gd') "$logDir\clear-signal-sim-057.log" 'ASTRA 0.5.7 CLEAR SIGNAL SIMULATION OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/routine_model_tests.gd') "$logDir\routine-054.log" 'ASTRA 0.5.4 ROUTINE MODEL TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/micro_arc_tests.gd') "$logDir\micro-arc-054.log" 'ASTRA 0.5.4 MICRO ARC TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/consequence_chain_tests.gd') "$logDir\consequence-054.log" 'ASTRA 0.5.4 CONSEQUENCE CHAIN TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/meaningful_choice_tests.gd') "$logDir\meaningful-054.log" 'ASTRA 0.5.4 MEANINGFUL CHOICE TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/curiosity_pin_tests.gd') "$logDir\curiosity-054.log" 'ASTRA 0.5.4 CURIOSITY PIN TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/decision_legibility_054_tests.gd') "$logDir\decision-054.log" 'ASTRA 0.5.4 DECISION LEGIBILITY TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/compatibility_054_tests.gd') "$logDir\compatibility-054.log" 'ASTRA 0.5.4 SAVE COMPATIBILITY TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/aftermath_054_simulation.gd') "$logDir\aftermath-054.log" 'ASTRA 0.5.4 AFTERMATH SIMULATION OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/editorial_054_report.gd', '--', '--loops=20') "$logDir\editorial-054.log" 'ASTRA 0.5.4 HUMAN EDITING REPORT OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/story_consistency_tests.gd') "$logDir\story-consistency.log" 'ASTRA STORY CONSISTENCY TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/first_contact_058_tests.gd') "$logDir\first-contact-058.log" 'ASTRA 0.5.8 FIRST CONTACT TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/contact_visual_058.gd') "$logDir\contact-visual-058.log" 'ASTRA 0.5.8 VISUAL CAPTURE OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/reset_060_tests.gd') "$logDir\reset-060.log" 'ASTRA 0.6.0 RESET TESTS OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/vote_abstain_060.gd') "$logDir\vote-abstain-060.log" 'ASTRA 0.6.0 NPC VOTE REGRESSION OK'
-    Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--script', 'res://tests/content_audit.gd') "$logDir\content-audit.log" 'ASTRA CONTENT AUDIT OK'
+    # The same suite CI runs (tests/ci_suite.txt): script | marker | extra args.
+    foreach ($row in Get-Content -LiteralPath "$AstraRoot\tests\ci_suite.txt") {
+        if ($row -match '^\s*(#|$)') { continue }
+        $parts = $row.Split('|')
+        $script = $parts[0]
+        $marker = $parts[1]
+        $arguments = @('--headless', '--path', $AstraRoot, '--script', "res://tests/$script")
+        if ($parts.Length -gt 2 -and $parts[2] -ne '') { $arguments += @('--') + $parts[2].Split(' ') }
+        Invoke-AstraGodot $engine $arguments "$logDir\$($script.Replace('.gd','')).log" $marker
+    }
     $exe = Join-Path $packageDir 'ASTRA.exe'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--export-release', 'Windows Desktop', $exe) "$logDir\export.log"
     if (-not (Test-Path -LiteralPath $exe)) { throw 'The Windows export did not produce ASTRA.exe.' }

@@ -99,6 +99,19 @@ static func shade(horizontal: bool = false) -> TextureRect:
 # 0.4.0 key art with no text baked into it. The ship mock-ups supplied alongside
 # these have Korean UI text painted on, so they stay reference-only: live text
 # over baked text is worse than no art at all.
+# 0.8.0: the art a story beat should stand in front of. The authored 0.7.x
+# scene paintings (art071-073) come back for the moments they were drawn for:
+# a Stage's resolution and the five crew moments; everything else uses the
+# room background named by the scene.
+static func beat_art(scene_data: Dictionary, case_id: String) -> String:
+    var id := str(scene_data.get("id", ""))
+    var storylet := storylet_scene(id)
+    if storylet != "":
+        return storylet
+    if str(scene_data.get("kind", "")) == "resolution" and story_scene(case_id) != "":
+        return story_scene(case_id)
+    return background(str(scene_data.get("art", AstraStageStory.STAGE_ART.get(case_id, "bridge"))))
+
 static func scene(id: String) -> String:
     var path := ROOT_040 + "scenes/" + id + ".webp"
     return path if ResourceLoader.exists(path) else background("bridge")

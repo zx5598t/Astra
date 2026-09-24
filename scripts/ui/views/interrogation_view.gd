@@ -1,313 +1,366 @@
-extends VBoxContainer
+extends HBoxContainer
 
-# Private interrogation: large portrait, persistent per-character transcript
-# (answers are always visible), and question buttons with their cost/hint.
-# A pending private event takes over the view until the player answers it.
+# Conversation (INTERROGATION). One click on a face starts a conversation;
+# there is no room to pick first and no separate "talk" button (§76). The
+# person answers at once, large on the right, and at most three follow-ups are
+# offered — each one built from something the explorer actually knows.
+
+const REACTION_FACE := {"SHAKEN": "shocked", "RESISTED": "annoyed", "ANGERED": "angry", "CONVINCED": "sad", "UNCERTAIN": "suspicious"}
+const FACE_ALIAS := {"calm": "neutral", "warm": "smile", "uneasy": "suspicious", "tense": "determined"}
 
 var screen
-var _content: Control
-var _portrait: AstraPortraitView
-var _transcript: RichTextLabel
-var _mode: String = ""
-var _npc_shown: String = ""
+var _people: GridContainer
+var _people_title: Label
+var _people_budget: Label
+var _right: VBoxContainer
+var _portrait: TextureRect
+var _name: Label
+var _job: Label
+var _tags: HBoxContainer
+var _state: Label
+var _log: VBoxContainer
+var _log_scroll: ScrollContainer
+var _options: VBoxContainer
+var _analyst: Button
+var _next: Button
+var _cards: Dictionary = {}
+var _selected: String = ""
+var _last_lines: int = 0
 
 func setup(game_screen) -> void:
     screen = game_screen
-    add_theme_constant_override("separation", 10)
-    size_flags_vertical = Control.SIZE_EXPAND_FILL
+    add_theme_constant_override("separation", 16)
+    var s: AstraGameSession = screen.session
+    # ---- left: who to hear
+    var left := AstraUI.vbox(10)
+    left.custom_minimum_size.x = 430
+    left.size_flags_stretch_ratio = 0.8
+    left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    add_child(left)
+    var head := AstraUI.hbox(10)
+    left.add_child(head)
+    _people_title = AstraUI.label("누구 말을 들어 볼까?", AstraUI.T_HEAD, AstraUI.TEXT)
+    head.add_child(_people_title)
+    head.add_child(AstraUI.spacer())
+    _people_budget = AstraUI.label("", AstraUI.T_UI, AstraUI.GOLD)
+    head.add_child(_people_budget)
+    var question := AstraUI.prose("오늘의 질문 · " + s.day_question(), AstraUI.T_UI, AstraUI.GOLD)
+    left.add_child(question)
+    left.add_child(AstraUI.prose("모두의 말을 다 들을 수는 없습니다. 금색 표시는 오늘 사건과 관련된 일을 맡은 사람입니다.", AstraUI.T_META, AstraUI.MUTED))
+    _people = GridContainer.new()
+    _people.columns = 2
+    _people.add_theme_constant_override("h_separation", 10)
+    _people.add_theme_constant_override("v_separation", 10)
+    var people_scroll := AstraUI.scroll(_people)
+    people_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    left.add_child(people_scroll)
+    for npc_id in s.active_roster():
+        var card := _person_card(str(npc_id))
+        _people.add_child(card)
+        _cards[str(npc_id)] = card
+
+    # ---- right: the conversation
+    var right_panel := AstraUI.panel(Color(0.02, 0.035, 0.06, 0.9), AstraUI.BORDER, 12, 14)
+    right_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    right_panel.size_flags_stretch_ratio = 1.25
+    add_child(right_panel)
+    # The speaker stands on the left of the panel, full height; the talk and
+    # the questions take the rest, so the conversation always has room.
+    var split := AstraUI.hbox(16)
+    right_panel.add_child(split)
+    var who := AstraUI.vbox(6)
+    who.custom_minimum_size.x = 210
+    split.add_child(who)
+    _portrait = TextureRect.new()
+    _portrait.custom_minimum_size = Vector2(210, 270)
+    _portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    _portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+    _portrait.material = AstraUI.defringe_material()
+    who.add_child(_portrait)
+    _name = AstraUI.label("", AstraUI.T_TITLE, AstraUI.TEXT)
+    who.add_child(_name)
+    _job = AstraUI.label("", AstraUI.T_UI, AstraUI.MUTED)
+    who.add_child(_job)
+    _tags = AstraUI.hbox(6)
+    who.add_child(_tags)
+    _state = AstraUI.prose("", AstraUI.T_META, AstraUI.MUTED)
+    who.add_child(_state)
+    _analyst = AstraUI.button("정밀 대조", AstraUI.VIOLET, AstraUI.T_META, 36)
+    _analyst.tooltip_text = "애널리스트 · 하루 한 번. 두 진술, 또는 진술과 기록이 서로 맞는지 대조합니다. 누가 Null인지는 알려 주지 않습니다."
+    _analyst.pressed.connect(_open_analyst)
+    who.add_child(_analyst)
+    who.add_child(AstraUI.spacer(false))
+    _right = AstraUI.vbox(10)
+    _right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    split.add_child(_right)
+    _log = AstraUI.vbox(8)
+    _log_scroll = AstraUI.scroll(_log)
+    _log_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    _right.add_child(_log_scroll)
+    _options = AstraUI.vbox(6)
+    _right.add_child(_options)
+    _next = AstraUI.primary_button("회의 열기  →", AstraUI.GREEN)
+    _next.custom_minimum_size.y = 48
+    _next.pressed.connect(func(): screen.advance_phase())
+    _right.add_child(_next)
+    _selected = ""
     refresh()
 
+func _person_card(npc_id: String) -> Button:
+    var s: AstraGameSession = screen.session
+    var card := Button.new()
+    card.custom_minimum_size = Vector2(205, 128)
+    card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+    card.focus_mode = Control.FOCUS_ALL
+    card.clip_contents = true
+    var row := AstraUI.hbox(10)
+    row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    row.offset_left = 8
+    row.offset_top = 6
+    row.offset_right = -8
+    row.offset_bottom = -6
+    row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    card.add_child(row)
+    var face := AstraUI.thumb(AstraCrewCatalog.portrait_path(npc_id, "neutral"), Vector2(88, 114))
+    face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+    face.name = "Face"
+    row.add_child(face)
+    var col := AstraUI.vbox(2)
+    col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    row.add_child(col)
+    var name := AstraUI.label(s.name_of(npc_id), AstraUI.T_HEAD, AstraCrewCatalog.accent(npc_id))
+    name.name = "Name"
+    col.add_child(name)
+    col.add_child(AstraUI.label(str(AstraCrewCatalog.info(npc_id).get("job", "")), AstraUI.T_META, AstraUI.MUTED))
+    var lead := AstraUI.label("", AstraUI.T_META, AstraUI.GOLD)
+    lead.name = "Lead"
+    col.add_child(lead)
+    var state := AstraUI.label("", AstraUI.T_META, AstraUI.MUTED)
+    state.name = "State"
+    col.add_child(state)
+    card.pressed.connect(_on_person.bind(npc_id))
+    return card
+
 func refresh() -> void:
-    var session: AstraGameSession = screen.session
-    var mode := "event" if not session.pending_event.is_empty() else "talk"
-    var npc_id: String = str(session.pending_event.get("npc_id", "")) if mode == "event" else screen.selected_id()
-    if mode != _mode or npc_id != _npc_shown or _content == null:
-        _mode = mode
-        _npc_shown = npc_id
-        _rebuild(session, npc_id)
+    var s: AstraGameSession = screen.session
+    if s.phase != "INTERROGATION":
+        return
+    var leads := s.talk_leads()
+    _people_budget.text = "대화 %d / %d 남음" % [s.conversations_left(), s.conversations_max()]
+    _people_budget.add_theme_color_override("font_color", AstraUI.GOLD if s.conversations_left() > 0 else AstraUI.DIM)
+    for npc_id in _cards:
+        var card: Button = _cards[npc_id]
+        var member := s.npc(npc_id)
+        var alive := member != null and member.is_alive()
+        var open := s.conversation_open(npc_id)
+        var lead: Label = card.find_child("Lead", true, false)
+        var state: Label = card.find_child("State", true, false)
+        lead.text = ("● " + str(leads[npc_id])) if leads.has(npc_id) and alive else ""
+        var accent: Color = AstraCrewCatalog.accent(npc_id)
+        if not alive:
+            state.text = s.status_label(npc_id)
+            card.disabled = true
+            card.modulate = Color(0.55, 0.57, 0.62)
+        elif open:
+            state.text = "추가 질문 %d" % s.followups_left(npc_id) if s.followups_left(npc_id) > 0 else "이야기함"
+            state.add_theme_color_override("font_color", AstraUI.GREEN)
+            card.disabled = false
+            card.modulate = Color.WHITE
+        else:
+            state.text = "대화하기" if s.conversations_left() > 0 else "오늘은 더 못 들음"
+            state.add_theme_color_override("font_color", AstraUI.CYAN if s.conversations_left() > 0 else AstraUI.DIM)
+            card.disabled = s.conversations_left() <= 0
+            card.modulate = Color.WHITE if s.conversations_left() > 0 else Color(0.75, 0.77, 0.82)
+        var selected: bool = npc_id == _selected
+        card.add_theme_stylebox_override("normal", AstraUI.style(Color(accent, 0.16) if selected else Color(0.03, 0.05, 0.08, 0.92), accent if selected else (Color(AstraUI.GOLD, 0.6) if leads.has(npc_id) and not open and alive else AstraUI.BORDER), 10, 2 if selected else 1, 8))
+        card.add_theme_stylebox_override("hover", AstraUI.style(Color(accent, 0.2), accent, 10, 2, 8))
+        card.add_theme_stylebox_override("pressed", AstraUI.style(Color(accent, 0.28), accent, 10, 2, 8))
+        card.add_theme_stylebox_override("disabled", AstraUI.style(Color(0.03, 0.04, 0.06, 0.85), AstraUI.BORDER, 10, 1, 8))
+    _refresh_right()
+
+func _refresh_right() -> void:
+    var s: AstraGameSession = screen.session
+    var done := s.phase_exhausted()
+    _next.visible = s.conversations_used() > 0
+    _next.text = "회의 열기  →" if done else "대화를 멈추고 회의 열기  →"
+    _analyst.visible = s.analyst_available() and s.conversations_used() > 0
+    if _selected == "" or not s.crew.has(_selected):
+        _show_empty()
+        return
+    var member := s.npc(_selected)
+    var face := str(FACE_ALIAS.get(member.expression, member.expression))
+    _portrait.texture = AstraUI.texture(AstraCrewCatalog.portrait_path(_selected, face))
+    _name.text = member.display_name
+    _name.add_theme_color_override("font_color", member.accent)
+    _job.text = member.job
+    AstraUI.clear(_tags)
+    var leads := s.talk_leads()
+    if leads.has(_selected):
+        _tags.add_child(AstraUI.chip(str(leads[_selected]), AstraUI.GOLD, AstraUI.T_META - 2))
+    _tags.add_child(AstraUI.chip(member.mood_label(), AstraUI.CYAN, AstraUI.T_META - 2))
+    if s.conversation_open(_selected):
+        _state.text = "더 물을 수 있음 %d" % s.followups_left(_selected) if s.followups_left(_selected) > 0 else "오늘은 다 물었음"
     else:
-        _update(session, npc_id)
+        _state.text = "아직 이야기하지 않음"
+    _render_log()
+    _render_options()
 
-func _rebuild(session: AstraGameSession, npc_id: String) -> void:
-    AstraUI.clear(self)
-    _content = null
-    _portrait = null
-    _transcript = null
-    if _mode == "event":
-        _content = _event_layout(session)
-    else:
-        _content = _talk_layout(session, npc_id)
-    add_child(_content)
+func _show_empty() -> void:
+    var s: AstraGameSession = screen.session
+    _portrait.texture = null
+    _name.text = "대화"
+    _name.add_theme_color_override("font_color", AstraUI.TEXT)
+    _job.text = ""
+    AstraUI.clear(_tags)
+    _state.text = ""
+    AstraUI.clear(_log)
+    AstraUI.clear(_options)
+    var hint := "왼쪽에서 한 사람을 누르면 바로 이야기가 시작됩니다.\n그 사람은 %s에 어디 있었는지 말하고, 본 것이 있으면 꺼냅니다." % s.incident_time()
+    if s.conversations_left() <= 0:
+        hint = "오늘 대화를 모두 썼습니다. 들은 말을 가지고 회의로 가세요."
+    _log.add_child(AstraUI.prose(hint, AstraUI.T_BODY, AstraUI.MUTED))
 
-func _update(session: AstraGameSession, npc_id: String) -> void:
-    if _mode == "talk":
-        var old := _content
-        _content = _talk_layout(session, npc_id, false)
-        remove_child(old)
-        old.queue_free()
-        add_child(_content)
+func _render_log() -> void:
+    var s: AstraGameSession = screen.session
+    AstraUI.clear(_log)
+    var entries: Array = []
+    for entry in s.transcripts.get(_selected, []):
+        if int(entry.get("day", 0)) == s.day:
+            entries.append(entry)
+    if entries.is_empty():
+        _log.add_child(AstraUI.prose("%s에게 %s의 일을 물어볼 수 있습니다. 대화 한 번을 씁니다." % [s.name_of(_selected), s.incident_time()], AstraUI.T_BODY, AstraUI.MUTED))
+    for entry in entries:
+        _log.add_child(_line_node(str(entry.get("speaker", "")), str(entry.get("text", ""))))
+    if entries.size() != _last_lines:
+        var start := _last_lines
+        _last_lines = entries.size()
+        for index in range(maxi(0, start), _log.get_child_count()):
+            AstraUI.fade_in(_log.get_child(index), 0.25, 0.12 * float(index - start))
+    call_deferred("_scroll_bottom")
 
-# ------------------------------------------------------------------ private event
+func _scroll_bottom() -> void:
+    if is_instance_valid(_log_scroll):
+        _log_scroll.scroll_vertical = int(_log_scroll.get_v_scroll_bar().max_value)
 
-func _event_layout(session: AstraGameSession) -> Control:
-    var event := session.pending_event
-    var npc_id := str(event.get("npc_id", ""))
-    var member := session.npc(npc_id)
-    var row := AstraUI.hbox(18)
-    row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    _portrait = AstraPortraitView.new()
-    _portrait.custom_minimum_size = Vector2(300, 400)
-    _portrait.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-    row.add_child(_portrait)
-    _portrait.show_member(member, true)
-    # The scene text and the choices scroll: some private events run long, and at
-    # 1366x768 the last option used to sit below the bottom of the window.
-    var scroller := ScrollContainer.new()
-    scroller.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-    scroller.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    scroller.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    row.add_child(scroller)
-    var box := AstraUI.vbox(12)
-    box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    scroller.add_child(box)
-    var head := AstraUI.hbox(8)
-    box.add_child(head)
-    head.add_child(AstraUI.chip("개인 면담", AstraUI.PINK, AstraUI.T_META))
-    head.add_child(AstraUI.crew_tag(npc_id, AstraUI.T_BODY, true, 28))
-    var scene := AstraUI.rich_prose(AstraUI.T_BODY)
-    scene.text = "[i][color=#%s]%s[/color][/i]" % [AstraUI.hex(AstraUI.MUTED), AstraUI.escape(str(event.get("scene", "")))]
-    box.add_child(scene)
-    box.add_child(AstraUI.prose(str(event.get("prompt", "")), AstraUI.T_HEAD, AstraUI.TEXT))
-    var interject: Dictionary = event.get("interject", {})
-    if not interject.is_empty():
-        var interject_id := str(interject.get("speaker", ""))
-        if interject_id in session.active_participants():
-            box.add_child(AstraUI.prose(str(interject.get("text", "")), AstraUI.T_META, AstraUI.MUTED))
-    box.add_child(AstraUI.label("이 대화에는 시간이 들지 않습니다.", AstraUI.T_META, AstraUI.DIM))
-    var choices: Array = event.get("choices", [])
-    if choices.is_empty():
-        var continue_button := AstraUI.button("계속", AstraUI.CYAN, AstraUI.T_UI, 48, true)
-        continue_button.pressed.connect(_resolve_event.bind(-1))
-        box.add_child(continue_button)
-    for index in range(choices.size()):
-        var choice: Dictionary = choices[index]
-        var button := AstraUI.button(str(choice.get("label", "")), AstraUI.PINK if index == 0 else AstraUI.CYAN, AstraUI.T_UI, 52)
+func _line_node(speaker: String, text: String) -> Control:
+    var s: AstraGameSession = screen.session
+    if speaker == "player":
+        var row := AstraUI.hbox(0)
+        row.add_child(AstraUI.spacer())
+        var bubble := AstraUI.panel(Color(AstraUI.GOLD, 0.1), Color(AstraUI.GOLD, 0.35), 10, 10)
+        bubble.custom_minimum_size.x = 0
+        var t := AstraUI.prose(text, AstraUI.T_UI, Color(1, 0.94, 0.8))
+        t.custom_minimum_size.x = 360
+        bubble.add_child(t)
+        row.add_child(bubble)
+        return row
+    if speaker == "narration" or speaker == "":
+        if text.begins_with("기록 ·"):
+            var card := AstraUI.panel(Color(AstraUI.GOLD, 0.08), Color(AstraUI.GOLD, 0.7), 8, 12)
+            var box := AstraUI.vbox(2)
+            card.add_child(box)
+            box.add_child(AstraUI.label("기록", AstraUI.T_META, AstraUI.GOLD))
+            box.add_child(AstraUI.prose(text.trim_prefix("기록 ·").strip_edges(), AstraUI.T_UI, AstraUI.TEXT))
+            return card
+        var n := AstraUI.prose(text, AstraUI.T_META, AstraUI.DIM)
+        return n
+    var member := s.npc(speaker)
+    var accent: Color = member.accent if member != null else AstraUI.CYAN
+    var bubble2 := AstraUI.panel(Color(accent, 0.07), Color(accent, 0.35), 10, 12)
+    var body := AstraUI.prose(text, AstraUI.T_BODY, AstraUI.TEXT)
+    bubble2.add_child(body)
+    return bubble2
+
+func _render_options() -> void:
+    var s: AstraGameSession = screen.session
+    AstraUI.clear(_options)
+    var options := s.question_options(_selected)
+    if options.is_empty():
+        return
+    for option in options:
+        var intent := str(option.get("intent", ""))
+        if intent == "STATEMENT":
+            continue
+        var tone := str(option.get("tone", ""))
+        var accent: Color = AstraUI.RED if tone == "press" else (AstraUI.VIOLET if intent == "EMPATHY" else (AstraUI.GOLD if intent in ["CONFRONT", "RECORD"] else AstraUI.CYAN))
+        var button := AstraUI.button(str(option.get("label", "")), accent, AstraUI.T_UI, 44)
         button.alignment = HORIZONTAL_ALIGNMENT_LEFT
         button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        button.pressed.connect(_resolve_event.bind(index))
-        box.add_child(button)
-    return row
-
-func _resolve_event(index: int) -> void:
-    var session: AstraGameSession = screen.session
-    var result := session.resolve_private_event(index)
-    if not bool(result.get("ok", false)):
-        return
-    screen.fx.play("secret" if result.has("clue") else "click")
-    var text := str(result.get("text", ""))
-    if text != "":
-        screen.fx.toast(text, AstraUI.PINK, 5.0)
-    screen.select(str(result.get("npc_id", "")))
-
-# ------------------------------------------------------------------ talk
-
-func _talk_layout(session: AstraGameSession, npc_id: String, animate: bool = true) -> Control:
-    var member := session.npc(npc_id)
-    var row := AstraUI.hbox(16)
-    row.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    if member == null:
-        row.add_child(AstraUI.label("위쪽 승무원 명단에서 이야기할 사람을 고르세요.", AstraUI.T_BODY, AstraUI.MUTED))
-        return row
-
-    # ---- left: who am I talking to -------------------------------------
-    #
-    # The column scrolls. At 1366x768 the portrait, the status card and the
-    # relationship card together are taller than the panel, and in 0.3.1 the
-    # overflow was simply clipped off the bottom of the screen.
-    var left_scroll := ScrollContainer.new()
-    left_scroll.custom_minimum_size = Vector2(330, 0)
-    left_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-    left_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    row.add_child(left_scroll)
-    var left := AstraUI.vbox(8)
-    left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    left_scroll.add_child(left)
-    _portrait = AstraPortraitView.new()
-    # 3:4 to match the cast art, so the figure fills the frame without cropping.
-    _portrait.custom_minimum_size = Vector2(300, 400)
-    left.add_child(_portrait)
-    _portrait.show_member(member, animate)
-
-    # One compact status card, instead of the three loose captions that used to
-    # run off the bottom of the column and get clipped.
-    var card := AstraUI.panel(Color(0.016, 0.031, 0.062, 0.93), Color(member.accent, 0.3), 10, 10)
-    left.add_child(card)
-    var card_box := AstraUI.vbox(5)
-    card.add_child(card_box)
-    card_box.add_child(AstraUI.crew_tag(npc_id, AstraUI.T_BODY, true, 28))
-    var claim: Dictionary = session.known_claims.get(npc_id, {})
-    if claim.is_empty():
-        card_box.add_child(AstraUI.label("진술 · 아직 듣지 못함", AstraUI.T_META, AstraUI.DIM))
-    else:
-        var mates: Array = claim.get("companions", [])
-        var mate_text := "혼자" if mates.is_empty() else AstraJosa.wa(session.names_of(mates)) + " 함께"
-        card_box.add_child(AstraUI.prose("진술 · " + session.room_name(str(claim.get("position", ""))) + " / " + mate_text, AstraUI.T_META, AstraUI.TEXT))
-    var issues := session.contradictions_on(npc_id).size()
-    if member.secret_revealed:
-        card_box.add_child(AstraUI.chip("숨긴 사정을 털어놓음", AstraUI.GOLD, AstraUI.T_META - 2))
-    elif issues > 0:
-        card_box.add_child(AstraUI.chip("진술에 어긋난 부분 %d건" % issues, AstraUI.RED, AstraUI.T_META - 2))
-    # Who this person is watching, and why — right beside their face, so the
-    # player does not have to keep fifty-six relationships in their head.
-    left.add_child(AstraUI.relation_card(session, npc_id))
-
-    # ---- right: the conversation ----------------------------------------
-    var right := AstraUI.vbox(10)
-    right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    row.add_child(right)
-
-    var log_panel := AstraUI.panel(Color(AstraUI.BG, 0.74), AstraUI.BORDER, 10, 12)
-    log_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    right.add_child(log_panel)
-    _transcript = AstraUI.rich(AstraUI.T_BODY, false)
-    _transcript.add_theme_constant_override("line_separation", AstraUI.LINE_SPACING)
-    _transcript.scroll_following = true
-    _transcript.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    log_panel.add_child(_transcript)
-    _transcript.text = _transcript_text(session, member)
-
-    if not member.is_alive():
-        right.add_child(AstraUI.label(AstraJosa.eun(member.display_name) + " 더 이상 심문할 수 없습니다.", AstraUI.T_BODY, AstraUI.GOLD))
-        return row
-
-    # Question buttons say what they are for on the button itself, not only in a
-    # tooltip nobody hovers long enough to read.
-    # The question list scrolls too: 0.4.0 offers up to nine of them and the
-    # last few used to sit below the bottom of the window with no indication
-    # that they existed.
-    var grid := GridContainer.new()
-    grid.columns = 2
-    grid.add_theme_constant_override("h_separation", 8)
-    grid.add_theme_constant_override("v_separation", 8)
-    grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    var grid_scroll := ScrollContainer.new()
-    grid_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-    grid_scroll.custom_minimum_size.y = 210
-    grid_scroll.size_flags_vertical = Control.SIZE_SHRINK_END
-    grid_scroll.add_child(grid)
-    right.add_child(grid_scroll)
-    for option in session.question_options(npc_id):
-        var intent := str(option.get("intent", ""))
-        var cell := AstraUI.vbox(1)
-        cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        var button := AstraUI.button(str(option.get("label", "")), _intent_color(intent), AstraUI.T_UI, 40)
-        button.clip_text = true
-        button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-        button.disabled = not bool(option.get("enabled", false))
         button.tooltip_text = str(option.get("hint", ""))
-        button.pressed.connect(_ask.bind(npc_id, intent))
-        cell.add_child(button)
-        var hint := AstraUI.label(str(option.get("hint", "")), AstraUI.T_META - 1, AstraUI.DIM)
-        hint.clip_text = true
-        hint.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-        cell.add_child(hint)
-        grid.add_child(cell)
-        # On DEAD_AIR's first day, the question that moves the case forward is
-        # ringed, so the player is not left scanning several buttons for the
-        # right one. AstraGameSession.tutorial_active() is permanently false
-        # in normal play (see game_session.gd), so this used to never fire.
-        var first_time_guidance := session.case_id == "DEAD_AIR" and session.day == 1
-        AstraUI.set_tutorial_nudge(button, first_time_guidance and bool(option.get("key", false)) and not button.disabled)
-    if session.talk_ap <= 0:
-        right.add_child(AstraUI.label("질문을 다 썼습니다. 아래 버튼으로 회의를 소집하세요.", AstraUI.T_BODY, AstraUI.GOLD))
-    return row
+        button.disabled = not bool(option.get("enabled", true))
+        button.pressed.connect(_ask.bind(intent, str(option.get("ref", ""))))
+        _options.add_child(button)
+        var hint := str(option.get("hint", ""))
+        if hint != "" and intent in ["CONFRONT", "RECORD", "EMPATHY"]:
+            var small := AstraUI.label(hint, AstraUI.T_META - 2, AstraUI.DIM, true)
+            small.max_lines_visible = 1
+            small.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+            _options.add_child(small)
 
-func _transcript_text(session: AstraGameSession, member: AstraCrewMember) -> String:
-    var entries: Array = session.transcripts.get(member.id, [])
-    if entries.is_empty():
-        return "[color=#%s]아직 나눈 대화가 없습니다. 아래 질문을 골라 보세요.\n\n· 알리바이는 출입 기록과 대조할 수 있습니다.\n· 단서를 보여 주면 명단에 든 사람과 아닌 사람의 반응이 다릅니다.\n· 모순을 찾았다면 추궁해 보세요.[/color]" % AstraUI.hex(AstraUI.DIM)
-    var lines: Array = []
-    var last_day := -1
-    for entry in entries:
-        var entry_day := int(entry.get("day", 1))
-        if entry_day != last_day:
-            last_day = entry_day
-            lines.append("[center][color=#%s]— DAY %d —[/color][/center]" % [AstraUI.hex(AstraUI.DIM), entry_day])
-        var speaker := str(entry.get("speaker", ""))
-        var text := AstraUI.escape(str(entry.get("text", "")))
-        # Speaker on its own line above the words. Running "이름  말" together on
-        # one line made long answers wrap under the name and read as one block.
-        if speaker == "player":
-            lines.append("[color=#%s]▸ 탐사요원[/color]\n[color=#%s]%s[/color]" % [AstraUI.hex(AstraUI.CYAN), AstraUI.hex(AstraUI.MUTED), text])
-        elif speaker == "narration":
-            lines.append("[i][color=#%s]%s[/color][/i]" % [AstraUI.hex(AstraUI.PINK), text])
-        else:
-            lines.append("[color=#%s][b]%s[/b][/color] [color=#%s](%s)[/color]\n%s" % [
-                AstraUI.hex(member.accent), member.display_name,
-                AstraUI.hex(AstraUI.DIM), member.job, text])
-    return "\n\n".join(PackedStringArray(lines))
+func _on_person(npc_id: String) -> void:
+    var s: AstraGameSession = screen.session
+    if _selected != npc_id:
+        _last_lines = 0
+    _selected = npc_id
+    s.select(npc_id)
+    if not s.conversation_open(npc_id) and s.conversations_left() > 0:
+        screen.fx.play("select")
+        var result := s.ask(npc_id, "STATEMENT")
+        _after_result(result)
+    refresh()
 
-func _intent_color(intent: String) -> Color:
-    match intent:
-        "EVIDENCE": return AstraUI.GOLD
-        "CONTRADICTION": return AstraUI.RED
-        "REASSURE", "CONFIDE", "PERSONAL": return AstraUI.GREEN
-        "PRESSURE": return Color("ff9a6a")
-        "WITNESS", "TIMELINE": return AstraUI.VIOLET
-        "TRUST": return AstraUI.PINK
-    return AstraUI.CYAN
-
-func _ask(npc_id: String, intent: String) -> void:
-    var session: AstraGameSession = screen.session
-    if intent == "EVIDENCE":
-        screen.open_clue_picker("어떤 단서를 보여 줄까요?", session.found_clues(), func(clue_id: String): _do_ask(npc_id, intent, clue_id))
-        return
-    _do_ask(npc_id, intent, "")
-
-func _do_ask(npc_id: String, intent: String, clue_id: String) -> void:
-    var session: AstraGameSession = screen.session
-    var result := session.ask(npc_id, intent, clue_id)
+func _ask(intent: String, ref: String) -> void:
+    var s: AstraGameSession = screen.session
+    var result := s.ask(_selected, intent, ref)
     if not bool(result.get("ok", false)):
+        screen.fx.toast("지금은 그 질문을 할 수 없습니다.", AstraUI.GOLD)
         return
-    screen.fx.play("talk")
-    if _portrait != null:
-        _portrait.pulse()
-    if bool(result.get("slip", false)):
-        screen.fx.play("slip")
-        screen.fx.banner("실언 포착", "%s — 알 수 없어야 할 사실을 입에 올렸다. 단서로 기록됨." % session.name_of(npc_id), AstraUI.RED, 1.4)
-        screen.fx.flash(AstraUI.RED, 0.12)
-    elif bool(result.get("secret", false)):
-        screen.fx.play("secret")
-        screen.fx.banner("숨긴 사정", "%s — 거짓 진술의 이유를 털어놓았다." % session.name_of(npc_id), AstraUI.GOLD, 1.3)
-    elif result.has("clue"):
-        screen.fx.play("clue")
-        screen.fx.toast("새 단서 · " + str(result["clue"].get("title", "")), AstraUI.PINK)
-    _show_reaction(result)
-    screen.request_ai_line(npc_id, intent, result)
+    screen.fx.play("click")
+    _after_result(result)
+    refresh()
 
-func _show_reaction(result: Dictionary) -> void:
-    var reaction: Dictionary = result.get("reaction", {})
-    if reaction.is_empty():
+func _after_result(result: Dictionary) -> void:
+    # A new record or sighting already appears as a card in the conversation and
+    # lights the notebook dot; no toast on top of it.
+    if bool(result.get("secret", false)):
+        screen.fx.toast("숨긴 사정을 들었습니다. 회의에서 이 사람을 변호할 수 있습니다.", AstraUI.PINK, 2.6)
+    if bool(result.get("changed_story", false)):
+        screen.fx.toast("말이 바뀌었습니다. 노트에 남았습니다.", AstraUI.RED, 2.4)
+
+func _open_analyst() -> void:
+    var s: AstraGameSession = screen.session
+    var items := s.analyst_candidates()
+    if items.size() < 2:
+        screen.fx.toast("대조할 진술이나 기록이 아직 두 개가 안 됩니다.", AstraUI.GOLD)
         return
-    var code := str(reaction.get("code", "UNCERTAIN"))
-    var label := "불확실"
-    var color := AstraUI.MUTED
-    match code:
-        "CONVINCED":
-            label = "납득함"
-            color = AstraUI.GREEN
-        "SHAKEN":
-            label = "흔들림"
-            color = AstraUI.GOLD
-        "RESISTED":
-            label = "아직 저항함"
-            color = AstraUI.VIOLET
-        "ANGERED":
-            label = "화남"
-            color = AstraUI.RED
-        _:
-            label = "불확실"
-            color = AstraUI.MUTED
-    # The reaction code remains available for tests/rules, but the player sees
-    # an in-world action rather than a repeated system verdict such as "납득함".
-    screen.fx.toast(str(reaction.get("text", "")), color, 3.4)
+    var picked: Array = []
+    var list := AstraUI.vbox(6)
+    list.add_child(AstraUI.prose("두 가지를 고르세요. 같은 사람의 같은 시각을 말하는지, 서로 부딪히는지 알려 줍니다.", AstraUI.T_META, AstraUI.MUTED))
+    var holder := []
+    for item in items:
+        var button := AstraUI.button(str(item["label"]).left(64), AstraUI.VIOLET, AstraUI.T_META, 38)
+        button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+        button.toggle_mode = true
+        button.toggled.connect(func(on: bool):
+            if on:
+                picked.append(str(item["ref"]))
+            else:
+                picked.erase(str(item["ref"]))
+            if picked.size() == 2:
+                var result := s.analyst_compare(str(picked[0]), str(picked[1]))
+                if not holder.is_empty() and is_instance_valid(holder[0]):
+                    holder[0].close(-1)
+                if bool(result.get("ok", false)):
+                    var said: Dictionary = result.get("reaction", {})
+                    var tail := ""
+                    if not said.is_empty():
+                        tail = "\n%s: “%s”" % [s.name_of(str(said.get("speaker", ""))), str(said.get("text", ""))]
+                    screen.fx.toast("정밀 대조 · " + str(result.get("text", "")) + tail, AstraUI.VIOLET, 4.0)
+                refresh()
+        )
+        list.add_child(button)
+    var scroll := AstraUI.scroll(list)
+    scroll.custom_minimum_size = Vector2(0, 380)
+    holder.append(AstraModal.open(screen.app.overlay_root(), "정밀 대조", scroll, [["닫기", AstraUI.MUTED]], Callable(), 700.0))

@@ -7,7 +7,7 @@ extends RefCounted
 # destructively.
 
 const DEFAULT_SAVE_PATH := "user://astra_meta.cfg"
-const SAVE_VERSION := 11
+const SAVE_VERSION := 12
 const CAMPAIGN_CASES := AstraCaseCatalog.CAMPAIGN
 const RANK_ORDER := ["D", "C", "B", "A", "S"]
 
@@ -53,6 +53,14 @@ var slot_intro_seen: Dictionary = {}
 # on a fresh campaign so a new game shows every glimpse again; never reset by
 # a loop reset within the same campaign.
 var slot_crew_glimpsed: Dictionary = {}
+# 0.8.0: who the explorer is in each campaign slot ({"name", "preset"}).
+var slot_player_profiles: Dictionary = {}
+# 0.8.0 DEEP RECONSTRUCTION: account-wide unlock and a few local bests. The
+# run itself lives in its own save (deep.run) so a death can close it for good.
+var campaign_completed: bool = false
+var deep_best_depth: int = 0
+var deep_best_accuracy: int = 0
+var deep_runs: int = 0
 var seen_help: Array[String] = []
 # 0.5.6 permanent observation Codex. IDs only; entry text remains authored in AstraCodex.
 var codex_entries_unlocked: Array[String] = []
@@ -68,6 +76,11 @@ func load_data() -> void:
     slot_voyage_memory = _dict(cfg.get_value("progress","slot_voyage_memory",{}))
     slot_intro_seen = _dict(cfg.get_value("progress","slot_intro_seen",{}))
     slot_crew_glimpsed = _dict(cfg.get_value("progress","slot_crew_glimpsed",{}))
+    slot_player_profiles = _dict(cfg.get_value("progress","slot_player_profiles",{}))
+    campaign_completed = bool(cfg.get_value("progress","campaign_completed",false))
+    deep_best_depth = int(cfg.get_value("progress","deep_best_depth",0))
+    deep_best_accuracy = int(cfg.get_value("progress","deep_best_accuracy",0))
+    deep_runs = int(cfg.get_value("progress","deep_runs",0))
     _load_string_list(seen_help, cfg.get_value("progress","seen_help",[]))
     total_insight = int(cfg.get_value("progress", "total_insight", 0))
     total_cases_completed = int(cfg.get_value("progress", "total_cases_completed", 0))
@@ -110,6 +123,11 @@ func save_data() -> bool:
     cfg.set_value("progress","slot_voyage_memory",slot_voyage_memory)
     cfg.set_value("progress","slot_intro_seen",slot_intro_seen)
     cfg.set_value("progress","slot_crew_glimpsed",slot_crew_glimpsed)
+    cfg.set_value("progress","slot_player_profiles",slot_player_profiles)
+    cfg.set_value("progress","campaign_completed",campaign_completed)
+    cfg.set_value("progress","deep_best_depth",deep_best_depth)
+    cfg.set_value("progress","deep_best_accuracy",deep_best_accuracy)
+    cfg.set_value("progress","deep_runs",deep_runs)
     cfg.set_value("progress","seen_help",seen_help)
     cfg.set_value("progress","codex_entries_unlocked",codex_entries_unlocked)
     cfg.set_value("progress", "total_insight", total_insight)
@@ -172,6 +190,11 @@ func reset() -> void:
     slot_voyage_memory.clear()
     slot_intro_seen.clear()
     slot_crew_glimpsed.clear()
+    slot_player_profiles.clear()
+    campaign_completed = false
+    deep_best_depth = 0
+    deep_best_accuracy = 0
+    deep_runs = 0
     seen_help.clear()
     codex_entries_unlocked.clear()
 
@@ -231,6 +254,10 @@ func record_case_result(case_id: String, protocol: String, report: Dictionary, p
     correct_isolations += int(report.get("null_isolated", 0))
     if AstraCaseCatalog.is_calibration(case_id):
         calibration_completed = true
+    # Clearing the last Stage finishes the campaign: DEEP RECONSTRUCTION opens
+    # for the whole archive, not only this slot.
+    if str(report.get("outcome", "")) == "WIN" and case_id in AstraCaseCatalog.CAMPAIGN and AstraCaseCatalog.next_stage(case_id) == "":
+        campaign_completed = true
     record_null_roles(report.get("nulls", []))
     for npc_id in report.get("roster", []):
         meet_person(str(npc_id))
@@ -418,6 +445,21 @@ func clear_voyage_memory_for_slot(slot: int) -> void:
     if maxi(0, slot) == 0:
         voyage_memory.clear()
 
+func player_profile_for_slot(slot: int) -> Dictionary:
+    var profile: Dictionary = _dict(slot_player_profiles.get(str(maxi(0, slot)), {}))
+    return {"name": str(profile.get("name", "")), "preset": str(profile.get("preset", "p1"))}
+
+func set_player_profile_for_slot(slot: int, profile: Dictionary) -> void:
+    slot_player_profiles[str(maxi(0, slot))] = {"name": str(profile.get("name", "")).strip_edges().left(10), "preset": str(profile.get("preset", "p1"))}
+
+func deep_unlocked() -> bool:
+    return campaign_completed
+
+func record_deep_run(depth: int, accuracy: int) -> void:
+    deep_runs += 1
+    deep_best_depth = maxi(deep_best_depth, depth)
+    deep_best_accuracy = maxi(deep_best_accuracy, accuracy)
+
 func intro_seen_for_slot(slot: int) -> bool:
     return bool(slot_intro_seen.get(str(maxi(0, slot)), false))
 
@@ -458,7 +500,20 @@ func campaign_cases_played() -> int:
     return played
 
 func unlocked_features() -> Array:
-    return AstraUnlocks.unlocked(calibration_completed, completed_campaign_cases())
+    var result: Array = AstraUnlocks.unlocked(calibration_completed, completed_campaign_cases())
+    for feature in AstraUnlocks.CORE_080:
+        if feature not in result:
+            result.append(feature)
+    return result
+
+# 0.8.0: progress belongs to a save slot. A fresh slot is Stage 1 with the
+# core rules; clearing Stages opens the next ones and Part II protocols.
+func unlocked_features_for_slot(slot: int) -> Array:
+    var chapters: Array = voyage_memory_for_slot(slot).get("chapters", [])
+    var highest := 0
+    for case_id in chapters:
+        highest = maxi(highest, AstraCaseCatalog.stage_index(str(case_id)))
+    return AstraUnlocks.for_slot_stage(highest)
 
 func has_feature(feature: String) -> bool:
     return AstraUnlocks.has(unlocked_features(), feature)

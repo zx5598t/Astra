@@ -84,4 +84,4 @@ func test_character_safety() -> void:
     check(str(reaction.get("speaker","")) == "vale", "active authored callback speaker is preserved")
 
 func test_save_contract() -> void:
-    check(AstraMetaProgress.SAVE_VERSION == 11, "0.6.2 keeps save schema v11")
+    check(AstraMetaProgress.SAVE_VERSION >= 11, "0.6.2 needs at least save schema v11 (0.8.0 moved to v12)")

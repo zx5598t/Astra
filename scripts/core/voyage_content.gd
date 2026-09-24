@@ -3829,15 +3829,20 @@ static func scene(id: String) -> Dictionary:
     return {}
 
 static func awake_roster(id: String) -> Array:
-    return AstraCrewCatalog.joined_on_day(campaign_day(id))
+    return AstraCrewCatalog.joined_on_stage(campaign_stage_index(id))
 
-# Calendar contract is authored explicitly, independently of CAMPAIGN indices.
-# A case has its own local days; replays return to the chapter's campaign date.
-const CAMPAIGN_DATES := {"CALIBRATION":1,"DEAD_AIR":2,"GLASS_GARDEN":3,"ECHO_WARD":4,"SILENT_ORBIT":5,"RED_SHIFT":6,"LAST_LIGHT":7,
-    "SECOND_WATCH":8,"BORROWED_DAYS":9,"BLIND_DECK":10,"THREE_MINUTES_DARK":11,"CONTINUITY":12,"THRESHOLD":13}
+# 0.8.0: the number that used to be called the "campaign day" was always the
+# chapter order. It is the Stage index now (AstraCaseCatalog.STAGE_ORDER); a
+# Stage has its own Days. campaign_day() stays only as a legacy wrapper — new
+# code must never mix "Stage 3, Day 2" with "campaign day 3".
+static func campaign_stage_index(id: String) -> int:
+    return maxi(1, AstraCaseCatalog.stage_index(id))
+
 static func campaign_day(id: String) -> int:
-    return int(CAMPAIGN_DATES.get(id,1))
+    return campaign_stage_index(id)
 
+# Story ACT (0.7.0) is a narrative grouping and is not the 0.8.0 game PART:
+# ACT II starts at SECOND_WATCH, PART II (two Nulls, protocols) at SILENT_ORBIT.
 # 0.7.0: ACT is derived from the campaign day, not stored state. Day 8 unlocks
 # through the existing per-case unlock chain (LAST_LIGHT must be completed
 # first), so there is nothing new to persist here (§35 of the design notes).

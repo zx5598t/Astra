@@ -1,0 +1,99 @@
+{
+  "daren": {
+    "expressions": {
+      "afraid": "B#2",
+      "angry": "B#5",
+      "annoyed": "B#1",
+      "determined": "B#6",
+      "embarrassed": "B#2",
+      "happy": "A#6",
+      "neutral": "A#0",
+      "sad": "B#4",
+      "shocked": "A#3",
+      "smile": "B#7",
+      "suspicious": "B#0",
+      "tired": "A#4"
+    },
+    "sheets": {
+      "A": "다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (1).png",
+      "B": "다렌/ChatGPT Image 2026년 9월 19일 오후 06_04_30 (2).png"
+    }
+  },
+  "lucan": {
+    "expressions": {
+      "afraid": "B#3",
+      "angry": "A#3",
+      "annoyed": "A#2",
+      "determined": "B#5",
+      "embarrassed": "B#2",
+      "happy": "B#1",
+      "neutral": "A#0",
+      "sad": "B#4",
+      "shocked": "A#4",
+      "smile": "B#0",
+      "suspicious": "A#3",
+      "tired": "A#5"
+    },
+    "sheets": {
+      "A": "루칸/ChatGPT Image 2026년 9월 19일 오후 06_22_41.png",
+      "B": "루칸/ChatGPT Image 2026년 9월 19일 오후 06_26_27.png"
+    }
+  },
+  "maren": {
+    "expressions": {
+      "afraid": "마렌/ChatGPT Image 2026년 9월 24일 오전 12_07_56 (5).png",
+      "angry": "마렌/ChatGPT Image 2026년 9월 23일 오후 11_48_03 (7).png",
+      "annoyed": "마렌/ChatGPT Image 2026년 9월 24일 오전 12_07_52 (3).png",
+      "determined": "마렌/ChatGPT Image 2026년 9월 23일 오후 11_48_03 (7).png",
+      "embarrassed": "마렌/ChatGPT Image 2026년 9월 23일 오후 11_47_58 (1).png",
+      "happy": "마렌/ChatGPT Image 2026년 9월 23일 오후 11_48_01 (5).png",
+      "neutral": "마렌/ChatGPT Image 2026년 9월 24일 오전 12_07_51 (2).png",
+      "sad": "마렌/ChatGPT Image 2026년 9월 23일 오후 11_48_03 (7).png",
+      "shocked": "마렌/ChatGPT Image 2026년 9월 23일 오후 11_48_02 (6).png",
+      "smile": "마렌/ChatGPT Image 2026년 9월 23일 오후 11_47_59 (3).png",
+      "suspicious": "마렌/ChatGPT Image 2026년 9월 23일 오후 11_48_00 (4).png",
+      "tired": "마렌/ChatGPT Image 2026년 9월 23일 오후 11_48_03 (7).png"
+    },
+    "main": "마렌/ChatGPT Image 2026년 9월 24일 오전 12_07_51 (2).png"
+  },
+  "mira": {
+    "head_source": "미라/미라.png"
+  },
+  "sena": {
+    "expressions": {
+      "afraid": "세나/ChatGPT Image 2026년 9월 24일 오전 12_17_21 (6)-Photoroom.png",
+      "angry": "세나/ChatGPT Image 2026년 9월 24일 오전 12_17_21 (5)-Photoroom.png",
+      "annoyed": "세나/ChatGPT Image 2026년 9월 24일 오전 12_17_21 (5)-Photoroom.png",
+      "determined": "세나/ChatGPT Image 2026년 9월 24일 오전 12_17_20 (4)-Photoroom.png",
+      "embarrassed": "세나/ChatGPT Image 2026년 9월 24일 오전 12_17_25 (10)-Photoroom.png",
+      "happy": "세나/ChatGPT Image 2026년 9월 24일 오전 12_17_09 (2)-Photoroom.png",
+      "neutral": "세나/ChatGPT Image 2026년 9월 24일 오전 12_17_18 (3)-Photoroom.png",
+      "sad": "세나/ChatGPT Image 2026년 9월 24일 오전 12_17_24 (9)-Photoroom.png",
+      "shocked": "세나/ChatGPT Image 2026년 9월 24일 오전 12_17_22 (7)-Photoroom.png",
+      "smile": "세나/ChatGPT Image 2026년 9월 24일 오전 12_17_08 (1)-Photoroom.png",
+      "suspicious": "세나/ChatGPT Image 2026년 9월 24일 오전 12_17_23 (8)-Photoroom.png",
+      "tired": "세나/ChatGPT Image 2026년 9월 24일 오전 12_17_24 (9)-Photoroom.png"
+    },
+    "main": "세나/ChatGPT Image 2026년 9월 24일 오전 12_17_18 (3)-Photoroom.png"
+  },
+  "soren": {
+    "expressions": {
+      "afraid": "A#5",
+      "angry": "B#5",
+      "annoyed": "A#2",
+      "determined": "A#7",
+      "embarrassed": "A#4",
+      "happy": "A#1",
+      "neutral": "B#0",
+      "sad": "A#6",
+      "shocked": "B#3",
+      "smile": "B#1",
+      "suspicious": "A#3",
+      "tired": "B#4"
+    },
+    "sheets": {
+      "A": "소렌/ChatGPT Image 2026년 9월 19일 오후 06_10_44 (2).png",
+      "B": "소렌/ChatGPT Image 2026년 9월 19일 오후 06_17_43.png"
+    }
+  }
+}
