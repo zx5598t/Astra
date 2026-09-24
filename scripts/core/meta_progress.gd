@@ -115,6 +115,16 @@ func load_data() -> void:
     _load_string_list(unlocks_announced, cfg.get_value("progress", "unlocks_announced", []))
     _load_string_list(codex_entries_unlocked, cfg.get_value("progress", "codex_entries_unlocked", []))
     _migrate_codex_from_existing_progress()
+    # 0.8.1 compatibility: preserve a legitimate old Deep unlock, and recover
+    # it from historical wins when the flag was missing. Attempts alone never qualify.
+    if not campaign_completed:
+        campaign_completed = _all_campaign_cases_cleared()
+
+func _all_campaign_cases_cleared() -> bool:
+    for case_id in CAMPAIGN_CASES:
+        if int(case_wins.get(case_id, 0)) <= 0:
+            return false
+    return not CAMPAIGN_CASES.is_empty()
 
 func save_data() -> bool:
     var cfg := ConfigFile.new()
@@ -349,7 +359,7 @@ func completed_campaign_cases() -> int:
     return completed
 
 func campaign_complete() -> bool:
-    return completed_campaign_cases() >= CAMPAIGN_CASES.size()
+    return _all_campaign_cases_cleared()
 
 func recommended_case_id_for_slot(slot: int) -> String:
     var chapters: Array = voyage_memory_for_slot(slot).get("chapters",[])
