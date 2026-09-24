@@ -266,4 +266,7 @@ func _run() -> void:
         printerr("ASTRA UI SMOKE FAILED · %d" % failures.size())
     root.remove_child(app)
     app.free()
+    # Let queued Controls/resources from the extra Archive round drain before
+    # SceneTree shutdown; Windows treats leaked RIDs as a non-zero Godot exit.
+    await _wait(5)
     quit(0 if failures.is_empty() else 1)
