@@ -324,7 +324,7 @@ func is_case_unlocked(case_id: String) -> bool:
     # is treated as already past it rather than sent back to the tutorial.
     if not past_calibration():
         return false
-    return index == 0 or int(case_counts.get(CAMPAIGN_CASES[index - 1], 0)) > 0
+    return index == 0 or int(case_wins.get(CAMPAIGN_CASES[index - 1], 0)) > 0
 
 func case_status(case_id: String) -> String:
     if not is_case_unlocked(case_id):
@@ -344,7 +344,7 @@ func best_case_rank(case_id: String) -> String:
 func completed_campaign_cases() -> int:
     var completed := 0
     for case_id in CAMPAIGN_CASES:
-        if int(case_counts.get(case_id, 0)) > 0:
+        if int(case_wins.get(case_id, 0)) > 0:
             completed += 1
     return completed
 
@@ -378,7 +378,7 @@ func campaign_summary() -> String:
 func unlock_hint(case_id: String) -> String:
     var index := CAMPAIGN_CASES.find(case_id)
     if index > 0:
-        return "%s 사건을 한 번 끝까지 조사하면 열립니다" % str(AstraCaseCatalog.get_case(str(CAMPAIGN_CASES[index - 1])).get("title", ""))
+        return "%s 사건을 해결하면 열립니다" % str(AstraCaseCatalog.get_case(str(CAMPAIGN_CASES[index - 1])).get("title", ""))
     return ""
 
 # Read-only archive entries; unresolved chapters keep their ending hidden.
@@ -386,12 +386,12 @@ func story_archive() -> Array:
     var entries: Array = []
     for case_id in CAMPAIGN_CASES:
         var data := AstraCaseCatalog.get_case(case_id)
-        var completed := int(case_counts.get(case_id, 0)) > 0
+        var attempted := int(case_counts.get(case_id, 0)) > 0
         var solved := int(case_wins.get(case_id, 0)) > 0
         entries.append({
             "id": case_id, "chapter": str(data.get("chapter", "")), "title": str(data.get("title", "")),
-            "unlocked": is_case_unlocked(case_id), "completed": completed, "solved": solved,
-            "text": str(data.get("story_outro", "")) if completed else "아직 확인하지 않은 기록입니다.",
+            "unlocked": is_case_unlocked(case_id), "attempted": attempted, "completed": solved, "solved": solved,
+            "text": str(data.get("story_outro", "")) if solved else "아직 확인하지 않은 기록입니다.",
             "mission_badge": bool(mission_badges.get(case_id, false)), "challenge_badge": bool(chapter_challenges.get(case_id, false))
         })
     return entries
