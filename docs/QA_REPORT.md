@@ -1,3 +1,84 @@
+# 0.8.1 CONTAINMENT TUNING — FINAL VALIDATION — 2026-09-25
+
+기준 main: `8741194830bab29f600d1a379423cf34b2a5825a`  
+검증 branch: `2a13ca20e3cad5c4a1f539783c97d76fa8688240` (PR #19, merge 전)  
+VERSION / project.godot: **0.8.1**. Snapshot v4 유지.
+
+## Functional
+- Archive protocol: Stage 5 GUARDIAN, Stage 6 GUARDIAN/ANALYST, Stage 7+ GUARDIAN/ANALYST/EMPATH. AUDITOR는 player-facing 목록에서 제거하고 legacy 입력만 ANALYST로 정규화.
+- Progression: attempt(`case_counts`)와 clear(`case_wins`) 분리. 실패는 다음 Stage / campaign completion / Deep을 열지 않음.
+- Slot isolation: Archive replay와 campaign availability는 active slot의 voyage memory를 사용.
+- Deep: 실제 campaign clears 기반. 기존의 legitimate completion flag는 보존.
+- Retry/reload: retry는 새 seed, snapshot reload는 같은 seed/day/packet을 유지.
+- ANALYST regression: bounded deterministic fixture에서 후보 2개 이상을 강제하고 compare verdict 및 당일 재사용 불가를 검사.
+- Player agency: same-seed Stage 3에서 player contact가 private fact의 public-room 진입 여부를 실제로 바꾸는 회귀를 유지.
+
+## Tests / CI
+GitHub Actions **Godot CI run #599 / 36034419630**:
+- Linux validate: **PASS**
+- Windows validate: **PASS**
+- import / every-script parse: **PASS**
+- main suite: **ASTRA TESTS OK · 61,813 checks**
+- UI smoke / Archive smoke: **PASS**
+- campaign + agency: **PASS**
+- Deep: **PASS**
+- pixel: **PASS**
+- retained story/character/visual suites: **PASS**
+- Windows release-candidate build: **PASS**
+- main scene boot: Linux/Windows **PASS**
+- save snapshot/reload + legacy AUDITOR normalization: **PASS**
+
+## Balance — 40 games / Stage
+| Stage | SMART | RANDOM | PASSIVE |
+|---|---:|---:|---:|
+| CALIBRATION | 100% | 70% | 65% |
+| DEAD_AIR | 95% | 82% | 87% |
+| GLASS_GARDEN | 100% | 87% | 95% |
+| ECHO_WARD | 95% | 95% | 97% |
+| SILENT_ORBIT | 100% | 70% | 57% |
+| RED_SHIFT | 90% | 57% | 55% |
+| LAST_LIGHT | 92% | 40% | 40% |
+| SECOND_WATCH | 87% | 55% | 65% |
+| BORROWED_DAYS | 87% | 57% | 37% |
+| BLIND_DECK | 92% | 70% | 65% |
+| THREE_MINUTES_DARK | 92% | 77% | 52% |
+| CONTINUITY | 80% | 65% | 50% |
+| THRESHOLD | 92% | 55% | 55% |
+
+TOTAL: SMART **92%** · RANDOM **67%** · PASSIVE **63%**. PART II SMART **90%** / PASSIVE **53%**.  
+SMART public contribution **1.70/game** vs PASSIVE **0.66/game**, secrets+admissions **1.65/game**.
+
+Stage 2~4 PASSIVE는 **87 / 95 / 97%**로 여전히 높다. 0.8.1은 untouched private record/witness/hearsay의 자동 공개를 낮추고 player-contact 공개를 강화했지만, PART I의 한 Null + 여러 투표 기회 구조 때문에 승률 자체는 여전히 관대하다. 이 수치를 숨기거나 목표 숫자에 맞추기 위해 NPC 판단을 무작위화하지 않았다. 실제 플레이에서는 정보 공개뿐 아니라 희생/속도/판단 변화 체감을 계속 사람 플레이로 확인해야 한다.
+
+## Dialogue audit
+우선 감사: `social_lines_080.gd`, `stage_story_080.gd`, `interludes_080.gd`, `dialogue_bank.gd`, `dialogue_variants.gd`, `story_content.gd`, `voyage_content.gd`, current meeting/vote/failure/finale paths.
+- cliché 후보(“어쩌면 우리는…”, “한 가지는 확실해”, “이건 시작일 뿐이야” 등) 반복 검색: 대량 반복 없음.
+- exact long-line duplicate 통계에서 의도적 shared player-choice / mirrored story source가 주된 중복임을 확인.
+- pressured confession 3문장을 노아/소렌/마렌 voice에 맞게 분리.
+- legacy unlock queue에서 현재 기능이 아닌 marks/private_talk/theory_report/night_tactics/hypothesis를 새 해금처럼 노출하지 않게 제거.
+- protocol unlock 문구의 구형 “감사관” 설명 제거.
+- dialogue consistency는 placeholder token, internal enum/key, roster/speaker, banmal voice를 자동 검사.
+- 이번 pass의 직접 대사 변경: **3문장**. 대량 재작성은 하지 않음.
+
+## Windows build
+- ZIP: `ASTRA-0.8.1-windows.zip`
+- size: **98,001,993 bytes**
+- SHA256: `60e921f7417a47b355c209195befdfb344c768f198f7f0db8634ae6f9dd2260a`
+- release-candidate artifact: **PASS**
+- exported EXE headless boot: **PASS**
+- GitHub Release / tag: 이 작업에서는 생성하지 않음.
+
+## Remaining human-only risks
+자동화로 완료 판정하지 않는다.
+- 실제 60분 플레이의 재미와 피로
+- Stage 2~4의 높은 PASSIVE 승률이 체감상 “방이 알아서 푼다”로 느껴지는지
+- 한국어 대사의 자연스러움과 반복 피로
+- 인터루드 조작감
+- finale 감정선과 세 ending tone의 차이
+- player contact → 공개 → NPC 판단 변화가 실제 화면에서 충분히 읽히는지
+
+---
+
 # 0.8.0 CONTAINMENT — 최종 QA (사회추리 재구성 · 최종 통합 · 캠페인 확장) — 2026-09-24
 
 기준: 로컬 작업 트리(원격 저장소 없음). 시작 VERSION 0.7.4 → **0.8.0**. 저장 v12(메타) / 스냅샷 v4.
