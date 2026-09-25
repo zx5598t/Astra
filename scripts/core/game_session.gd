@@ -343,6 +343,9 @@ func _new_stage_state() -> Dictionary:
         "story_queue": [], "story_index": 0, "story_line": 0, "story_seen": [],
         "confessions": {}, "admissions": {}, "analyses": [],
         "public_accusations": [], "public_defenses": [], "public_presented": [], "public_log": [],
+        # 0.8.2 runtime-only agency telemetry. It lives inside stage_state so snapshot v4
+        # can carry it without a new schema field; old v4 snapshots hydrate lazily.
+        "agency_contacts": {}, "agency_events": [], "agency_vote_changes": [],
         "player_confronted": {}, "outcome_reason": "", "result_story": false,
         "recovered": []
     }
@@ -1353,6 +1356,7 @@ func ask(npc_id: String, intent: String, ref: String = "") -> Dictionary:
     return result
 
 func _finish_ask(member: AstraCrewMember, result: Dictionary) -> void:
+    _record_player_contact(member.id, str(result.get("intent", "")), str(result.get("fragment", {}).get("id", "")))
     talk_ap = conversations_left()
     member.refresh_expression()
     member.remember("DAY %d · 탐사요원과 대화 %s" % [day, str(result.get("intent", ""))])
@@ -2656,7 +2660,25 @@ func _set_moment(kind: String, data: Dictionary) -> void:
     stage_state()["meeting_moment"] = moment
 
 func _add_accusation(speaker: String, target: String, weight: float = 1.0) -> void:
-    stage_state()["public_accusations"].append({"day": day, "speaker": speaker, "target": target, "weight": weight})
+    var entry := {"day": day, "speaker": speaker, "target": target, "weight": weight}
+    if speaker == "player":
+        entry["player_derived"] = true
+        # Retain only fragment ids that actually contribute positive evidence to
+        # this target. This avoids treating unrelated facts the explorer happens
+        # to know as the basis for an accusation.
+        var known_ids := {}
+        for item in known_fragments():
+            known_ids[str(item.get("id", ""))] = true
+        var basis_facts: Array = []
+        var view := suspicion_breakdown("player", target)
+        for reason in view.get("reasons", []):
+            if float(reason.get("weight", 0.0)) <= 0.0:
+                continue
+            var source := str(reason.get("source", ""))
+            if known_ids.has(source) and source not in basis_facts:
+                basis_facts.append(source)
+        entry["basis_facts"] = basis_facts
+    stage_state()["public_accusations"].append(entry)
 
 func _add_defense(speaker: String, target: String) -> void:
     stage_state()["public_defenses"].append({"day": day, "speaker": speaker, "target": target})
@@ -3207,13 +3229,57 @@ func _respond_to_evidence(subject: String, item: Dictionary, topic: String) -> v
 func contested_state(fragment_id: String) -> String:
     return str(stage_state().get("contested", {}).get(fragment_id, ""))
 
+func _record_player_contact(npc_id: String, action: String, fact_id: String = "") -> void:
+    var contacts: Dictionary = stage_state().get("agency_contacts", {})
+    var key := fact_id if fact_id != "" else ("claim:D%d:%s" % [day, npc_id])
+    contacts[key] = {"day": day, "npc": npc_id, "action": action, "fact": fact_id}
+    stage_state()["agency_contacts"] = contacts
+
+func _agency_contact_for(fact_id: String) -> Dictionary:
+    return Dictionary(stage_state().get("agency_contacts", {}).get(fact_id, {}))
+
+func _agency_event(kind: String, data: Dictionary = {}) -> void:
+    var events: Array = stage_state().get("agency_events", [])
+    var entry := {"kind": kind, "day": day}
+    entry.merge(data, true)
+    events.append(entry)
+    while events.size() > 160:
+        events.pop_front()
+    stage_state()["agency_events"] = events
+
+func agency_metrics() -> Dictionary:
+    var public_caused := 0
+    var meeting_changed := 0
+    var vote_changed := int(stage_state().get("agency_vote_changes", []).size())
+    for raw in stage_state().get("agency_events", []):
+        var event: Dictionary = raw
+        match str(event.get("kind", "")):
+            "public_fact":
+                if bool(event.get("player_caused", false)):
+                    public_caused += 1
+            "meeting_shift":
+                if bool(event.get("player_caused", false)):
+                    meeting_changed += 1
+    return {"player_caused_public_facts": public_caused, "player_caused_meeting_changes": meeting_changed,
+        "player_caused_vote_changes": vote_changed}
+
 func _publish_fragment(item: Dictionary, speaker: String) -> void:
     var id := str(item.get("id", ""))
     AstraKnowledgeModel.make_public(flags, id, active_participants(), day, speaker)
     if id not in stage_state().get("public_presented", []):
         stage_state()["public_presented"].append(id)
     var public_log: Array = stage_state().get("public_log", [])
-    public_log.append({"day": day, "fact": id, "speaker": speaker, "player_contact": player_knows(id)})
+    var contact := _agency_contact_for(id)
+    # "Player-caused" means an explicit conversation contact exposed this fact,
+    # or the explorer personally presented it. Merely knowing a fact through
+    # another path must not claim causal credit for an NPC's independent share.
+    var contacted := not contact.is_empty()
+    public_log.append({"day": day, "fact": id, "speaker": speaker, "player_contact": contacted,
+        "player_action": str(contact.get("action", "")), "source": str(item.get("owner", "")),
+        "provenance": str(item.get("type", ""))})
+    _agency_event("public_fact", {"fact": id, "speaker": speaker, "source": str(item.get("owner", "")),
+        "provenance": str(item.get("type", "")), "player_caused": speaker == "player" or contacted,
+        "player_action": str(contact.get("action", "")), "public_trigger": "player_present" if speaker == "player" else "npc_share"})
     while public_log.size() > 80:
         public_log.pop_front()
     stage_state()["public_log"] = public_log
@@ -3445,6 +3511,7 @@ func intervene(kind: String, ref: String) -> Dictionary:
     if phase != "MEETING" or meeting_actions_left <= 0 or outcome != "":
         return {"ok": false}
     var before := _meeting_tops()
+    var votes_before := _npc_vote_targets()
     var used_before := int(stage_state().get("interventions", {}).get(_day_key(), 0))
     var start := meeting_feed.size()
     var ok := false
@@ -3472,9 +3539,28 @@ func intervene(kind: String, ref: String) -> Dictionary:
     _use_daily("interventions")
     _refresh_npc_suspicion()
     var shifts := _opinion_shift_lines(before)
+    for shift in shifts:
+        _agency_event("meeting_shift", {"npc": str(shift.get("npc", "")), "before": str(shift.get("before", "")),
+            "after": str(shift.get("after", "")), "player_caused": true, "action": kind, "ref": ref})
+    var votes_after := _npc_vote_targets()
+    var vote_changes: Array = stage_state().get("agency_vote_changes", [])
+    for voter in votes_before:
+        if votes_after.has(voter) and str(votes_before[voter]) != str(votes_after[voter]):
+            vote_changes.append({"day": day, "voter": str(voter), "before": str(votes_before[voter]),
+                "after": str(votes_after[voter]), "action": kind, "ref": ref})
+    stage_state()["agency_vote_changes"] = vote_changes
     _recompute_contradictions()
     changed.emit()
     return {"ok": true, "lines": meeting_feed.slice(start), "shifts": shifts}
+
+func _npc_vote_targets() -> Dictionary:
+    var result := {}
+    var pool := eligible_vote_targets()
+    if pool.is_empty():
+        return result
+    for voter in eligible_voters():
+        result[str(voter)] = str(_vote_target_for(str(voter), pool).get("target", ""))
+    return result
 
 func _meeting_tops() -> Dictionary:
     var tops := {}

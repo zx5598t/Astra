@@ -1,3 +1,16 @@
+## 0.8.2 — PLAYER MATTERS
+
+Player-agency stabilization pass over 0.8.1. No new mode, character, protocol, Act or ending.
+
+- Added runtime provenance for player contact → public fact → meeting reasoning → NPC vote changes, reusing the authoritative Stage state and DecisionTrace paths.
+- Player contacts now retain the action that exposed a fact; public evidence records source/provenance/trigger without a new persistent save field or snapshot-version bump.
+- Meeting interventions compare NPC intent before/after the action and record attributable opinion/vote changes for deterministic paired QA.
+- Player accusations retain the evidence ids the explorer actually knew, so later reasoning can distinguish an evidence-backed push from unsupported pressure.
+- Added Stage 2–4 paired agency regression/probe coverage; win rate remains a reported metric, not the sole balance target.
+- Tightened agency attribution so player-caused publication requires explicit contact or direct presentation, and player accusations retain only positively contributing known fragment ids.
+- Hardened Windows CI against Godot native exit-code false negatives while still requiring PASS markers and rejecting script/parse/compile failures.
+- Snapshot v4 and meta save v12 remain unchanged.
+
 ## 0.8.1 — CONTAINMENT TUNING
 
 Stabilization pass over 0.8.0. No new mode, character, lore branch or protocol.
