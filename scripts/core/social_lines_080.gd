@@ -404,8 +404,8 @@ const LINES := {
         "m_record": ["문은 거짓말 안 해. 공개한다. {record}"],
         "m_group_answer": ["{members}? 나도 걸리네. 난 순찰 중이었어."],
         "m_caution": ["{target|eul} 몰기 전에 근거부터 확인해. 성급한 격리는 보안이 아니야."],
-        "m_saw": ["내가 봤어. {time}쯤 {target|i} {room} 쪽으로 갔어."],
-        "m_saw_group": ["{time}쯤 {phrase} {room} 쪽으로 갔어. {members} 중 하나야."],
+        "m_saw": ["{time}쯤 {target|i} {room} 쪽으로 가는 거, 똑똑히 봤어."],
+        "m_saw_group": ["내가 봤어. {time}쯤 {phrase} {room} 쪽으로 가더라. 얼굴은 못 봤고, {members} 중 하나야."],
         "m_defend_self": ["난 {pos}에 있었어. {mates|rang} 같이. {target}, 근거 있어?"],
         "m_vouch": ["{target|rang} 나 그때 {pos}에 있었어. 내가 보증해."],
         "m_catch_lie": ["{a}|rang {b} 말이 안 맞아. 누가 거짓말하는 거야?"],
@@ -418,7 +418,7 @@ const LINES := {
         "m_forward": ["틀렸으면 오늘 제대로 하면 돼. 규정대로 가자."],
         "m_accuse": ["{target}. {reason}. 난 네가 제일 위험해 보여."],
         "m_agree": ["동의해. {target}."],
-        "m_excuse_remote": ["그 인증은 원격 점검이야. 난 {room}에 없었어."],
+        "m_excuse_remote": ["그 인증? 원격 점검이야. 나 {room} 근처에도 안 갔어."],
         "m_excuse_auto": ["자동 해제 주기야."],
         "m_excuse_card": ["내 카드 복제됐을 수 있어."],
         "m_rebut": ["그건 안 돼. {fact}"],
@@ -446,7 +446,7 @@ const LINES := {
         "record_support": ["{target}|eun 그때 {room}에서 채널에 접속해 있었어요."],
         "inference": ["그 승인은 중계 단말 앞에서만 돼요. 원격 경로는 막혀 있어요."],
         "saw_none": ["아무도요. 제가 듣던 건 사람 소리가 아니었어요.", "못 봤어요. 조용했어요."],
-        "yesterday_same": ["어제와 같아요. {pos}."],
+        "yesterday_same": ["…어제랑 같아요. {pos}에 있었어요."],
         "yesterday_changed": ["어제는 {pos|ieot}어요. {old|ira}고 했나요? …같은 구간을 두 번 들은 것 같네요."],
         "opinion": ["{target|ieyo}. {reason|i} 걸려요. 출처가 확실한 말만 믿으려고요.", "지금은 {target} 쪽이에요. 근거는 {reason}."],
         "opinion_none": ["아직 신호가 약해요. 이름을 말할 수준이 아니에요."],
@@ -596,7 +596,7 @@ const LINES := {
         "record_meaning_group": ["태그 종류까지만 보여요. {members} 중 한 명이에요."],
         "record_support": ["{target}|eun 그 시간 {room}에 있었어요. 공기가 그렇게 말해요."],
         "inference": ["그 분류는 생태 단말에 직접 들어가야 바뀌어요. 자동으로는 안 돼요."],
-        "saw_none": ["아무도 못 봤어요. 식물만 보고 있었어요.", "못 봤어요. 조용했어요."],
+        "saw_none": ["아무도 못 봤어요. 식물만 보고 있었어요.", "아무도 못 봤어요. 잎 흔들리는 소리밖에 없었어요."],
         "yesterday_same": ["어제와 같아요. {pos}에 있었어요."],
         "yesterday_changed": ["어제는… {pos|ieot}어요. {old|ira}고 했나요? 제가 헷갈렸나 봐요."],
         "opinion": ["{target|ieyo}. {reason|i} 마음에 걸려요. 그래도 틀렸으면 좋겠어요.", "지금은 {target} 쪽이에요. {reason|i} 신경 쓰여요."],
@@ -604,7 +604,7 @@ const LINES := {
         "reassure": ["고마워요. …조금 숨이 쉬어지네요."],
         "pressure_null": ["그렇게 몰아세우면 누구라도 무너져요."],
         "pressure_crew": ["제가 아는 건 다 말했어요. 정말이에요."],
-        "deny": ["저는 {room}에 가지 않았어요.", "그건 제가 아니에요."],
+        "deny": ["{room}엔 가지 않았어요. 거긴 제가 갈 일이 없는 곳이에요.", "그건 제가 아니에요."],
         "excuse_remote": ["생태 단말은 원격 동기화가 돌아요. 제가 거기 있었던 게 아니에요."],
         "excuse_auto": ["자동 관리 주기였을 거예요."],
         "excuse_card": ["제 태그는 작업대에 두고 다녀요. 누가 가져갔을 수도요."],
@@ -615,9 +615,9 @@ const LINES := {
         "already_told": ["아까 다 말했어요."],
         "deflect": ["그건… 지금 말하고 싶지 않아요.", "사건이랑은 상관없는 일이에요."],
         "explain_with": ["저는 {pos}에 있었어요. {mate}한테 물어봐요.", "{mates|wa} 같이 있었어요. {source|i} 본 건 제가 아니에요."],
-        "explain_alone": ["혼자였어요. 그래도 {room}엔 안 갔어요."],
+        "explain_alone": ["혼자 있었어요. 그래도 {room} 쪽엔 가지 않았어요. 정말로요."],
         "misremember": ["아, 제가 착각했어요. {pos|ieot}어요. 물 주는 순서를 거꾸로 기억했네요."],
-        "confess": ["…말할게요. 사실 {pos}에 있었어요."],
+        "confess": ["…사실대로 말할게요. 그때 {pos}에 있었어요."],
         "confess_pressed": ["알겠어요. 숨기지 않을게요. {pos|ieot}어요."],
         "incident_note": ["{time}, {room|ieyo}. {stake|i} 걸린 일이에요. 살아 있는 것부터 확인할게요."],
         "recovered_record": ["{from}의 기록이 생태 백업에 남아 있었어요. 어제 그 시간 거예요."],
@@ -639,7 +639,7 @@ const LINES := {
         "m_catch_lie": ["{a}의 말이랑 {b}의 말이 안 맞아요. 둘 다 맞을 수는 없어요."],
         "m_benign_callout": ["{target}, {mate|i} 당신이랑 같이 있었다는데요. {pos|ieot}다는 건 뭐예요?"],
         "m_deflect": ["그건 나중에 말할게요."],
-        "m_confess_public": ["…말할게요. 그 시간 {pos}에 있었어요."],
+        "m_confess_public": ["…다들 앞에서 말할게요. 그 시간엔 {pos}에 있었어요."],
         "m_callback": ["{target}, {when} {old|ira}고 했잖아요. 지금은 {new|ieyo}?"],
         "m_deny": ["아니에요.", "그렇게 말한 적 없어요."],
         "m_yesterday": ["어제 {target|eul} 보냈는데 오늘도 일이 생겼어요. …우리가 틀렸을까요?"],
@@ -649,7 +649,7 @@ const LINES := {
         "m_excuse_remote": ["원격 동기화였을 거예요. 저는 {room}에 없었어요."],
         "m_excuse_auto": ["자동 관리 주기예요."],
         "m_excuse_card": ["누가 제 태그를 가져갔을 수도 있어요."],
-        "m_rebut": ["그건 안 돼요. {fact}"],
+        "m_rebut": ["음… 그건 그렇게 되지 않아요. {fact}"],
         "m_demand": ["{target}, 다시 설명해 줘요. 천천히."],
         "m_shift": ["…다시 생각해 보니 {target|ieyo}. {reason|i} 걸려요."],
         "m_confirm": ["네, 제가 말한 거예요."],
@@ -659,6 +659,80 @@ const LINES := {
 }
 
 # Generic fallbacks so a missing key never shows an empty line.
+# 1.0 final words: what the person answers is the actual thing that was
+# raised against them (a link that held, a harmless reason now public, the
+# explorer's own accusation). Same words for Nulls and innocents.
+const LAST_LINES := {
+    "mira": {"last_link": ["그 두 기록이 안 맞는다는 건 알아요. 그래도 그 틈을 제가 만들었다는 증거는 아니에요. 한 번만 더 봐 줘요."],
+        "last_explained": ["숨긴 이유는 이미 말했어요. 부끄러웠지만, 사건과는 상관없어요. 그걸로 저를 보내진 말아요."],
+        "last_accused_by_you": ["당신이 저를 지목한 이유는 들었어요. 저는 그 이유가 틀렸다고 생각해요. 판단은… 당신 몫이에요."]},
+    "rho": {"last_link": ["그래, 그 둘 안 맞아. 인정해. 근데 안 맞는 거랑 내가 했다는 건 다른 얘기잖아."],
+        "last_explained": ["내가 뭘 숨겼는지는 다 말했어. 창피한 거지 사건이랑은 상관없어."],
+        "last_accused_by_you": ["너 나 찍었지. 괜찮아. 대신 틀렸으면, 내일 그 얘기 꼭 하자."]},
+    "dax": {"last_link": ["모순은 인정해. 남은 변수는 아직 두 개야. 그중 하나를 골라서 나로 끝내지는 마."],
+        "last_explained": ["숨긴 건 설명했어. 조건 하나가 빠졌다고 결론이 바뀌진 않아."],
+        "last_accused_by_you": ["네 추론은 들었어. 전제 하나가 틀렸다고 봐. 계산은 네가 해."]},
+    "noa": {"last_link": ["두 기록이 부딪힌다는 건 저도 적었어요. 누가 그 틈을 만들었는지는 아직 안 적혀 있어요."],
+        "last_explained": ["숨긴 이유는 말했어요. 기록에도 남겼어요. 그 이상은 없어요."],
+        "last_accused_by_you": ["당신의 지목도 적었어요. 틀렸다면, 그것도 적을 거예요."]},
+    "sena": {"last_link": ["그 연결, 틀렸다고는 안 할게. 근데 안 맞는 게 하나 있다고 사람을 재우는 거야?"],
+        "last_explained": ["숨긴 건 말했잖아. 내 실수였어. 사건이랑은 상관없어."],
+        "last_accused_by_you": ["날 찍은 거 알아. 좋아. 대신 네 판단이 맞는지 끝까지 봐."]},
+    "vale": {"last_link": ["…시간이 겹치는 건 알아요. 그게 전부예요."],
+        "last_explained": ["…이유는 말했어요. 더는 없어요."],
+        "last_accused_by_you": ["…당신이 그렇게 들었다면요. 전 다르게 들었어요."]},
+    "eli": {"last_link": ["안 맞는 건 인정한다. 내가 했다는 건 아니야."],
+        "last_explained": ["이유는 말했다. 끝."],
+        "last_accused_by_you": ["네 판단이다. 책임도 네 거고."]},
+    "lyra": {"last_link": ["그 두 가지가 안 맞는 건 저도 봤어요. 그래도 한 가지 흔적으로 사람 전체를 판단하진 말아 줘요."],
+        "last_explained": ["숨긴 이유는 이미 말했어요. 창피했을 뿐이에요. 그건 사건이 아니에요."],
+        "last_accused_by_you": ["당신이 저를 의심하는 건 알아요. 괜찮아요. 다만 끝까지 확인은 해 줘요."]},
+}
+
+# 1.0 linking: the room answers a statement-and-evidence link.
+const LINK_LINES := {
+    "mira": {"m_link_holds": ["…그 두 가지는 같이 설명이 안 돼요. {target}, 이건 대답해 줘야 해요."],
+        "m_link_partial": ["그것만으로는 아직 누구라고 할 수 없어요. 그래도 기억해 둘게요."],
+        "m_link_fails": ["그 둘은 서로 상관없는 얘기 같아요. 괜히 사람을 몰지는 말아요."],
+        "m_redirect": ["제 말만 보지 말고 {target}의 설명도 봐요. 아직 안 맞는 게 거기 있잖아요."],
+        "m_doubt_explorer": ["탐사요원, 정말 확실해요? 그 연결은 당신이 만든 거예요."]},
+    "rho": {"m_link_holds": ["와, 그건 진짜 안 맞네. {target}, 이건 설명해야겠다."],
+        "m_link_partial": ["음, 반쯤은 맞는 말인데… 아직 확정은 아니지?"],
+        "m_link_fails": ["어… 그게 왜 연결돼? 난 잘 모르겠는데."],
+        "m_redirect": ["나만 보지 말고, {target} 쪽은? 거기도 안 맞는 게 있었잖아."],
+        "m_doubt_explorer": ["야, 너 아까부터 너무 확신하는 거 아냐? 그 연결, 네가 붙인 거잖아."]},
+    "dax": {"m_link_holds": ["조건 두 개가 서로를 지워. {target}, 남은 설명을 들어 보자."],
+        "m_link_partial": ["범위는 줄었어. 결론은 아직이야."],
+        "m_link_fails": ["그 둘 사이엔 논리가 없어. 추측을 근거처럼 말하지 마."],
+        "m_redirect": ["변수를 하나만 보지 마. {target} 쪽 모순은 아직 그대로야."],
+        "m_doubt_explorer": ["그 연결을 한 건 너야. 네 추론이 틀릴 가능성도 계산에 넣어."]},
+    "noa": {"m_link_holds": ["적어 둘게요. 두 기록이 부딪혀요. {target}의 답도 같이요."],
+        "m_link_partial": ["적어 둘게요. 다만 이건 확인이 아니라 후보예요."],
+        "m_link_fails": ["그 기록은 그 말과 관계가 없어요. 그렇게는 못 적어요."],
+        "m_redirect": ["{target}의 진술도 아직 정리가 안 됐어요. 그것도 같이 봐요."],
+        "m_doubt_explorer": ["그 연결은 탐사요원의 해석이에요. 기록에 적힌 건 아니에요."]},
+    "sena": {"m_link_holds": ["그건 빠져나갈 데가 없네. {target}, 말해 봐."],
+        "m_link_partial": ["좁혀지긴 했네. 한 방은 아니야."],
+        "m_link_fails": ["그걸로 누굴 몰아? 근거가 안 되잖아."],
+        "m_redirect": ["그럼 {target}|eun? 거기 문제는 벌써 잊었어?"],
+        "m_doubt_explorer": ["너 너무 몰아가는데? 그 연결 확실해?"]},
+    "vale": {"m_link_holds": ["…시간이 겹쳐요. {target}, 이 부분은 들어야겠어요."],
+        "m_link_partial": ["…그 말만으로는 아직 모자라요. 다른 쪽에서 한 번 더 들어야 해요."],
+        "m_link_fails": ["…그건 다른 얘기예요. 섞으면 더 헷갈려요."],
+        "m_redirect": ["…{target}의 말도 아직 설명되지 않았어요."],
+        "m_doubt_explorer": ["…당신이 그렇게 이어 붙였을 뿐이잖아요."]},
+    "eli": {"m_link_holds": ["위치가 안 맞는다. {target}, 설명해."],
+        "m_link_partial": ["후보는 줄었다. 아직 하나는 아니야."],
+        "m_link_fails": ["관계없다. 헛짚었어."],
+        "m_redirect": ["{target} 쪽 동선도 확인 안 됐다."],
+        "m_doubt_explorer": ["네 해석이다. 사실이 아니야."]},
+    "lyra": {"m_link_holds": ["그 둘을 나란히 두니까 이상하네요. {target}, 무슨 일이었는지 얘기해 줄래요?"],
+        "m_link_partial": ["방향은 보여요. 조금만 더 확인해 봐요."],
+        "m_link_fails": ["음… 그건 좀 억지 같아요. 조금만 더 차분히 봐요."],
+        "m_redirect": ["저만 보지 말고 {target}의 이야기도 다시 들어 봐요."],
+        "m_doubt_explorer": ["탐사요원, 너무 서두르는 것 같아요. 그 연결은 당신 생각이잖아요."]},
+}
+
 const FALLBACK := {
     "open_with": "{time}엔 {pos}에 있었어. {mates|wa} 같이.",
     "open_alone": "{time}엔 {pos}에 혼자 있었어.",
@@ -683,6 +757,10 @@ static func line(npc_id: String, key: String, params: Dictionary = {}, pick: flo
         pool = SHIELD_LINES.get(npc_id, {}).get(key, [])
     if pool.is_empty():
         pool = ANALYST_LINES.get(npc_id, {}).get(key, [])
+    if pool.is_empty():
+        pool = LINK_LINES.get(npc_id, {}).get(key, [])
+    if pool.is_empty():
+        pool = LAST_LINES.get(npc_id, {}).get(key, [])
     var template := ""
     if pool.is_empty():
         template = str(FALLBACK.get(key, ""))

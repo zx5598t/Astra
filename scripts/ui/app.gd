@@ -415,6 +415,64 @@ func _save_session() -> void:
     if session != null and session.phase != "RESULT":
         if not session.save_snapshot(snapshot_path()):
             fx.toast("진행 저장에 실패했습니다. 저장 폴더의 여유 공간을 확인하세요.", AstraUI.RED)
+        else:
+            _keep_dawn()
+
+# The first save of each morning is kept aside: a lost Stage can be rewound to
+# it once (AstraGameSession.apply_rewind). Deep runs never keep one.
+func dawn_path() -> String:
+    return snapshot_path() + ".dawn"
+
+func _keep_dawn() -> void:
+    if deep_active or session == null or session.is_deep() or session.phase != "BRIEFING":
+        return
+    var key := "%s:%d:%d" % [session.case_id, session.seed_value, session.day]
+    var info := ConfigFile.new()
+    if info.load(dawn_path() + ".key") == OK and str(info.get_value("dawn", "key", "")) == key:
+        return
+    var from := ProjectSettings.globalize_path(snapshot_path())
+    if DirAccess.copy_absolute(from, ProjectSettings.globalize_path(dawn_path())) == OK:
+        info.set_value("dawn", "key", key)
+        info.save(dawn_path() + ".key")
+
+func can_rewind() -> bool:
+    if session == null or deep_active or session.is_deep() or session.outcome != "LOSE":
+        return false
+    if session.rewinds_used() >= AstraGameSession.REWINDS_PER_STAGE:
+        return false
+    var info := ConfigFile.new()
+    if info.load(dawn_path() + ".key") != OK:
+        return false
+    return str(info.get_value("dawn", "key", "")) == "%s:%d:%d" % [session.case_id, session.seed_value, session.day]
+
+func rewind_to_dawn() -> void:
+    if not can_rewind():
+        return
+    var memory := session.rewind_memory()
+    var used := session.rewinds_used() + 1
+    var restored := AstraGameSession.new()
+    if not restored.load_snapshot(dawn_path()):
+        fx.toast("되감을 아침을 불러올 수 없습니다.", AstraUI.RED)
+        return
+    session = restored
+    session.set_player_profile(meta.player_profile_for_slot(active_slot))
+    session.features = meta.unlocked_features_for_slot(active_slot)
+    session.reconcile_codex_after_resume(meta.codex_entries_unlocked)
+    session.apply_rewind(memory, used)
+    _connect_codex_events()
+    _connect_autosave()
+    show_session_screen()
+
+# The Stage before this one, if the slot has reached it (to go back and replay).
+func previous_case_id() -> String:
+    if session == null or session.is_deep():
+        return ""
+    var order: Array = AstraCaseCatalog.STAGE_ORDER
+    var index := order.find(session.case_id)
+    if index <= 0:
+        return ""
+    var previous := str(order[index - 1])
+    return previous if meta.is_case_unlocked_for_slot(previous, active_slot) else ""
 
 func resume_case(slot: int = -1) -> void:
     if slot >= 0:

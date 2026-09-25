@@ -153,6 +153,27 @@ const FIRST_CONTACT := {
         "eli": ["", "이 구역 너머엔 뭐가 있어?", "지금은 아무것도. …아무것도 없어야 맞는 곳이다."]},
 }
 
+# How the first exchange landed, remembered for the Stage (1.0): the next
+# day's first talk can come back to it. Warm tones and friction are the same
+# size of nudge — the explorer's actual conduct moves trust far more.
+const TONE_WARM := ["intellectual_resonance", "professional_respect", "quiet_trust", "shared_curiosity", "competitive_respect", "consent_first", "quick_roles", "route_trust", "earned_trust", "tool_rivalry"]
+const TONE_NUDGE := 0.02
+const TONE_CALLBACK := {
+    "mira": {"warm": "어제 그 얘기, 기억해요. 오늘도 한 가지씩 봐요.", "friction": "어제는 좀 엄하게 말했죠. 그래도 말은 바꾸지 않을게요."},
+    "rho": {"warm": "어, 왔어? 어제 그 얘기 이어서 하자.", "friction": "어제 좀 투닥거렸지. 뭐, 오늘은 일 얘기부터."},
+    "dax": {"warm": "어제 조건 하나를 네가 먼저 짚었지. 오늘도 그렇게 해.", "friction": "어제 그 방식, 아직 동의는 안 해. 그래도 들을게."},
+    "noa": {"warm": "어제 말한 건 적어 뒀어요. 오늘 것도 정확히 적을게요.", "friction": "어제 일, 아직 적어 둔 채예요. 오늘은 순서대로 말해 줘요."},
+    "sena": {"warm": "어제처럼 하자. 넌 앞, 난 사람.", "friction": "어제 혼자 앞서간 거, 오늘은 안 봐준다."},
+    "vale": {"warm": "…어제 끝까지 들어 줬죠. 오늘도 그래 줄래요?", "friction": "…어제는 너무 빨랐어요. 오늘은 조금만 천천히요."},
+    "eli": {"warm": "어제 동선, 맞았다. 오늘도 그렇게.", "friction": "어제 그건 틀렸다. 오늘은 확인부터."},
+    "lyra": {"warm": "어제 같이 본 거, 계속 생각나요. 오늘은 뭘 볼까요?", "friction": "어제는 좀 어긋났죠. 오늘은 제 말부터 들어 줘요."},
+}
+
+static func tone_kind(tag: String) -> String:
+    if tag == "":
+        return ""
+    return "warm" if tag in TONE_WARM else "friction"
+
 # Rotation: a Stage features a few of the pairs, so the same exchange does not
 # open every Stage of a campaign. Deterministic from the Stage index alone.
 static func first_contact(id: String, crew_id: String, stage: int) -> Array:
@@ -172,31 +193,31 @@ static func first_contact(id: String, crew_id: String, stage: int) -> Array:
 # Each explorer's own public voice for the meeting moves. Same placeholders,
 # in the same order, as the default line the session passes in.
 const MEETING_VOICE := {
-    "serin": {"present": "내가 들은 걸 순서대로 놓을게. %s", "defend": "%s|eul 보내기엔 빈칸이 너무 많아. 확인된 것부터 다시 보자.",
+    "serin": {"present": "내가 들은 걸 순서대로 놓을게. %s", "link": "이 둘을 순서대로 놓아 볼게. %s — 그리고 %s. 빈칸이 보여?", "defend": "%s|eul 보내기엔 빈칸이 너무 많아. 확인된 것부터 다시 보자.",
         "compare": "%s, %s. 두 사람 다 %s에 어디 있었는지 한 번 더. 순서가 어디서 갈리는지 보고 싶어.",
         "support": "나도 %s 쪽 설명에서 한 칸이 비어. 거기를 채워 줘.", "press": "%s, 그 시간 동선을 처음부터. 빠진 칸 없이.",
         "hearsay": "%s, 직접 본 사람한테 듣고 싶어. 들은 말은 한 번 옮길 때마다 조금씩 달라져.", "clarify": "잠깐. 확인된 말과 아직 추측인 말을 나눠 놓자.",
         "coax": "%s, 사건과 상관없는 일이면 지금 말해도 돼. 그걸로 널 보내진 않아.", "basis": "잠깐. %s, %s|eul 의심하는 근거를 처음부터 다시."},
-    "mika": {"present": "자, 들은 거 풀어 볼게. %s", "defend": "%s|eul 보내기엔 부품이 모자라. 확인된 것부터 조립하자.",
+    "mika": {"present": "자, 들은 거 풀어 볼게. %s", "link": "이거랑 이거, 맞물려 보자. %s — 그리고 %s. 안 맞지?", "defend": "%s|eul 보내기엔 부품이 모자라. 확인된 것부터 조립하자.",
         "compare": "%s, %s. 둘 다 %s에 어디 있었는지 다시 말해 봐. 한쪽은 분명 어디가 헐거울 거야.",
         "support": "나도 %s 쪽이 걸려. 설명 좀 더 줘.", "press": "%s, 그 시간 동선 처음부터. 농담 아니야.",
         "hearsay": "%s, 직접 본 사람 누구야? 건너 들은 거면 나사 하나씩 빠져 있을걸.", "clarify": "잠깐만. 확인된 거랑 추측인 거, 따로 놓자.",
         "coax": "%s, 사건이랑 상관없는 거면 지금 말해. 그걸로 아무도 너 안 보내.", "basis": "잠깐. %s, %s|eul 의심하는 근거 다시 말해 줄래?"},
-    "jace": {"present": "내가 들은 거 먼저 꺼낼게. %s", "defend": "%s|eul 보내기엔 근거가 부족해. 내가 틀리면 그건 내가 질게.",
+    "jace": {"present": "내가 들은 거 먼저 꺼낼게. %s", "link": "두 개 같이 볼게. %s — 그리고 %s.", "defend": "%s|eul 보내기엔 근거가 부족해. 내가 틀리면 그건 내가 질게.",
         "compare": "%s, %s. 둘 다 %s에 어디 있었는지 다시 말해 줘. 지금 여기서 맞춰 보자.",
         "support": "나도 %s 쪽이 걸려. 설명 더 들어야겠어.", "press": "%s, 그 시간 동선 처음부터 다시. 천천히.",
         "hearsay": "%s, 직접 본 사람한테 듣자. 네가 뭘 봤는지 정확히.", "clarify": "잠깐, 확인된 거랑 아직 추측인 거 나눠서 가자.",
         "coax": "%s, 사건이랑 상관없는 일이면 지금 말해. 그걸로 널 보내게 두진 않아.", "basis": "잠깐. %s, %s|eul 의심하는 근거부터 다시 들려줘."},
-    "rael": {"present": "들은 걸 말할게. 누굴 몰려는 게 아니라, 다 같이 보자고. %s", "defend": "%s|eul 몰아가기엔 근거가 부족해. 확인된 것부터 봐.",
+    "rael": {"present": "들은 걸 말할게. 누굴 몰려는 게 아니라, 다 같이 보자고. %s", "link": "천천히 같이 봐 줘. %s — 그리고 %s. 둘 다 맞기는 어려워.", "defend": "%s|eul 몰아가기엔 근거가 부족해. 확인된 것부터 봐.",
         "compare": "%s, %s. 두 사람 다 %s에 어디 있었는지 다시 말해 줄래? 천천히 해도 돼.",
         "support": "나도 %s 쪽이 마음에 걸려. 설명을 더 듣고 싶어.", "press": "%s, 그 시간 동선을 처음부터 말해 줘. 숨 고르고.",
         "hearsay": "%s, 직접 본 사람한테 듣고 싶어. 정확히 뭘 봤는지.", "clarify": "잠깐. 확인된 말과 아직 추측인 부분을 나눠 보자.",
         "coax": "%s, 사건이랑 상관없는 일이면 지금 말해도 괜찮아. 그걸로 아무도 널 보내지 않아.", "basis": "잠깐. %s, %s|eul 의심하는 근거부터 다시 말해 줄래?"},
-    "logan": {"present": "들은 거다. %s", "defend": "%s. 근거 부족. 확인된 것부터.",
+    "logan": {"present": "들은 거다. %s", "link": "%s. 그리고 %s. 안 맞는다.", "defend": "%s. 근거 부족. 확인된 것부터.",
         "compare": "%s, %s. %s. 둘 다 위치.", "support": "%s. 나도 걸린다. 설명해.", "press": "%s. 그 시간 동선. 처음부터.",
         "hearsay": "%s. 직접 봤나. 뭘.", "clarify": "잠깐. 확인된 것과 추측을 나눈다.",
         "coax": "%s. 사건과 상관없으면 지금 말해. 그걸로 널 보내진 않는다.", "basis": "%s. %s|eul 의심하는 근거."},
-    "sia": {"present": "나 이거 들었어! 다 같이 들어 봐. %s", "defend": "%s|eul 보내기엔 아직 못 본 데가 많아. 확인된 것부터 보자.",
+    "sia": {"present": "나 이거 들었어! 다 같이 들어 봐. %s", "link": "이거 봐! %s — 그리고 %s. 이상하지 않아?", "defend": "%s|eul 보내기엔 아직 못 본 데가 많아. 확인된 것부터 보자.",
         "compare": "%s, %s! 둘 다 %s에 어디 있었는지 다시 말해 줘. 지도 펴 놓고 보자.",
         "support": "나도 %s 쪽이 궁금해. 설명 더 해 줘.", "press": "%s, 그 시간 어디부터 어디까지 갔는지 처음부터 말해 줘.",
         "hearsay": "%s, 직접 본 거야? 누구한테 들은 거면 그 사람한테 가서 물어보자.", "clarify": "잠깐! 확인된 거랑 추측인 거 나눠 보자.",

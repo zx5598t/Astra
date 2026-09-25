@@ -49,7 +49,7 @@ jobs:
           done < <(find scripts tests -name '*.gd' | sort)
           exit "$failed"
 
-      - name: 0.8.2 PLAYER MATTERS suite (rules, fairness, UI smoke, retained story tests)
+      - name: ASTRA suite (rules, fairness, 1.0 motion/deduction/minigame/UI layout gates, retained story tests)
         run: |
           failed=0
           while IFS='|' read -r script marker args; do
@@ -113,7 +113,7 @@ jobs:
           & $env:GODOT --headless --path . --import 2>&1 | Tee-Object -FilePath windows-import.log
           if (Select-String -Path windows-import.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Windows Godot import reported script errors.' }
 
-      - name: Run the 0.8.2 suite on Windows
+      - name: Run the ASTRA suite on Windows
         shell: pwsh
         run: |
           foreach ($row in Get-Content tests/ci_suite.txt) {

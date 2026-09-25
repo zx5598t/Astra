@@ -4,6 +4,9 @@ extends VBoxContainer
 # is a face you can pick; one confirm. Then each ballot is read out in the
 # voter's own words, the pod closes on whoever got the most, and someone close
 # to them reacts. No role is shown (§32, §33).
+# 1.0: after picking someone the explorer says why — one of the things they
+# actually know about that person, or plain instinct. It is kept with the Day
+# and shown again in the result; it is never graded.
 
 var screen
 var _header: Label
@@ -15,6 +18,8 @@ var _reveal: VBoxContainer
 var _reveal_scroll: ScrollContainer
 var _after: VBoxContainer
 var _choice: String = ""
+var _reason: int = -1
+var _reasons: VBoxContainer
 var _mode: String = "choose"
 var _queue: Array = []
 var _timer: Timer
@@ -37,14 +42,17 @@ func setup(game_screen) -> void:
     add_child(grid_scroll)
     _reveal = AstraUI.vbox(6)
     _reveal_scroll = AstraUI.scroll(_reveal)
+    AstraUI.track_follow(_reveal_scroll)
     _reveal_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
     _reveal_scroll.visible = false
     add_child(_reveal_scroll)
     _after = AstraUI.vbox(8)
     add_child(_after)
-    var bottom := AstraUI.hbox(10)
+    var bottom := AstraUI.hbox(AstraUI.SPACE_MD)
     add_child(bottom)
-    bottom.add_child(AstraUI.spacer())
+    _reasons = AstraUI.vbox(AstraUI.SPACE_XS)
+    _reasons.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    bottom.add_child(_reasons)
     _confirm = AstraUI.primary_button("한 사람을 고르세요", AstraUI.RED)
     _confirm.custom_minimum_size = Vector2(360, 52)
     _confirm.disabled = true
@@ -139,17 +147,40 @@ func _candidate(npc_id: String) -> Button:
     job.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     col.add_child(job)
     card.pressed.connect(func():
+        if _choice != npc_id:
+            _reason = -1
         _choice = npc_id
         screen.fx.play("select")
         refresh()
     )
     return card
 
+func _render_reasons() -> void:
+    var s: AstraGameSession = screen.session
+    AstraUI.clear(_reasons)
+    if _choice == "" or s.vote_stage() != "BALLOT":
+        return
+    _reasons.add_child(AstraUI.label("왜 %s인가요? · 하나를 고르세요" % s.name_of(_choice), AstraUI.T_META, AstraUI.GOLD))
+    var options := s.ballot_reasons(_choice)
+    for index in range(options.size()):
+        var picked := index == _reason
+        var button := AstraUI.choice_button(("● " if picked else "○ ") + str(options[index]["text"]), AstraUI.GOLD if picked else AstraUI.MUTED, AstraUI.T_META, picked)
+        button.pressed.connect(func():
+            _reason = index
+            refresh()
+        )
+        _reasons.add_child(button)
+
 func _update_confirm() -> void:
     var s: AstraGameSession = screen.session
     if _choice == "" or (s.vote_stage() in ["RUNOFF", "TIEBREAK"] and _choice not in s.runoff_candidates()):
         _choice = "" if s.vote_stage() in ["RUNOFF", "TIEBREAK"] and _choice not in s.runoff_candidates() else _choice
         _confirm.text = "한 사람을 고르세요"
+        _confirm.disabled = true
+        return
+    _render_reasons()
+    if s.vote_stage() == "BALLOT" and _reason < 0:
+        _confirm.text = "이유를 하나 고르세요"
         _confirm.disabled = true
         return
     _confirm.disabled = false
@@ -161,12 +192,16 @@ func _on_confirm() -> void:
     if _choice == "":
         return
     var before := s.vote_stage()
+    if before == "BALLOT" and _reason >= 0:
+        s.set_ballot_reason(_choice, _reason)
     var result := s.resolve_tiebreak(_choice) if before == "TIEBREAK" else s.cast_vote(_choice)
     if not bool(result.get("ok", false)):
         screen.fx.toast("그 사람에게는 투표할 수 없습니다.", AstraUI.GOLD)
         return
     screen.fx.play("alert")
     _choice = ""
+    _reason = -1
+    AstraUI.clear(_reasons)
     _mode = "reveal"
     _statements.visible = false
     _grid.get_parent().visible = false
@@ -209,9 +244,11 @@ func _reveal_next() -> void:
     var line := str(ballot.get("line", ""))
     if line != "" and voter != "player":
         var quote := AstraUI.label("“%s”" % line, AstraUI.T_META, AstraUI.MUTED, true)
+        quote.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         row.add_child(quote)
     _reveal.add_child(row)
     AstraUI.fade_in(row, 0.2)
+    AstraUI.follow_bottom(_reveal_scroll)
     screen.fx.play("tick")
 
 func _finish_reveal() -> void:

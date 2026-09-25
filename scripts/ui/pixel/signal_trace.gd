@@ -1,212 +1,258 @@
 class_name AstraSignalTrace
-extends Control
+extends AstraShipTask
 
-# SIGNAL TRACE (interlude task). Three broken pieces of a signal; bring each
-# one's frequency onto the faint target wave and lock it. No timer. After two
-# wrong locks (or a while on one piece) the listener marks where it sounds
-# right, so a slow hand is never stuck (§65). "나중에" gives up with what is
-# already joined: a partial result, never a dead end (§16).
+# SIGNAL ANALYSIS (1.0). Three receiver channels. One is only interference —
+# its trace never repeats; the other two carry the same repeating signal.
+#   1. Find the interference (compare the shapes; 1-3 or click).
+#   2. Bring the two real channels onto the reference: frequency and phase
+#      (Tab switches channel, ← → frequency, ↑ ↓ phase, Space locks).
+#   3. With both locked, the pulses show which antenna heard the signal first:
+#      bow, stern, or both at once (inside the ship). Choose the source.
+# Success: the source is known. Partial: the signal is real but its source is
+# not (or the task is left). Deterministic per seed; no timer, no reflexes.
 
-signal finished(result: String)
+const SOURCES := ["함수 쪽 바깥", "함미 쪽 바깥", "선내 (두 안테나가 동시에)"]
 
-const PIECES_DEFAULT := ["호출음", "목소리", "승인 음"]
+var tolerance := 0.05
+var noise_channel := 0
+var freq_targets: Array = []
+var phase_targets: Array = []
+var freq: Array = [0.5, 0.5, 0.5]
+var phase: Array = [0.0, 0.0, 0.0]
+var locked: Array = [false, false, false]
+var source := 0
+var offset_ms := 0
+var _active := 0
+var _misses := 0
+var _answer := -1
+var _seed := 0
 
-var pieces: Array = PIECES_DEFAULT.duplicate()
-var tolerance: float = 0.045
-var listener_name: String = "소렌"
-var _targets: Array = []
-var _phase_targets: Array = []
-var _alignment: float = 0.0
-var _phase_slider: HSlider
-var _index: int = 0
-var _value: float = 0.5
-var _misses: int = 0
-var _time_on_piece: float = 0.0
-var _phase: float = 0.0
-var _wave: Control
-var _title: Label
-var _hint: Label
-var _chips: HBoxContainer
-var _slider: HSlider
-var _lock: Button
-var _later: Button
-var _done: bool = false
-
-func setup(seed_value: int, piece_names: Array, tol: float, listener: String) -> void:
-    if not piece_names.is_empty():
-        pieces = piece_names.duplicate()
-    tolerance = tol
-    listener_name = listener
+func setup(seed_value: int, _pieces: Array = [], tol: float = 0.05, listener: String = "소렌") -> void:
+    _seed = seed_value
+    tolerance = maxf(0.04, tol)
     var rng := RandomNumberGenerator.new()
-    rng.seed = absi(hash("signal_trace|%d" % seed_value))
-    for i in range(pieces.size()):
-        _targets.append(rng.randf_range(0.12, 0.88))
-        _phase_targets.append(rng.randf_range(0.15, 0.85))
-    set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    mouse_filter = Control.MOUSE_FILTER_STOP
-    var dim := ColorRect.new()
-    dim.color = Color(0.01, 0.02, 0.05, 0.72)
-    dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    add_child(dim)
-    var panel := AstraUI.reading_panel(AstraUI.CYAN, 0.97)
-    panel.anchor_left = 0.5
-    panel.anchor_right = 0.5
-    panel.anchor_top = 0.5
-    panel.anchor_bottom = 0.5
-    panel.offset_left = -390
-    panel.offset_right = 390
-    panel.offset_top = -270
-    panel.offset_bottom = 270
-    add_child(panel)
-    var box := AstraUI.vbox(10)
-    panel.add_child(box)
-    _title = AstraUI.label("", AstraUI.T_HEAD, AstraUI.CYAN)
-    box.add_child(_title)
-    _chips = AstraUI.hbox(8)
-    box.add_child(_chips)
-    _wave = Control.new()
-    _wave.custom_minimum_size = Vector2(740, 170)
-    _wave.draw.connect(_draw_wave)
-    box.add_child(_wave)
-    _slider = HSlider.new()
-    _slider.min_value = 0.0
-    _slider.max_value = 1.0
-    _slider.step = 0.005
-    _slider.custom_minimum_size = Vector2(740, 30)
-    _slider.value_changed.connect(func(v: float):
-        _value = v
-        _refresh()
-    )
-    box.add_child(_slider)
-    box.add_child(AstraUI.label("주파수 ← → / A D   ·   시간 정렬 ↑ ↓ / W S   ·   두 파형을 겹쳐 고정", AstraUI.T_META, AstraUI.MUTED))
-    _phase_slider = HSlider.new()
-    _phase_slider.min_value = 0.0
-    _phase_slider.max_value = 1.0
-    _phase_slider.step = 0.005
-    _phase_slider.custom_minimum_size = Vector2(740, 30)
-    _phase_slider.value_changed.connect(func(v: float):
-        _alignment = v
-        _refresh()
-    )
-    box.add_child(_phase_slider)
-    _hint = AstraUI.prose("", AstraUI.T_UI, AstraUI.MUTED)
-    box.add_child(_hint)
-    var row := AstraUI.hbox(10)
-    box.add_child(row)
-    _later = AstraUI.button("나중에 (이어 붙인 만큼만)", AstraUI.MUTED, AstraUI.T_UI, 44)
-    _later.pressed.connect(func(): _finish("partial"))
-    row.add_child(_later)
-    row.add_child(AstraUI.spacer())
-    _lock = AstraUI.primary_button("이 주파수로 고정  (Space)", AstraUI.GOLD)
-    _lock.pressed.connect(_try_lock)
-    row.add_child(_lock)
-    _start_piece()
+    rng.seed = absi(hash("signal_analysis|%d" % seed_value))
+    noise_channel = rng.randi_range(0, 2)
+    source = rng.randi_range(0, 2)
+    offset_ms = [rng.randi_range(18, 40), -rng.randi_range(18, 40), 0][source]
+    for i in range(3):
+        freq_targets.append(rng.randf_range(0.2, 0.8))
+        phase_targets.append(rng.randf_range(0.15, 0.85))
+    build_housing("통신 · 신호 분석", listener, AstraUI.CYAN, ["간섭 찾기", "두 채널 정렬", "발신 방향"])
+    body.draw.connect(_draw_body)
+    body.gui_input.connect(_on_body_input)
+    reset_task()
 
-func _start_piece() -> void:
-    _time_on_piece = 0.0
+func reset_task() -> void:
+    for i in range(3):
+        locked[i] = false
+        freq[i] = clampf(float(freq_targets[i]) + (0.3 if float(freq_targets[i]) < 0.5 else -0.3), 0.0, 1.0)
+        phase[i] = 0.0
     _misses = 0
-    # Start clearly off the target, on whichever side has more room.
-    var target := float(_targets[_index])
-    _value = clampf(target + (0.35 if target < 0.5 else -0.35), 0.0, 1.0)
-    _slider.set_value_no_signal(_value)
-    _alignment = 0.0
-    _phase_slider.set_value_no_signal(_alignment)
-    _hint.text = "%s: 들리는 쪽으로 천천히 옮겨 봐요. 흐린 물결과 겹치면 붙어요." % listener_name if _index == 0 else "%s: 다음 조각이에요." % listener_name
-    _refresh()
+    _answer = -1
+    _active = 1 if noise_channel == 0 else 0
+    set_step(0)
+    instruct("세 수신 채널 중 하나는 잡음뿐입니다. 모양이 반복되지 않는 채널을 고르세요. (1–3 또는 클릭)")
+    say("세 줄이 다 비슷해 보여도, 진짜 신호는 같은 모양이 되풀이돼요.")
+    set_action("이 채널이 간섭이다", false)
+    body.queue_redraw()
 
-func _matched() -> bool:
-    return absf(_value - float(_targets[_index])) <= tolerance and absf(_alignment - float(_phase_targets[_index])) <= tolerance
+func handle_key(event: InputEventKey) -> bool:
+    match step:
+        0:
+            if event.keycode in [KEY_1, KEY_2, KEY_3]:
+                _answer = event.keycode - KEY_1
+                _action.text = AstraJosa.i("채널 " + "ABC"[_answer]) + " 간섭이다"
+                _action.disabled = false
+                body.queue_redraw()
+                return true
+        1:
+            if event.keycode == KEY_TAB:
+                _next_channel()
+                return true
+            if event.keycode in [KEY_LEFT, KEY_A]:
+                _nudge(-0.01, 0.0)
+                return true
+            if event.keycode in [KEY_RIGHT, KEY_D]:
+                _nudge(0.01, 0.0)
+                return true
+            if event.keycode in [KEY_UP, KEY_W]:
+                _nudge(0.0, 0.01)
+                return true
+            if event.keycode in [KEY_DOWN, KEY_S]:
+                _nudge(0.0, -0.01)
+                return true
+        2:
+            if event.keycode in [KEY_1, KEY_2, KEY_3]:
+                _answer = event.keycode - KEY_1
+                set_action("발신: " + str(SOURCES[_answer]), true)
+                body.queue_redraw()
+                return true
+    if event.keycode in [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER] and not _action.disabled:
+        primary_action()
+        return true
+    return false
 
-func _refresh() -> void:
-    _title.text = "끊긴 신호 · 조각 %d / %d · %s" % [_index + 1, pieces.size(), str(pieces[_index])]
-    AstraUI.clear(_chips)
-    for i in range(pieces.size()):
-        var color := AstraUI.GREEN if i < _index else (AstraUI.GOLD if i == _index else AstraUI.DIM)
-        _chips.add_child(AstraUI.chip(("✓ " if i < _index else "") + str(pieces[i]), color, AstraUI.T_META))
-    _lock.modulate = Color.WHITE if _matched() else Color(1, 1, 1, 0.75)
-    _wave.queue_redraw()
+func _next_channel() -> void:
+    for k in range(1, 3):
+        var c := (_active + k) % 3
+        if c != noise_channel and not bool(locked[c]):
+            _active = c
+            break
+    body.queue_redraw()
 
-func _process(delta: float) -> void:
-    if _done:
+func _nudge(df: float, dp: float) -> void:
+    if bool(locked[_active]):
         return
-    _time_on_piece += delta
-    if not AstraUI.reduce_motion:
-        _phase += delta * 1.6
-        _wave.queue_redraw()
-    if _time_on_piece > 25.0 and _misses < 2:
-        _misses = 2
-        _hint.text = "%s: 여기쯤이에요. 제가 들리는 곳을 짚어 둘게요." % listener_name
-    var step := 0.0
-    if Input.is_key_pressed(KEY_LEFT) or Input.is_key_pressed(KEY_A):
-        step -= 1.0
-    if Input.is_key_pressed(KEY_RIGHT) or Input.is_key_pressed(KEY_D):
-        step += 1.0
-    if step != 0.0:
-        _value = clampf(_value + step * delta * 0.35, 0.0, 1.0)
-        _slider.set_value_no_signal(_value)
-        _refresh()
-    var phase_step := float(Input.is_key_pressed(KEY_UP) or Input.is_key_pressed(KEY_W)) - float(Input.is_key_pressed(KEY_DOWN) or Input.is_key_pressed(KEY_S))
-    if phase_step != 0.0:
-        _alignment = clampf(_alignment + phase_step * delta * 0.35, 0.0, 1.0)
-        _phase_slider.set_value_no_signal(_alignment)
-        _refresh()
+    freq[_active] = clampf(float(freq[_active]) + df, 0.0, 1.0)
+    phase[_active] = fposmod(float(phase[_active]) + dp, 1.0)
+    _update_lock_button()
+    body.queue_redraw()
 
-func consume_advance() -> bool:
-    if _done:
-        return false
-    _try_lock()
-    return true
+func _matched(c: int) -> bool:
+    var dp := absf(float(phase[c]) - float(phase_targets[c]))
+    dp = minf(dp, 1.0 - dp)
+    return absf(float(freq[c]) - float(freq_targets[c])) <= tolerance and dp <= tolerance
 
-func _try_lock() -> void:
-    if _done:
-        return
-    if not _matched():
-        _misses += 1
-        var higher := float(_targets[_index]) > _value
-        _hint.text = "%s: 아직이에요. 조금 더 %s요." % [listener_name, "높여" if higher else "낮춰"]
-        if _misses >= 2:
-            _hint.text += " 여기쯤이에요. 짚어 둘게요."
-            _hint.text += " 주파수 %d / 시간 정렬 %d (0–100)" % [roundi(float(_targets[_index]) * 100), roundi(float(_phase_targets[_index]) * 100)]
-        elif absf(_value - float(_targets[_index])) <= tolerance:
-            _hint.text = "%s: 주파수는 맞아요. 위아래 키로 시작 시각도 맞춰 봐요." % listener_name
-        _wave.queue_redraw()
-        return
-    _index += 1
-    if _index >= pieces.size():
-        _finish("success")
-        return
-    _start_piece()
+func _update_lock_button() -> void:
+    set_action("채널 %s 고정" % "ABC"[_active], true)
 
-func _finish(result: String) -> void:
-    if _done:
-        return
-    _done = true
-    # What is already joined counts: no piece at all is still "partial" —
-    # the scene goes on either way.
-    finished.emit(result)
+func primary_action() -> void:
+    match step:
+        0:
+            if _answer < 0:
+                return
+            if _answer == noise_channel:
+                set_step(1)
+                instruct("남은 두 채널을 흐린 기준 파형에 겹치세요. 주파수 ← →, 위상 ↑ ↓, Tab으로 채널 전환, 맞으면 고정.")
+                say("좋아요. 그건 그냥 배 안의 잡음이에요. 나머지 둘은 같은 걸 듣고 있어요.")
+                _answer = -1
+                _update_lock_button()
+            else:
+                _misses += 1
+                say("채널 %s는… 같은 모양이 다시 나와요. 반복되는 건 신호예요." % "ABC"[_answer] if _misses < 2 else
+                    "채널 %s를 봐요. 봉우리 간격이 매번 달라요." % "ABC"[noise_channel])
+                _answer = -1
+                set_action("이 채널이 간섭이다", false)
+        1:
+            if _matched(_active):
+                locked[_active] = true
+                say("붙었어요.")
+                var remaining := false
+                for c in range(3):
+                    remaining = remaining or (c != noise_channel and not bool(locked[c]))
+                if remaining:
+                    _next_channel()
+                    _update_lock_button()
+                else:
+                    set_step(2)
+                    instruct("두 안테나(함수·함미)가 같은 펄스를 받은 시각을 보세요. 먼저 들은 쪽이 가깝습니다. 발신 방향을 고르세요. (1–3)")
+                    say("펄스 두 개예요. …시간 차이를 봐요.")
+                    set_action("방향을 고르세요", false)
+            else:
+                _misses += 1
+                say("아직 어긋나요. 봉우리 간격(주파수)부터 맞추고, 그다음 위치(위상)를 맞춰요." if _misses < 3 else
+                    "주파수는 %s, 위상은 %s 쪽이에요." % ["오른쪽" if float(freq_targets[_active]) > float(freq[_active]) else "왼쪽", "위" if float(phase_targets[_active]) > float(phase[_active]) else "아래"])
+        2:
+            if _answer < 0:
+                return
+            if _answer == source:
+                say("…%s. 그럼 이건 녹음이 아니에요. 지금 누가 보내고 있어요." % str(SOURCES[source]) if source != 2 else "…둘이 동시에 들었어요. 이 신호는 배 안에서 나와요.")
+                finish("success")
+            else:
+                say("그 방향이면 시간 차이가 반대로 나와야 해요. …신호는 확실하지만 방향은 모르겠네요.")
+                finish("partial")
 
-func _draw_wave() -> void:
-    var size := _wave.size
-    _wave.draw_rect(Rect2(Vector2.ZERO, size), Color("08121d"))
-    for i in range(1, 8):
-        _wave.draw_line(Vector2(size.x * i / 8.0, 0), Vector2(size.x * i / 8.0, size.y), Color("122132"), 1.0)
-    _wave.draw_line(Vector2(0, size.y * 0.5), Vector2(size.x, size.y * 0.5), Color("1b2d42"), 1.0)
-    if _index >= _targets.size():
+func _on_body_input(event: InputEvent) -> void:
+    if not (event is InputEventMouseButton) or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
         return
-    var target := float(_targets[_index])
-    var matched := _matched()
-    var distance := absf(_value - target)
-    var target_points := PackedVector2Array()
-    var mine := PackedVector2Array()
-    for i in range(0, 181):
-        var t := float(i) / 180.0
-        var x := t * size.x
-        target_points.append(Vector2(x, size.y * 0.5 + sin(t * TAU * (3.0 + target * 8.0) + _phase + float(_phase_targets[_index]) * PI) * size.y * 0.3))
-        var noise := sin(t * 91.0 + _phase * 3.0) * distance * size.y * 0.35
-        mine.append(Vector2(x, size.y * 0.5 + sin(t * TAU * (3.0 + _value * 8.0) + _phase + _alignment * PI) * size.y * 0.3 + noise))
-    _wave.draw_polyline(target_points, Color(AstraUI.CYAN, 0.35), 5.0, true)
-    _wave.draw_polyline(mine, AstraUI.GREEN if matched else AstraUI.GOLD, 2.5, true)
-    if _misses >= 2:
-        # the listener's mark on the dial
-        var x := target * size.x
-        _wave.draw_line(Vector2(x, size.y - 18), Vector2(x, size.y), AstraUI.PINK, 4.0)
+    var y: float = (event as InputEventMouseButton).position.y
+    var lane := int(y / (body.size.y / 3.0))
+    match step:
+        0:
+            _answer = clampi(lane, 0, 2)
+            _action.text = AstraJosa.i("채널 " + "ABC"[_answer]) + " 간섭이다"
+            _action.disabled = false
+        1:
+            var c := clampi(lane, 0, 2)
+            if c != noise_channel and not bool(locked[c]):
+                _active = c
+                _update_lock_button()
+        2:
+            var x: float = (event as InputEventMouseButton).position.x
+            if x > body.size.x * 0.62:
+                _answer = clampi(int((y - 40.0) / 70.0), 0, 2)
+                set_action("발신: " + str(SOURCES[_answer]), true)
+    body.queue_redraw()
+
+func _hiss(c: int, t: float) -> float:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = absi(hash("hiss|%d|%d|%d" % [_seed, c, int(t * 40.0)]))
+    return rng.randf_range(-1.0, 1.0)
+
+# Every channel is noisy. The real ones repeat the same motif under the hiss;
+# the interference drifts in pitch and strength, so it never repeats — it has
+# to be read, not spotted by cleanliness.
+func _wave(c: int, t: float) -> float:
+    if c == noise_channel:
+        return 0.5 * sin(t * (4.6 + 1.4 * sin(t * 0.37)) + 1.1) * (0.7 + 0.3 * sin(t * 0.61)) + 0.3 * sin(t * 9.3 * (1.0 + 0.12 * sin(t * 0.23))) + 0.3 * _hiss(c, t)
+    var f := 3.0 + float(freq[c]) * 6.0
+    var p := float(phase[c]) * TAU
+    return (sin(t * f + p) * 0.55 + sin(t * f * 2.0 + p) * 0.2) + 0.3 * _hiss(c, t)
+
+func _target_wave(c: int, t: float) -> float:
+    var f := 3.0 + float(freq_targets[c]) * 6.0
+    var p := float(phase_targets[c]) * TAU
+    return sin(t * f + p) * 0.7 + sin(t * f * 2.0 + p) * 0.25
+
+func _draw_body() -> void:
+    var w := body.size.x
+    var h := body.size.y
+    if step < 2:
+        var lane_h := h / 3.0
+        for c in range(3):
+            var top := c * lane_h
+            var rect := Rect2(0, top + 4, w, lane_h - 8)
+            var chosen := (step == 0 and c == _answer) or (step == 1 and c == _active)
+            draw_box(body, rect, Color(0.02, 0.05, 0.08), Color(AstraUI.CYAN, 0.9) if chosen else Color(AstraUI.BORDER, 1.0), 3.0 if chosen else 1.0)
+            var status := ""
+            if step >= 1 and c == noise_channel:
+                status = " · 간섭 (제외)"
+            elif bool(locked[c]):
+                status = " · 고정됨"
+            draw_text(body, Vector2(10, top + 26), "채널 %s%s" % ["ABC"[c], status], AstraUI.TEXT, 15)
+            var mid := top + lane_h * 0.55
+            if step == 1 and c != noise_channel and not bool(locked[c]):
+                var ghost := PackedVector2Array()
+                for x in range(90, int(w) - 10, 4):
+                    ghost.append(Vector2(x, mid - _target_wave(c, x / 60.0) * lane_h * 0.32))
+                body.draw_polyline(ghost, Color(AstraUI.MUTED, 0.45), 3.0)
+            var pts := PackedVector2Array()
+            for x in range(90, int(w) - 10, 3):
+                var v := _target_wave(c, x / 60.0) if bool(locked[c]) else _wave(c, x / 60.0)
+                pts.append(Vector2(x, mid - v * lane_h * 0.32))
+            var ink := AstraUI.GREEN if bool(locked[c]) else (AstraUI.DIM if (step >= 1 and c == noise_channel) else AstraUI.CYAN)
+            body.draw_polyline(pts, ink, 2.0)
+            if step == 1 and c == _active:
+                draw_text(body, Vector2(w - 330, top + 26), "주파수 %d%% · 위상 %d%%" % [int(float(freq[c]) * 100), int(float(phase[c]) * 100)], AstraUI.GOLD, 14)
+        return
+    # Step 3: two antennas, one pulse each, on a millisecond axis.
+    var axis_w := w * 0.58
+    for i in range(2):
+        var top := 30.0 + i * 120.0
+        draw_box(body, Rect2(0, top, axis_w, 96), Color(0.02, 0.05, 0.08), AstraUI.BORDER, 1.0)
+        draw_text(body, Vector2(10, top + 22), ["함수 안테나", "함미 안테나"][i], AstraUI.TEXT, 15)
+        var at := 0.0
+        if i == 0:
+            at = -float(offset_ms) * 0.5
+        else:
+            at = float(offset_ms) * 0.5
+        var x := axis_w * 0.5 + at * 4.0
+        body.draw_line(Vector2(20, top + 70), Vector2(axis_w - 20, top + 70), AstraUI.DIM, 1.0)
+        body.draw_rect(Rect2(x - 3, top + 34, 6, 36), AstraUI.GOLD)
+        draw_text(body, Vector2(x - 30, top + 90), "%+d ms" % int(round(at)), AstraUI.GOLD, 13)
+    draw_text(body, Vector2(10, 290), "먼저 받은 안테나 = 더 가까운 쪽. 같은 시각이면 두 안테나 사이, 배 안이다.", AstraUI.MUTED, 14)
+    for s in range(3):
+        var rect := Rect2(w * 0.62, 40 + s * 70, w * 0.36, 58)
+        draw_box(body, rect, Color(AstraUI.CYAN, 0.18) if s == _answer else Color(0.02, 0.05, 0.08), AstraUI.CYAN if s == _answer else AstraUI.BORDER, 2.0)
+        draw_text(body, rect.position + Vector2(12, 36), "%d  %s" % [s + 1, SOURCES[s]], AstraUI.TEXT, 15)

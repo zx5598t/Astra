@@ -1,170 +1,236 @@
 class_name AstraOrderTask
-extends Control
+extends AstraShipTask
 
-# ORDER (interlude task: samples, duty logs, the last boundary). Four pieces
-# of the record are shuffled; pick them in the order they happened. It is not
-# a test: the point is to see, laid out in a row, the two things that should
-# not sit next to each other (§13). A wrong pick explains itself; after two,
-# the person helping points at the next piece. "나중에" keeps what is placed.
+# EVIDENCE TIMELINE (1.0). Record cards (samples, duty logs, the last
+# boundary) lie shuffled. The same thinking as the meeting, done with paper:
+#   1. Lay them on the timeline in the order they happened (click a card, or
+#      its number; the next free slot takes it; Backspace takes the last back).
+#   2. Find the boundary: between which two neighbouring cards does the story
+#      stop making sense? (← → then Space, or click the gap)
+#   3. Say what it means (one of three readings; only one follows from the
+#      cards, the others overreach).
+# The card order and the readings are shuffled per seed. A wrong step
+# explains itself; after two the helper points. Partial keeps what is placed.
 
-signal finished(result: String)
-
-var helper_name: String = ""
-var title_text: String = ""
-var insight: String = ""
-var items: Array = []      # [[text, rank], ...] in display order
-var _placed: Array = []    # indexes into items, in chosen order
-var _misses: int = 0
-var _cards: VBoxContainer
-var _slots: HBoxContainer
-var _hint: Label
-var _done: bool = false
-var _task_data: Dictionary = {}
-var _concluding: bool = false
+var title_text := ""
+var insight := ""
+var items: Array = []        # [[text, rank], ...] in display order
+var gap_after := 0           # the boundary is after this rank
+var _placed: Array = []
+var _gap := -1
 var _conclusions: Array = []
+var _answer := -1
+var _misses := 0
 
 func setup(seed_value: int, task: Dictionary, helper: String) -> void:
-    _task_data = task.duplicate(true)
-    helper_name = helper
-    title_text = str(task.get("title", "순서"))
+    title_text = str(task.get("title", "기록"))
     insight = str(task.get("insight", ""))
+    gap_after = int(task.get("gap_after", 0))
     items = Array(task.get("items", [])).duplicate(true)
     var rng := RandomNumberGenerator.new()
-    rng.seed = absi(hash("order|%d|%s" % [seed_value, title_text]))
-    _conclusions = Array(task.get("conclusions", [])).duplicate()
-    for i in range(_conclusions.size() - 1, 0, -1):
-        var j := rng.randi_range(0, i)
-        var old = _conclusions[i]
-        _conclusions[i] = _conclusions[j]
-        _conclusions[j] = old
+    rng.seed = absi(hash("timeline|%d|%s" % [seed_value, title_text]))
     for i in range(items.size() - 1, 0, -1):
         var j := rng.randi_range(0, i)
         var tmp = items[i]
         items[i] = items[j]
         items[j] = tmp
-    if _already_sorted():
-        items.reverse()
-    set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    mouse_filter = Control.MOUSE_FILTER_STOP
-    var dim := ColorRect.new()
-    dim.color = Color(0.01, 0.02, 0.05, 0.72)
-    dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    add_child(dim)
-    var panel := AstraUI.reading_panel(AstraUI.VIOLET, 0.97)
-    panel.anchor_left = 0.5
-    panel.anchor_right = 0.5
-    panel.anchor_top = 0.5
-    panel.anchor_bottom = 0.5
-    panel.offset_left = -430
-    panel.offset_right = 430
-    panel.offset_top = -250
-    panel.offset_bottom = 250
-    add_child(panel)
-    var box := AstraUI.vbox(10)
-    panel.add_child(box)
-    box.add_child(AstraUI.label(title_text, AstraUI.T_HEAD, AstraUI.VIOLET))
-    box.add_child(AstraUI.label("먼저 일어난 것부터 차례로 누르세요.", AstraUI.T_META, AstraUI.MUTED))
-    _slots = AstraUI.hbox(8)
-    box.add_child(_slots)
-    _cards = AstraUI.vbox(6)
-    box.add_child(_cards)
-    _hint = AstraUI.prose("", AstraUI.T_UI, AstraUI.MUTED)
-    box.add_child(_hint)
-    var row := AstraUI.hbox(10)
-    box.add_child(row)
-    var later := AstraUI.button("나중에 (여기까지만)", AstraUI.MUTED, AstraUI.T_UI, 44)
-    later.pressed.connect(func(): _finish("partial"))
-    row.add_child(later)
-    _render()
-
-func _already_sorted() -> bool:
+    var sorted := true
     for i in range(items.size()):
-        if int(items[i][1]) != i:
-            return false
+        sorted = sorted and int(items[i][1]) == i
+    if sorted:
+        items.reverse()
+    _conclusions = Array(task.get("conclusions", [insight, "기록의 순서만으로 누가 사건을 일으켰는지 알 수 있다.", "지금 기억과 다르니 기록 전체를 버려도 된다."])).duplicate()
+    for i in range(_conclusions.size() - 1, 0, -1):
+        var j := rng.randi_range(0, i)
+        var tmp = _conclusions[i]
+        _conclusions[i] = _conclusions[j]
+        _conclusions[j] = tmp
+    build_housing("기록 · " + title_text, helper, AstraUI.VIOLET, ["순서", "경계", "의미"])
+    body.draw.connect(_draw_body)
+    body.gui_input.connect(_on_body_input)
+    reset_task()
+
+func reset_task() -> void:
+    _placed.clear()
+    _gap = -1
+    _answer = -1
+    _misses = 0
+    set_step(0)
+    instruct("카드를 일어난 순서대로 시간축에 놓으세요. (숫자 키 또는 클릭 · Backspace로 하나 되돌리기)")
+    say("날짜 칸이 없는 것도 내용을 보면 앞뒤가 보여요.")
+    set_action("카드를 모두 놓으세요", false)
+    body.queue_redraw()
+
+func place(index: int) -> bool:
+    if step != 0 or index < 0 or index >= items.size() or index in _placed:
+        return false
+    _placed.append(index)
+    if _placed.size() == items.size():
+        set_action("이 순서로 확인", true)
+    body.queue_redraw()
     return true
 
-func consume_advance() -> bool:
-    return not _done
+func handle_key(key: InputEventKey) -> bool:
+    var n := key.keycode - KEY_1
+    match step:
+        0:
+            if n >= 0 and n < items.size():
+                place(n)
+                return true
+            if key.keycode == KEY_BACKSPACE and not _placed.is_empty():
+                _placed.pop_back()
+                set_action("카드를 모두 놓으세요", false)
+                body.queue_redraw()
+                return true
+        1:
+            if key.keycode in [KEY_LEFT, KEY_A]:
+                _gap = maxi(0, _gap - 1) if _gap >= 0 else 0
+                set_action("여기가 맞지 않는다", true)
+                body.queue_redraw()
+                return true
+            if key.keycode in [KEY_RIGHT, KEY_D]:
+                _gap = mini(items.size() - 2, _gap + 1)
+                set_action("여기가 맞지 않는다", true)
+                body.queue_redraw()
+                return true
+        2:
+            if n >= 0 and n < _conclusions.size():
+                _answer = n
+                set_action("이 뜻이다", true)
+                body.queue_redraw()
+                return true
+    if key.keycode in [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER] and not _action.disabled:
+        primary_action()
+        return true
+    return false
 
-func _render() -> void:
-    AstraUI.clear(_slots)
-    for i in range(items.size()):
-        var text := "%d" % (i + 1)
-        var color := AstraUI.DIM
-        if i < _placed.size():
-            text = "%d ✓" % (i + 1)
-            color = AstraUI.GREEN
-        _slots.add_child(AstraUI.chip(text, color, AstraUI.T_META))
-    AstraUI.clear(_cards)
-    if _concluding:
-        _cards.add_child(AstraUI.label(str(_task_data.get("question", "이 순서에서 확인되는 것은?")), AstraUI.T_UI, AstraUI.CYAN))
-        for i in range(_conclusions.size()):
-            var conclusion := str(_conclusions[i])
-            var confirm := AstraUI.button("%d · %s" % [i+1, conclusion], AstraUI.VIOLET, AstraUI.T_UI, 50)
-            confirm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-            confirm.pressed.connect(_conclude.bind(i))
-            _cards.add_child(confirm)
-        return
-    var next_rank := _placed.size()
-    for index in range(items.size()):
-        if index in _placed:
-            continue
-        var item: Array = items[index]
-        var button := AstraUI.button("%d · %s" % [index+1, item[0]], AstraUI.VIOLET, AstraUI.T_UI, 50)
-        button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-        if _misses >= 2 and int(item[1]) == next_rank:
-            button.add_theme_color_override("font_color", AstraUI.GOLD)
-            button.text = "▸ " + str(item[0])
-        button.pressed.connect(_pick.bind(index))
-        _cards.add_child(button)
-    var placed_text: Array = []
-    for index in _placed:
-        placed_text.append(str(items[index][0]))
-    if not placed_text.is_empty() and _hint.text == "":
-        _hint.text = "  →  ".join(PackedStringArray(placed_text))
-
-func _pick(index: int) -> void:
-    if _done or _concluding or index in _placed or index < 0 or index >= items.size():
-        return
-    var item: Array = items[index]
-    if int(item[1]) != _placed.size():
-        _misses += 1
-        _hint.text = "%s: 그건 아직이에요. 그보다 먼저 일어난 게 있어요." % helper_name
-        if _misses >= 2:
-            _hint.text += " 이거부터요."
-        _render()
-        return
-    _placed.append(index)
-    _hint.text = ""
-    if _placed.size() >= items.size():
-        _hint.text = insight
-        _concluding = not _conclusions.is_empty()
-        _render()
-        if not _concluding:
-            _finish.call_deferred("success")
-        return
-    _render()
-
-func _conclude(index: int) -> void:
-    if _done or not _concluding or index < 0 or index >= _conclusions.size():
-        return
-    if str(_conclusions[index]) == insight:
-        _finish("success")
-    else:
-        _hint.text = "날짜와 순서가 보여 주는 범위부터 보자. 누가 했는지는 이 기록만으로 결정할 수 없다."
-
-func _unhandled_key_input(event: InputEvent) -> void:
-    if event is InputEventKey and event.pressed and not event.echo and not _done:
-        var index := int(event.keycode) - KEY_1
-        if index >= 0 and index < ( _conclusions.size() if _concluding else items.size() ):
-            if _concluding:
-                _conclude(index)
+func primary_action() -> void:
+    match step:
+        0:
+            var wrong := -1
+            for slot in range(_placed.size()):
+                if int(items[int(_placed[slot])][1]) != slot:
+                    wrong = slot
+                    break
+            if wrong < 0:
+                set_step(1)
+                instruct("이 순서에서, 나란히 놓일 수 없는 두 카드 사이는 어디인가요? (← → 또는 틈을 클릭)")
+                say("순서는 맞아요. …이제 어디가 이상한지 봐요.")
+                set_action("틈을 고르세요", false)
             else:
-                _pick(index)
-            get_viewport().set_input_as_handled()
+                _misses += 1
+                say("%d번째 자리부터 어긋나요." % (wrong + 1) if _misses < 2 else "%d번째에는 ‘%s’가 와야 해요." % [wrong + 1, _card_with_rank(wrong)])
+                _placed = _placed.slice(0, wrong)
+                set_action("카드를 모두 놓으세요", false)
+        1:
+            if _gap == gap_after:
+                set_step(2)
+                instruct("그 틈이 말해 주는 것은? (1–3 또는 클릭)")
+                say("…네. 거기예요.")
+                set_action("뜻을 고르세요", false)
+            else:
+                _misses += 1
+                say("그 둘은 앞뒤로 이어져요. 이상한 건 다른 곳이에요." if _misses < 3 else "‘%s’ 바로 뒤를 봐요." % _card_with_rank(gap_after))
+        2:
+            if _answer < 0:
+                return
+            if str(_conclusions[_answer]) == insight:
+                say(insight)
+                finish("success")
+            else:
+                say("그건 카드가 말하는 것보다 많이 나간 얘기예요. …순서와 틈은 확인했어요.")
+                finish("partial")
 
-func _finish(result: String) -> void:
-    if _done:
+func _card_with_rank(rank: int) -> String:
+    for item in items:
+        if int(item[1]) == rank:
+            return str(item[0])
+    return ""
+
+func _on_body_input(event: InputEvent) -> void:
+    if not (event is InputEventMouseButton) or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
         return
-    _done = true
-    finished.emit(result)
+    var at: Vector2 = (event as InputEventMouseButton).position
+    match step:
+        0:
+            for i in range(items.size()):
+                if _card_rect(i).has_point(at):
+                    place(i)
+        1:
+            for g in range(items.size() - 1):
+                if _gap_rect(g).has_point(at):
+                    _gap = g
+                    set_action("여기가 맞지 않는다", true)
+                    body.queue_redraw()
+        2:
+            for c in range(_conclusions.size()):
+                if _conclusion_rect(c).has_point(at):
+                    _answer = c
+                    set_action("이 뜻이다", true)
+                    body.queue_redraw()
+
+func _slot_rect(slot: int) -> Rect2:
+    var w := (body.size.x - 40.0) / float(items.size())
+    return Rect2(20 + slot * w + 8, 20, w - 16, 112)
+
+func _gap_rect(g: int) -> Rect2:
+    var a := _slot_rect(g)
+    return Rect2(a.end.x - 6, a.position.y - 6, 28, a.size.y + 12)
+
+func _card_rect(i: int) -> Rect2:
+    var w := (body.size.x - 40.0) / float(items.size())
+    return Rect2(20 + i * w + 8, 190, w - 16, 112)
+
+func _conclusion_rect(c: int) -> Rect2:
+    return Rect2(20, 176 + c * 58, body.size.x - 40, 48)
+
+func _draw_body() -> void:
+    draw_text(body, Vector2(20, 14), "시간축 →", AstraUI.MUTED, 13)
+    for slot in range(items.size()):
+        var rect := _slot_rect(slot)
+        if slot < _placed.size():
+            var item: Array = items[int(_placed[slot])]
+            draw_box(body, rect, Color(AstraUI.VIOLET, 0.16), AstraUI.VIOLET, 2.0)
+            _wrap_text(rect, str(item[0]))
+        else:
+            draw_box(body, rect, Color(0.02, 0.04, 0.07), AstraUI.BORDER, 1.0)
+            draw_text(body, rect.position + Vector2(10, 26), "%d번째" % (slot + 1), AstraUI.DIM, 14)
+    if step >= 1:
+        for g in range(items.size() - 1):
+            var gap := _gap_rect(g)
+            var chosen := g == _gap
+            body.draw_rect(gap, Color(AstraUI.GOLD, 0.35) if chosen else Color(AstraUI.GOLD, 0.08))
+            if chosen:
+                draw_text(body, gap.position + Vector2(-4, gap.size.y + 20), "여기?", AstraUI.GOLD, 14)
+    if step == 0:
+        draw_text(body, Vector2(20, 176), "놓을 카드", AstraUI.MUTED, 13)
+        for i in range(items.size()):
+            var rect := _card_rect(i)
+            if i in _placed:
+                draw_box(body, rect, Color(0.02, 0.03, 0.05), Color(AstraUI.BORDER, 0.5), 1.0)
+                continue
+            draw_box(body, rect, Color(0.04, 0.06, 0.1), AstraUI.CYAN, 2.0)
+            draw_text(body, rect.position + Vector2(8, 20), "%d" % (i + 1), AstraUI.GOLD, 15)
+            _wrap_text(Rect2(rect.position + Vector2(0, 14), rect.size - Vector2(0, 14)), str(items[i][0]))
+    if step == 2:
+        for c in range(_conclusions.size()):
+            var rect := _conclusion_rect(c)
+            draw_box(body, rect, Color(AstraUI.VIOLET, 0.2) if c == _answer else Color(0.03, 0.05, 0.08), AstraUI.VIOLET if c == _answer else AstraUI.BORDER, 2.0)
+            draw_text(body, rect.position + Vector2(12, 31), "%d  %s" % [c + 1, _conclusions[c]], AstraUI.TEXT, 15)
+
+func _wrap_text(rect: Rect2, text: String) -> void:
+    var font := body.get_theme_default_font()
+    var size := AstraUI.font_size(14)
+    var words := text.split(" ")
+    var line := ""
+    var y := rect.position.y + 26
+    for word in words:
+        var trial := word if line == "" else line + " " + word
+        if font.get_string_size(trial, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > rect.size.x - 16 and line != "":
+            body.draw_string(font, Vector2(rect.position.x + 8, y), line, HORIZONTAL_ALIGNMENT_LEFT, -1, size, AstraUI.TEXT)
+            y += size + 6
+            line = word
+        else:
+            line = trial
+    if line != "":
+        body.draw_string(font, Vector2(rect.position.x + 8, y), line, HORIZONTAL_ALIGNMENT_LEFT, -1, size, AstraUI.TEXT)

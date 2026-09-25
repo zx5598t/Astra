@@ -2,11 +2,11 @@ class_name AstraPlayerSetup
 extends Control
 
 # Choosing the explorer for a new campaign: one of six fixed people, not a
-# look or a class. Cards show the illustrated portrait (the same drawings the
-# conversation screens use), name, specialty, one line of temperament and the
-# selection line; the side panel shows the full figure, their small pixel self
-# walking (the same person in the deck scenes), their past, why they came and
-# how they approach people. No stats, no difficulty stars. One confirm starts.
+# look or a class. Everything here is the explorer's main illustration
+# (플레이어/<이름>.png): each card is a crop of it, the side panel shows it whole
+# with their past, why they came and how they approach people. No pixel art on
+# this screen — the small pixel self first appears in the deck scenes. No
+# stats, no difficulty stars. One confirm starts.
 
 signal confirmed(profile: Dictionary)
 signal cancelled
@@ -18,9 +18,6 @@ var _selected := "serin"
 var _cards: Dictionary = {}
 var _detail: VBoxContainer
 var _quote: Label
-var _preview: AstraPixelActor
-var _preview_holder: Control
-var _preview_t := 0.0
 var _figure: TextureRect
 
 func setup(initial: Dictionary = {}) -> void:
@@ -59,16 +56,12 @@ func setup(initial: Dictionary = {}) -> void:
     side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     side.size_flags_vertical = Control.SIZE_EXPAND_FILL
     row.add_child(side)
-    var figure_row := AstraUI.hbox(8)
-    figure_row.custom_minimum_size.y = 250
-    side.add_child(figure_row)
-    _figure = AstraUI.thumb("", Vector2(170, 250))
+    _figure = AstraUI.thumb("", Vector2(0, 300))
+    _figure.name = "MainIllustration"
     _figure.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-    figure_row.add_child(_figure)
-    _preview_holder = Control.new()
-    _preview_holder.custom_minimum_size = Vector2(150, 250)
-    _preview_holder.clip_contents = true
-    figure_row.add_child(_preview_holder)
+    _figure.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    _figure.size_flags_stretch_ratio = 1.3
+    side.add_child(_figure)
     _detail = AstraUI.vbox(8)
     _detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     var detail_scroll := AstraUI.scroll(_detail)
@@ -106,7 +99,11 @@ func _card(id: String) -> Button:
     content.offset_bottom = -6
     content.mouse_filter = Control.MOUSE_FILTER_IGNORE
     card.add_child(content)
-    var portrait := AstraUI.thumb(AstraExplorerCatalog.portrait_path(id), Vector2(0, 118))
+    # A crop of the same main illustration: head and shoulders.
+    var portrait := TextureRect.new()
+    portrait.texture = card_texture(id)
+    portrait.custom_minimum_size = Vector2(0, 118)
+    portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
     portrait.size_flags_vertical = Control.SIZE_EXPAND_FILL
     content.add_child(portrait)
@@ -116,9 +113,7 @@ func _card(id: String) -> Button:
     content.add_child(name_row)
     content.add_child(AstraUI.label(str(AstraExplorerCatalog.CARD_SPECIALTIES[id]), AstraUI.T_META, AstraUI.CYAN))
     content.add_child(AstraUI.label(str(AstraExplorerCatalog.CARD_SUMMARIES[id]), AstraUI.T_META, AstraUI.MUTED))
-    var quote := AstraUI.label("“%s”" % d["selection"], AstraUI.T_META, AstraUI.TEXT)
-    quote.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-    quote.clip_text = true
+    var quote := AstraUI.label("“%s”" % d["selection"], AstraUI.T_META, AstraUI.TEXT, true)
     content.add_child(quote)
     for child in content.get_children():
         child.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -132,13 +127,29 @@ func _card(id: String) -> Button:
 func selected() -> String:
     return _selected
 
+# The head-and-shoulders crop of an explorer's main illustration.
+static func card_texture(id: String) -> Texture2D:
+    var full := AstraUI.texture(AstraExplorerCatalog.full_path(id))
+    if full == null:
+        return null
+    var w := float(full.get_width())
+    var h := float(full.get_height())
+    var box := minf(w, h * 0.34)
+    var atlas := AtlasTexture.new()
+    atlas.atlas = full
+    atlas.region = Rect2(Vector2((w - box) * 0.5 + float(CARD_SHIFT.get(id, 0)) * box, 0.0), Vector2(box, box))
+    return atlas
+
+# Where the face sits in each drawing, as a share of the crop width (the
+# figures lean or turn). Checked against every main illustration.
+const CARD_SHIFT := {"serin": 0.0, "mika": 0.0, "jace": 0.0, "rael": 0.0, "logan": 0.0, "sia": 0.0}
+
 func _select(id: String, spoken: bool = true) -> void:
     _selected = id if id in AstraExplorerCatalog.ORDER else "serin"
     for key in _cards:
         (_cards[key] as Button).set_pressed_no_signal(key == _selected)
     var d := AstraExplorerCatalog.data(_selected)
     _figure.texture = AstraUI.texture(AstraExplorerCatalog.full_path(_selected))
-    _show_preview()
     AstraUI.clear(_detail)
     var head := AstraUI.hbox(8)
     head.add_child(AstraUI.label(str(d["name"]), AstraUI.T_TITLE, AstraUI.GOLD))
@@ -157,31 +168,3 @@ func _select(id: String, spoken: bool = true) -> void:
             text = "“%s”" % text
         _detail.add_child(AstraUI.prose(text, AstraUI.T_UI, AstraUI.MUTED))
 
-# Their pixel self, walking toward you and standing, so the portrait and the
-# deck character read as one person.
-func _show_preview() -> void:
-    if _preview != null:
-        _preview.queue_free()
-    _preview = AstraPixelActor.new()
-    var art := str(AstraExplorerCatalog.EXPLORERS[_selected]["art_id"])
-    _preview.setup(AstraPixelActor.player_sheet(art), "player", "", AstraUI.GOLD)
-    _preview.scale = Vector2(1.5, 1.5)
-    _preview.position = Vector2(75, 230)
-    _preview_holder.add_child(_preview)
-    _preview_t = 0.0
-
-func _process(delta: float) -> void:
-    if _preview == null:
-        return
-    _preview_t += delta
-    # walk down for a moment, then stand and wave now and then
-    var cycle := fmod(_preview_t, 6.0)
-    if cycle < 1.6 and not AstraUI.reduce_motion:
-        if not _preview.moving:
-            _preview.face("down")
-            _preview.set_moving(true)
-    elif _preview.moving:
-        _preview.set_moving(false)
-    elif cycle > 3.0 and cycle < 3.05:
-        if not _preview.pose("greet"):
-            _preview.gesture("nod")

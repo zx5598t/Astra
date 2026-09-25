@@ -126,15 +126,16 @@ func _motion_tests() -> void:
     for i in range(12):
         a._process(0.05)
     check(a.emote_active() == "", "an emote goes away")
+    # 1.0: walking is carried by the drawn frames; no band moves the upper
+    # body against the legs. The whole figure rises a pixel on passing frames.
     a.set_moving(true)
-    a._push_until = -1.0
     a._sprite.pause()
     a._sprite.frame = 0
     a._process(0.0)
-    check(a.band_offsets()[1].y == 1, "a walk contact frame dips")
+    check(a.band_offsets()[1] == Vector2i.ZERO and int(a.band_offsets()[2]) == 0, "a walk contact frame: body on the legs, figure down")
     a._sprite.frame = 1
     a._process(0.0)
-    check(a.band_offsets()[1].y == 0, "a walk passing frame rises")
+    check(a.band_offsets()[1] == Vector2i.ZERO and int(a.band_offsets()[2]) == 1, "a walk passing frame: the whole figure rises one pixel")
     a.set_moving(false)
     a.face("up")
     a.working = true
@@ -279,7 +280,7 @@ func _pose_tests() -> void:
     d._process(0.2)
     d.set_moving(false)
     d._process(0.02)
-    check(d.band_offsets()[1].y == 1, "a walk settles when it stops")
+    check(d.current_animation() == "idle_right" and d._sprite.sprite_frames.get_frame_texture(d._sprite.animation, d._sprite.frame) != null, "a walk stops on the standing frame")
     d.talking = true
     var talked := false
     d.face("down")

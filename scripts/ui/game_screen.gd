@@ -194,7 +194,7 @@ func refresh_objective() -> void:
         "INTERROGATION":
             _budget.text = "대화 %d/%d" % [session.conversations_left(), session.conversations_max()]
         "MEETING":
-            _budget.text = "개입 %d" % session.meeting_actions_left
+            _budget.text = "발언 %d · 확인 %d" % [session.meeting_actions_left, int(session.stage_state().get("clarifications_left", 3))]
         _:
             _budget.text = ""
     _note_button.text = "노트" + (" •" if not session.known_fragments(session.day).is_empty() else "")

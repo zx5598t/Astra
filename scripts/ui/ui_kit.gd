@@ -587,3 +587,88 @@ static func relation_card(session, observer_id: String) -> PanelContainer:
     if int(data.get("retracted", 0)) > 0:
         box.add_child(label("공개 발언을 %d번 되돌린 적이 있습니다." % int(data["retracted"]), T_META, GOLD))
     return card
+
+# ---- 1.0 layout rules ---------------------------------------------------------
+#
+# One spacing scale for every screen, so text never touches a border on one
+# panel and floats in space on the next.
+const SPACE_XS := 4
+const SPACE_SM := 8
+const SPACE_MD := 12
+const SPACE_LG := 18
+const PANEL_PADDING := 16
+const BUBBLE_PADDING := 14
+const BUTTON_GAP := 8
+# Room under the last line of a scrolling list, so it never sits on the edge.
+const BOTTOM_SAFE := 28
+
+# A choice whose text may run to two or three lines: the button grows with
+# its wrapped label instead of clipping the second line.
+static func choice_button(text: String, accent: Color = CYAN, size: int = T_UI, filled: bool = false) -> Button:
+    var node := button("", accent, size, 44, filled)
+    var pad := MarginContainer.new()
+    for side in ["margin_left", "margin_right"]:
+        pad.add_theme_constant_override(side, SPACE_MD)
+    for side in ["margin_top", "margin_bottom"]:
+        pad.add_theme_constant_override(side, SPACE_SM)
+    pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    var text_label := label(text, size, TEXT, true)
+    text_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    text_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    pad.add_child(text_label)
+    node.add_child(pad)
+    node.set_meta("label", text_label)
+    node.tooltip_text = ""
+    var sync := func() -> void:
+        if is_instance_valid(node) and is_instance_valid(text_label):
+            var need := text_label.get_minimum_size().y + SPACE_SM * 2 + 4
+            if absf(node.custom_minimum_size.y - maxf(44.0, need)) > 0.5:
+                node.custom_minimum_size.y = maxf(44.0, need)
+    text_label.resized.connect(sync, CONNECT_DEFERRED)
+    node.resized.connect(sync, CONNECT_DEFERRED)
+    return node
+
+static func choice_text(node: Button) -> String:
+    return str((node.get_meta("label") as Label).text) if node.has_meta("label") else node.text
+
+# A log that grows at the bottom (conversation, meeting): follow new lines
+# while the reader is at the bottom; leave them alone while they read back,
+# and show a small "새 발언 ↓" chip instead.
+static func track_follow(scroll: ScrollContainer) -> void:
+    scroll.set_meta("follow", true)
+    var bar := scroll.get_v_scroll_bar()
+    bar.value_changed.connect(func(_value: float) -> void:
+        if scroll.has_meta("programmatic") and bool(scroll.get_meta("programmatic")):
+            return
+        scroll.set_meta("follow", bar.value >= bar.max_value - bar.page - 32.0)
+    )
+
+static func is_following(scroll: ScrollContainer) -> bool:
+    return not scroll.has_meta("follow") or bool(scroll.get_meta("follow"))
+
+# Scroll to the true bottom after the layout has settled: the new node's full
+# height is known only once its container has sorted, two frames later.
+static func follow_bottom(scroll: ScrollContainer, force: bool = false) -> void:
+    if not is_instance_valid(scroll) or not scroll.is_inside_tree():
+        return
+    if not force and not is_following(scroll):
+        return
+    var tree := scroll.get_tree()
+    await tree.process_frame
+    await tree.process_frame
+    if not is_instance_valid(scroll):
+        return
+    var bar := scroll.get_v_scroll_bar()
+    scroll.set_meta("programmatic", true)
+    scroll.scroll_vertical = int(bar.max_value)
+    scroll.set_meta("programmatic", false)
+    scroll.set_meta("follow", true)
+
+# Bottom breathing room inside a scrolling list; keep it the last child.
+static func bottom_pad() -> Control:
+    var pad := Control.new()
+    pad.name = "BottomPad"
+    pad.custom_minimum_size = Vector2(0, BOTTOM_SAFE)
+    pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    return pad

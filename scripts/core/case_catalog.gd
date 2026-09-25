@@ -487,7 +487,7 @@ const TALK_BUDGET := {
 }
 const DEFAULT_TALK_BUDGET := 3
 const FOLLOWUPS_PER_CONVERSATION := 2
-const MEETING_INTERVENTIONS := 1
+const MEETING_INTERVENTIONS := 3
 # Optional record checks per Day (contextual, inside a conversation). Not a
 # progression requirement.
 const RECORD_CHECKS_PER_DAY := 1

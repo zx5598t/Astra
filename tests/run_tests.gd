@@ -214,7 +214,15 @@ func test_meeting_moments() -> void:
     if not intervened:
         intervened = bool(s.intervene("accuse", str(s.living_ids()[0])).get("ok", false))
     check(intervened, "the explorer can intervene")
-    check(s.meeting_actions_left == 0 and s.meeting_options().is_empty(), "one intervention per meeting without EMPATH")
+    # 1.0: three moves a Day without EMPATH (link, present, press, defend,
+    # accuse...), then the floor is closed to strong moves.
+    check(s.meeting_actions_left == AstraCaseCatalog.MEETING_INTERVENTIONS - 1, "a move spends one of the Day's moves")
+    var guard := 0
+    while s.meeting_actions_left > 0 and guard < 6:
+        guard += 1
+        s.intervene("accuse", str(s.living_ids()[guard % s.living_ids().size()]))
+    check(s.meeting_actions_left == 0 and s.meeting_options().is_empty(), "no more moves than the Day allows without EMPATH")
+    check(not bool(s.intervene("accuse", str(s.living_ids()[0])).get("ok", false)), "a move past the budget is refused")
     s._finish_meeting()
     check(s.meeting_over(), "the meeting ends")
     for entry in s.meeting_feed:
@@ -226,7 +234,7 @@ func test_meeting_moments() -> void:
 
 func test_vote_rules() -> void:
     var ties := 0
-    for seed_value in range(1, 41):
+    for seed_value in range(1, 121):
         var s := AstraGameSession.new()
         s.setup("SILENT_ORBIT", 3000 + seed_value, "GUARDIAN")
         _finish_morning(s)
@@ -565,6 +573,7 @@ func test_simulations(games: int) -> void:
     var n := 0
     var n2 := 0
     var delta := {"smart_public": 0, "passive_public": 0, "smart_shifts": 0, "smart_confessions": 0}
+    var early_passive := 0
     for case_id in AstraCaseCatalog.STAGE_ORDER:
         var stage := AstraCaseCatalog.stage_index(case_id)
         var proto := "GUARDIAN" if stage >= 5 else "NONE"
@@ -583,6 +592,8 @@ func test_simulations(games: int) -> void:
             delta["smart_public"] += int(ss.get("presented", 0)) + int(ss.get("public_contradictions", 0))
             delta["passive_public"] += int(ps.get("presented", 0)) + int(ps.get("public_contradictions", 0))
             delta["smart_confessions"] += int(ss.get("confessions", 0)) + int(ss.get("admissions", 0))
+        if stage in [2, 3, 4]:
+            early_passive += w["passive"]
         for k in w:
             totals[k] += w[k]
             if stage >= 5:
@@ -606,3 +617,13 @@ func test_simulations(games: int) -> void:
     check(smart_rate >= passive_rate + 0.05, "thinking beats being carried (%.0f%% vs %.0f%%)" % [smart_rate * 100, passive_rate * 100])
     check(float(part2["passive"]) / float(maxi(1, n2)) <= 0.85, "Part II does not carry a passive player (%.0f%%)" % (100.0 * part2["passive"] / maxi(1, n2)))
     check(delta["smart_public"] > delta["passive_public"] * 2, "the explorer's play changes what is public")
+    # 1.0 gates, stricter than 0.8 (measured baseline in docs/QA_REPORT.md):
+    #  - thinking clearly beats blind activity and being carried;
+    #  - early Stages no longer carry a passive player to ~90%+ (0.9.0: 87/95/97);
+    #  - the explorer's play puts at least three times as much on the table.
+    var early_rate := float(early_passive) / float(games * 3)
+    print("EARLY Stage 2-4 passive %d%%" % int(early_rate * 100))
+    check(smart_rate >= random_rate + 0.15, "1.0: thinking beats random by 15 points (%.0f%% vs %.0f%%)" % [smart_rate * 100, random_rate * 100])
+    check(smart_rate >= passive_rate + 0.20, "1.0: thinking beats being carried by 20 points (%.0f%% vs %.0f%%)" % [smart_rate * 100, passive_rate * 100])
+    check(early_rate <= 0.85, "1.0: Stages 2-4 do not carry a passive player (%.0f%%)" % (early_rate * 100))
+    check(delta["smart_public"] > delta["passive_public"] * 3, "1.0: the explorer's play puts three times as much on the table")

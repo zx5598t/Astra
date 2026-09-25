@@ -18,8 +18,9 @@ extends Node2D
 #    band cannot make: a raised hand, a start of surprise, sitting down. A
 #    drawn gesture has a one-pixel dip before and after it (anticipation and
 #    recovery), so standing -> pose -> standing is never a bare cut.
-# Transitions: a walk starts with a push-off dip and ends with a settle dip;
-# turning round in place passes through a side (or front) frame.
+# Transitions: a walk starts on the frame they stood on and advances by the
+# distance actually covered (per-sheet stride), with a one-pixel rise on the
+# passing frames; turning round passes through a side (or front) frame.
 
 const FRAME := AstraPixelManifest.FRAME_SIZE
 const POSE_FRAME := AstraPixelManifest.POSE_SIZE
@@ -41,11 +42,12 @@ const SIT_DROP := 24
 const SIT_DROP_DRAWN := 4
 const NOTICE_RANGE := 170.0
 const PACE_SPEED := 58.0
+# Fallback gait length; each sheet carries its own (AstraPixelManifest "stride").
 const STRIDE_PIXELS := 80.0
 # 3-frame sheets (step, stand, step, stand): the steps are held a little longer.
 const WALK_PHASES_3 := [0.0, 0.30, 0.50, 0.80, 1.0]
 const WALK_PHASES_4 := [0.0, 0.25, 0.50, 0.75, 1.0]
-const TURN_SECONDS := 0.07
+const TURN_SECONDS := 0.1
 const DIP_SECONDS := 0.07
 
 const MOTION_SHADER := """
@@ -195,8 +197,6 @@ var _pose_len: float = 0.0
 var _pose_flip: bool = false
 var _talk_beat_at: float = 0.0
 var _listen_at: float = 0.0
-var _settle_until: float = -1.0
-var _push_until: float = -1.0
 var _turn_show: String = ""
 var _turn_until: float = -1.0
 var _emote: String = ""
@@ -323,8 +323,8 @@ func walk_frame_count() -> int:
 func face(dir: String) -> void:
     if dir not in DIRECTIONS:
         return
-    # Turning round in place passes through the side (or the front).
-    if not moving and dir != facing and _sprite != null and not AstraUI.reduce_motion and _opposite(dir) == facing:
+    # Turning round passes through the side (or the front), standing or walking.
+    if dir != facing and _sprite != null and _opposite(dir) == facing:
         _turn_show = "down" if dir in ["left", "right"] else ("left" if _rng.randf() < 0.5 else "right")
         _turn_until = _t + TURN_SECONDS
     facing = dir
@@ -352,22 +352,46 @@ func set_moving(value: bool) -> void:
         _gesture = ""
         _pose = ""
         _look_plan.clear()
-        _walk_distance = STRIDE_PIXELS * (0.30 if _walk_frames == 3 else 0.0)
+        # Start from the frame they were standing on, so the feet do not jump.
+        var start := _stand_index()
+        _walk_distance = _stride() * _phase_start(start)
         _last_walk_position = position
-        _push_until = _t + DIP_SECONDS
-        _turn_until = -1.0
-    else:
-        _settle_until = _t + DIP_SECONDS + 0.03
     _apply_animation()
     if value:
-        _sprite.frame = 1 if _walk_frames == 3 else 0
+        _sprite.frame = _stand_index() if _walk_frames == 4 else 1
+
+# Length of one gait cycle in room pixels for the sheet in use.
+func _stride() -> float:
+    var info := AstraPixelManifest.sheet(_sheet_key)
+    return float(info.get("carry_stride" if carrying else "stride", STRIDE_PIXELS))
+
+func _stand_index() -> int:
+    var info := AstraPixelManifest.sheet(_sheet_key)
+    var stand: Array = info.get("carry_stand" if carrying else "stand", [])
+    var row := DIRECTIONS.find(facing)
+    return int(stand[row]) if row >= 0 and row < stand.size() else 1
+
+func _phase_start(frame: int) -> float:
+    var phases: Array = WALK_PHASES_3 if _walk_frames == 3 else WALK_PHASES_4
+    return float(phases[clampi(frame, 0, 3)])
+
+# Feet apart on this walk frame (a contact): the body is at its lowest.
+func _is_contact(frame: int) -> bool:
+    if _walk_frames == 3:
+        return frame == 0 or frame == 2
+    var info := AstraPixelManifest.sheet(_sheet_key)
+    var contact: Array = info.get("carry_contact" if carrying else "contact", [])
+    var row := DIRECTIONS.find(_shown_facing())
+    if row < 0 or row >= contact.size():
+        return false
+    return int(Array(contact[row])[clampi(frame, 0, 3)]) == 1
 
 # Which frame fits right now.
 func current_animation() -> String:
     var prefix := "carry_" if carrying else ""
-    if moving:
-        return prefix + "walk_" + facing
     var shown := _shown_facing()
+    if moving:
+        return prefix + "walk_" + shown
     if _pose != "" and _pose_phase() == "hold":
         return "pose_%s_%d" % [_pose, _pose_variant]
     if seated and shown == "down" and has_pose("sit"):
@@ -641,9 +665,10 @@ func _process(delta: float) -> void:
         return
     _t += delta
     if distance_driven and moving and delta > 0.0:
+        var stride := _stride()
         if _last_walk_position != Vector2.INF:
-            _walk_distance += minf(position.distance_to(_last_walk_position), STRIDE_PIXELS)
-        var phase := fmod(_walk_distance / STRIDE_PIXELS, 1.0)
+            _walk_distance += minf(position.distance_to(_last_walk_position), stride)
+        var phase := fmod(_walk_distance / stride, 1.0)
         var phases: Array = WALK_PHASES_3 if _walk_frames == 3 else WALK_PHASES_4
         for index in range(4):
             if phase >= phases[index] and phase < phases[index + 1]:
@@ -677,25 +702,15 @@ func _process(delta: float) -> void:
     var still := AstraUI.reduce_motion
     if not still and not _drawn_pose():
         if moving:
-            if _walk_frames == 3:
-                # contact frames (feet apart) sit a pixel lower
-                var f := _sprite.frame
-                body.y = 1 if f == 0 or f == 2 else 0
-                head.y = body.y * 2
-            if _t < _push_until:
-                body.y = 1
-                head.y = 1
-            if facing == "left":
-                head.x = -1
-            elif facing == "right":
-                head.x = 1
+            # Walking is carried by the drawn frames alone: no band moves the
+            # upper body against the legs. The whole figure rises a pixel on
+            # the passing frames (feet together) and sits down on contact.
+            if not _is_contact(_sprite.frame):
+                hop = 1
         else:
             if fmod(_t + _breath_shift, _breath_period) > _breath_period * 0.55:
                 body.y = 1
             head.y = body.y
-            if _t < _settle_until:
-                body.y = 1
-                head.y = 2
             if _pose != "" and _pose_phase() in ["in", "out"]:
                 # anticipation / recovery around a drawn pose
                 body.y = 1

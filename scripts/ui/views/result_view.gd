@@ -161,7 +161,22 @@ func _build_summary() -> void:
             rbox.add_child(AstraUI.label("아직 모르는 것", AstraUI.T_META, AstraUI.GOLD))
             rbox.add_child(AstraUI.prose(str(story.get("open_question", "")), AstraUI.T_UI, AstraUI.TEXT))
     else:
-        rbox.add_child(AstraUI.prose("이번 재구성은 여기서 끝났다. 다시 시도하면 같은 STAGE가 새로 재구성된다. 다음 주기의 Null이 같은 사람이라는 보장은 없다. 기억하는 사람은 당신뿐이다.", AstraUI.T_UI, AstraUI.TEXT))
+        if screen.app.can_rewind():
+            rbox.add_child(AstraUI.prose("이번 재구성은 여기서 끊겼다. 하지만 오늘 아침은 아직 당신 안에 남아 있다. 되감으면 같은 사람들, 같은 진실의 아침으로 돌아간다. 그들은 아무것도 기억하지 못한다. 당신만 기억한다.", AstraUI.T_UI, AstraUI.TEXT))
+            var memory: Dictionary = s.rewind_memory()
+            rbox.add_child(AstraUI.label("가지고 돌아갈 기억", AstraUI.T_META, AstraUI.VIOLET))
+            for note in Array(memory.get("notes", [])).slice(0, 4):
+                rbox.add_child(AstraUI.prose("· " + str(note), AstraUI.T_META, AstraUI.MUTED))
+        else:
+            rbox.add_child(AstraUI.prose("이번 재구성은 여기서 끝났다. 다시 시도하면 같은 STAGE가 새로 재구성된다. 다음 주기의 Null이 같은 사람이라는 보장은 없다. 기억하는 사람은 당신뿐이다.", AstraUI.T_UI, AstraUI.TEXT))
+    var reasons_given: Dictionary = s.stage_state().get("ballot_reasons", {})
+    if not reasons_given.is_empty():
+        rbox.add_child(AstraUI.label("당신이 댄 이유", AstraUI.T_META, AstraUI.GOLD))
+        var days: Array = reasons_given.keys()
+        days.sort()
+        for key in days:
+            var entry: Dictionary = reasons_given[key]
+            rbox.add_child(AstraUI.prose("DAY %s · %s — %s" % [str(key), s.name_of(str(entry.get("target", ""))), str(entry.get("text", ""))], AstraUI.T_META, AstraUI.MUTED))
 
     var buttons := AstraUI.hbox(12)
     root.add_child(buttons)
@@ -191,10 +206,25 @@ func _build_summary() -> void:
         var records := AstraUI.button("기록 확인", AstraUI.MUTED, AstraUI.T_UI, 48)
         records.pressed.connect(func(): screen.open_notebook())
         buttons.add_child(records)
+    if not win:
+        # Going back a Stage is always open to a slot that has reached it.
+        var previous_id: String = screen.app.previous_case_id()
+        if previous_id != "":
+            var back := AstraUI.button("이전 STAGE로 돌아가기", AstraUI.MUTED, AstraUI.T_UI, 48)
+            back.tooltip_text = "STAGE %d를 다시 재구성합니다. 진행한 캠페인은 그대로 남습니다." % AstraCaseCatalog.stage_index(previous_id)
+            back.pressed.connect(func(): screen.start_other_case(previous_id))
+            buttons.add_child(back)
     # A retry is a new reconstruction: new seed, possibly new Nulls (§28).
-    var retry := AstraUI.button("이 Stage 다시" if win else "재구성 재시도", AstraUI.CYAN, AstraUI.T_UI, 48, not win)
+    var retry := AstraUI.button("이 Stage 다시" if win else "처음부터 새로 재구성", AstraUI.CYAN, AstraUI.T_UI, 48, not win and not screen.app.can_rewind())
     retry.pressed.connect(func(): screen.restart_case())
     buttons.add_child(retry)
+    if not win and screen.app.can_rewind():
+        # The same reconstruction, from this morning: only you remember.
+        var rewind := AstraUI.primary_button("DAY %d 아침으로 되감기  ↺" % s.day, AstraUI.VIOLET)
+        rewind.custom_minimum_size = Vector2(300, 52)
+        rewind.tooltip_text = "같은 사람, 같은 진실. 이번 Stage에 한 번. 지난 시도에서 들은 것은 기억으로 남습니다."
+        rewind.pressed.connect(func(): screen.app.rewind_to_dawn())
+        buttons.add_child(rewind)
     if win and next_id != "":
         var next := AstraUI.primary_button("다음 STAGE  →", AstraUI.GREEN)
         next.custom_minimum_size = Vector2(260, 52)

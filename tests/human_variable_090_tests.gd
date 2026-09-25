@@ -108,50 +108,8 @@ func _meeting() -> void:
         check(not bool(s.intervene("clarify", "claim:mira")["ok"]), "no checks during vote")
     check(windows >= 14 and responses > 0, "real repeated windows with responses")
 
+# 1.0: the task families have their own gate (tests/minigame_100_tests.gd).
 func _mechanics() -> void:
-    for seed in range(12):
-        for data in [AstraInterludes.SAMPLE_TASK, AstraInterludes.ROUTE_TASK]:
-            var field := AstraFieldTask.new()
-            root.add_child(field)
-            field.setup(seed, data)
-            var outcomes: Array = []
-            field.finished.connect(func(result): outcomes.append(result))
-            if str(data["kind"]) == "safe_route":
-                field.choose(1 if int(field.costs[0]) < int(field.costs[1]) else 2)
-                field.choose(3)
-                field.choose(4)
-            else:
-                field.choose(0)
-                field.choose(1)
-            field.consume_advance()
-            check(outcomes == ["success"], "field task solvable for seed")
-            field._finish("partial")
-            check(outcomes.size() == 1, "completion is idempotent")
-            field.queue_free()
-        var power := AstraPowerRoute.new()
-        root.add_child(power)
-        power.setup(seed, "준")
-        power.levers = power.goal.duplicate()
-        check(power._powered()["security"] and not power._powered()["pump"], "both power topologies solvable")
-        power.queue_free()
-    for kind in ["sample_scan", "safe_route"]:
-        var field := AstraFieldTask.new()
-        root.add_child(field)
-        field.setup(12, AstraInterludes.SAMPLE_TASK if kind == "sample_scan" else AstraInterludes.ROUTE_TASK)
-        var outputs: Array = []
-        field.finished.connect(func(result): outputs.append(result))
-        field._finish("partial")
-        check(outputs == ["partial"], "partial exit before solving")
-        field.queue_free()
-    var signal_task := AstraSignalTrace.new()
-    root.add_child(signal_task)
-    signal_task.setup(47, [], 0.045, "소렌")
-    for i in range(signal_task.pieces.size()):
-        signal_task._value = float(signal_task._targets[i])
-        signal_task._alignment = float(signal_task._phase_targets[i])
-        signal_task._try_lock()
-    check(signal_task._done, "frequency and phase all channels solvable")
-    signal_task.queue_free()
     await process_frame
 
 func _distance_motion() -> void:
@@ -236,4 +194,4 @@ func _art_and_voice() -> void:
     check(said.size() == 6, "six different meeting voices")
 
 func _placeholders(key: String) -> int:
-    return {"present": 1, "defend": 1, "compare": 3, "support": 1, "press": 1, "hearsay": 1, "clarify": 0, "coax": 1, "basis": 2}[key]
+    return {"present": 1, "defend": 1, "compare": 3, "support": 1, "press": 1, "hearsay": 1, "clarify": 0, "coax": 1, "basis": 2, "link": 2}[key]

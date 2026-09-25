@@ -1,3 +1,70 @@
+# 1.0.0 CONVICTION — LOCAL VALIDATION — 2026-09-26
+
+기준: `main` 2f0fc5a (v0.9.0) · branch `astra-1.0.0-conviction` · VERSION **1.0.0** · Snapshot **v4** · Meta save **v12** ·
+migration 없음(새 상태 `links`, `raised_pairs`, `ballot_reasons`, `null_plans`, `explorer_tones`, `rewinds`, `echo_notes`, `echo_leads`,
+`sourced`, `tone_recalled`는 모두 기존 `flags["stage_080"]` 안의 선택 필드이며 없으면 기본값. 되감기용 아침 스냅샷은 같은 v4 형식의 별도 파일).
+
+## 변경 전 기준선(0.9.0, 40판 공식 게이트)
+SMART 92% · RANDOM 67% · PASSIVE 63% · Stage 2~4 PASSIVE 87/95/97% · 기여 1.70 vs 0.66.
+원인 계측(tests/_tmp 프로브, 비 CI): PASSIVE는 1일차에 대부분 틀리지만(무고/희생양 격리 ~75%) 2~3일차에 방이 스스로 수렴했다.
+수렴 경로: 보드의 알리바이 충돌을 모든 NPC가 조용히 반영, 혼자 가진 좁혀진 목격으로 공개 지목 → 방이 따라감, 묻지 않은 기록의 자동 공개.
+
+## 결과 (1.0.0)
+### 공식 게이트 (40판/Stage, `run_tests.gd`, 로컬 Windows) — `ASTRA TESTS OK · 63,700 checks`
+TOTAL SMART 91% · RANDOM 68% · PASSIVE 55% · PART II SMART 88% / PASSIVE 47% · Stage 2~4 PASSIVE 80% (75/82/82) ·
+공개 기여 SMART 5.90 vs PASSIVE 1.36 (0.9.0: 1.70 vs 0.66).
+Stage별 SMART/RANDOM/PASSIVE: CALIBRATION 100/77/60 · DEAD_AIR 95/90/75 · GLASS_GARDEN 100/87/82 · ECHO_WARD 100/85/82 · SILENT_ORBIT 92/65/42 ·
+RED_SHIFT 85/67/50 · LAST_LIGHT 82/52/40 · SECOND_WATCH 90/57/52 · BORROWED_DAYS 90/52/50 · BLIND_DECK 90/67/60 · THREE_MINUTES_DARK 90/67/47 ·
+CONTINUITY 87/52/32 · THRESHOLD 92/65/50.
+Agency (8 paired seeds, ACTIVE/PASSIVE): DEAD_AIR 승 7/6 · 일수 11/15 · 무고 격리 4/9 · 희생 4/9 · 공개 11/0 · 회의 변화 8/0 · 투표 변화 14/0 —
+GLASS_GARDEN 8/6 · 11/18 · 3/12 · 3/10 · 20/0 · 15/0 · 25/0 — ECHO_WARD 8/7 · 10/24 · 2/17 · 2/17 · 14/0 · 17/0 · 22/0.
+나머지: motion 1,699 · minigame 545 · deduction 9,955 · UI layout 815 · pixel 1,711 · 0.9.0 variable 1,055 · campaign 219 · deep 66 · agency 66 · UI smoke · walkthrough 080/100 · 보존 스위트 전부 PASS (`tests/ci_suite.txt` 29개).
+### 대표본 (100판/Stage, `balance_probe.gd --games=100`, 공식 게이트와 다른 seed)
+| Stage | SMART | RANDOM | PASSIVE |
+|---|---|---|---|
+| CALIBRATION | 98 | 83 | 57 |
+| DEAD_AIR | 93 | 72 | 67 |
+| GLASS_GARDEN | 99 | 86 | 73 |
+| ECHO_WARD | 95 | 84 | 85 |
+| SILENT_ORBIT | 94 | 64 | 50 |
+| RED_SHIFT | 85 | 61 | 36 |
+| LAST_LIGHT | 91 | 57 | 48 |
+| SECOND_WATCH | 98 | 58 | 50 |
+| BORROWED_DAYS | 91 | 55 | 44 |
+| BLIND_DECK | 84 | 60 | 48 |
+| THREE_MINUTES_DARK | 92 | 60 | 43 |
+| CONTINUITY | 85 | 56 | 45 |
+| THRESHOLD | 88 | 62 | 44 |
+| **전체** | **91** | **66** | **53** |
+
+- SMART − RANDOM 25점, SMART − PASSIVE 38점(0.9.0: 25 / 29).
+- Stage 2~4 PASSIVE 평균 75%(0.9.0 ≈ 93%). **권장 목표 60%에는 도달하지 못했다.** ECHO_WARD(7명, 목숨 3~4번)는 85%로 남았다:
+  방이 틀려도 기회가 여러 번이고 3일차에는 흔적이 한 사람으로 좁혀지는 구조 때문이다. NPC를 멍청하게 만들거나 단서를 무작위로 숨기는 방식은 쓰지 않았다.
+- 같은 seed 짝 비교(agency, 8 seeds × Stage 2~4): 아래 CI 절의 AGENCY 줄. 적극 플레이는 무고한 격리·희생·경과 일수를 크게 줄인다.
+
+### 1.0 게이트 (기존 0.8 게이트는 그대로 두고 추가)
+SMART ≥ RANDOM + 15 · SMART ≥ PASSIVE + 20 · Stage 2~4 PASSIVE ≤ 85% · 공개 기여 SMART > PASSIVE × 3.
+85%는 0.9.0 실측(93%)보다 낮고 이번 분포(40판 80%, 100판 75%)의 여유를 둔 값이다.
+
+## 새 자동 검증
+- `motion_100_tests.gd`: 14명 × 4방향 × (걷기, 도구 걷기) — 연속 프레임 하체 차이 ≥ 40px, 한 바닥선, 키 ≤ 12px, 몸통 축 ≤ 3px, 보폭 56–112px, 한 보폭 = 한 사이클, 막히면 제자리, 걷는 동안 띠 이동 0, 90°/180° 전환, 줄인 움직임에서도 걷기, 전환 중 빈 프레임 없음.
+- `minigame_100_tests.gd`: 네 계열 × 16 seed — 결정적, 답이 seed마다 다름, 키보드만으로 성공, 부분 성공, 잘못된 단계는 설명되고 막히지 않음, 완료 1회, 모든 인터루드가 네 계열 중 하나, 역할을 말하지 않음. 회로: 측정 3번이면 언제나 고장 모듈이 특정됨(공정성).
+- `deduction_100_tests.gd`: 4 Stage × 12 seed 회의 — 모든 연결 판정에 이유, 근거는 플레이어가 아는 것만, 맞는 연결 194건 중 같은 진술에 동등한 근거가 둘 이상 성립 41건, 무관 2,132건 거절, 확인 질문 7종, 교집합·좁힘, 연결 후 당사자 대답과 방의 반응, 회의 정리, 마지막 말, 투표 이유 저장, NPC 투표 이유 문장. "말해진 문제만" 규칙, 혼자 본 것 규칙, 되감기(같은 진실, 기억 ≠ 지식), 선택 화면(도트 없음, 같은 일러스트의 카드).
+- `ui_layout_100.gd`: 1366×768 · 1600×900 · 1920×1080 · 2560×1440, 합성 긴 한국어 — 마지막 대화/회의 줄이 휠 없이 보임, 아래 여백, 과거를 읽는 중에는 끌어내리지 않고 "새 발언" 칩, "끝까지 보기" 후 마지막 줄, 줄바꿈 버튼 높이, 창 밖으로 나가는 텍스트·버튼 없음, 투표 확정 버튼, 실제 앱 경로의 되감기(아침 보관 → 패배 → 되감기 → 같은 진실 → 한 번만).
+- `walkthrough_100.gd`: Stage 1·2·3·5·9·13 전체 흐름 + 같은 seed의 세린·미카·로건 비교 → `build/qa/walkthrough_100.txt`.
+
+## 사람이 본 것 (창 모드 캡처, `tests/visual_100.gd` → `build/qa/100/`)
+- 선택 화면(세린·로건, 두 해상도): 도트 없음, 카드 = 메인 일러스트 크롭, 잘림 없음.
+- 걷기 스트립(14명, 1x·3x·다리만 3x): 네 방향 모두 발이 교대로 나감을 확인. 시퀀스(출발→한 보폭→정지→뒤돌기→말하기).
+- 회의(시작·연결 선택 1/2·2/2·연결 후·정리), 투표(이유 선택), 패배 결과, 작업 네 계열.
+- 발견해서 고친 것: 목표 문구가 옛 규칙("한 번 끼어드세요"), 내레이션 뒤 "· 의 말에" 빈 이름, 동행 충돌이 한쪽만 표시, 설명된 충돌이 계속 의심을 만듦, "루칸였어요" 조사, "마렌은 마렌의 선실" 표현, 신호 분석 1단계가 너무 쉬움(깨끗한 사인파) → 모든 채널에 잡음과 비반복 간섭.
+
+## 남은 것
+- Stage 2~4 PASSIVE 60% 목표 미달(75%, ECHO_WARD 85%).
+- 실제 사람의 플레이 감각(재미, 회의 템포, 연결 선택지 목록의 길이)은 자동 검사로 판정하지 않는다.
+
+---
+
 # 0.9.0 HUMAN VARIABLE — LOCAL VALIDATION — 2026-09-25
 
 기준: `main` 9ed806c (v0.8.2) · branch `astra-0.9.0-human-variable` · VERSION **0.9.0** · Snapshot v4 · Meta save v12 · migration 없음

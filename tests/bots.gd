@@ -80,6 +80,10 @@ static func _smart_meeting(s: AstraGameSession) -> void:
     while not s.meeting_over() and guard < 10:
         guard += 1
         if s.meeting_actions_left > 0:
+            var link := smart_link(s)
+            if link != "":
+                s.intervene("link", link)
+        if s.meeting_actions_left > 0:
             var pick := _smart_moment_pick(s)
             if not pick.is_empty():
                 s.intervene(str(pick["kind"]), str(pick["ref"]))
@@ -92,6 +96,53 @@ static func _smart_meeting(s: AstraGameSession) -> void:
             var top := _player_top(s)
             if top != "" and s.suspicion_score("player", top) >= 0.25:
                 s.intervene("accuse", top)
+
+# The explorer's own reasoning: a statement and one or two things it knows
+# that show it cannot be true. Only links the judgement accepts as a
+# contradiction or a narrowing to two, never the same link twice.
+static func smart_link(s: AstraGameSession) -> String:
+    var done := {}
+    var shown := {}
+    for entry in s.stage_state().get("links", []):
+        if int(entry.get("day", 0)) == s.day:
+            done[str(entry.get("statement", "")) + "|" + str(entry.get("evidence", ""))] = true
+            var t: Array = Array(entry.get("targets", [])).duplicate()
+            t.sort()
+            shown[str(t)] = true
+    var best := ""
+    var best_value := 0.0
+    var top := _player_top(s)
+    for statement in s.link_statements():
+        var sref := str(statement["ref"])
+        var evidence := s.link_evidence(sref)
+        for ev in evidence:
+            var eref := str(ev["ref"])
+            if done.has(sref + "|" + eref):
+                continue
+            var verdict := s.judge_link(sref, eref)
+            var value := 0.0
+            if str(verdict["result"]) == "CONTRADICTION":
+                var t2: Array = Array(verdict.get("targets", [])).duplicate()
+                t2.sort()
+                if shown.has(str(t2)):
+                    continue
+                value = 1.0 + (0.5 if top in Array(verdict.get("targets", [])) else 0.0)
+            elif str(verdict["result"]) == "NARROWS" and str(ev.get("kind", "")) == "fragment":
+                for ev2 in evidence:
+                    var eref2 := str(ev2["ref"])
+                    if eref2 == eref or str(ev2.get("kind", "")) != "fragment":
+                        continue
+                    var pair := s.judge_link(sref, eref, eref2)
+                    if str(pair["result"]) == "CONTRADICTION" and 1.2 > value:
+                        value = 1.2
+                        if value > best_value:
+                            best_value = value
+                            best = "%s|%s|%s" % [sref, eref, eref2]
+                continue
+            if value > best_value:
+                best_value = value
+                best = "%s|%s" % [sref, eref]
+    return best
 
 static func _smart_moment_pick(s: AstraGameSession, last_chance: bool = false) -> Dictionary:
     var top := _player_top(s)
@@ -250,6 +301,13 @@ static func play_random(case_id: String, seed_value: int, protocol: String = "NO
                         if str(option["kind"]) == "accuse":
                             var living := s.living_ids()
                             ref = str(living[rng.randi_range(0, living.size() - 1)])
+                        elif str(option["kind"]) == "link":
+                            var statements := s.link_statements()
+                            var statement := str(statements[rng.randi_range(0, statements.size() - 1)]["ref"])
+                            var evidence := s.link_evidence(statement)
+                            if evidence.is_empty():
+                                continue
+                            ref = "%s|%s" % [statement, str(evidence[rng.randi_range(0, evidence.size() - 1)]["ref"])]
                         s.intervene(str(option["kind"]), ref)
                     s.meeting_continue()
                 s.advance()

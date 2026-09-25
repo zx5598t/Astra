@@ -1,208 +1,284 @@
 class_name AstraPowerRoute
-extends Control
+extends AstraShipTask
 
-# SYSTEM ROUTING (interlude task, Stage 3 with Jun). Four hand levers between
-# the main bus and three loads. Bring power to the security wing without
-# waking the water pump (they share a feed, and both at once trips the bus).
-# Click a lever to flip it. No timer; after two wrong tries Jun points at the
-# next lever to flip (§65). "나중에" leaves it half-done: partial, never stuck.
-#
-#   bus ─ L1 ─┬─ L2 ─ 급수 펌프
-#             └─ L3 ─┬─ L4 ─ 보안 구역
-#                    └────── 비상 조명
-# Goal: L1 on, L3 on, L4 on, L2 off.
+# CIRCUIT DIAGNOSIS (1.0). A feed runs from the reactor bus through sections
+# of modules to the security load. One module has failed open.
+#   1. Measure: up to three test points (the feed after each section). A
+#      point reads 정상 (full), 약함 (a parallel pair lost one side) or 없음.
+#   2. Name the failed module from the readings.
+#   3. Bypass: pick a jumper that spans the failed section and can carry the
+#      load (capacity in A, shown on each jumper).
+# Three seeded layouts (plain chain, a parallel pair, a long chain); the
+# failed module, the load and jumper capacities come from the seed. Nothing
+# is timed. Success: the right module and a safe bypass. Partial: power
+# restored without knowing why, or the task left.
 
-signal finished(result: String)
+const LAYOUTS := [
+    [["A"], ["B"], ["C"], ["D"]],
+    [["A"], ["B", "C"], ["D"], ["E"]],
+    [["A"], ["B"], ["C", "D"], ["E"], ["F"]],
+]
 
-const GOAL := [true, false, true, true]
-const NAMES := ["주 레버", "펌프 분기", "보안 분기", "보안 구역 레버"]
+var sections: Array = []
+var failed := ""
+var load_amps := 30
+var jumpers: Array = []        # {from, to, cap}
+var probes_left := 3
+var readings := {}             # test point index -> text
+var _selected_module := ""
+var _selected_jumper := -1
+var _misses := 0
+var _layout := 0
 
-var helper_name: String = "준"
-var levers: Array = [false, true, false, false]
-var bypass: bool = false
-var goal: Array = GOAL.duplicate()
-var _status: Label
-var _tries: int = 0
-var _board: Control
-var _hint: Label
-var _done: bool = false
-var _lever_rects: Array = []
-
-func setup(seed_value: int, helper: String) -> void:
-    helper_name = helper
+func setup(seed_value: int, helper: String = "준") -> void:
     var rng := RandomNumberGenerator.new()
-    rng.seed = absi(hash("power_route|%d" % seed_value))
-    bypass = rng.randf() < 0.5
-    goal = [true, false, true, false] if bypass else GOAL.duplicate()
-    # a start that is never already solved
-    for i in range(4):
-        levers[i] = rng.randf() < 0.5
-    if levers == goal:
-        levers[1] = true
-    set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    mouse_filter = Control.MOUSE_FILTER_STOP
-    var dim := ColorRect.new()
-    dim.color = Color(0.01, 0.02, 0.05, 0.72)
-    dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    add_child(dim)
-    var panel := AstraUI.reading_panel(AstraUI.GOLD, 0.97)
-    panel.anchor_left = 0.5
-    panel.anchor_right = 0.5
-    panel.anchor_top = 0.5
-    panel.anchor_bottom = 0.5
-    panel.offset_left = -400
-    panel.offset_right = 400
-    panel.offset_top = -255
-    panel.offset_bottom = 255
-    add_child(panel)
-    var box := AstraUI.vbox(10)
-    panel.add_child(box)
-    box.add_child(AstraUI.label("분배반 · 보안 구역에 전력을", AstraUI.T_HEAD, AstraUI.GOLD))
-    box.add_child(AstraUI.prose("우회 회로 연결됨 · 4번 직결을 내리면 우회선이 연결됩니다." if bypass else "직결 회로 · 보안 분기와 4번 레버를 모두 올려 연결합니다.", AstraUI.T_UI, AstraUI.TEXT))
-    _board = Control.new()
-    _board.custom_minimum_size = Vector2(760, 250)
-    _board.mouse_filter = Control.MOUSE_FILTER_STOP
-    _board.draw.connect(_draw_board)
-    _board.gui_input.connect(_on_board_input)
-    box.add_child(_board)
-    _status = AstraUI.label("1–4 레버 전환 · Space 전력 확인 · 펌프 OFF / 보안 ON", AstraUI.T_META, AstraUI.CYAN)
-    box.add_child(_status)
-    _hint = AstraUI.prose("%s: 레버를 눌러서 올리고 내려. 펌프랑 보안 구역을 같이 살리면 차단기가 떨어져." % helper_name, AstraUI.T_UI, AstraUI.MUTED)
-    box.add_child(_hint)
-    var row := AstraUI.hbox(10)
-    box.add_child(row)
-    var later := AstraUI.button("나중에 (지금 상태로 두기)", AstraUI.MUTED, AstraUI.T_UI, 44)
-    later.pressed.connect(func(): _finish("partial"))
-    row.add_child(later)
-    row.add_child(AstraUI.spacer())
-    var test := AstraUI.primary_button("전력 넣기  (Space)", AstraUI.GOLD)
-    test.pressed.connect(_try)
-    row.add_child(test)
+    rng.seed = absi(hash("circuit|%d" % seed_value))
+    _layout = rng.randi_range(0, LAYOUTS.size() - 1)
+    sections = LAYOUTS[_layout].duplicate(true)
+    var modules: Array = []
+    for section in sections:
+        for m in section:
+            modules.append(str(m))
+    # the first module is the bus breaker everyone checks: never the fault
+    failed = str(modules[rng.randi_range(1, modules.size() - 1)])
+    load_amps = int([20, 30, 40][rng.randi_range(0, 2)])
+    var fault_section := _section_of(failed)
+    jumpers.clear()
+    var spans: Array = []
+    for a in range(sections.size()):
+        for b in range(a + 1, mini(sections.size(), a + 3) + 1):
+            spans.append([a, b])
+    for i in range(spans.size() - 1, 0, -1):
+        var j := rng.randi_range(0, i)
+        var tmp = spans[i]
+        spans[i] = spans[j]
+        spans[j] = tmp
+    var good_made := false
+    for span in spans:
+        if jumpers.size() >= 3:
+            break
+        var covers := int(span[0]) <= fault_section and fault_section < int(span[1])
+        var cap: int = [10, 20, 30, 40, 50][rng.randi_range(0, 4)]
+        if covers and not good_made:
+            cap = maxi(cap, load_amps)
+            good_made = true
+        elif covers:
+            cap = mini(cap, load_amps - 10)
+        jumpers.append({"from": int(span[0]), "to": int(span[1]), "cap": cap})
+    if not good_made:
+        jumpers[0] = {"from": fault_section, "to": fault_section + 1, "cap": load_amps + 10}
+    build_housing("배전 · 회로 진단", helper, AstraUI.GOLD, ["측정", "고장 찾기", "우회"])
+    body.draw.connect(_draw_body)
+    body.gui_input.connect(_on_body_input)
+    reset_task()
 
-func consume_advance() -> bool:
-    if _done:
+func _section_of(module: String) -> int:
+    for i in range(sections.size()):
+        if module in Array(sections[i]):
+            return i
+    return -1
+
+# What a test point after `section` reads with `failed` open.
+func reading_at(section: int) -> String:
+    var fault_section := _section_of(failed)
+    if section < fault_section:
+        return "정상"
+    return "약함" if Array(sections[fault_section]).size() > 1 else "없음"
+
+func reset_task() -> void:
+    probes_left = 3
+    readings.clear()
+    _selected_module = ""
+    _selected_jumper = -1
+    _misses = 0
+    set_step(0)
+    instruct("측정점(1–%d)에서 전원을 재 보세요. 둘로 갈라진 구간은 모듈 글자(A–F)로 갈래 하나를 잴 수 있습니다. 세 번까지. 다 쟀으면 Space." % sections.size())
+    say("차단기부터 부하까지 한 줄이야. 어디서 끊겼는지는 재 보면 나와.")
+    set_action("측정 끝 · 고장 찾기로", false)
+    body.queue_redraw()
+
+func probe(section: int) -> bool:
+    if step != 0 or probes_left <= 0 or section < 0 or section >= sections.size() or readings.has(section):
         return false
-    _try()
+    readings[section] = reading_at(section)
+    probes_left -= 1
+    set_action("측정 끝 · 고장 찾기로", true)
+    if probes_left == 0:
+        say("측정은 여기까지. 읽은 걸로 판단하자.")
+    body.queue_redraw()
     return true
 
-func _powered() -> Dictionary:
-    var j1 := bool(levers[0])
-    var pump := j1 and bool(levers[1])
-    var j2 := j1 and bool(levers[2])
-    var security := j2 and (not bool(levers[3]) if bypass else bool(levers[3]))
-    var lights := j2
-    return {"pump": pump, "security": security, "lights": lights, "trip": pump and security}
+# One side of a split pair (costs a measurement): current through it or not.
+func probe_branch(module: String) -> bool:
+    var s := _section_of(module)
+    if step != 0 or probes_left <= 0 or s < 0 or Array(sections[s]).size() < 2 or readings.has("m:" + module):
+        return false
+    readings["m:" + module] = "없음" if module == failed else "정상"
+    probes_left -= 1
+    set_action("측정 끝 · 고장 찾기로", true)
+    body.queue_redraw()
+    return true
 
-func _try() -> void:
-    if _done:
+func choose_module(module: String) -> void:
+    if step != 1:
         return
-    var p := _powered()
-    if bool(p["security"]) and not bool(p["pump"]):
-        _finish("success")
+    _selected_module = module
+    set_action("%s 모듈이 고장이다" % module, true)
+    body.queue_redraw()
+
+func choose_jumper(index: int) -> void:
+    if step != 2 or index < 0 or index >= jumpers.size():
         return
-    _tries += 1
-    if bool(p["trip"]):
-        _hint.text = "%s: 펑! 차단기 떨어졌어. 펌프 분기부터 내려." % helper_name
-    elif not bool(levers[0]):
-        _hint.text = "%s: 주 레버가 내려가 있어. 전기가 아예 안 들어와." % helper_name
-    elif bool(p["pump"]):
-        _hint.text = "%s: 펌프만 살았어. 그 분기는 내려야 해." % helper_name
-    else:
-        _hint.text = "%s: 보안 구역까지 안 닿았어. 선을 따라가 봐." % helper_name
-    if _tries >= 2:
-        for i in range(4):
-            if bool(levers[i]) != bool(goal[i]):
-                _hint.text += " …%s, 그거 하나 바꿔 봐." % str(NAMES[i])
-                break
-    _board.queue_redraw()
+    _selected_jumper = index
+    set_action("우회선 %d 연결" % (index + 1), true)
+    body.queue_redraw()
 
-func _finish(result: String) -> void:
-    if _done:
+func handle_key(key: InputEventKey) -> bool:
+    var n := key.keycode - KEY_1
+    if n >= 0 and n <= 8:
+        match step:
+            0: probe(n)
+            2: choose_jumper(n)
+        return true
+    # Module letters: measure one side of a split pair, or name the fault.
+    var letter := key.keycode - KEY_A
+    if letter >= 0 and letter < 6:
+        var module := "ABCDEF"[letter]
+        if module in _modules():
+            if step == 0:
+                probe_branch(module)
+            elif step == 1:
+                choose_module(module)
+            return true
+    if key.keycode in [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER] and not _action.disabled:
+        primary_action()
+        return true
+    return false
+
+func _modules() -> Array:
+    var all: Array = []
+    for section in sections:
+        for m in section:
+            all.append(str(m))
+    return all
+
+func primary_action() -> void:
+    match step:
+        0:
+            if readings.is_empty():
+                return
+            set_step(1)
+            instruct("측정값으로 고장 난 모듈을 고르세요. (모듈 글자 A–F 또는 클릭)")
+            say("‘약함’은 둘로 갈라진 구간에서 한쪽만 죽었을 때야. ‘없음’은 한 줄짜리가 끊긴 거고.")
+            set_action("모듈을 고르세요", false)
+        1:
+            if _selected_module == "":
+                return
+            if _selected_module == failed:
+                set_step(2)
+                instruct("우회선을 고르세요. 고장 구간을 건너뛰고, 부하 %dA를 견딜 수 있어야 합니다. (1–%d)" % [load_amps, jumpers.size()])
+                say("맞아, 거기야. 이제 돌아가는 길. 용량 모자라면 또 탈 거야.")
+                set_action("우회선을 고르세요", false)
+            else:
+                _misses += 1
+                if _misses >= 2:
+                    say("…%s가 아니면 측정값이 설명이 안 돼. 일단 전원만 살리자." % _selected_module)
+                    finish("partial")
+                    return
+                say("%s가 끊겼다면 측정값이 달라야 해. 다시 봐." % _selected_module)
+                _selected_module = ""
+                set_action("모듈을 고르세요", false)
+        2:
+            if _selected_jumper < 0:
+                return
+            var j: Dictionary = jumpers[_selected_jumper]
+            var fault_section := _section_of(failed)
+            var covers := int(j["from"]) <= fault_section and fault_section < int(j["to"])
+            if covers and int(j["cap"]) >= load_amps:
+                say("들어온다. …이 모듈, 누가 손으로 뺀 흔적이 있어. 저절로 나간 게 아니야.")
+                finish("success")
+            elif not covers:
+                say("그 선은 고장 구간을 안 건너. 전원은 그대로 죽어 있어.")
+                _selected_jumper = -1
+                set_action("우회선을 고르세요", false)
+            else:
+                say("용량이 %dA뿐이야. 켜자마자 또 탈 거야. 일단 여기까지만 하자." % int(j["cap"]))
+                finish("partial")
+
+func _on_body_input(event: InputEvent) -> void:
+    if not (event is InputEventMouseButton) or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
         return
-    _done = true
-    finished.emit(result)
+    var at: Vector2 = (event as InputEventMouseButton).position
+    match step:
+        0:
+            for i in range(sections.size()):
+                if _tp_rect(i).grow(10).has_point(at):
+                    probe(i)
+            for m in _modules():
+                if _module_rect(str(m)).has_point(at):
+                    probe_branch(str(m))
+        1:
+            for m in _modules():
+                if _module_rect(str(m)).has_point(at):
+                    choose_module(str(m))
+        2:
+            for i in range(jumpers.size()):
+                if _jumper_rect(i).has_point(at):
+                    choose_jumper(i)
 
-func _on_board_input(event: InputEvent) -> void:
-    if not (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT):
-        return
-    for i in range(_lever_rects.size()):
-        if Rect2(_lever_rects[i]).has_point(event.position):
-            levers[i] = not bool(levers[i])
-            _board.queue_redraw()
-            return
+func _section_x(i: int) -> float:
+    var w := body.size.x
+    return 120.0 + (w - 260.0) * (float(i) + 0.5) / float(sections.size())
 
-func _unhandled_key_input(event: InputEvent) -> void:
-    if _done or not (event is InputEventKey) or not event.pressed or event.echo:
-        return
-    var index := -1
-    match event.keycode:
-        KEY_1: index = 0
-        KEY_2: index = 1
-        KEY_3: index = 2
-        KEY_4: index = 3
-    if index >= 0:
-        levers[index] = not bool(levers[index])
-        _board.queue_redraw()
-        get_viewport().set_input_as_handled()
+func _module_rect(module: String) -> Rect2:
+    var s := _section_of(module)
+    var index := Array(sections[s]).find(module)
+    var count := Array(sections[s]).size()
+    var y := 110.0 + (float(index) - (count - 1) * 0.5) * 70.0
+    return Rect2(_section_x(s) - 44, y - 26, 88, 52)
 
-func _draw_board() -> void:
-    var size := _board.size
-    _board.draw_rect(Rect2(Vector2.ZERO, size), Color("0b1520"))
-    var p := _powered()
-    _status.text = "1–4 레버 · 펌프 %s / 보안 %s / %s" % ["ON" if p["pump"] else "OFF", "ON" if p["security"] else "OFF", "과부하" if p["trip"] else "안전"]
-    var live := AstraUI.GOLD
-    var dead := Color("2a3a4f")
-    var bus := Vector2(40, size.y * 0.5)
-    var l1 := Vector2(170, size.y * 0.5)
-    var j1 := Vector2(280, size.y * 0.5)
-    var l2 := Vector2(400, size.y * 0.22)
-    var pump := Vector2(640, size.y * 0.22)
-    var l3 := Vector2(400, size.y * 0.66)
-    var j2 := Vector2(500, size.y * 0.66)
-    var l4 := Vector2(580, size.y * 0.52)
-    var sec := Vector2(700, size.y * 0.52)
-    var lights := Vector2(700, size.y * 0.86)
-    var j1_live := bool(levers[0])
-    var j2_live := bool(p["lights"])
-    _wire(bus, l1, true, live, dead)
-    _wire(l1, j1, j1_live, live, dead)
-    _wire(j1, Vector2(j1.x, l2.y), j1_live, live, dead)
-    _wire(Vector2(j1.x, l2.y), l2, j1_live, live, dead)
-    _wire(l2, pump, bool(p["pump"]), live, dead)
-    _wire(j1, Vector2(j1.x, l3.y), j1_live, live, dead)
-    _wire(Vector2(j1.x, l3.y), l3, j1_live, live, dead)
-    _wire(l3, j2, j2_live, live, dead)
-    _wire(j2, Vector2(j2.x, l4.y), j2_live, live, dead)
-    _wire(Vector2(j2.x, l4.y), l4, j2_live, live, dead)
-    _wire(l4, sec, bool(p["security"]), live, dead)
-    if bypass:
-        _wire(l4 + Vector2(0, -35), sec + Vector2(0, -35), bool(p["security"]), live, dead)
-        _wire(l4, l4 + Vector2(0, -35), bool(p["security"]), live, dead)
-        _wire(sec + Vector2(0, -35), sec, bool(p["security"]), live, dead)
-    _wire(j2, Vector2(j2.x, lights.y), j2_live, live, dead)
-    _wire(Vector2(j2.x, lights.y), lights, j2_live, live, dead)
-    _board.draw_circle(bus, 14.0, live)
-    _node(pump, "급수 펌프", bool(p["pump"]), AstraUI.CYAN)
-    _node(sec, "보안 구역", bool(p["security"]), AstraUI.GREEN)
-    _node(lights, "비상 조명", j2_live, AstraUI.MUTED)
-    _lever_rects.clear()
-    for i in range(4):
-        var at: Vector2 = [l1, l2, l3, l4][i]
-        var rect := Rect2(at - Vector2(26, 30), Vector2(52, 60))
-        _lever_rects.append(rect)
-        _board.draw_rect(rect, Color("1a2a3d"))
-        _board.draw_rect(rect, AstraUI.GOLD if bool(levers[i]) else AstraUI.BORDER_HI, false, 2.0)
-        var knob := at + Vector2(0, -14 if bool(levers[i]) else 14)
-        _board.draw_line(at, knob, AstraUI.TEXT, 5.0)
-        _board.draw_circle(knob, 8.0, AstraUI.GOLD if bool(levers[i]) else AstraUI.DIM)
-        _board.draw_string(get_theme_default_font(), at + Vector2(-26, 50), "%d" % (i + 1), HORIZONTAL_ALIGNMENT_CENTER, 52, 16, AstraUI.MUTED)
-    if bool(p["trip"]):
-        _board.draw_rect(Rect2(Vector2.ZERO, size), Color(AstraUI.RED, 0.12))
+func _tp_rect(i: int) -> Rect2:
+    var x := (_section_x(i) + (_section_x(i + 1) if i + 1 < sections.size() else body.size.x - 90.0)) * 0.5
+    return Rect2(x - 14, 96, 28, 28)
 
-func _wire(a: Vector2, b: Vector2, on: bool, live: Color, dead: Color) -> void:
-    _board.draw_line(a, b, live if on else dead, 5.0 if on else 3.0)
+func _jumper_rect(i: int) -> Rect2:
+    return Rect2(40 + i * ((body.size.x - 80) / 3.0), 270, (body.size.x - 80) / 3.0 - 16, 70)
 
-func _node(at: Vector2, label: String, on: bool, accent: Color) -> void:
-    _board.draw_circle(at, 16.0, accent if on else Color("1a2a3d"))
-    _board.draw_arc(at, 16.0, 0.0, TAU, 24, accent, 2.0)
-    _board.draw_string(get_theme_default_font(), at + Vector2(-60, 36), label, HORIZONTAL_ALIGNMENT_CENTER, 120, 16, AstraUI.TEXT if on else AstraUI.MUTED)
+func _draw_body() -> void:
+    var w := body.size.x
+    var line_y := 110.0
+    body.draw_line(Vector2(40, line_y), Vector2(w - 40, line_y), AstraUI.DIM, 4.0)
+    draw_box(body, Rect2(10, line_y - 30, 70, 60), Color(0.05, 0.08, 0.1), AstraUI.GOLD)
+    draw_text(body, Vector2(18, line_y + 6), "버스", AstraUI.GOLD, 15)
+    draw_box(body, Rect2(w - 90, line_y - 30, 80, 60), Color(0.05, 0.08, 0.1), AstraUI.GOLD)
+    draw_text(body, Vector2(w - 84, line_y - 4), "보안부하", AstraUI.GOLD, 13)
+    draw_text(body, Vector2(w - 84, line_y + 18), "%dA" % load_amps, AstraUI.GOLD, 13)
+    for m in _modules():
+        var rect := _module_rect(str(m))
+        var picked := step >= 1 and str(m) == _selected_module
+        if Array(sections[_section_of(str(m))]).size() > 1:
+            body.draw_line(Vector2(rect.position.x - 20, line_y), Vector2(rect.position.x, rect.get_center().y), AstraUI.DIM, 3.0)
+            body.draw_line(Vector2(rect.end.x, rect.get_center().y), Vector2(rect.end.x + 20, line_y), AstraUI.DIM, 3.0)
+        draw_box(body, rect, Color(AstraUI.GOLD, 0.22) if picked else Color(0.05, 0.08, 0.1), AstraUI.GOLD if picked else AstraUI.BORDER, 3.0 if picked else 2.0)
+
+        draw_text(body, rect.position + Vector2(10, 32), str(m), AstraUI.TEXT, 16)
+        var branch := str(readings.get("m:" + str(m), ""))
+        if branch != "":
+            draw_text(body, rect.position + Vector2(36, 32), "· " + branch, AstraUI.GREEN if branch == "정상" else AstraUI.RED, 13)
+    for i in range(sections.size()):
+        var tp := _tp_rect(i)
+        var read := str(readings.get(i, ""))
+        body.draw_circle(tp.get_center(), 11.0, AstraUI.CYAN if read == "" else (AstraUI.GREEN if read == "정상" else (AstraUI.GOLD if read == "약함" else AstraUI.RED)))
+        draw_text(body, tp.position + Vector2(-6, -12), "측정 %d" % (i + 1), AstraUI.MUTED, 13)
+        if read != "":
+            draw_text(body, tp.position + Vector2(-6, 52), read, AstraUI.TEXT, 15)
+    draw_text(body, Vector2(40, 236), "측정 남음 %d" % probes_left if step == 0 else "측정값: 정상 = 전원 있음 · 약함 = 갈래 하나만 · 없음 = 끊김", AstraUI.MUTED, 14)
+    for i in range(jumpers.size()):
+        var j: Dictionary = jumpers[i]
+        var rect := _jumper_rect(i)
+        var picked := step == 2 and i == _selected_jumper
+        draw_box(body, rect, Color(AstraUI.CYAN, 0.2) if picked else Color(0.03, 0.05, 0.08), AstraUI.CYAN if picked else AstraUI.BORDER, 2.0)
+        var from_label := "버스" if int(j["from"]) == 0 else "측정 %d" % int(j["from"])
+        var to_label := "부하" if int(j["to"]) >= sections.size() else "측정 %d" % int(j["to"])
+        draw_text(body, rect.position + Vector2(12, 28), "우회선 %d · %s → %s" % [i + 1, from_label, to_label], AstraUI.TEXT, 15)
+        draw_text(body, rect.position + Vector2(12, 54), "용량 %dA" % int(j["cap"]), AstraUI.GOLD, 15)

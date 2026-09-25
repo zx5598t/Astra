@@ -20,4 +20,4 @@ godot --headless --path . --script res://tools/import_pixel_090.gd
 godot --headless --path . --import
 ```
 
-원본은 잘라 내고 같은 배율로만 줄입니다(늘이지 않음). 동작 크기 맞춤 규칙은 `docs/PIXEL_ACTIONS_090.md`.
+원본은 잘라 내고 같은 배율로만 줄입니다(늘이지 않음). 동작 크기 맞춤 규칙은 `docs/PIXEL_ACTIONS_100.md`.

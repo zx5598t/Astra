@@ -169,9 +169,9 @@ func _build(id: String, spec: Dictionary, dots: String, out_dir: String, explore
     var cells := _cut_grid(walk_src, cols, 4, false)
     var walk := _walk_sheet(cells, cols, rows, 0.0)
     walk["image"].save_png(out_dir.path_join(id + ".png"))
-    var entry := {"source": str(spec["walk"]), "scale": walk["scale"], "frames": cols, "contact": walk["contact"], "stand": walk["stand"],
+    var entry := {"source": str(spec["walk"]), "scale": walk["scale"], "frames": cols, "stride": walk["stride"], "contact": walk["contact"], "stand": walk["stand"],
         "neck": walk["neck"], "rows": rows, "audit": walk["audit"]}
-    var rt := {"walk": _res(out_dir, id + ".png"), "frames": cols, "contact": walk["contact"], "stand": walk["stand"], "neck": walk["neck"]}
+    var rt := {"walk": _res(out_dir, id + ".png"), "frames": cols, "contact": walk["contact"], "stand": walk["stand"], "neck": walk["neck"], "stride": walk["stride"]}
     if explorer:
         _face(walk["image"], int(walk["stand"][0]), cols).save_png(out_dir.path_join(id + "_face.png"))
         var carry_src := _load(dots.path_join(str(spec["carry"])))
@@ -184,6 +184,7 @@ func _build(id: String, spec: Dictionary, dots: String, out_dir: String, explore
             rt["carry"] = _res(out_dir, id + "_carry.png")
             rt["carry_contact"] = carry["contact"]
             rt["carry_stand"] = carry["stand"]
+            rt["carry_stride"] = carry["stride"]
     # Drawn poses. The front standing height of the walking sheet is what the
     # idle cell of every action sheet is matched to.
     var stand_src_h := float(walk["stand_src_height"])
@@ -276,7 +277,7 @@ func _legacy(dir_path: String, out_dir: String) -> void:
         walk["image"].save_png(out_dir.path_join(preset + ".png"))
         _face(walk["image"], 1, 3).save_png(out_dir.path_join(preset + "_face.png"))
         manifest["player"][preset] = {"source": str(names[index]), "scale": walk["scale"], "frames": 3, "legacy": true, "audit": walk["audit"]}
-        runtime[preset] = {"walk": _res(out_dir, preset + ".png"), "frames": 3, "contact": walk["contact"], "stand": walk["stand"], "neck": walk["neck"]}
+        runtime[preset] = {"walk": _res(out_dir, preset + ".png"), "frames": 3, "contact": walk["contact"], "stand": walk["stand"], "neck": walk["neck"], "stride": walk["stride"]}
 
 func _res(dir_path: String, file_name: String) -> String:
     var root := ProjectSettings.globalize_path("res://")
@@ -313,6 +314,7 @@ func _walk_sheet(cells: Array, cols: int, rows: Array, fixed_scale: float) -> Di
     var audit: Array = []
     var stand_src_height := 0.0
     var stand_src_head := 1
+    var side_spread: Array = []
     var neck := 70
     for d in range(4):
         var dir: String = DIRECTIONS[d]
@@ -342,7 +344,7 @@ func _walk_sheet(cells: Array, cols: int, rows: Array, fixed_scale: float) -> Di
             var small: Image = frames[c]
             if small == null:
                 continue
-            var feet_x := _feet_center(small)
+            var feet_x := _torso_center(small)
             var dest := Vector2i(FRAME_W / 2 - feet_x + c * FRAME_W, FRAME_H - 2 - small.get_height() + d * FRAME_H)
             var clip := Rect2i(dest, small.get_size()).intersection(Rect2i(c * FRAME_W, d * FRAME_H, FRAME_W, FRAME_H))
             sheet.blend_rect(small, Rect2i(clip.position - dest, clip.size), clip.position)
@@ -362,6 +364,8 @@ func _walk_sheet(cells: Array, cols: int, rows: Array, fixed_scale: float) -> Di
             # left step, stand, right step: the drawn order is the gait
             narrowest = 1
             flags = [1, 0, 1]
+        if dir in ["left", "right"]:
+            side_spread.append(float(sorted_spreads[sorted_spreads.size() - 1]))
         contact.append(flags)
         stand.append(narrowest)
         if d == 0:
@@ -379,7 +383,7 @@ func _walk_sheet(cells: Array, cols: int, rows: Array, fixed_scale: float) -> Di
         if top_max - top_min > 8:
             warnings.append(_who + ": walk %s: head top moves %d px between frames" % [dir, top_max - top_min])
     return {"image": sheet, "scale": snappedf(scale, 0.0001), "median_src": median, "contact": contact, "stand": stand, "audit": audit,
-        "stand_src_height": stand_src_height, "stand_src_head": stand_src_head, "neck": neck}
+        "stand_src_height": stand_src_height, "stand_src_head": stand_src_head, "neck": neck, "stride": _stride(side_spread)}
 
 # Widest opaque run over the top third (the head with its hair).
 func _head_width(img: Image) -> int:
@@ -395,6 +399,17 @@ func _head_width(img: Image) -> int:
         if hi >= lo:
             best = maxi(best, hi - lo + 1)
     return best
+
+# Screen distance of one full gait cycle (two steps). A step is about the
+# distance between the feet at contact in the side view, minus a foot. The
+# actor advances its frames by this distance, so feet do not skate.
+func _stride(side_spread: Array) -> int:
+    if side_spread.is_empty():
+        return 80
+    var total := 0.0
+    for v in side_spread:
+        total += float(v)
+    return clampi(int(round(2.0 * (total / side_spread.size() - 16.0))), 56, 112)
 
 func _median_height(cells: Array) -> float:
     var heights: Array = []
@@ -725,3 +740,19 @@ func _write_runtime(path: String) -> void:
     var file := FileAccess.open(path, FileAccess.WRITE)
     file.store_string(text)
     file.close()
+
+# Horizontal anchor for walking frames: the torso and hips (50-78% of the
+# figure's height). In a walk the body travels steadily while the feet swing
+# and plant around it, so anchoring the feet makes the body jump sideways;
+# the head is left out because hair flares.
+func _torso_center(img: Image) -> int:
+    var w := img.get_width()
+    var h := img.get_height()
+    var total := 0
+    var count := 0
+    for y in range(int(h * 0.5), int(h * 0.78)):
+        for x in range(w):
+            if img.get_pixel(x, y).a > 0.5:
+                total += x
+                count += 1
+    return total / count if count > 0 else w / 2

@@ -152,9 +152,7 @@ func show_beat(beat: Dictionary) -> void:
     for index in range(choices.size()):
         var choice = choices[index]
         var label := str(choice.get("label", "")) if choice is Dictionary else str(choice)
-        var button := AstraUI.button(label, AstraUI.GOLD, AstraUI.T_UI, 48, true)
-        button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-        button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        var button := AstraUI.choice_button(label, AstraUI.GOLD, AstraUI.T_UI, true)
         button.pressed.connect(func(): chose.emit(index))
         _choices.add_child(button)
     _more.visible = not _has_choices

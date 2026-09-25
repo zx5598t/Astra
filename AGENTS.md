@@ -1,7 +1,7 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **0.9.0** (HUMAN VARIABLE; the social-deduction core is 0.8.0 CONTAINMENT). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- Version **1.0.0** (CONVICTION; built on the 0.8.0 CONTAINMENT core and 0.9.0 explorers). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
 - One Stage = one game; a Day = Morning → Conversation → Meeting → Vote → Night. PART I (Stages 1–4) one Null,
   PART II (Stage 5+) two Nulls and one protocol (GUARDIAN 5 / ANALYST 6 / EMPATH 7). No investigation phase,
   no exploration in the main loop, no abstention, exactly one isolation per Day, explorer death = immediate loss.
@@ -61,7 +61,7 @@ walking the node tree. Do not reintroduce that pattern.
   feeling, pixel characters carry space — do not mix them. Motion beyond walking is made in
   `AstraPixelActor.MOTION_SHADER` by moving whole-pixel bands (head above `NECK_ROWS`, upper body above
   `WAIST_ROW`, legs planted) — never redraw or stretch the sheets. Drawn poses are cut from the user's action
-  sheets at the walking figure's size, with a one-pixel dip in and out (`docs/PIXEL_ACTIONS_090.md`). Interlude actors carry `idle` (watch/work/sit/alert/pace); a seated
+  sheets at the walking figure's size, with a one-pixel dip in and out (`docs/PIXEL_ACTIONS_100.md`). Interlude actors carry `idle` (watch/work/sit/alert/pace); a seated
   actor needs a prop marked `front` (drawn again over them by y-sort).
 - **Explorers (0.9.0)**: a new campaign picks one of six explorers (`AstraExplorerCatalog`): `explorer_id` is who,
   `art_id` which drawings (`serin_a`...). Identity changes wording only — questions, first-contact exchanges
@@ -76,6 +76,24 @@ walking the node tree. Do not reintroduce that pattern.
 - **DEEP RECONSTRUCTION** (`scripts/core/deep_run.gd`, `scripts/ui/deep_screen.gd`): one life, depth from the run
   seed, one announced modifier per depth from 4, two Nulls from 7. A death closes the run file before anything
   can be reloaded. No stat upgrades.
+
+## 1.0.0 CONVICTION rules
+- **The room weighs only what was said aloud.** Board alibi conflicts count for NPCs after `_raise_pair` (a link,
+  a contrast, a clarification to the companions, or `_thread_claims`); a public confession takes the conflict off.
+  Unasked keepers share at `UNASKED_SHARE`; a lone private glimpse is voted on, not accused with
+  (`_lone_private_conviction`). Do not bring back silent board weighting — it made the room solve Stages alone.
+- **Link verb** (`link_statements`, `link_evidence`, `judge_link`, `intervene("link", "stmt|ev[|ev2]")`): judged from
+  content only (places, people, times, excuse method). Never read `_day_role`, `truth` or a fragment's `refutes` for a
+  group record there. Every logically equivalent piece of evidence must pass.
+- Meeting: `MEETING_INTERVENTIONS = 3` strong moves + 3 clarifications a Day; `board_status`, `meeting_summary`,
+  `ballot_reasons`/`set_ballot_reason`. No numbers on screen.
+- **Rewind**: the app keeps the first save of each morning (`dawn_path`); a lost Stage can go back once
+  (`rewind_memory` → `apply_rewind`). Memory is notes and leads only, never knowledge. Deep has no rewind.
+- **Walking** is whole frames only (no band motion while moving), distance-driven with the sheet's `stride`,
+  torso-anchored frames. Gate: `tests/motion_100_tests.gd`. The selection screen shows main illustrations only.
+- **Tasks**: `AstraShipTask` housing; families signal / circuit / timeline / route (`minigame_100_tests.gd`).
+- **UI**: growing logs use `AstraUI.track_follow` + `follow_bottom` (after layout, never while the reader scrolls back)
+  and end with `AstraUI.bottom_pad()`; multi-line choices use `AstraUI.choice_button`. Gate: `tests/ui_layout_100.gd`.
 
 ## Balance guardrails
 `tests/run_tests.gd` plays every Stage with three bots (SMART talks, follows up, intervenes and votes by

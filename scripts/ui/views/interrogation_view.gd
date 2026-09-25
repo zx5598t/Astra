@@ -21,6 +21,7 @@ var _state: Label
 var _log: VBoxContainer
 var _log_scroll: ScrollContainer
 var _options: VBoxContainer
+var _options_scroll: ScrollContainer
 var _analyst: Button
 var _next: Button
 var _cards: Dictionary = {}
@@ -93,12 +94,16 @@ func setup(game_screen) -> void:
     _right = AstraUI.vbox(10)
     _right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     split.add_child(_right)
-    _log = AstraUI.vbox(8)
+    _log = AstraUI.vbox(AstraUI.SPACE_MD)
     _log_scroll = AstraUI.scroll(_log)
     _log_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    _log_scroll.size_flags_stretch_ratio = 1.6
+    AstraUI.track_follow(_log_scroll)
     _right.add_child(_log_scroll)
-    _options = AstraUI.vbox(6)
-    _right.add_child(_options)
+    _options = AstraUI.vbox(AstraUI.BUTTON_GAP)
+    _options_scroll = AstraUI.scroll(_options)
+    _options_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    _right.add_child(_options_scroll)
     _next = AstraUI.primary_button("회의 열기  →", AstraUI.GREEN)
     _next.custom_minimum_size.y = 48
     _next.pressed.connect(func(): screen.advance_phase())
@@ -238,18 +243,17 @@ func _render_log() -> void:
         _last_lines = entries.size()
         for index in range(maxi(0, start), _log.get_child_count()):
             AstraUI.fade_in(_log.get_child(index), 0.25, 0.12 * float(index - start))
-    call_deferred("_scroll_bottom")
-
-func _scroll_bottom() -> void:
-    if is_instance_valid(_log_scroll):
-        _log_scroll.scroll_vertical = int(_log_scroll.get_v_scroll_bar().max_value)
+    _log.add_child(AstraUI.bottom_pad())
+    # The log is rebuilt after every answer: land on the last line, whole,
+    # once the layout has settled.
+    AstraUI.follow_bottom(_log_scroll, true)
 
 func _line_node(speaker: String, text: String) -> Control:
     var s: AstraGameSession = screen.session
     if speaker == "player":
         var row := AstraUI.hbox(0)
         row.add_child(AstraUI.spacer())
-        var bubble := AstraUI.panel(Color(AstraUI.GOLD, 0.1), Color(AstraUI.GOLD, 0.35), 10, 10)
+        var bubble := AstraUI.panel(Color(AstraUI.GOLD, 0.1), Color(AstraUI.GOLD, 0.35), 10, AstraUI.BUBBLE_PADDING)
         bubble.custom_minimum_size.x = 0
         var t := AstraUI.prose(text, AstraUI.T_UI, Color(1, 0.94, 0.8))
         t.custom_minimum_size.x = 360
@@ -272,7 +276,7 @@ func _line_node(speaker: String, text: String) -> Control:
         return n
     var member := s.npc(speaker)
     var accent: Color = member.accent if member != null else AstraUI.CYAN
-    var bubble2 := AstraUI.panel(Color(accent, 0.07), Color(accent, 0.35), 10, 12)
+    var bubble2 := AstraUI.panel(Color(accent, 0.07), Color(accent, 0.35), 10, AstraUI.BUBBLE_PADDING)
     var body := AstraUI.prose(text, AstraUI.T_BODY, AstraUI.TEXT)
     bubble2.add_child(body)
     return bubble2
@@ -289,19 +293,14 @@ func _render_options() -> void:
             continue
         var tone := str(option.get("tone", ""))
         var accent: Color = AstraUI.RED if tone == "press" else (AstraUI.VIOLET if intent == "EMPATHY" else (AstraUI.GOLD if intent in ["CONFRONT", "RECORD"] else AstraUI.CYAN))
-        var button := AstraUI.button(str(option.get("label", "")), accent, AstraUI.T_UI, 44)
-        button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-        button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        button.tooltip_text = str(option.get("hint", ""))
+        var button := AstraUI.choice_button(str(option.get("label", "")), accent, AstraUI.T_UI)
         button.disabled = not bool(option.get("enabled", true))
         button.pressed.connect(_ask.bind(intent, str(option.get("ref", ""))))
         _options.add_child(button)
         var hint := str(option.get("hint", ""))
         if hint != "" and intent in ["CONFRONT", "RECORD", "EMPATHY"]:
-            var small := AstraUI.label(hint, AstraUI.T_META - 2, AstraUI.DIM, true)
-            small.max_lines_visible = 1
-            small.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-            _options.add_child(small)
+            _options.add_child(AstraUI.label(hint, AstraUI.T_META - 2, AstraUI.DIM, true))
+    _options.add_child(AstraUI.bottom_pad())
 
 func _on_person(npc_id: String) -> void:
     var s: AstraGameSession = screen.session
@@ -344,8 +343,7 @@ func _open_analyst() -> void:
     list.add_child(AstraUI.prose("두 가지를 고르세요. 같은 사람의 같은 시각을 말하는지, 서로 부딪히는지 알려 줍니다.", AstraUI.T_META, AstraUI.MUTED))
     var holder := []
     for item in items:
-        var button := AstraUI.button(str(item["label"]).left(64), AstraUI.VIOLET, AstraUI.T_META, 38)
-        button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+        var button := AstraUI.choice_button(str(item["label"]), AstraUI.VIOLET, AstraUI.T_META)
         button.toggle_mode = true
         button.toggled.connect(func(on: bool):
             if on:

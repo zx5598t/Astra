@@ -483,10 +483,12 @@ func _open_task(kind: String) -> void:
             who.face(who.home_facing)
         who.working = true
     match kind:
-        "sample_scan", "safe_route":
+        "safe_route":
             var field := AstraFieldTask.new()
             add_child(field)
-            field.setup(session.seed_value, task)
+            var route_data := task.duplicate(true)
+            route_data["helper"] = session.name_of(helper) if helper != "" else str(task.get("helper", "루칸"))
+            field.setup(session.seed_value, route_data)
             field.finished.connect(_finish_task)
             _task = field
         "signal_trace":

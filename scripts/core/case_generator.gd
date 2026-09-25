@@ -1047,10 +1047,13 @@ static func _left_after(pick: Dictionary, w_specific: bool, e_specific: bool) ->
 
 # How many people today's traces should leave, drawn per Day (§3, §4). The
 # first Stage teaches the loop, so its Day 1 lands on one person more often.
+# 1.0: a single trace rarely names one person. Two independent traces (a log
+# and a sighting, held by different people) meet at the actor; connecting them
+# is the reasoning the explorer does. Day 3+ still usually narrows to one.
 const NARROW_CURVE := {
-    1: [0.15, 0.55, 0.30],
-    2: [0.45, 0.45, 0.10],
-    3: [0.70, 0.30, 0.00]
+    1: [0.05, 0.50, 0.45],
+    2: [0.20, 0.62, 0.18],
+    3: [0.55, 0.45, 0.00]
 }
 
 static func _narrow_target(case_id: String, day: int, rng: RandomNumberGenerator) -> int:

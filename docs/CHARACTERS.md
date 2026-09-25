@@ -1,4 +1,4 @@
-# ASTRA 인물 — 0.9.0 HUMAN VARIABLE: 여섯 탐사요원
+# ASTRA 인물 — 1.0.0 CONVICTION / 0.9.0 HUMAN VARIABLE: 여섯 탐사요원
 
 새 캠페인은 여섯 탐사요원 중 한 사람을 고르며 시작한다. **능력치·클래스가 아니다.** 사건의 진실, Null, 단서, 판단 가중치, 표는
 누구를 골라도 같다(같은 seed 기준, `tests/human_variable_090_tests.gd`). 달라지는 것은 묻는 말, 승무원이 처음 받아들이는 방식,
@@ -19,7 +19,7 @@
 라엘×미라 professional_respect, 라엘×세나 protective_friction, 라엘×노아 consent_first, 로건×루칸 quiet_trust,
 로건×세나 quick_roles, 로건×준 earned_trust, 로건×미라 hardest_patient, 시아×마렌 shared_curiosity, 시아×세나 protective_friction,
 시아×노아 report_friction, 시아×다렌 exception_maker. 태그 있는 쌍은 Stage 1·2와 이후 세 Stage마다, 나머지는 돌아가며 나온다.
-**호감 보너스가 아니다** — 첫 말의 온도일 뿐이고 이후 관계는 실제 행동(지목·변호·대화)이 만든다.
+**호감 보너스가 아니다** — 첫 말의 온도다. 1.0부터는 그 tone이 Stage 동안 기억되어 신뢰를 아주 조금(±0.02) 움직이고, 다음 날 그 사람의 첫마디가 그 교환으로 돌아온다(`TONE_CALLBACK`). 이후 관계는 실제 행동(지목·변호·연결·대화)이 훨씬 크게 만든다.
 
 **회의 말투 (`MEETING_VOICE`)**: 공개·변호·대질·동조·추궁·출처 확인·재확인·달래기·근거 요구의 문장이 사람마다 다르다.
 로건은 짧고, 세린은 순서와 빈칸을, 미카는 부품 비유를, 라엘은 상대의 상태를, 제이스는 책임을, 시아는 직접 가 보자는 말을 한다.
