@@ -2663,7 +2663,21 @@ func _add_accusation(speaker: String, target: String, weight: float = 1.0) -> vo
     var entry := {"day": day, "speaker": speaker, "target": target, "weight": weight}
     if speaker == "player":
         entry["player_derived"] = true
-        entry["basis_facts"] = known_fragments(day).map(func(item): return str(item.get("id", "")))
+        # Retain only fragment ids that actually contribute positive evidence to
+        # this target. This avoids treating unrelated facts the explorer happens
+        # to know as the basis for an accusation.
+        var known_ids := {}
+        for item in known_fragments():
+            known_ids[str(item.get("id", ""))] = true
+        var basis_facts: Array = []
+        var view := suspicion_breakdown("player", target)
+        for reason in view.get("reasons", []):
+            if float(reason.get("weight", 0.0)) <= 0.0:
+                continue
+            var source := str(reason.get("source", ""))
+            if known_ids.has(source) and source not in basis_facts:
+                basis_facts.append(source)
+        entry["basis_facts"] = basis_facts
     stage_state()["public_accusations"].append(entry)
 
 func _add_defense(speaker: String, target: String) -> void:
@@ -3256,10 +3270,10 @@ func _publish_fragment(item: Dictionary, speaker: String) -> void:
         stage_state()["public_presented"].append(id)
     var public_log: Array = stage_state().get("public_log", [])
     var contact := _agency_contact_for(id)
-    # A fact may have been learned during the current conversation before the
-    # contact book is finalized. Treat actual player knowledge as contact, but
-    # keep the explicit action when it is available.
-    var contacted := not contact.is_empty() or player_knows(id)
+    # "Player-caused" means an explicit conversation contact exposed this fact,
+    # or the explorer personally presented it. Merely knowing a fact through
+    # another path must not claim causal credit for an NPC's independent share.
+    var contacted := not contact.is_empty()
     public_log.append({"day": day, "fact": id, "speaker": speaker, "player_contact": contacted,
         "player_action": str(contact.get("action", "")), "source": str(item.get("owner", "")),
         "provenance": str(item.get("type", ""))})
