@@ -1,3 +1,24 @@
+# 0.8.2 PLAYER MATTERS — VALIDATION
+
+기준 main 시작점: `f0ff5a97c49f7d1e5404db16df91145d270d0fcb`
+작업 branch: `astra-0.8.2-player-matters`
+VERSION: **0.8.2** · Snapshot v4 · Meta save v12 · migration 없음.
+
+이 문서의 최종 수치는 PR CI 및 Windows release-candidate build가 완료된 뒤 실제 로그로 갱신한다. 추측값을 기록하지 않는다.
+
+## 0.8.2 gates
+- 기존 `tests/ci_suite.txt` threshold 완화 없음.
+- Stage 2~4 same-seed ACTIVE/PASSIVE paired regression.
+- player contact → public fact → meeting shift → NPC vote-change provenance.
+- private/public knowledge invariant 및 player-known option invariant.
+- 1366×768 / 1920×1080 UI smoke.
+- Windows RC ZIP/SHA256/boot는 CI artifact의 실제 값만 기록.
+
+## 시작 baseline
+0.8.1 최종 QA의 40-game 결과와 희생/속도 수치는 아래의 기존 보고를 baseline으로 유지하며, 0.8.2 결과가 나오기 전에는 덮어쓰지 않는다.
+
+---
+
 # 0.8.1 CONTAINMENT TUNING — FINAL VALIDATION — 2026-09-25
 
 기준 main: `8741194830bab29f600d1a379423cf34b2a5825a`  
