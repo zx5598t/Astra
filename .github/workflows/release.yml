@@ -2,8 +2,16 @@ name: Windows build
 
 on:
   push:
+    branches: [main]
     tags: ["v*"]
+    paths:
+      - "VERSION"
+      - ".github/workflows/release.yml"
   workflow_dispatch:
+
+concurrency:
+  group: astra-release-${{ github.sha }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
