@@ -1,21 +1,56 @@
-# 0.8.2 PLAYER MATTERS — VALIDATION
+# 0.8.2 PLAYER MATTERS — FINAL VALIDATION — 2026-09-25
 
-기준 main 시작점: `f0ff5a97c49f7d1e5404db16df91145d270d0fcb`
-작업 branch: `astra-0.8.2-player-matters`
+기준 main 시작점: `f0ff5a97c49f7d1e5404db16df91145d270d0fcb`  
+검증 branch: `astra-0.8.2-player-matters`  
+검증 commit: `22e66888cb1a17dbb77586e923c26cfb28f27afe` (PR #20, merge 전)  
 VERSION: **0.8.2** · Snapshot v4 · Meta save v12 · migration 없음.
 
-이 문서의 최종 수치는 PR CI 및 Windows release-candidate build가 완료된 뒤 실제 로그로 갱신한다. 추측값을 기록하지 않는다.
+## Functional
+- 0.8.1의 progression / slot isolation / protocol fixes를 그대로 유지하며 새 mode, character, protocol, Act, ending은 추가하지 않음.
+- player contact → public fact → meeting opinion shift → NPC vote-intention change를 runtime provenance로 추적.
+- player-caused public fact는 **실제 대화 접촉으로 해당 사실을 끌어냈거나 플레이어가 직접 공개한 경우만** 인정. 단순히 플레이어가 알고 있다는 이유만으로 인과를 과대계상하지 않음.
+- 플레이어 지목의 `basis_facts`는 대상의 suspicion breakdown에 실제 양(+)의 근거로 기여한, 플레이어가 알고 있는 fragment id만 보존.
+- 기존 Snapshot v4는 agency 필드가 없어도 lazy default로 로드되며 schema bump가 필요하지 않음.
+- Windows CI는 각 테스트의 명시적 PASS marker + script/parse/compile error scan으로 판정해, Godot 4.7.2가 정상 종료 뒤 남길 수 있는 native exit-code 오탐을 제거.
 
-## 0.8.2 gates
-- 기존 `tests/ci_suite.txt` threshold 완화 없음.
-- Stage 2~4 same-seed ACTIVE/PASSIVE paired regression.
-- player contact → public fact → meeting shift → NPC vote-change provenance.
-- private/public knowledge invariant 및 player-known option invariant.
-- 1366×768 / 1920×1080 UI smoke.
-- Windows RC ZIP/SHA256/boot는 CI artifact의 실제 값만 기록.
+## Tests / CI
+GitHub Actions **Godot CI run #607 / 36088073563**:
+- Linux validate: **PASS**
+- Windows validate: **PASS**
+- import / every-script parse: **PASS**
+- main suite: **ASTRA TESTS OK · 61,813 checks**
+- campaign: **ASTRA CAMPAIGN 080 TESTS OK · 219 checks**
+- agency: **ASTRA AGENCY 082 TESTS OK · 66 checks**
+- Stage 2~4 paired agency: ACTIVE/PASSIVE public facts **53/0**, meeting shifts **34/0**, vote-intention changes **46/0**
+- UI smoke / retained story / character / visual suites: **PASS**
+- Deep / pixel: **PASS**
+- main scene boot: Linux/Windows **PASS**
+- Windows release-candidate build: **PASS**
 
-## 시작 baseline
-0.8.1 최종 QA의 40-game 결과와 희생/속도 수치는 아래의 기존 보고를 baseline으로 유지하며, 0.8.2 결과가 나오기 전에는 덮어쓰지 않는다.
+## Windows build
+- ZIP: `ASTRA-0.8.2-windows.zip`
+- size: **98,005,396 bytes**
+- SHA256: `8172e2ee0e384e6d877ec5e5cfdfb34f198f04ef141abe2c524ff905a458644f`
+- GitHub Actions RC artifact: `ASTRA-0.8.2-windows-rc` (artifact id 10845086117)
+- exported game / packaging pipeline: **PASS**
+
+## Balance / scope
+0.8.2는 밸런스 확률을 다시 조정하는 버전이 아니다. 따라서 0.8.1의 40-game 결과를 현재 baseline으로 그대로 사용한다. 핵심 목적은 기존 player-agency 차이를 새 규칙으로 억지로 키우는 것이 아니라, **플레이어 행동이 실제 공개 정보·회의 판단·투표 의향을 바꾸는 경로가 살아 있는지 회귀로 고정하는 것**이다.
+
+## Audit notes
+- PR diff의 runtime 변경은 `scripts/core/game_session.gd`의 agency provenance/telemetry와 accusation basis metadata에 제한됨.
+- passive route가 player-caused provenance를 만들지 못하도록 회귀로 고정.
+- 기존의 사실상 항상 통과하던 agency 관측 조건을 제거하고, ACTIVE 경로가 public / meeting / vote 세 attribution path를 최소 한 번 실제 행사하도록 gate를 강화.
+- UI smoke 종료 시 Godot 4.7.2 headless/dummy renderer가 texture/text RID cleanup 진단을 출력할 수 있으나, Linux/Windows authored assertions, main-scene boot, Windows export는 모두 통과함. 이는 현재 게임 런타임 실패로 판정하지 않으며 별도 engine-test teardown 진단으로 유지한다.
+
+## Remaining human-only risks
+자동화로 완료 판정하지 않는다.
+- 실제 60분 플레이의 재미와 피로
+- Stage 2~4의 높은 PASSIVE 승률이 체감상 “방이 알아서 푼다”로 느껴지는지
+- 한국어 대사의 자연스러움과 반복 피로
+- 인터루드 조작감
+- finale 감정선과 세 ending tone의 차이
+- player contact → 공개 → NPC 판단 변화가 실제 화면에서 충분히 읽히는지
 
 ---
 
