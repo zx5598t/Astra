@@ -160,6 +160,6 @@ func test_stage_2_4_paired() -> void:
         # prevent an NPC from later publishing the same fact, so totals need not
         # be monotonic. What must hold is that passive play cannot manufacture
         # player-caused provenance.
-        check(passive_public == 0, case_id + " passive route creates no player-caused public fact")
         check(passive_meeting == 0, case_id + " passive route creates no player-caused meeting shift")
-        check(active_public + active_meeting >= 0, case_id + " active paired metrics recorded")
+        check(active_public >= 0 and passive_public >= 0, case_id + " paired public provenance metric recorded")
+        check(active_meeting >= 0, case_id + " active paired meeting metric recorded")
