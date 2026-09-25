@@ -3256,7 +3256,10 @@ func _publish_fragment(item: Dictionary, speaker: String) -> void:
         stage_state()["public_presented"].append(id)
     var public_log: Array = stage_state().get("public_log", [])
     var contact := _agency_contact_for(id)
-    var contacted := not contact.is_empty()
+    # A fact may have been learned during the current conversation before the
+    # contact book is finalized. Treat actual player knowledge as contact, but
+    # keep the explicit action when it is available.
+    var contacted := not contact.is_empty() or player_knows(id)
     public_log.append({"day": day, "fact": id, "speaker": speaker, "player_contact": contacted,
         "player_action": str(contact.get("action", "")), "source": str(item.get("owner", "")),
         "provenance": str(item.get("type", ""))})
