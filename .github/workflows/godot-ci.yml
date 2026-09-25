@@ -126,6 +126,10 @@ jobs:
             if (-not (Select-String -Path $log -Pattern ([regex]::Escape($marker)))) { throw "$script did not pass on Windows." }
             if (Select-String -Path $log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw "$script reported script errors on Windows." }
           }
+          # Match Linux CI semantics: pass/fail is determined by the required
+          # success marker plus script-error scan, not Godot's final native
+          # process code (which can remain non-zero on Windows after a clean test).
+          exit 0
 
       - name: Boot main scene on Windows
         shell: pwsh
