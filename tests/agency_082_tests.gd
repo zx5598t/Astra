@@ -34,6 +34,14 @@ func test_contact_provenance() -> void:
                 break
             var result := s.ask(str(npc_id), "STATEMENT")
             var fid := str(result.get("fragment", {}).get("id", ""))
+            if fid == "":
+                var options := s.question_options(str(npc_id))
+                for option in options:
+                    if bool(option.get("enabled", false)) and str(option.get("intent", "")) in ["RECORD", "WITNESS"]:
+                        result = s.ask(str(npc_id), str(option.get("intent", "")), str(option.get("ref", "")))
+                        fid = str(result.get("fragment", {}).get("id", ""))
+                        if fid != "":
+                            break
             if fid != "":
                 var contacts: Dictionary = s.stage_state().get("agency_contacts", {})
                 check(contacts.has(fid), "contact records fact provenance")
