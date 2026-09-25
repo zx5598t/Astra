@@ -43,6 +43,17 @@ func test_contact_provenance() -> void:
             break
     check(found, "bounded Stage 3 seed finds a contacted fact")
 
+func _crowd_pick(s: AstraGameSession, pool: Array) -> String:
+    var tally := {}
+    for voter in s.vote_intentions(pool):
+        var target := str(s.vote_intentions(pool)[voter])
+        tally[target] = int(tally.get(target, 0)) + 1
+    var best := str(pool[0])
+    for target in pool:
+        if int(tally.get(str(target), 0)) > int(tally.get(best, 0)):
+            best = str(target)
+    return best
+
 func _run_pair(case_id: String, seed_value: int, active: bool) -> Dictionary:
     var s := AstraGameSession.new()
     s.setup(case_id, seed_value)
@@ -51,7 +62,16 @@ func _run_pair(case_id: String, seed_value: int, active: bool) -> Dictionary:
         guard += 1
         match s.phase:
             "BRIEFING":
-                AstraTestBots._finish_morning(s, active)
+                var sg := 0
+                while not s.story_finished() and sg < 200:
+                    sg += 1
+                    var scene := s.story_scene()
+                    if active and str(scene.get("kind", "")) == "interlude":
+                        s.finish_interlude(str(scene.get("interlude", "")), "success")
+                    elif not Array(scene.get("choices", [])).is_empty():
+                        s.story_choose(0)
+                    else:
+                        s.story_next()
                 s.advance()
             "INTERROGATION":
                 if active:
@@ -80,7 +100,7 @@ func _run_pair(case_id: String, seed_value: int, active: bool) -> Dictionary:
                         s.meeting_continue()
                 s.advance()
             "VOTE":
-                var target := AstraTestBots._crowd_pick(s, s.eligible_vote_targets())
+                var target := _crowd_pick(s, s.eligible_vote_targets())
                 if active:
                     var best := ""
                     var score := -99.0
@@ -93,9 +113,9 @@ func _run_pair(case_id: String, seed_value: int, active: bool) -> Dictionary:
                         target = best
                 s.cast_vote(target)
                 if s.vote_stage() == "RUNOFF":
-                    s.cast_vote(AstraTestBots._crowd_pick(s, s.runoff_candidates()))
+                    s.cast_vote(_crowd_pick(s, s.runoff_candidates()))
                 if s.vote_stage() == "TIEBREAK":
-                    s.resolve_tiebreak(AstraTestBots._crowd_pick(s, s.runoff_candidates()))
+                    s.resolve_tiebreak(_crowd_pick(s, s.runoff_candidates()))
                 s.advance()
             "NIGHT":
                 s.choose_night_action("skip", "")
