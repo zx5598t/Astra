@@ -45,6 +45,11 @@ func test_contact_provenance() -> void:
             if fid != "":
                 var contacts: Dictionary = s.stage_state().get("agency_contacts", {})
                 check(contacts.has(fid), "contact records fact provenance")
+                var contact: Dictionary = contacts.get(fid, {})
+                check(str(contact.get("fact", "")) == fid, "contact provenance retains exact fact id")
+                check(str(contact.get("npc", "")) == str(npc_id), "contact provenance retains source NPC")
+                check(str(contact.get("action", "")) != "", "contact provenance retains player action")
+                check(int(contact.get("day", 0)) == s.day, "contact provenance retains current day")
                 found = true
                 break
         if found:
@@ -141,11 +146,19 @@ func _run_pair(case_id: String, seed_value: int, active: bool) -> Dictionary:
         "votes": int(metrics.get("player_caused_vote_changes", 0))}
 
 func test_stage_2_4_paired() -> void:
+    var total_active_public := 0
+    var total_passive_public := 0
+    var total_active_meeting := 0
+    var total_passive_meeting := 0
+    var total_active_votes := 0
+    var total_passive_votes := 0
     for case_id in ["DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD"]:
         var active_public := 0
         var passive_public := 0
         var active_meeting := 0
         var passive_meeting := 0
+        var active_votes := 0
+        var passive_votes := 0
         for seed in range(1, 9):
             var value := seed * 7919 + 17
             var a := _run_pair(case_id, value, true)
@@ -154,12 +167,28 @@ func test_stage_2_4_paired() -> void:
             passive_public += int(p["public"])
             active_meeting += int(a["meeting"])
             passive_meeting += int(p["meeting"])
-            check(int(a["innocent"]) >= 0 and int(p["innocent"]) >= 0, case_id + " paired isolation metric")
-            check(int(a["casualties"]) >= 0 and int(p["casualties"]) >= 0, case_id + " paired casualty metric")
-        # Paired metrics are observational: the active route can legitimately
-        # prevent an NPC from later publishing the same fact, so totals need not
-        # be monotonic. What must hold is that passive play cannot manufacture
-        # player-caused provenance.
+            active_votes += int(a["votes"])
+            passive_votes += int(p["votes"])
+            check(str(a["outcome"]) != "" and str(p["outcome"]) != "", case_id + " paired routes reach a result")
+            check(int(a["days"]) >= 1 and int(p["days"]) >= 1, case_id + " paired routes record elapsed days")
+        total_active_public += active_public
+        total_passive_public += passive_public
+        total_active_meeting += active_meeting
+        total_passive_meeting += passive_meeting
+        total_active_votes += active_votes
+        total_passive_votes += passive_votes
+        # Passive play performs no conversation or meeting intervention, so it
+        # must never manufacture player-caused provenance.
+        check(passive_public == 0, case_id + " passive route creates no player-caused public fact")
         check(passive_meeting == 0, case_id + " passive route creates no player-caused meeting shift")
-        check(active_public >= 0 and passive_public >= 0, case_id + " paired public provenance metric recorded")
-        check(active_meeting >= 0, case_id + " active paired meeting metric recorded")
+        check(passive_votes == 0, case_id + " passive route creates no player-caused vote change")
+    print("AGENCY 082 PAIRED · public %d/%d · meeting %d/%d · votes %d/%d" % [
+        total_active_public, total_passive_public, total_active_meeting, total_passive_meeting,
+        total_active_votes, total_passive_votes])
+    # Across the bounded Stage 2–4 fixtures, active play must exercise every
+    # attribution path at least once. These are regression gates, not balance
+    # targets; they prevent a future refactor from leaving telemetry wired but inert.
+    check(total_active_public > 0, "active route causes at least one public fact")
+    check(total_active_meeting > 0, "active route causes at least one meeting opinion shift")
+    check(total_active_votes > 0, "active route causes at least one NPC vote-intention change")
+
