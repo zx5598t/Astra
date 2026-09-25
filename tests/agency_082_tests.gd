@@ -159,10 +159,17 @@ func test_stage_2_4_paired() -> void:
         var passive_meeting := 0
         var active_votes := 0
         var passive_votes := 0
+        var active_totals := [0, 0, 0, 0]
+        var passive_totals := [0, 0, 0, 0]
         for seed in range(1, 9):
             var value := seed * 7919 + 17
             var a := _run_pair(case_id, value, true)
             var p := _run_pair(case_id, value, false)
+            for pair in [[a, active_totals], [p, passive_totals]]:
+                pair[1][0] += 1 if str(pair[0]["outcome"]) == "WIN" else 0
+                pair[1][1] += int(pair[0]["days"])
+                pair[1][2] += int(pair[0]["innocent"])
+                pair[1][3] += int(pair[0]["casualties"])
             active_public += int(a["public"])
             passive_public += int(p["public"])
             active_meeting += int(a["meeting"])
@@ -172,6 +179,7 @@ func test_stage_2_4_paired() -> void:
             check(str(a["outcome"]) != "" and str(p["outcome"]) != "", case_id + " paired routes reach a result")
             check(int(a["days"]) >= 1 and int(p["days"]) >= 1, case_id + " paired routes record elapsed days")
         total_active_public += active_public
+        print("AGENCY STAGE %s · ACTIVE/PASSIVE wins=%d/%d days=%d/%d innocent=%d/%d casualties=%d/%d public=%d/%d meeting=%d/%d votes=%d/%d (8 paired seeds)" % [case_id, active_totals[0], passive_totals[0], active_totals[1], passive_totals[1], active_totals[2], passive_totals[2], active_totals[3], passive_totals[3], active_public, passive_public, active_meeting, passive_meeting, active_votes, passive_votes])
         total_passive_public += passive_public
         total_active_meeting += active_meeting
         total_passive_meeting += passive_meeting
@@ -191,4 +199,3 @@ func test_stage_2_4_paired() -> void:
     check(total_active_public > 0, "active route causes at least one public fact")
     check(total_active_meeting > 0, "active route causes at least one meeting opinion shift")
     check(total_active_votes > 0, "active route causes at least one NPC vote-intention change")
-

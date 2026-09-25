@@ -1,636 +1,2186 @@
 {
   "crew": {
     "dax": {
-      "frames": [
+      "action_fit": [
+        {
+          "head_ratio": 0.838,
+          "height_ratio": 0.916
+        },
+        {
+          "head_ratio": 0.883,
+          "height_ratio": 0.93
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            12,
+            27,
+            30
+          ],
+          "top_rows": [
+            12,
+            12,
+            12
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            12,
+            15,
+            12
+          ],
+          "top_rows": [
+            13,
+            12,
+            13
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            43,
+            44,
+            50
+          ],
+          "top_rows": [
+            19,
+            19,
+            19
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            49,
+            44,
+            46
+          ],
+          "top_rows": [
+            15,
+            16,
+            15
+          ]
+        }
+      ],
+      "contact": [
         [
-          322,
-          6,
-          175,
-          306
+          0,
+          1,
+          1
         ],
         [
-          543,
-          6,
-          175,
-          307
+          0,
+          1,
+          0
         ],
         [
-          757,
-          6,
-          178,
-          306
+          0,
+          0,
+          1
         ],
         [
-          322,
-          319,
-          180,
-          305
-        ],
-        [
-          541,
-          318,
-          182,
-          306
-        ],
-        [
-          758,
-          319,
-          179,
-          305
-        ],
-        [
-          320,
-          634,
-          194,
-          288
-        ],
-        [
-          528,
-          634,
-          197,
-          288
-        ],
-        [
-          759,
-          634,
-          198,
-          288
-        ],
-        [
-          320,
-          926,
-          194,
-          298
-        ],
-        [
-          531,
-          926,
-          204,
-          296
-        ],
-        [
-          750,
-          926,
-          205,
-          298
+          1,
+          0,
+          0
         ]
       ],
-      "median_height": 301.5,
+      "frames": 3,
+      "neck": 66,
+      "pose_cells": [
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            72,
+            112
+          ],
+          "source": "다렌1.png"
+        },
+        {
+          "cell": "1:2",
+          "clipped": false,
+          "size": [
+            68,
+            113
+          ],
+          "source": "다렌2.png"
+        },
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            67,
+            112
+          ],
+          "source": "다렌1.png"
+        },
+        {
+          "cell": "0:6",
+          "clipped": false,
+          "size": [
+            70,
+            99
+          ],
+          "source": "다렌1.png"
+        },
+        {
+          "cell": "1:1",
+          "clipped": false,
+          "size": [
+            66,
+            113
+          ],
+          "source": "다렌2.png"
+        },
+        {
+          "cell": "1:9",
+          "clipped": false,
+          "size": [
+            79,
+            101
+          ],
+          "source": "다렌2.png"
+        },
+        {
+          "cell": "0:9",
+          "clipped": false,
+          "size": [
+            74,
+            95
+          ],
+          "source": "다렌1.png"
+        },
+        {
+          "cell": "1:8",
+          "clipped": false,
+          "size": [
+            68,
+            99
+          ],
+          "source": "다렌2.png"
+        },
+        {
+          "cell": "0:10",
+          "clipped": false,
+          "size": [
+            74,
+            96
+          ],
+          "source": "다렌1.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            72,
+            98
+          ],
+          "source": "다렌1.png"
+        },
+        {
+          "cell": "1:7",
+          "clipped": false,
+          "size": [
+            69,
+            98
+          ],
+          "source": "다렌2.png"
+        },
+        {
+          "cell": "1:11",
+          "clipped": false,
+          "size": [
+            96,
+            96
+          ],
+          "source": "다렌2.png"
+        },
+        {
+          "cell": "1:6",
+          "clipped": false,
+          "size": [
+            88,
+            91
+          ],
+          "source": "다렌2.png"
+        }
+      ],
+      "poses": {
+        "cheer": [
+          8,
+          5
+        ],
+        "crouch": [
+          11
+        ],
+        "greet": [
+          0
+        ],
+        "happy": [
+          5
+        ],
+        "listen": [
+          2
+        ],
+        "sit": [
+          12
+        ],
+        "surprised": [
+          6,
+          7
+        ],
+        "talk": [
+          0,
+          1
+        ],
+        "think": [
+          3,
+          4
+        ],
+        "work": [
+          9,
+          10
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
       "scale": 0.3715,
-      "source": "다렌.png"
+      "source": "다렌.png",
+      "stand": [
+        1,
+        1,
+        1,
+        1
+      ]
     },
     "eli": {
-      "frames": [
+      "action_fit": [
+        {
+          "head_ratio": 0.827,
+          "height_ratio": 0.748
+        },
+        {
+          "head_ratio": 0.883,
+          "height_ratio": 0.881
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            44,
+            30,
+            27
+          ],
+          "top_rows": [
+            15,
+            14,
+            14
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            28,
+            15,
+            13
+          ],
+          "top_rows": [
+            14,
+            13,
+            14
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 3,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            51,
+            49,
+            54
+          ],
+          "top_rows": [
+            19,
+            17,
+            16
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 3,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            54,
+            52,
+            55
+          ],
+          "top_rows": [
+            12,
+            15,
+            14
+          ]
+        }
+      ],
+      "contact": [
         [
-          316,
-          15,
-          181,
-          295
+          1,
+          0,
+          0
         ],
         [
-          536,
-          15,
-          182,
-          297
+          1,
+          0,
+          0
         ],
         [
-          752,
-          15,
-          181,
-          297
+          0,
+          0,
+          1
         ],
         [
-          320,
-          321,
-          179,
-          297
-        ],
-        [
-          542,
-          321,
-          178,
-          299
-        ],
-        [
-          758,
-          322,
-          182,
-          298
-        ],
-        [
-          318,
-          630,
-          197,
-          285
-        ],
-        [
-          536,
-          629,
-          197,
-          289
-        ],
-        [
-          756,
-          627,
-          199,
-          291
-        ],
-        [
-          307,
-          923,
-          206,
-          301
-        ],
-        [
-          526,
-          926,
-          203,
-          295
-        ],
-        [
-          746,
-          928,
-          202,
-          297
+          0,
+          0,
+          1
         ]
       ],
-      "median_height": 297.0,
+      "frames": 3,
+      "neck": 76,
+      "pose_cells": [
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            69,
+            115
+          ],
+          "source": "루칸2.png"
+        },
+        {
+          "cell": "1:2",
+          "clipped": false,
+          "size": [
+            74,
+            109
+          ],
+          "source": "소렌2.png"
+        },
+        {
+          "cell": "0:8",
+          "clipped": false,
+          "size": [
+            72,
+            114
+          ],
+          "source": "루칸2.png"
+        },
+        {
+          "cell": "1:8",
+          "clipped": false,
+          "size": [
+            79,
+            93
+          ],
+          "source": "소렌2.png"
+        },
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            67,
+            115
+          ],
+          "source": "루칸2.png"
+        },
+        {
+          "cell": "1:1",
+          "clipped": false,
+          "size": [
+            70,
+            112
+          ],
+          "source": "소렌2.png"
+        },
+        {
+          "cell": "0:9",
+          "clipped": false,
+          "size": [
+            75,
+            113
+          ],
+          "source": "루칸2.png"
+        },
+        {
+          "cell": "1:9",
+          "clipped": false,
+          "size": [
+            75,
+            95
+          ],
+          "source": "소렌2.png"
+        },
+        {
+          "cell": "0:10",
+          "clipped": false,
+          "size": [
+            78,
+            115
+          ],
+          "source": "루칸2.png"
+        },
+        {
+          "cell": "1:10",
+          "clipped": false,
+          "size": [
+            72,
+            95
+          ],
+          "source": "소렌2.png"
+        },
+        {
+          "cell": "0:6",
+          "clipped": false,
+          "size": [
+            85,
+            93
+          ],
+          "source": "루칸2.png"
+        },
+        {
+          "cell": "1:6",
+          "clipped": false,
+          "size": [
+            82,
+            80
+          ],
+          "source": "소렌2.png"
+        },
+        {
+          "cell": "0:11",
+          "clipped": false,
+          "size": [
+            80,
+            97
+          ],
+          "source": "루칸2.png"
+        },
+        {
+          "cell": "1:11",
+          "clipped": false,
+          "size": [
+            73,
+            90
+          ],
+          "source": "소렌2.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            73,
+            114
+          ],
+          "source": "루칸2.png"
+        },
+        {
+          "cell": "1:7",
+          "clipped": false,
+          "size": [
+            73,
+            93
+          ],
+          "source": "소렌2.png"
+        }
+      ],
+      "poses": {
+        "cheer": [
+          8,
+          9
+        ],
+        "crouch": [
+          10,
+          11
+        ],
+        "greet": [
+          0,
+          1
+        ],
+        "listen": [
+          4,
+          5
+        ],
+        "point": [
+          2,
+          3
+        ],
+        "ready": [
+          14,
+          15
+        ],
+        "sit": [
+          12,
+          13
+        ],
+        "surprised": [
+          6,
+          7
+        ],
+        "talk": [
+          2,
+          3
+        ],
+        "think": [
+          4
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
       "scale": 0.3771,
-      "source": "루칸.png"
+      "source": "루칸.png",
+      "stand": [
+        1,
+        1,
+        1,
+        1
+      ]
     },
     "lyra": {
-      "frames": [
+      "action_fit": [
+        {
+          "head_ratio": 0.882,
+          "height_ratio": 0.909
+        },
+        {
+          "head_ratio": 0.819,
+          "height_ratio": 0.847
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            12,
+            16,
+            12
+          ],
+          "top_rows": [
+            14,
+            14,
+            14
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            12,
+            14,
+            13
+          ],
+          "top_rows": [
+            13,
+            13,
+            14
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            46,
+            45,
+            51
+          ],
+          "top_rows": [
+            17,
+            17,
+            17
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            49,
+            45,
+            46
+          ],
+          "top_rows": [
+            14,
+            14,
+            14
+          ]
+        }
+      ],
+      "contact": [
         [
-          289,
-          18,
-          213,
-          297
+          0,
+          1,
+          0
         ],
         [
-          511,
-          18,
-          230,
-          298
+          0,
+          0,
+          0
         ],
         [
-          750,
-          18,
-          215,
-          298
+          0,
+          0,
+          1
         ],
         [
-          298,
-          320,
-          221,
-          301
-        ],
-        [
-          532,
-          321,
-          223,
-          300
-        ],
-        [
-          766,
-          322,
-          215,
-          299
-        ],
-        [
-          300,
-          626,
-          227,
-          291
-        ],
-        [
-          532,
-          626,
-          225,
-          291
-        ],
-        [
-          759,
-          627,
-          221,
-          290
-        ],
-        [
-          283,
-          923,
-          219,
-          298
-        ],
-        [
-          503,
-          922,
-          230,
-          299
-        ],
-        [
-          739,
-          923,
-          223,
-          299
+          1,
+          0,
+          0
         ]
       ],
-      "median_height": 298.0,
+      "frames": 3,
+      "neck": 65,
+      "pose_cells": [
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            91,
+            114
+          ],
+          "source": "마렌1.png"
+        },
+        {
+          "cell": "1:2",
+          "clipped": false,
+          "size": [
+            86,
+            111
+          ],
+          "source": "마렌2.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            91,
+            92
+          ],
+          "source": "마렌1.png"
+        },
+        {
+          "cell": "1:7",
+          "clipped": false,
+          "size": [
+            85,
+            112
+          ],
+          "source": "마렌2.png"
+        },
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            88,
+            112
+          ],
+          "source": "마렌1.png"
+        },
+        {
+          "cell": "1:1",
+          "clipped": false,
+          "size": [
+            85,
+            111
+          ],
+          "source": "마렌2.png"
+        },
+        {
+          "cell": "0:9",
+          "clipped": false,
+          "size": [
+            93,
+            105
+          ],
+          "source": "마렌1.png"
+        },
+        {
+          "cell": "1:9",
+          "clipped": false,
+          "size": [
+            89,
+            112
+          ],
+          "source": "마렌2.png"
+        },
+        {
+          "cell": "0:10",
+          "clipped": false,
+          "size": [
+            96,
+            104
+          ],
+          "source": "마렌1.png"
+        },
+        {
+          "cell": "1:10",
+          "clipped": false,
+          "size": [
+            89,
+            112
+          ],
+          "source": "마렌2.png"
+        },
+        {
+          "cell": "0:8",
+          "clipped": false,
+          "size": [
+            94,
+            91
+          ],
+          "source": "마렌1.png"
+        },
+        {
+          "cell": "1:8",
+          "clipped": false,
+          "size": [
+            96,
+            115
+          ],
+          "source": "마렌2.png"
+        },
+        {
+          "cell": "0:6",
+          "clipped": false,
+          "size": [
+            98,
+            87
+          ],
+          "source": "마렌1.png"
+        },
+        {
+          "cell": "1:6",
+          "clipped": false,
+          "size": [
+            93,
+            92
+          ],
+          "source": "마렌2.png"
+        }
+      ],
+      "poses": {
+        "cheer": [
+          8,
+          9
+        ],
+        "greet": [
+          0,
+          1
+        ],
+        "happy": [
+          4,
+          5
+        ],
+        "point": [
+          2
+        ],
+        "sit": [
+          12,
+          13
+        ],
+        "surprised": [
+          6,
+          7
+        ],
+        "talk": [
+          2,
+          3
+        ],
+        "work": [
+          10,
+          11
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
       "scale": 0.3758,
-      "source": "마렌.png"
+      "source": "마렌.png",
+      "stand": [
+        1,
+        1,
+        1,
+        1
+      ]
     },
     "mira": {
-      "frames": [
+      "action_fit": [
+        {
+          "head_ratio": 0.884,
+          "height_ratio": 0.933
+        },
+        {
+          "head_ratio": 0.865,
+          "height_ratio": 0.887
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            12,
+            12,
+            12
+          ],
+          "top_rows": [
+            12,
+            12,
+            12
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            13,
+            12,
+            12
+          ],
+          "top_rows": [
+            14,
+            14,
+            14
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            47,
+            49,
+            53
+          ],
+          "top_rows": [
+            18,
+            18,
+            18
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            45,
+            49,
+            51
+          ],
+          "top_rows": [
+            14,
+            15,
+            15
+          ]
+        }
+      ],
+      "contact": [
         [
-          312,
-          12,
-          203,
-          305
+          0,
+          0,
+          0
         ],
         [
-          529,
-          12,
-          199,
-          305
+          0,
+          0,
+          0
         ],
         [
-          745,
-          12,
-          205,
-          306
+          0,
+          0,
+          1
         ],
         [
-          308,
-          324,
-          211,
-          303
-        ],
-        [
-          526,
-          324,
-          205,
-          303
-        ],
-        [
-          742,
-          324,
-          216,
-          303
-        ],
-        [
-          312,
-          634,
-          218,
-          290
-        ],
-        [
-          534,
-          634,
-          218,
-          290
-        ],
-        [
-          764,
-          634,
-          220,
-          290
-        ],
-        [
-          290,
-          927,
-          211,
-          300
-        ],
-        [
-          501,
-          929,
-          215,
-          298
-        ],
-        [
-          716,
-          929,
-          227,
-          298
+          0,
+          1,
+          1
         ]
       ],
-      "median_height": 301.5,
-      "scale": 0.3715,
-      "source": "미라.png"
+      "frames": 3,
+      "neck": 66,
+      "pose_cells": [
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            88,
+            112
+          ],
+          "source": "미라1.png"
+        },
+        {
+          "cell": "1:2",
+          "clipped": false,
+          "size": [
+            86,
+            111
+          ],
+          "source": "미라2.png"
+        },
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            84,
+            112
+          ],
+          "source": "미라1.png"
+        },
+        {
+          "cell": "1:1",
+          "clipped": false,
+          "size": [
+            82,
+            113
+          ],
+          "source": "미라2.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            91,
+            93
+          ],
+          "source": "미라1.png"
+        },
+        {
+          "cell": "0:9",
+          "clipped": false,
+          "size": [
+            93,
+            101
+          ],
+          "source": "미라1.png"
+        },
+        {
+          "cell": "1:9",
+          "clipped": false,
+          "size": [
+            90,
+            99
+          ],
+          "source": "미라2.png"
+        },
+        {
+          "cell": "0:10",
+          "clipped": false,
+          "size": [
+            97,
+            102
+          ],
+          "source": "미라1.png"
+        },
+        {
+          "cell": "1:10",
+          "clipped": false,
+          "size": [
+            87,
+            99
+          ],
+          "source": "미라2.png"
+        },
+        {
+          "cell": "1:7",
+          "clipped": false,
+          "size": [
+            79,
+            86
+          ],
+          "source": "미라2.png"
+        },
+        {
+          "cell": "0:8",
+          "clipped": false,
+          "size": [
+            91,
+            93
+          ],
+          "source": "미라1.png"
+        },
+        {
+          "cell": "1:8",
+          "clipped": false,
+          "size": [
+            103,
+            86
+          ],
+          "source": "미라2.png"
+        },
+        {
+          "cell": "0:6",
+          "clipped": false,
+          "size": [
+            98,
+            88
+          ],
+          "source": "미라1.png"
+        },
+        {
+          "cell": "1:6",
+          "clipped": false,
+          "size": [
+            85,
+            85
+          ],
+          "source": "미라2.png"
+        }
+      ],
+      "poses": {
+        "cheer": [
+          7,
+          8
+        ],
+        "crouch": [
+          10,
+          11
+        ],
+        "greet": [
+          0,
+          1
+        ],
+        "happy": [
+          2,
+          3
+        ],
+        "listen": [
+          3
+        ],
+        "sit": [
+          12,
+          13
+        ],
+        "surprised": [
+          5,
+          6
+        ],
+        "talk": [
+          2
+        ],
+        "think": [
+          4
+        ],
+        "work": [
+          9
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
+      "scale": 0.3721,
+      "source": "미라.png",
+      "stand": [
+        1,
+        1,
+        1,
+        1
+      ]
     },
     "noa": {
-      "frames": [
+      "action_fit": [
+        {
+          "head_ratio": 0.808,
+          "height_ratio": 0.87
+        },
+        {
+          "head_ratio": 0.736,
+          "height_ratio": 0.748
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            10,
+            14,
+            11
+          ],
+          "top_rows": [
+            14,
+            14,
+            14
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            12,
+            14,
+            10
+          ],
+          "top_rows": [
+            13,
+            13,
+            13
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            40,
+            42,
+            47
+          ],
+          "top_rows": [
+            18,
+            18,
+            18
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            45,
+            17,
+            42
+          ],
+          "top_rows": [
+            14,
+            14,
+            14
+          ]
+        }
+      ],
+      "contact": [
         [
-          324,
-          18,
-          177,
-          294
+          0,
+          1,
+          0
         ],
         [
-          540,
-          18,
-          181,
-          294
+          0,
+          1,
+          0
         ],
         [
-          758,
-          18,
-          179,
-          294
+          0,
+          0,
+          1
         ],
         [
-          325,
-          325,
-          175,
-          298
-        ],
-        [
-          541,
-          325,
-          179,
-          298
-        ],
-        [
-          758,
-          325,
-          179,
-          298
-        ],
-        [
-          327,
-          640,
-          181,
-          284
-        ],
-        [
-          541,
-          640,
-          181,
-          284
-        ],
-        [
-          768,
-          640,
-          180,
-          284
-        ],
-        [
-          325,
-          930,
-          183,
-          296
-        ],
-        [
-          537,
-          930,
-          183,
-          296
-        ],
-        [
-          758,
-          930,
-          184,
-          296
+          1,
+          0,
+          1
         ]
       ],
-      "median_height": 295.0,
+      "frames": 3,
+      "neck": 66,
+      "pose_cells": [
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            72,
+            110
+          ],
+          "source": "노아2.png"
+        },
+        {
+          "cell": "1:2",
+          "clipped": false,
+          "size": [
+            70,
+            112
+          ],
+          "source": "노아3.png"
+        },
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            74,
+            110
+          ],
+          "source": "노아2.png"
+        },
+        {
+          "cell": "1:1",
+          "clipped": false,
+          "size": [
+            69,
+            111
+          ],
+          "source": "노아3.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            67,
+            89
+          ],
+          "source": "노아2.png"
+        },
+        {
+          "cell": "1:7",
+          "clipped": false,
+          "size": [
+            71,
+            112
+          ],
+          "source": "노아3.png"
+        },
+        {
+          "cell": "0:9",
+          "clipped": false,
+          "size": [
+            69,
+            89
+          ],
+          "source": "노아2.png"
+        },
+        {
+          "cell": "1:8",
+          "clipped": false,
+          "size": [
+            78,
+            106
+          ],
+          "source": "노아3.png"
+        },
+        {
+          "cell": "0:10",
+          "clipped": false,
+          "size": [
+            70,
+            91
+          ],
+          "source": "노아2.png"
+        },
+        {
+          "cell": "1:9",
+          "clipped": false,
+          "size": [
+            73,
+            107
+          ],
+          "source": "노아3.png"
+        },
+        {
+          "cell": "0:6",
+          "clipped": false,
+          "size": [
+            71,
+            78
+          ],
+          "source": "노아2.png"
+        },
+        {
+          "cell": "1:6",
+          "clipped": false,
+          "size": [
+            85,
+            94
+          ],
+          "source": "노아3.png"
+        }
+      ],
+      "poses": {
+        "cheer": [
+          8,
+          9
+        ],
+        "greet": [
+          0,
+          1
+        ],
+        "happy": [
+          2,
+          3
+        ],
+        "sit": [
+          10,
+          11
+        ],
+        "surprised": [
+          6,
+          7
+        ],
+        "talk": [
+          2,
+          3
+        ],
+        "think": [
+          4,
+          5
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
       "scale": 0.3797,
-      "source": "노아.png"
+      "source": "노아.png",
+      "stand": [
+        1,
+        1,
+        1,
+        1
+      ]
     },
     "rho": {
-      "frames": [
+      "action_fit": [
+        {
+          "head_ratio": 0.896,
+          "height_ratio": 0.891
+        },
+        {
+          "head_ratio": 0.878,
+          "height_ratio": 0.953
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            17,
+            15,
+            17
+          ],
+          "top_rows": [
+            13,
+            12,
+            12
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            18,
+            20,
+            14
+          ],
+          "top_rows": [
+            12,
+            12,
+            12
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            57,
+            52,
+            51
+          ],
+          "top_rows": [
+            18,
+            18,
+            18
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            52,
+            53,
+            54
+          ],
+          "top_rows": [
+            15,
+            16,
+            16
+          ]
+        }
+      ],
+      "contact": [
         [
-          318,
-          12,
-          178,
-          302
+          0,
+          0,
+          0
         ],
         [
-          539,
-          12,
-          174,
-          303
+          1,
+          1,
+          0
         ],
         [
-          759,
-          12,
-          177,
-          303
+          1,
+          0,
+          0
         ],
         [
-          318,
-          322,
-          181,
-          305
-        ],
-        [
-          537,
-          322,
-          182,
-          304
-        ],
-        [
-          758,
-          322,
-          182,
-          305
-        ],
-        [
-          308,
-          635,
-          188,
-          288
-        ],
-        [
-          531,
-          636,
-          187,
-          289
-        ],
-        [
-          755,
-          636,
-          188,
-          289
-        ],
-        [
-          315,
-          925,
-          187,
-          295
-        ],
-        [
-          537,
-          926,
-          187,
-          293
-        ],
-        [
-          756,
-          926,
-          187,
-          294
+          0,
+          0,
+          0
         ]
       ],
-      "median_height": 298.5,
+      "frames": 3,
+      "neck": 65,
+      "pose_cells": [
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            72,
+            114
+          ],
+          "source": "준1.png"
+        },
+        {
+          "cell": "1:2",
+          "clipped": false,
+          "size": [
+            76,
+            112
+          ],
+          "source": "준2.png"
+        },
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            69,
+            114
+          ],
+          "source": "준1.png"
+        },
+        {
+          "cell": "1:1",
+          "clipped": false,
+          "size": [
+            70,
+            110
+          ],
+          "source": "준2.png"
+        },
+        {
+          "cell": "0:9",
+          "clipped": false,
+          "size": [
+            76,
+            97
+          ],
+          "source": "준1.png"
+        },
+        {
+          "cell": "1:9",
+          "clipped": false,
+          "size": [
+            77,
+            105
+          ],
+          "source": "준2.png"
+        },
+        {
+          "cell": "0:10",
+          "clipped": false,
+          "size": [
+            73,
+            98
+          ],
+          "source": "준1.png"
+        },
+        {
+          "cell": "1:10",
+          "clipped": false,
+          "size": [
+            74,
+            108
+          ],
+          "source": "준2.png"
+        },
+        {
+          "cell": "0:8",
+          "clipped": false,
+          "size": [
+            94,
+            88
+          ],
+          "source": "준1.png"
+        },
+        {
+          "cell": "1:8",
+          "clipped": false,
+          "size": [
+            87,
+            89
+          ],
+          "source": "준2.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            79,
+            87
+          ],
+          "source": "준1.png"
+        },
+        {
+          "cell": "1:7",
+          "clipped": false,
+          "size": [
+            77,
+            88
+          ],
+          "source": "준2.png"
+        }
+      ],
+      "poses": {
+        "cheer": [
+          6,
+          7
+        ],
+        "crouch": [
+          10,
+          11
+        ],
+        "greet": [
+          0,
+          1
+        ],
+        "happy": [
+          2,
+          3
+        ],
+        "surprised": [
+          4,
+          5
+        ],
+        "talk": [
+          2,
+          3
+        ],
+        "work": [
+          8,
+          9
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
       "scale": 0.3752,
-      "source": "준.png"
+      "source": "준.png",
+      "stand": [
+        1,
+        1,
+        1,
+        1
+      ]
     },
     "sena": {
-      "frames": [
+      "action_fit": [
+        {
+          "head_ratio": 0.831,
+          "height_ratio": 0.954
+        },
+        {
+          "head_ratio": 0.86,
+          "height_ratio": 0.965
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            12,
+            14,
+            12
+          ],
+          "top_rows": [
+            6,
+            6,
+            6
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            14,
+            16,
+            14
+          ],
+          "top_rows": [
+            9,
+            9,
+            9
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            43,
+            46,
+            49
+          ],
+          "top_rows": [
+            23,
+            23,
+            23
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            50,
+            50,
+            50
+          ],
+          "top_rows": [
+            19,
+            19,
+            19
+          ]
+        }
+      ],
+      "contact": [
         [
-          306,
-          6,
-          218,
-          330
+          0,
+          0,
+          0
         ],
         [
-          534,
-          6,
-          221,
-          330
+          0,
+          0,
+          0
         ],
         [
-          766,
-          8,
-          226,
-          328
+          0,
+          0,
+          1
         ],
         [
-          289,
-          338,
-          221,
-          322
-        ],
-        [
-          514,
-          339,
-          224,
-          321
-        ],
-        [
-          747,
-          339,
-          217,
-          321
-        ],
-        [
-          288,
-          664,
-          229,
-          283
-        ],
-        [
-          521,
-          664,
-          228,
-          283
-        ],
-        [
-          751,
-          664,
-          252,
-          283
-        ],
-        [
-          269,
-          947,
-          257,
-          293
-        ],
-        [
-          526,
-          947,
-          221,
-          293
-        ],
-        [
-          750,
-          948,
-          248,
-          292
+          0,
+          0,
+          0
         ]
       ],
-      "median_height": 307.0,
+      "frames": 3,
+      "neck": 67,
+      "pose_cells": [
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            90,
+            116
+          ],
+          "source": "세나1.png"
+        },
+        {
+          "cell": "1:2",
+          "clipped": false,
+          "size": [
+            88,
+            117
+          ],
+          "source": "세나2.png"
+        },
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            84,
+            117
+          ],
+          "source": "세나1.png"
+        },
+        {
+          "cell": "1:1",
+          "clipped": false,
+          "size": [
+            86,
+            117
+          ],
+          "source": "세나2.png"
+        },
+        {
+          "cell": "0:9",
+          "clipped": false,
+          "size": [
+            88,
+            92
+          ],
+          "source": "세나1.png"
+        },
+        {
+          "cell": "1:9",
+          "clipped": false,
+          "size": [
+            81,
+            102
+          ],
+          "source": "세나2.png"
+        },
+        {
+          "cell": "0:10",
+          "clipped": false,
+          "size": [
+            94,
+            94
+          ],
+          "source": "세나1.png"
+        },
+        {
+          "cell": "1:10",
+          "clipped": false,
+          "size": [
+            87,
+            102
+          ],
+          "source": "세나2.png"
+        },
+        {
+          "cell": "0:6",
+          "clipped": false,
+          "size": [
+            92,
+            93
+          ],
+          "source": "세나1.png"
+        },
+        {
+          "cell": "1:6",
+          "clipped": false,
+          "size": [
+            87,
+            92
+          ],
+          "source": "세나2.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            89,
+            97
+          ],
+          "source": "세나1.png"
+        },
+        {
+          "cell": "1:7",
+          "clipped": false,
+          "size": [
+            83,
+            94
+          ],
+          "source": "세나2.png"
+        }
+      ],
+      "poses": {
+        "cheer": [
+          6,
+          7
+        ],
+        "crouch": [
+          8,
+          9
+        ],
+        "greet": [
+          0,
+          1
+        ],
+        "happy": [
+          3
+        ],
+        "ready": [
+          10,
+          11
+        ],
+        "surprised": [
+          4,
+          5
+        ],
+        "talk": [
+          2,
+          3
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
       "scale": 0.3648,
-      "source": "세나.png"
+      "source": "세나.png",
+      "stand": [
+        1,
+        1,
+        1,
+        1
+      ]
     },
     "vale": {
-      "frames": [
+      "action_fit": [
+        {
+          "head_ratio": 0.784,
+          "height_ratio": 0.788
+        },
+        {
+          "head_ratio": 0.86,
+          "height_ratio": 0.897
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            14,
+            12,
+            13
+          ],
+          "top_rows": [
+            12,
+            11,
+            11
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            14,
+            15,
+            14
+          ],
+          "top_rows": [
+            12,
+            11,
+            11
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            45,
+            43,
+            50
+          ],
+          "top_rows": [
+            18,
+            18,
+            18
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            51,
+            42,
+            52
+          ],
+          "top_rows": [
+            16,
+            16,
+            17
+          ]
+        }
+      ],
+      "contact": [
         [
-          308,
-          14,
-          191,
-          304
+          0,
+          0,
+          0
         ],
         [
-          531,
-          14,
-          192,
-          305
+          0,
+          0,
+          0
         ],
         [
-          754,
-          14,
-          191,
-          305
+          0,
+          0,
+          1
         ],
         [
-          311,
-          328,
-          195,
-          304
-        ],
-        [
-          533,
-          327,
-          195,
-          305
-        ],
-        [
-          754,
-          327,
-          194,
-          305
-        ],
-        [
-          313,
-          642,
-          194,
-          287
-        ],
-        [
-          535,
-          642,
-          194,
-          287
-        ],
-        [
-          756,
-          643,
-          195,
-          286
-        ],
-        [
-          309,
-          938,
-          198,
-          291
-        ],
-        [
-          531,
-          938,
-          197,
-          291
-        ],
-        [
-          754,
-          939,
-          196,
-          290
+          1,
+          0,
+          1
         ]
       ],
-      "median_height": 297.5,
+      "frames": 3,
+      "neck": 70,
+      "pose_cells": [
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            73,
+            116
+          ],
+          "source": "소렌1.png"
+        },
+        {
+          "cell": "1:2",
+          "clipped": false,
+          "size": [
+            72,
+            112
+          ],
+          "source": "루칸1.png"
+        },
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            72,
+            114
+          ],
+          "source": "소렌1.png"
+        },
+        {
+          "cell": "1:1",
+          "clipped": false,
+          "size": [
+            72,
+            112
+          ],
+          "source": "루칸1.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            81,
+            120
+          ],
+          "source": "소렌1.png"
+        },
+        {
+          "cell": "1:7",
+          "clipped": false,
+          "size": [
+            78,
+            91
+          ],
+          "source": "루칸1.png"
+        },
+        {
+          "cell": "0:9",
+          "clipped": false,
+          "size": [
+            80,
+            114
+          ],
+          "source": "소렌1.png"
+        },
+        {
+          "cell": "1:9",
+          "clipped": false,
+          "size": [
+            81,
+            99
+          ],
+          "source": "루칸1.png"
+        },
+        {
+          "cell": "0:10",
+          "clipped": false,
+          "size": [
+            77,
+            112
+          ],
+          "source": "소렌1.png"
+        },
+        {
+          "cell": "1:10",
+          "clipped": false,
+          "size": [
+            69,
+            98
+          ],
+          "source": "루칸1.png"
+        },
+        {
+          "cell": "0:8",
+          "clipped": false,
+          "size": [
+            84,
+            117
+          ],
+          "source": "소렌1.png"
+        },
+        {
+          "cell": "1:8",
+          "clipped": false,
+          "size": [
+            84,
+            92
+          ],
+          "source": "루칸1.png"
+        },
+        {
+          "cell": "0:6",
+          "clipped": false,
+          "size": [
+            79,
+            98
+          ],
+          "source": "소렌1.png"
+        },
+        {
+          "cell": "1:6",
+          "clipped": false,
+          "size": [
+            75,
+            87
+          ],
+          "source": "루칸1.png"
+        }
+      ],
+      "poses": {
+        "cheer": [
+          8,
+          9
+        ],
+        "greet": [
+          0,
+          1
+        ],
+        "happy": [
+          2,
+          3
+        ],
+        "listen": [
+          4,
+          5
+        ],
+        "sit": [
+          12,
+          13
+        ],
+        "surprised": [
+          6,
+          7
+        ],
+        "talk": [
+          2,
+          3
+        ],
+        "think": [
+          4
+        ],
+        "work": [
+          10,
+          11
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
       "scale": 0.3765,
-      "source": "소렌.png"
+      "source": "소렌.png",
+      "stand": [
+        1,
+        1,
+        1,
+        1
+      ]
     }
   },
   "directions": [
@@ -639,483 +2189,2716 @@
     "left",
     "right"
   ],
-  "frame_h": 128,
-  "frame_w": 96,
-  "frames_per_direction": 3,
+  "frame": [
+    128,
+    128
+  ],
   "player": {
-    "p1": {
-      "frames": [
+    "jace_a": {
+      "action_fit": [
+        {
+          "head_ratio": 0.747,
+          "height_ratio": 0.939
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            21,
+            27,
+            20,
+            21
+          ],
+          "top_rows": [
+            10,
+            11,
+            11,
+            11
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            19,
+            19,
+            19,
+            19
+          ],
+          "top_rows": [
+            15,
+            15,
+            15,
+            15
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            55,
+            59,
+            58,
+            57
+          ],
+          "top_rows": [
+            14,
+            14,
+            15,
+            14
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            65,
+            57,
+            55,
+            57
+          ],
+          "top_rows": [
+            15,
+            14,
+            14,
+            14
+          ]
+        }
+      ],
+      "carry": {
+        "audit": [
+          {
+            "dir": "down",
+            "head_jitter": 1,
+            "mirrored": false,
+            "source_row": 0,
+            "spread": [
+              15,
+              16,
+              13,
+              16
+            ],
+            "top_rows": [
+              13,
+              14,
+              14,
+              14
+            ]
+          },
+          {
+            "dir": "up",
+            "head_jitter": 0,
+            "mirrored": false,
+            "source_row": 1,
+            "spread": [
+              20,
+              18,
+              19,
+              16
+            ],
+            "top_rows": [
+              14,
+              14,
+              14,
+              14
+            ]
+          },
+          {
+            "dir": "left",
+            "head_jitter": 2,
+            "mirrored": false,
+            "source_row": 3,
+            "spread": [
+              56,
+              55,
+              52,
+              57
+            ],
+            "top_rows": [
+              17,
+              19,
+              18,
+              18
+            ]
+          },
+          {
+            "dir": "right",
+            "head_jitter": 1,
+            "mirrored": false,
+            "source_row": 2,
+            "spread": [
+              55,
+              49,
+              49,
+              52
+            ],
+            "top_rows": [
+              15,
+              15,
+              14,
+              14
+            ]
+          }
+        ],
+        "contact": [
+          [
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            0,
+            0,
+            0
+          ]
+        ],
+        "scale": 0.3684,
+        "source": "제이스1.png",
+        "stand": [
+          2,
+          3,
+          2,
+          1
+        ]
+      },
+      "contact": [
         [
-          285,
-          5,
-          201,
-          329
+          0,
+          1,
+          0,
+          0
         ],
         [
-          530,
-          5,
-          194,
-          329
+          0,
+          0,
+          0,
+          0
         ],
         [
-          760,
-          6,
-          199,
-          328
+          0,
+          1,
+          1,
+          0
         ],
         [
-          294,
-          338,
-          208,
-          301
-        ],
-        [
-          540,
-          338,
-          201,
-          301
-        ],
-        [
-          771,
-          340,
-          198,
-          299
-        ],
-        [
-          273,
-          644,
-          225,
-          294
-        ],
-        [
-          526,
-          643,
-          218,
-          297
-        ],
-        [
-          755,
-          643,
-          223,
-          298
-        ],
-        [
-          282,
-          941,
-          223,
-          289
-        ],
-        [
-          519,
-          944,
-          211,
-          292
-        ],
-        [
-          751,
-          942,
-          222,
-          294
+          1,
+          0,
+          0,
+          0
         ]
       ],
-      "median_height": 298.5,
+      "frames": 4,
+      "neck": 62,
+      "pose_cells": [
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            77,
+            109
+          ],
+          "source": "제이스2.png"
+        },
+        {
+          "cell": "0:3",
+          "clipped": false,
+          "size": [
+            74,
+            108
+          ],
+          "source": "제이스2.png"
+        },
+        {
+          "cell": "0:6",
+          "clipped": false,
+          "size": [
+            85,
+            101
+          ],
+          "source": "제이스2.png"
+        },
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            73,
+            107
+          ],
+          "source": "제이스2.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            77,
+            98
+          ],
+          "source": "제이스2.png"
+        },
+        {
+          "cell": "0:10",
+          "clipped": false,
+          "size": [
+            81,
+            99
+          ],
+          "source": "제이스2.png"
+        },
+        {
+          "cell": "0:11",
+          "clipped": false,
+          "size": [
+            91,
+            96
+          ],
+          "source": "제이스2.png"
+        },
+        {
+          "cell": "0:13",
+          "clipped": false,
+          "size": [
+            72,
+            100
+          ],
+          "source": "제이스2.png"
+        },
+        {
+          "cell": "0:12",
+          "clipped": false,
+          "size": [
+            107,
+            99
+          ],
+          "source": "제이스2.png"
+        },
+        {
+          "cell": "0:8",
+          "clipped": false,
+          "size": [
+            96,
+            95
+          ],
+          "source": "제이스2.png"
+        }
+      ],
+      "poses": {
+        "cheer": [
+          5,
+          6
+        ],
+        "greet": [
+          0
+        ],
+        "happy": [
+          1
+        ],
+        "listen": [
+          3
+        ],
+        "point": [
+          2
+        ],
+        "ready": [
+          9
+        ],
+        "sigh": [
+          7
+        ],
+        "sit": [
+          8
+        ],
+        "surprised": [
+          4
+        ],
+        "talk": [
+          1,
+          2
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
+      "scale": 0.3746,
+      "source": "제이스.png",
+      "stand": [
+        2,
+        0,
+        0,
+        2
+      ]
+    },
+    "logan_a": {
+      "action_fit": [
+        {
+          "head_ratio": 0.823,
+          "height_ratio": 1.013
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 2,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            22,
+            17,
+            22,
+            18
+          ],
+          "top_rows": [
+            14,
+            12,
+            14,
+            12
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            17,
+            16,
+            24,
+            23
+          ],
+          "top_rows": [
+            17,
+            16,
+            17,
+            16
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            66,
+            66,
+            67,
+            62
+          ],
+          "top_rows": [
+            13,
+            14,
+            13,
+            13
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 2,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            64,
+            70,
+            60,
+            66
+          ],
+          "top_rows": [
+            15,
+            16,
+            14,
+            15
+          ]
+        }
+      ],
+      "carry": {
+        "audit": [
+          {
+            "dir": "down",
+            "head_jitter": 0,
+            "mirrored": false,
+            "source_row": 0,
+            "spread": [
+              18,
+              23,
+              18,
+              23
+            ],
+            "top_rows": [
+              14,
+              14,
+              14,
+              14
+            ]
+          },
+          {
+            "dir": "up",
+            "head_jitter": 0,
+            "mirrored": false,
+            "source_row": 1,
+            "spread": [
+              16,
+              14,
+              17,
+              15
+            ],
+            "top_rows": [
+              14,
+              14,
+              14,
+              14
+            ]
+          },
+          {
+            "dir": "left",
+            "head_jitter": 2,
+            "mirrored": false,
+            "source_row": 3,
+            "spread": [
+              64,
+              62,
+              64,
+              62
+            ],
+            "top_rows": [
+              15,
+              17,
+              15,
+              17
+            ]
+          },
+          {
+            "dir": "right",
+            "head_jitter": 0,
+            "mirrored": false,
+            "source_row": 2,
+            "spread": [
+              60,
+              60,
+              59,
+              59
+            ],
+            "top_rows": [
+              14,
+              14,
+              14,
+              14
+            ]
+          }
+        ],
+        "contact": [
+          [
+            0,
+            1,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "scale": 0.3697,
+        "source": "로건1.png",
+        "stand": [
+          0,
+          1,
+          1,
+          2
+        ]
+      },
+      "contact": [
+        [
+          1,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          1
+        ]
+      ],
+      "frames": 4,
+      "neck": 60,
+      "pose_cells": [
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            64,
+            107
+          ],
+          "source": "로건2.png"
+        },
+        {
+          "cell": "0:3",
+          "clipped": false,
+          "size": [
+            79,
+            107
+          ],
+          "source": "로건2.png"
+        },
+        {
+          "cell": "0:8",
+          "clipped": false,
+          "size": [
+            96,
+            102
+          ],
+          "source": "로건2.png"
+        },
+        {
+          "cell": "0:13",
+          "clipped": false,
+          "size": [
+            73,
+            106
+          ],
+          "source": "로건2.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            71,
+            102
+          ],
+          "source": "로건2.png"
+        },
+        {
+          "cell": "0:14",
+          "clipped": false,
+          "size": [
+            76,
+            94
+          ],
+          "source": "로건2.png"
+        },
+        {
+          "cell": "0:4",
+          "clipped": false,
+          "size": [
+            93,
+            92
+          ],
+          "source": "로건2.png"
+        },
+        {
+          "cell": "0:12",
+          "clipped": false,
+          "size": [
+            93,
+            102
+          ],
+          "source": "로건2.png"
+        },
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            78,
+            105
+          ],
+          "source": "로건2.png"
+        },
+        {
+          "cell": "0:6",
+          "clipped": false,
+          "size": [
+            90,
+            105
+          ],
+          "source": "로건2.png"
+        }
+      ],
+      "poses": {
+        "carry": [
+          9
+        ],
+        "cheer": [
+          3
+        ],
+        "crouch": [
+          6
+        ],
+        "greet": [
+          0
+        ],
+        "listen": [
+          0
+        ],
+        "point": [
+          1
+        ],
+        "ready": [
+          8
+        ],
+        "sigh": [
+          5
+        ],
+        "sit": [
+          7
+        ],
+        "surprised": [
+          4
+        ],
+        "talk": [
+          1,
+          2
+        ],
+        "think": [
+          0
+        ],
+        "work": [
+          2
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
+      "scale": 0.3625,
+      "source": "로건.png",
+      "stand": [
+        1,
+        1,
+        3,
+        2
+      ]
+    },
+    "mika_a": {
+      "action_fit": [
+        {
+          "head_ratio": 0.935,
+          "height_ratio": 1.05
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 3,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            20,
+            15,
+            20,
+            22
+          ],
+          "top_rows": [
+            7,
+            9,
+            8,
+            10
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            17,
+            17,
+            18,
+            18
+          ],
+          "top_rows": [
+            15,
+            15,
+            15,
+            16
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 1,
+          "mirrored": true,
+          "source_row": 3,
+          "spread": [
+            63,
+            62,
+            63,
+            66
+          ],
+          "top_rows": [
+            12,
+            12,
+            13,
+            12
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            50,
+            56,
+            60,
+            59
+          ],
+          "top_rows": [
+            16,
+            16,
+            16,
+            16
+          ]
+        }
+      ],
+      "carry": {
+        "audit": [
+          {
+            "dir": "down",
+            "head_jitter": 1,
+            "mirrored": false,
+            "source_row": 0,
+            "spread": [
+              15,
+              18,
+              15,
+              13
+            ],
+            "top_rows": [
+              11,
+              11,
+              10,
+              10
+            ]
+          },
+          {
+            "dir": "up",
+            "head_jitter": 0,
+            "mirrored": false,
+            "source_row": 1,
+            "spread": [
+              15,
+              15,
+              14,
+              15
+            ],
+            "top_rows": [
+              14,
+              14,
+              14,
+              14
+            ]
+          },
+          {
+            "dir": "left",
+            "head_jitter": 1,
+            "mirrored": false,
+            "source_row": 3,
+            "spread": [
+              56,
+              55,
+              51,
+              52
+            ],
+            "top_rows": [
+              15,
+              15,
+              16,
+              15
+            ]
+          },
+          {
+            "dir": "right",
+            "head_jitter": 1,
+            "mirrored": false,
+            "source_row": 2,
+            "spread": [
+              56,
+              56,
+              52,
+              41
+            ],
+            "top_rows": [
+              15,
+              14,
+              14,
+              14
+            ]
+          }
+        ],
+        "contact": [
+          [
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            0,
+            0
+          ],
+          [
+            1,
+            1,
+            1,
+            0
+          ]
+        ],
+        "scale": 0.3746,
+        "source": "미카1.png",
+        "stand": [
+          3,
+          2,
+          2,
+          3
+        ]
+      },
+      "contact": [
+        [
+          1,
+          0,
+          1,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          1,
+          1
+        ]
+      ],
+      "frames": 4,
+      "neck": 63,
+      "pose_cells": [
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            109,
+            117
+          ],
+          "source": "미카2.png"
+        },
+        {
+          "cell": "0:9",
+          "clipped": false,
+          "size": [
+            95,
+            111
+          ],
+          "source": "미카2.png"
+        },
+        {
+          "cell": "0:13",
+          "clipped": false,
+          "size": [
+            104,
+            112
+          ],
+          "source": "미카2.png"
+        },
+        {
+          "cell": "0:15",
+          "clipped": false,
+          "size": [
+            94,
+            118
+          ],
+          "source": "미카2.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            111,
+            105
+          ],
+          "source": "미카2.png"
+        },
+        {
+          "cell": "0:10",
+          "clipped": false,
+          "size": [
+            112,
+            113
+          ],
+          "source": "미카2.png"
+        },
+        {
+          "cell": "0:11",
+          "clipped": false,
+          "size": [
+            108,
+            103
+          ],
+          "source": "미카2.png"
+        },
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            79,
+            114
+          ],
+          "source": "미카2.png"
+        },
+        {
+          "cell": "0:3",
+          "clipped": false,
+          "size": [
+            103,
+            116
+          ],
+          "source": "미카2.png"
+        },
+        {
+          "cell": "0:12",
+          "clipped": false,
+          "size": [
+            108,
+            107
+          ],
+          "source": "미카2.png"
+        },
+        {
+          "cell": "0:8",
+          "clipped": false,
+          "size": [
+            114,
+            101
+          ],
+          "source": "미카2.png"
+        },
+        {
+          "cell": "0:6",
+          "clipped": false,
+          "size": [
+            96,
+            115
+          ],
+          "source": "미카2.png"
+        }
+      ],
+      "poses": {
+        "carry": [
+          11
+        ],
+        "cheer": [
+          5,
+          3
+        ],
+        "crouch": [
+          8,
+          9
+        ],
+        "greet": [
+          0
+        ],
+        "happy": [
+          3
+        ],
+        "point": [
+          1
+        ],
+        "sigh": [
+          6
+        ],
+        "sit": [
+          10
+        ],
+        "surprised": [
+          4
+        ],
+        "talk": [
+          1,
+          2
+        ],
+        "work": [
+          7
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "right",
+        "right"
+      ],
+      "scale": 0.374,
+      "source": "미카.png",
+      "stand": [
+        1,
+        0,
+        1,
+        0
+      ]
+    },
+    "p1": {
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            16,
+            15,
+            20
+          ],
+          "top_rows": [
+            3,
+            3,
+            3
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            15,
+            14,
+            22
+          ],
+          "top_rows": [
+            13,
+            13,
+            14
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 2,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            53,
+            53,
+            54
+          ],
+          "top_rows": [
+            16,
+            15,
+            14
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 2,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            62,
+            51,
+            53
+          ],
+          "top_rows": [
+            18,
+            16,
+            16
+          ]
+        }
+      ],
+      "frames": 3,
+      "legacy": true,
       "scale": 0.3752,
       "source": "ChatGPT Image 2026년 9월 24일 오전 10_04_32 (1).png"
     },
     "p2": {
-      "frames": [
-        [
-          214,
-          8,
-          236,
-          301
-        ],
-        [
-          499,
-          8,
-          248,
-          303
-        ],
-        [
-          787,
-          8,
-          244,
-          301
-        ],
-        [
-          216,
-          319,
-          236,
-          298
-        ],
-        [
-          510,
-          316,
-          239,
-          308
-        ],
-        [
-          814,
-          319,
-          234,
-          302
-        ],
-        [
-          219,
-          630,
-          251,
-          286
-        ],
-        [
-          523,
-          634,
-          233,
-          284
-        ],
-        [
-          820,
-          630,
-          235,
-          288
-        ],
-        [
-          202,
-          924,
-          255,
-          295
-        ],
-        [
-          493,
-          927,
-          236,
-          294
-        ],
-        [
-          784,
-          927,
-          261,
-          295
-        ]
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            10,
+            10,
+            10
+          ],
+          "top_rows": [
+            12,
+            12,
+            12
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 3,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            14,
+            12,
+            13
+          ],
+          "top_rows": [
+            13,
+            10,
+            12
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 2,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            39,
+            45,
+            44
+          ],
+          "top_rows": [
+            18,
+            19,
+            17
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            45,
+            48,
+            45
+          ],
+          "top_rows": [
+            15,
+            15,
+            15
+          ]
+        }
       ],
-      "median_height": 296.5,
+      "frames": 3,
+      "legacy": true,
       "scale": 0.3777,
       "source": "ChatGPT Image 2026년 9월 24일 오전 10_04_32 (2).png"
     },
     "p3": {
-      "frames": [
-        [
-          224,
-          8,
-          259,
-          303
-        ],
-        [
-          499,
-          8,
-          244,
-          303
-        ],
-        [
-          765,
-          8,
-          259,
-          303
-        ],
-        [
-          217,
-          321,
-          265,
-          297
-        ],
-        [
-          502,
-          322,
-          245,
-          296
-        ],
-        [
-          761,
-          323,
-          261,
-          294
-        ],
-        [
-          247,
-          628,
-          259,
-          292
-        ],
-        [
-          532,
-          627,
-          268,
-          295
-        ],
-        [
-          816,
-          629,
-          247,
-          293
-        ],
-        [
-          191,
-          929,
-          255,
-          304
-        ],
-        [
-          461,
-          927,
-          262,
-          308
-        ],
-        [
-          744,
-          928,
-          271,
-          307
-        ]
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            18,
+            15,
+            29
+          ],
+          "top_rows": [
+            13,
+            13,
+            13
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            17,
+            26,
+            15
+          ],
+          "top_rows": [
+            15,
+            15,
+            16
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            51,
+            60,
+            52
+          ],
+          "top_rows": [
+            17,
+            16,
+            17
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 2,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            51,
+            56,
+            57
+          ],
+          "top_rows": [
+            13,
+            11,
+            11
+          ]
+        }
       ],
-      "median_height": 300.0,
+      "frames": 3,
+      "legacy": true,
       "scale": 0.3733,
       "source": "ChatGPT Image 2026년 9월 24일 오전 10_04_32 (3).png"
     },
     "p4": {
-      "frames": [
-        [
-          274,
-          7,
-          178,
-          325
-        ],
-        [
-          520,
-          9,
-          208,
-          322
-        ],
-        [
-          805,
-          9,
-          178,
-          322
-        ],
-        [
-          278,
-          335,
-          206,
-          315
-        ],
-        [
-          529,
-          335,
-          191,
-          316
-        ],
-        [
-          796,
-          338,
-          186,
-          312
-        ],
-        [
-          235,
-          652,
-          237,
-          289
-        ],
-        [
-          520,
-          653,
-          239,
-          284
-        ],
-        [
-          821,
-          653,
-          204,
-          289
-        ],
-        [
-          215,
-          942,
-          226,
-          299
-        ],
-        [
-          491,
-          942,
-          229,
-          296
-        ],
-        [
-          794,
-          943,
-          199,
-          295
-        ]
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            34,
+            33,
+            29
+          ],
+          "top_rows": [
+            7,
+            8,
+            8
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 2,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            17,
+            16,
+            35
+          ],
+          "top_rows": [
+            11,
+            10,
+            12
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 2,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            60,
+            65,
+            62
+          ],
+          "top_rows": [
+            20,
+            22,
+            20
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 2,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            64,
+            59,
+            60
+          ],
+          "top_rows": [
+            16,
+            17,
+            18
+          ]
+        }
       ],
-      "median_height": 305.5,
+      "frames": 3,
+      "legacy": true,
       "scale": 0.3666,
       "source": "ChatGPT Image 2026년 9월 24일 오전 10_04_33 (4).png"
     },
     "p5": {
-      "frames": [
-        [
-          272,
-          9,
-          182,
-          315
-        ],
-        [
-          535,
-          9,
-          180,
-          315
-        ],
-        [
-          799,
-          9,
-          185,
-          315
-        ],
-        [
-          275,
-          328,
-          179,
-          308
-        ],
-        [
-          539,
-          328,
-          170,
-          308
-        ],
-        [
-          799,
-          328,
-          177,
-          309
-        ],
-        [
-          257,
-          637,
-          212,
-          292
-        ],
-        [
-          529,
-          637,
-          230,
-          290
-        ],
-        [
-          791,
-          642,
-          231,
-          287
-        ],
-        [
-          249,
-          932,
-          214,
-          295
-        ],
-        [
-          504,
-          934,
-          243,
-          295
-        ],
-        [
-          784,
-          932,
-          235,
-          299
-        ]
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            53,
+            47,
+            30
+          ],
+          "top_rows": [
+            10,
+            10,
+            10
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            10,
+            54,
+            26
+          ],
+          "top_rows": [
+            12,
+            12,
+            12
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 2,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            54,
+            57,
+            49
+          ],
+          "top_rows": [
+            18,
+            19,
+            20
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            53,
+            51,
+            52
+          ],
+          "top_rows": [
+            17,
+            17,
+            16
+          ]
+        }
       ],
-      "median_height": 303.5,
+      "frames": 3,
+      "legacy": true,
       "scale": 0.369,
       "source": "ChatGPT Image 2026년 9월 24일 오전 10_04_33 (5).png"
     },
     "p6": {
-      "frames": [
-        [
-          265,
-          13,
-          183,
-          321
-        ],
-        [
-          534,
-          13,
-          183,
-          321
-        ],
-        [
-          805,
-          13,
-          183,
-          322
-        ],
-        [
-          272,
-          339,
-          175,
-          301
-        ],
-        [
-          536,
-          340,
-          174,
-          298
-        ],
-        [
-          810,
-          339,
-          168,
-          301
-        ],
-        [
-          280,
-          643,
-          189,
-          286
-        ],
-        [
-          530,
-          643,
-          188,
-          286
-        ],
-        [
-          792,
-          645,
-          178,
-          285
-        ],
-        [
-          273,
-          932,
-          181,
-          297
-        ],
-        [
-          528,
-          932,
-          186,
-          296
-        ],
-        [
-          795,
-          936,
-          186,
-          290
-        ]
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            21,
+            20,
+            16
+          ],
+          "top_rows": [
+            5,
+            5,
+            5
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            20,
+            21,
+            17
+          ],
+          "top_rows": [
+            13,
+            14,
+            13
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            54,
+            48,
+            53
+          ],
+          "top_rows": [
+            18,
+            18,
+            19
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 3,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            55,
+            59,
+            57
+          ],
+          "top_rows": [
+            14,
+            15,
+            17
+          ]
+        }
       ],
-      "median_height": 297.5,
+      "frames": 3,
+      "legacy": true,
       "scale": 0.3765,
       "source": "ChatGPT Image 2026년 9월 24일 오전 10_04_33 (6).png"
+    },
+    "rael_a": {
+      "action_fit": [
+        {
+          "head_ratio": 0.77,
+          "height_ratio": 0.922
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            15,
+            19,
+            23,
+            16
+          ],
+          "top_rows": [
+            15,
+            14,
+            15,
+            14
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 3,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            20,
+            19,
+            17,
+            26
+          ],
+          "top_rows": [
+            15,
+            17,
+            14,
+            15
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 2,
+          "mirrored": true,
+          "source_row": 3,
+          "spread": [
+            61,
+            61,
+            65,
+            66
+          ],
+          "top_rows": [
+            11,
+            11,
+            12,
+            13
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 2,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            50,
+            56,
+            58,
+            55
+          ],
+          "top_rows": [
+            13,
+            14,
+            13,
+            12
+          ]
+        }
+      ],
+      "carry": {
+        "audit": [
+          {
+            "dir": "down",
+            "head_jitter": 1,
+            "mirrored": false,
+            "source_row": 0,
+            "spread": [
+              14,
+              13,
+              14,
+              17
+            ],
+            "top_rows": [
+              12,
+              13,
+              13,
+              13
+            ]
+          },
+          {
+            "dir": "up",
+            "head_jitter": 1,
+            "mirrored": false,
+            "source_row": 1,
+            "spread": [
+              13,
+              15,
+              16,
+              15
+            ],
+            "top_rows": [
+              13,
+              13,
+              14,
+              14
+            ]
+          },
+          {
+            "dir": "left",
+            "head_jitter": 4,
+            "mirrored": false,
+            "source_row": 3,
+            "spread": [
+              56,
+              58,
+              49,
+              55
+            ],
+            "top_rows": [
+              15,
+              15,
+              18,
+              14
+            ]
+          },
+          {
+            "dir": "right",
+            "head_jitter": 0,
+            "mirrored": false,
+            "source_row": 2,
+            "spread": [
+              57,
+              54,
+              53,
+              38
+            ],
+            "top_rows": [
+              17,
+              17,
+              17,
+              17
+            ]
+          }
+        ],
+        "contact": [
+          [
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            1,
+            0
+          ]
+        ],
+        "scale": 0.3696,
+        "source": "라엘1.png",
+        "stand": [
+          1,
+          0,
+          2,
+          3
+        ]
+      },
+      "contact": [
+        [
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          1,
+          1
+        ],
+        [
+          0,
+          1,
+          1,
+          1
+        ]
+      ],
+      "frames": 4,
+      "neck": 66,
+      "pose_cells": [
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            72,
+            106
+          ],
+          "source": "라엘2.png"
+        },
+        {
+          "cell": "0:3",
+          "clipped": false,
+          "size": [
+            76,
+            105
+          ],
+          "source": "라엘2.png"
+        },
+        {
+          "cell": "0:10",
+          "clipped": false,
+          "size": [
+            85,
+            97
+          ],
+          "source": "라엘2.png"
+        },
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            72,
+            105
+          ],
+          "source": "라엘2.png"
+        },
+        {
+          "cell": "0:6",
+          "clipped": false,
+          "size": [
+            78,
+            97
+          ],
+          "source": "라엘2.png"
+        },
+        {
+          "cell": "0:15",
+          "clipped": false,
+          "size": [
+            75,
+            100
+          ],
+          "source": "라엘2.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            76,
+            96
+          ],
+          "source": "라엘2.png"
+        },
+        {
+          "cell": "0:11",
+          "clipped": false,
+          "size": [
+            76,
+            94
+          ],
+          "source": "라엘2.png"
+        },
+        {
+          "cell": "0:13",
+          "clipped": false,
+          "size": [
+            74,
+            98
+          ],
+          "source": "라엘2.png"
+        },
+        {
+          "cell": "0:5",
+          "clipped": false,
+          "size": [
+            93,
+            99
+          ],
+          "source": "라엘2.png"
+        },
+        {
+          "cell": "0:4",
+          "clipped": false,
+          "size": [
+            74,
+            93
+          ],
+          "source": "라엘2.png"
+        },
+        {
+          "cell": "0:8",
+          "clipped": false,
+          "size": [
+            72,
+            98
+          ],
+          "source": "라엘2.png"
+        },
+        {
+          "cell": "0:12",
+          "clipped": false,
+          "size": [
+            73,
+            95
+          ],
+          "source": "라엘2.png"
+        }
+      ],
+      "poses": {
+        "cheer": [
+          7
+        ],
+        "crouch": [
+          10,
+          11
+        ],
+        "greet": [
+          0
+        ],
+        "happy": [
+          5
+        ],
+        "listen": [
+          3
+        ],
+        "point": [
+          2
+        ],
+        "sigh": [
+          8
+        ],
+        "sit": [
+          12
+        ],
+        "surprised": [
+          6
+        ],
+        "talk": [
+          1,
+          2
+        ],
+        "think": [
+          4
+        ],
+        "work": [
+          3,
+          9
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "right",
+        "right"
+      ],
+      "scale": 0.3758,
+      "source": "라엘.png",
+      "stand": [
+        0,
+        2,
+        0,
+        0
+      ]
+    },
+    "serin_a": {
+      "action_fit": [
+        {
+          "head_ratio": 0.842,
+          "height_ratio": 0.972
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            13,
+            12,
+            14,
+            14
+          ],
+          "top_rows": [
+            11,
+            11,
+            12,
+            11
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            24,
+            14,
+            14,
+            16
+          ],
+          "top_rows": [
+            15,
+            15,
+            15,
+            15
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            58,
+            55,
+            62,
+            58
+          ],
+          "top_rows": [
+            14,
+            13,
+            13,
+            14
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 1,
+          "mirrored": false,
+          "source_row": 3,
+          "spread": [
+            64,
+            68,
+            66,
+            65
+          ],
+          "top_rows": [
+            14,
+            15,
+            15,
+            15
+          ]
+        }
+      ],
+      "carry": {
+        "audit": [
+          {
+            "dir": "down",
+            "head_jitter": 1,
+            "mirrored": false,
+            "source_row": 0,
+            "spread": [
+              13,
+              13,
+              13,
+              12
+            ],
+            "top_rows": [
+              13,
+              13,
+              13,
+              12
+            ]
+          },
+          {
+            "dir": "up",
+            "head_jitter": 2,
+            "mirrored": false,
+            "source_row": 1,
+            "spread": [
+              15,
+              14,
+              14,
+              19
+            ],
+            "top_rows": [
+              12,
+              14,
+              12,
+              13
+            ]
+          },
+          {
+            "dir": "left",
+            "head_jitter": 1,
+            "mirrored": false,
+            "source_row": 3,
+            "spread": [
+              51,
+              56,
+              42,
+              52
+            ],
+            "top_rows": [
+              16,
+              15,
+              16,
+              16
+            ]
+          },
+          {
+            "dir": "right",
+            "head_jitter": 2,
+            "mirrored": false,
+            "source_row": 2,
+            "spread": [
+              48,
+              43,
+              55,
+              26
+            ],
+            "top_rows": [
+              16,
+              16,
+              16,
+              14
+            ]
+          }
+        ],
+        "contact": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            0,
+            1
+          ],
+          [
+            1,
+            1,
+            1,
+            0
+          ]
+        ],
+        "scale": 0.3696,
+        "source": "세린1.png",
+        "stand": [
+          3,
+          1,
+          2,
+          3
+        ]
+      },
+      "contact": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ]
+      ],
+      "frames": 4,
+      "neck": 82,
+      "pose_cells": [
+        {
+          "cell": "0:3",
+          "clipped": false,
+          "size": [
+            94,
+            109
+          ],
+          "source": "세린2.png"
+        },
+        {
+          "cell": "0:6",
+          "clipped": false,
+          "size": [
+            99,
+            102
+          ],
+          "source": "세린2.png"
+        },
+        {
+          "cell": "0:5",
+          "clipped": false,
+          "size": [
+            100,
+            102
+          ],
+          "source": "세린2.png"
+        },
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            92,
+            110
+          ],
+          "source": "세린2.png"
+        },
+        {
+          "cell": "0:14",
+          "clipped": false,
+          "size": [
+            104,
+            102
+          ],
+          "source": "세린2.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            96,
+            102
+          ],
+          "source": "세린2.png"
+        },
+        {
+          "cell": "0:9",
+          "clipped": false,
+          "size": [
+            91,
+            102
+          ],
+          "source": "세린2.png"
+        },
+        {
+          "cell": "0:10",
+          "clipped": false,
+          "size": [
+            100,
+            90
+          ],
+          "source": "세린2.png"
+        },
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            93,
+            109
+          ],
+          "source": "세린2.png"
+        },
+        {
+          "cell": "0:13",
+          "clipped": false,
+          "size": [
+            82,
+            102
+          ],
+          "source": "세린2.png"
+        },
+        {
+          "cell": "0:8",
+          "clipped": false,
+          "size": [
+            96,
+            102
+          ],
+          "source": "세린2.png"
+        }
+      ],
+      "poses": {
+        "cheer": [
+          6
+        ],
+        "greet": [
+          0
+        ],
+        "happy": [
+          4
+        ],
+        "listen": [
+          3
+        ],
+        "point": [
+          1
+        ],
+        "sigh": [
+          7
+        ],
+        "sit": [
+          10
+        ],
+        "surprised": [
+          5
+        ],
+        "talk": [
+          1,
+          2
+        ],
+        "think": [
+          3
+        ],
+        "work": [
+          8,
+          9
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "left",
+        "right"
+      ],
+      "scale": 0.3672,
+      "source": "세린.png",
+      "stand": [
+        1,
+        1,
+        1,
+        0
+      ]
+    },
+    "sia_a": {
+      "action_fit": [
+        {
+          "head_ratio": 0.824,
+          "height_ratio": 1.0
+        }
+      ],
+      "audit": [
+        {
+          "dir": "down",
+          "head_jitter": 2,
+          "mirrored": false,
+          "source_row": 0,
+          "spread": [
+            16,
+            17,
+            18,
+            21
+          ],
+          "top_rows": [
+            10,
+            11,
+            10,
+            12
+          ]
+        },
+        {
+          "dir": "up",
+          "head_jitter": 0,
+          "mirrored": false,
+          "source_row": 1,
+          "spread": [
+            14,
+            15,
+            13,
+            21
+          ],
+          "top_rows": [
+            14,
+            14,
+            14,
+            14
+          ]
+        },
+        {
+          "dir": "left",
+          "head_jitter": 2,
+          "mirrored": true,
+          "source_row": 3,
+          "spread": [
+            62,
+            67,
+            68,
+            68
+          ],
+          "top_rows": [
+            12,
+            14,
+            12,
+            12
+          ]
+        },
+        {
+          "dir": "right",
+          "head_jitter": 2,
+          "mirrored": false,
+          "source_row": 2,
+          "spread": [
+            65,
+            59,
+            59,
+            64
+          ],
+          "top_rows": [
+            16,
+            16,
+            15,
+            17
+          ]
+        }
+      ],
+      "carry": {
+        "audit": [
+          {
+            "dir": "down",
+            "head_jitter": 0,
+            "mirrored": false,
+            "source_row": 0,
+            "spread": [
+              18,
+              14,
+              15,
+              15
+            ],
+            "top_rows": [
+              10,
+              10,
+              10,
+              10
+            ]
+          },
+          {
+            "dir": "up",
+            "head_jitter": 0,
+            "mirrored": false,
+            "source_row": 1,
+            "spread": [
+              15,
+              17,
+              15,
+              16
+            ],
+            "top_rows": [
+              13,
+              13,
+              13,
+              13
+            ]
+          },
+          {
+            "dir": "left",
+            "head_jitter": 1,
+            "mirrored": false,
+            "source_row": 3,
+            "spread": [
+              56,
+              59,
+              53,
+              55
+            ],
+            "top_rows": [
+              19,
+              19,
+              20,
+              20
+            ]
+          },
+          {
+            "dir": "right",
+            "head_jitter": 1,
+            "mirrored": false,
+            "source_row": 2,
+            "spread": [
+              52,
+              51,
+              55,
+              50
+            ],
+            "top_rows": [
+              16,
+              16,
+              16,
+              15
+            ]
+          }
+        ],
+        "contact": [
+          [
+            1,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ]
+        ],
+        "scale": 0.3708,
+        "source": "시아1.png",
+        "stand": [
+          1,
+          0,
+          2,
+          3
+        ]
+      },
+      "contact": [
+        [
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          0,
+          0,
+          1
+        ]
+      ],
+      "frames": 4,
+      "neck": 64,
+      "pose_cells": [
+        {
+          "cell": "0:1",
+          "clipped": false,
+          "size": [
+            92,
+            109
+          ],
+          "source": "시아2.png"
+        },
+        {
+          "cell": "0:2",
+          "clipped": false,
+          "size": [
+            96,
+            109
+          ],
+          "source": "시아2.png"
+        },
+        {
+          "cell": "0:3",
+          "clipped": false,
+          "size": [
+            96,
+            108
+          ],
+          "source": "시아2.png"
+        },
+        {
+          "cell": "0:14",
+          "clipped": false,
+          "size": [
+            85,
+            106
+          ],
+          "source": "시아2.png"
+        },
+        {
+          "cell": "0:7",
+          "clipped": false,
+          "size": [
+            85,
+            106
+          ],
+          "source": "시아2.png"
+        },
+        {
+          "cell": "0:10",
+          "clipped": false,
+          "size": [
+            93,
+            100
+          ],
+          "source": "시아2.png"
+        },
+        {
+          "cell": "0:12",
+          "clipped": false,
+          "size": [
+            88,
+            99
+          ],
+          "source": "시아2.png"
+        },
+        {
+          "cell": "0:15",
+          "clipped": false,
+          "size": [
+            91,
+            90
+          ],
+          "source": "시아2.png"
+        },
+        {
+          "cell": "0:5",
+          "clipped": false,
+          "size": [
+            88,
+            108
+          ],
+          "source": "시아2.png"
+        },
+        {
+          "cell": "0:4",
+          "clipped": false,
+          "size": [
+            85,
+            107
+          ],
+          "source": "시아2.png"
+        },
+        {
+          "cell": "0:8",
+          "clipped": false,
+          "size": [
+            102,
+            102
+          ],
+          "source": "시아2.png"
+        },
+        {
+          "cell": "0:9",
+          "clipped": false,
+          "size": [
+            89,
+            98
+          ],
+          "source": "시아2.png"
+        },
+        {
+          "cell": "0:6",
+          "clipped": false,
+          "size": [
+            88,
+            109
+          ],
+          "source": "시아2.png"
+        }
+      ],
+      "poses": {
+        "carry": [
+          12
+        ],
+        "cheer": [
+          5,
+          6
+        ],
+        "crouch": [
+          9,
+          8
+        ],
+        "greet": [
+          0
+        ],
+        "happy": [
+          1,
+          3
+        ],
+        "point": [
+          2
+        ],
+        "sigh": [
+          7
+        ],
+        "sit": [
+          10,
+          11
+        ],
+        "surprised": [
+          4
+        ],
+        "talk": [
+          1,
+          2
+        ],
+        "work": [
+          8
+        ]
+      },
+      "rows": [
+        "down",
+        "up",
+        "right",
+        "right"
+      ],
+      "scale": 0.3696,
+      "source": "시아.png",
+      "stand": [
+        0,
+        2,
+        0,
+        1
+      ]
     }
-  }
+  },
+  "pose_frame": [
+    128,
+    144
+  ],
+  "warnings": []
 }

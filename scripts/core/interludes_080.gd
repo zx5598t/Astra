@@ -428,7 +428,38 @@ static func for_case(case_id: String, day: int) -> String:
     return ""
 
 static func data(id: String) -> Dictionary:
-    return Dictionary(INTERLUDES.get(id, {})).duplicate(true)
+    var result := Dictionary(INTERLUDES.get(id, {})).duplicate(true)
+    if id == "red_shift_samples":
+        result["task"] = SAMPLE_TASK.duplicate(true)
+        for target in result["targets"]:
+            if str(target.get("id", "")) == "lyra":
+                target["task"] = "sample_scan"
+                target["lines"] = [["lyra", "태그와 채집 장소를 나란히 봐 줄래요? 출항 기록과 맞지 않는 쌍을 찾고 있어요."],
+                    ["lyra", "샘플 하나만 보면 놓쳐요. 비교할 둘을 골라 봐요."]]
+    elif id == "blind_deck_door":
+        result["task"] = ROUTE_TASK.duplicate(true)
+        for target in result["targets"]:
+            if str(target.get("id", "")) == "new_door":
+                target.erase("complete")
+            if str(target.get("id", "")) == "eli":
+                target["task"] = "safe_route"
+                target["lines"].append(["eli", "문부터 열지 마. 여기서 돌아오는 길까지 짚고 가자. 산소는 왕복 분량으로 세고."])
+    elif str(result.get("task", {}).get("kind", "")) == "order":
+        result["task"]["question"] = "이 순서에서 확인되는 것은?"
+        result["task"]["conclusions"] = [str(result["task"]["insight"]), "기록의 순서만으로 누가 사건을 일으켰는지 알 수 있다.", "현재 기억과 다르므로 기록 전체를 버려도 된다."]
+    return result
+
+const SAMPLE_TASK := {"kind": "sample_scan", "title": "시료 비교 · 날짜와 장소",
+    "instruction": "시료를 눌러 태그를 읽고, 출항 순서와 충돌하는 두 시료를 고르세요. 1–4 선택 · Space 확인.",
+    "samples": [
+        {"label": "목적지 대기 시료", "tag": "D−212", "observation": "목적지에서 채집한 흙. 태그에는 출항 212일 전이라고 적혀 있다."},
+        {"label": "출항 전 검역 시료", "tag": "D−3", "observation": "출항 전 검역 시료. 목적지 시료보다 나중 날짜다. 두 태그를 함께 놓아 보자."},
+        {"label": "출항 당일 시료", "tag": "D±0", "observation": "출항 당일의 시료. 기준일을 표시한 태그가 붙어 있다."},
+        {"label": "항해 3주차 시료", "tag": "D+21", "observation": "항해 3주차에 채집했다는 태그. 아직 태그의 날짜가 맞는지는 모른다."}
+    ]}
+const ROUTE_TASK := {"kind": "safe_route", "title": "귀환 경로 · 지도에서 지워진 문",
+    "instruction": "숫자는 구간별 산소 소모량입니다. 예산 12칸 안에서 정비 문까지 갔다 돌아올 길을 고르세요. 1–2 분기 선택 · Space 확인.",
+    "nodes": ["현재 위치", "상부 복도", "하부 복도", "분기점", "정비 문"]}
 
 static func all_ids() -> Array:
     return INTERLUDES.keys()

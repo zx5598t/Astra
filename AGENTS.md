@@ -1,7 +1,7 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **0.8.0** (CONTAINMENT — social-deduction core). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- Version **0.9.0** (HUMAN VARIABLE; the social-deduction core is 0.8.0 CONTAINMENT). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
 - One Stage = one game; a Day = Morning → Conversation → Meeting → Vote → Night. PART I (Stages 1–4) one Null,
   PART II (Stage 5+) two Nulls and one protocol (GUARDIAN 5 / ANALYST 6 / EMPATH 7). No investigation phase,
   no exploration in the main loop, no abstention, exactly one isolation per Day, explorer death = immediate loss.
@@ -56,14 +56,18 @@ walking the node tree. Do not reintroduce that pattern.
 - **Interludes** (`scripts/core/interludes_080.gd`, `scripts/ui/pixel/*`): short playable scenes placed in the
   Day 1 story queue (kind `interlude`). A story scene first: failing or skipping never blocks the Stage or
   erases evidence (`finish_interlude(id, "success"|"partial"|"skipped")`). Pixel sheets come only from
-  `tools/import_pixel_080.gd` (originals untouched; 96x128 frames, rows down/up/left/right). Portraits carry
+  `tools/import_pixel_090.gd` (originals untouched; 128x128 frames, rows down/up/left/right; it also writes
+  `scripts/ui/pixel/pixel_manifest.gd`, never edit that by hand). Portraits carry
   feeling, pixel characters carry space — do not mix them. Motion beyond walking is made in
   `AstraPixelActor.MOTION_SHADER` by moving whole-pixel bands (head above `NECK_ROWS`, upper body above
-  `WAIST_ROW`, legs planted) — never redraw or stretch the sheets. Drawn poses come only from optional action
-  sheets (`docs/PIXEL_ACTIONS_080.md`). Interlude actors carry `idle` (watch/work/sit/alert/pace); a seated
+  `WAIST_ROW`, legs planted) — never redraw or stretch the sheets. Drawn poses are cut from the user's action
+  sheets at the walking figure's size, with a one-pixel dip in and out (`docs/PIXEL_ACTIONS_090.md`). Interlude actors carry `idle` (watch/work/sit/alert/pace); a seated
   actor needs a prop marked `front` (drawn again over them by y-sort).
-- **탐사요원 등록**: name + look per save slot (`AstraMetaProgress.player_profile_for_slot`); the crew still say
-  탐사요원. Temporary looks p1-p6 until final art is dropped into `assets/player_src/` (see its README).
+- **Explorers (0.9.0)**: a new campaign picks one of six explorers (`AstraExplorerCatalog`): `explorer_id` is who,
+  `art_id` which drawings (`serin_a`...). Identity changes wording only — questions, first-contact exchanges
+  (`FIRST_CONTACT`, rotating by Stage), meeting voice (`MEETING_VOICE`) — never truth, roles, weights, votes or
+  RNG. Portraits: `tools/import_explorers_090.gd` → `assets/explorers/`. Old saves keep p1-p6 as a neutral
+  explorer (`AstraMetaProgress.player_profile_for_slot`); never map a legacy look to one of the six.
 - **Failure / echo**: the explorer's death ends the reconstruction at once; a retry is a new reconstruction
   (`AstraGameSession.fresh_seed(previous)`), a load is the same one. Residual Echo and the death echo leave at
   most one beat of feeling at the next first morning — never a role or an answer.

@@ -19,14 +19,24 @@ var _cards: VBoxContainer
 var _slots: HBoxContainer
 var _hint: Label
 var _done: bool = false
+var _task_data: Dictionary = {}
+var _concluding: bool = false
+var _conclusions: Array = []
 
 func setup(seed_value: int, task: Dictionary, helper: String) -> void:
+    _task_data = task.duplicate(true)
     helper_name = helper
     title_text = str(task.get("title", "순서"))
     insight = str(task.get("insight", ""))
     items = Array(task.get("items", [])).duplicate(true)
     var rng := RandomNumberGenerator.new()
     rng.seed = absi(hash("order|%d|%s" % [seed_value, title_text]))
+    _conclusions = Array(task.get("conclusions", [])).duplicate()
+    for i in range(_conclusions.size() - 1, 0, -1):
+        var j := rng.randi_range(0, i)
+        var old = _conclusions[i]
+        _conclusions[i] = _conclusions[j]
+        _conclusions[j] = old
     for i in range(items.size() - 1, 0, -1):
         var j := rng.randi_range(0, i)
         var tmp = items[i]
@@ -86,12 +96,21 @@ func _render() -> void:
             color = AstraUI.GREEN
         _slots.add_child(AstraUI.chip(text, color, AstraUI.T_META))
     AstraUI.clear(_cards)
+    if _concluding:
+        _cards.add_child(AstraUI.label(str(_task_data.get("question", "이 순서에서 확인되는 것은?")), AstraUI.T_UI, AstraUI.CYAN))
+        for i in range(_conclusions.size()):
+            var conclusion := str(_conclusions[i])
+            var confirm := AstraUI.button("%d · %s" % [i+1, conclusion], AstraUI.VIOLET, AstraUI.T_UI, 50)
+            confirm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+            confirm.pressed.connect(_conclude.bind(i))
+            _cards.add_child(confirm)
+        return
     var next_rank := _placed.size()
     for index in range(items.size()):
         if index in _placed:
             continue
         var item: Array = items[index]
-        var button := AstraUI.button(str(item[0]), AstraUI.VIOLET, AstraUI.T_UI, 50)
+        var button := AstraUI.button("%d · %s" % [index+1, item[0]], AstraUI.VIOLET, AstraUI.T_UI, 50)
         button.alignment = HORIZONTAL_ALIGNMENT_LEFT
         if _misses >= 2 and int(item[1]) == next_rank:
             button.add_theme_color_override("font_color", AstraUI.GOLD)
@@ -105,7 +124,7 @@ func _render() -> void:
         _hint.text = "  →  ".join(PackedStringArray(placed_text))
 
 func _pick(index: int) -> void:
-    if _done:
+    if _done or _concluding or index in _placed or index < 0 or index >= items.size():
         return
     var item: Array = items[index]
     if int(item[1]) != _placed.size():
@@ -119,10 +138,30 @@ func _pick(index: int) -> void:
     _hint.text = ""
     if _placed.size() >= items.size():
         _hint.text = insight
+        _concluding = not _conclusions.is_empty()
         _render()
-        _finish.call_deferred("success")
+        if not _concluding:
+            _finish.call_deferred("success")
         return
     _render()
+
+func _conclude(index: int) -> void:
+    if _done or not _concluding or index < 0 or index >= _conclusions.size():
+        return
+    if str(_conclusions[index]) == insight:
+        _finish("success")
+    else:
+        _hint.text = "날짜와 순서가 보여 주는 범위부터 보자. 누가 했는지는 이 기록만으로 결정할 수 없다."
+
+func _unhandled_key_input(event: InputEvent) -> void:
+    if event is InputEventKey and event.pressed and not event.echo and not _done:
+        var index := int(event.keycode) - KEY_1
+        if index >= 0 and index < ( _conclusions.size() if _concluding else items.size() ):
+            if _concluding:
+                _conclude(index)
+            else:
+                _pick(index)
+            get_viewport().set_input_as_handled()
 
 func _finish(result: String) -> void:
     if _done:

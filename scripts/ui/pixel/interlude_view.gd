@@ -13,7 +13,7 @@ extends Control
 
 signal done(result: String)
 
-const SPEED := 230.0
+const SPEED := 160.0
 const REACH := 100.0
 
 var session: AstraGameSession
@@ -73,6 +73,7 @@ func setup(game_session: AstraGameSession, id: String, player_preset: String) ->
         var npc_id := str(entry.get("id", ""))
         var actor := AstraPixelActor.new()
         actor.setup(AstraPixelActor.crew_sheet(npc_id), npc_id, session.name_of(npc_id), AstraCrewCatalog.accent(npc_id))
+        actor.distance_driven = true
         actor.position = room.tile_to_px(entry.get("at", [1, 1]))
         actor.facing = str(entry.get("facing", "down"))
         actor.face(actor.facing)
@@ -89,6 +90,9 @@ func setup(game_session: AstraGameSession, id: String, player_preset: String) ->
     player = AstraPixelActor.new()
     var preset := player_preset if ResourceLoader.exists(AstraPixelActor.player_sheet(player_preset)) else "p1"
     player.setup(AstraPixelActor.player_sheet(preset), "player", "나", AstraUI.GOLD)
+    player.distance_driven = true
+    # In a scene with work to do the explorer brings their own tool.
+    player.carrying = not Dictionary(data.get("task", {})).is_empty()
     player.position = room.tile_to_px(data.get("spawn", [7.5, 8.0]))
     player.face("up")
     room.add_child(player)
@@ -479,6 +483,12 @@ func _open_task(kind: String) -> void:
             who.face(who.home_facing)
         who.working = true
     match kind:
+        "sample_scan", "safe_route":
+            var field := AstraFieldTask.new()
+            add_child(field)
+            field.setup(session.seed_value, task)
+            field.finished.connect(_finish_task)
+            _task = field
         "signal_trace":
             var trace := AstraSignalTrace.new()
             add_child(trace)
@@ -521,7 +531,8 @@ func _react(result: String) -> void:
         actors[helper].working = false
     if result == "partial":
         player.emote("…", 1.6, true)
-        player.gesture("sigh", true)
+        if not player.pose("sigh", 1.1, true):
+            player.gesture("sigh", true)
         if actors.has(helper):
             actors[helper].gesture("nod", true)
         return
@@ -535,6 +546,8 @@ func _react(result: String) -> void:
     for id in actors:
         if actors[id].position.distance_to(player.position) < 420.0:
             actors[id].glance(player.position, 1.6)
+            if actors[id].facing == "down" and actors[id].position.distance_to(player.position) < 260.0:
+                actors[id].pose("surprised")
 
 func _close(result: String) -> void:
     if _closing:

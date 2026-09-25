@@ -50,7 +50,7 @@ func _run() -> void:
     _expect(app._current is AstraPlayerSetup, "a fresh profile starts with explorer registration")
     if app._current is AstraPlayerSetup:
         _click()
-        app._current.confirmed.emit({"name": "", "preset": "p1"})
+        app._current.confirmed.emit(AstraExplorerCatalog.profile_for("mika"))
         await _wait(5)
     _expect(app._current is AstraOpeningView, "registration leads into the opening scene")
     # Opening: three beats, one click each.

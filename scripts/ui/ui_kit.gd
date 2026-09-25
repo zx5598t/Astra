@@ -248,17 +248,26 @@ static func defringe_material() -> ShaderMaterial:
         _defringe.shader = shader
     return _defringe
 
-# The explorer's small face (from 탐사요원 등록), pixel-sharp.
-static func player_face(session, size: Vector2) -> TextureRect:
-    var preset := "p1"
-    if session != null and session.has_method("player_profile"):
-        preset = str(session.player_profile().get("preset", "p1"))
+# The explorer's face next to their lines: the illustrated head cut from the
+# user's expression sheet for the six explorers (same world as the crew
+# portraits), the pixel face for a legacy look. `mood` picks a bust instead.
+static func explorer_face_texture(profile: Dictionary, mood: String = "") -> Texture2D:
+    var id := str(AstraExplorerCatalog.normalize(profile)["explorer_id"])
+    if mood != "":
+        var bust := AstraExplorerCatalog.bust_path(id, mood)
+        if bust != "":
+            return texture(bust)
+    return texture(AstraExplorerCatalog.face_path(profile))
+
+static func player_face(session, size: Vector2, mood: String = "") -> TextureRect:
+    var profile: Dictionary = session.player_profile() if session != null and session.has_method("player_profile") else {}
     var rect := TextureRect.new()
-    rect.texture = texture("res://assets/pixel080/player/%s_face.png" % preset)
+    rect.texture = explorer_face_texture(profile, mood)
     rect.custom_minimum_size = size
     rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
     rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-    rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+    var illustrated := AstraExplorerCatalog.head_path(str(profile.get("explorer_id", ""))) != ""
+    rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR if illustrated else CanvasItem.TEXTURE_FILTER_NEAREST
     rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
     return rect
 

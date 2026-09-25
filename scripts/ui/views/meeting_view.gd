@@ -3,8 +3,8 @@ extends HBoxContainer
 # Meeting. The room argues one point at a time: someone puts something on the
 # table, the named person answers, a third person weighs in — then it pauses.
 # At each pause the explorer can step in (2–3 options that fit this point) or
-# keep listening. Once the one intervention is used, the rest of the meeting
-# plays on its own and the vote follows (§24–§27, §47).
+# keep listening. Public-source checks have a separate budget; spending the
+# decisive intervention never skips the remaining player windows.
 
 const TONE_COLOR := {"calm": AstraUI.CYAN, "press": AstraUI.RED, "defend": AstraUI.GREEN, "redirect": AstraUI.GOLD, "confront": AstraUI.PINK}
 const REVEAL_DELAY := 0.95
@@ -158,10 +158,6 @@ func _on_caught_up() -> void:
     var s: AstraGameSession = screen.session
     if s.phase != "MEETING":
         return
-    if s.meeting_actions_left <= 0 and not s.meeting_over():
-        s.meeting_continue()
-        _timer.start()
-        return
     _render_actions()
     screen.refresh_objective()
 
@@ -227,6 +223,14 @@ func _render_actions() -> void:
     if _picker_open:
         _render_accuse_picker()
         return
+    var soft := s.clarification_options()
+    if not soft.is_empty():
+        _actions.add_child(AstraUI.label("되묻기 · 강한 개입과 별도", AstraUI.T_META, AstraUI.CYAN))
+        for option in soft:
+            var check_button := AstraUI.button(str(option["label"]), AstraUI.CYAN, AstraUI.T_UI, 46)
+            check_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+            check_button.pressed.connect(_intervene.bind("clarify", str(option["ref"])))
+            _actions.add_child(check_button)
     var options := s.meeting_options()
     if not options.is_empty():
         var title := "끼어들 수 있습니다  (%d번 남음)" % s.meeting_actions_left
@@ -296,8 +300,7 @@ func _intervene(kind: String, ref: String) -> void:
         screen.fx.toast("지금은 그렇게 할 수 없습니다.", AstraUI.GOLD)
         return
     screen.fx.play("select")
-    for shift in result.get("shifts", []):
-        screen.fx.toast(AstraJosa.i(s.name_of(str(shift.get("npc", "")))) + " 생각을 바꿨습니다.", AstraUI.CYAN, 2.2)
+    # The actual reason from DecisionTrace is spoken in the feed.
     _timer.start()
     _render_actions()
 

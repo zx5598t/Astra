@@ -457,10 +457,10 @@ func clear_voyage_memory_for_slot(slot: int) -> void:
 
 func player_profile_for_slot(slot: int) -> Dictionary:
     var profile: Dictionary = _dict(slot_player_profiles.get(str(maxi(0, slot)), {}))
-    return {"name": str(profile.get("name", "")), "preset": str(profile.get("preset", "p1"))}
+    return AstraExplorerCatalog.normalize(profile)
 
 func set_player_profile_for_slot(slot: int, profile: Dictionary) -> void:
-    slot_player_profiles[str(maxi(0, slot))] = {"name": str(profile.get("name", "")).strip_edges().left(10), "preset": str(profile.get("preset", "p1"))}
+    slot_player_profiles[str(maxi(0, slot))] = AstraExplorerCatalog.normalize(profile)
 
 func deep_unlocked() -> bool:
     return campaign_completed

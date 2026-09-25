@@ -15,4 +15,6 @@ Godot and its third-party library license notices: https://godotengine.org/licen
 
 ## Artwork
 
+The six explorers' portraits, expression busts, full figures and pixel sheets (`assets/explorers/`, `assets/pixel080/player/*_a*`) are cut from drawings supplied by the project owner (`플레이어/`, `미니 도트 캐릭/`) by `tools/import_explorers_090.gd` and `tools/import_pixel_090.gd`: cropped, uniformly scaled and edge-cleaned only. The generated placeholder portraits of an earlier 0.9.0 draft were removed and are not shipped.
+
 Character, environment, item and icon artwork was supplied by the project owner. Version 0.4.2 uses the owner's new character folders (`assets/art050`). Representative portraits and expression cells were mechanically cropped, resized and border-cleaned using Godot. Source files remain unchanged. This update does not assign a new license to those images.

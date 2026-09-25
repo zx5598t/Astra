@@ -42,7 +42,7 @@ func _run() -> void:
         app.session = AstraGameSession.new()
         var s: AstraGameSession = app.session
         s.setup("THRESHOLD", 4040, "GUARDIAN")
-        s.set_player_profile({"name": "하윤", "preset": "p3"})
+        s.set_player_profile(AstraExplorerCatalog.profile_for("sia"))
         s.begin_voyage({"campaign_tally": {"defended": {"noa": 3}, "sent_wrong": {"rho": 1}, "saved": {"sena": 2}, "deaths": {}}})
         for id in s.living_null_ids():
             s.crew[id].status = AstraCrewMember.STATUS_ISOLATED

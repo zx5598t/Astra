@@ -8,11 +8,16 @@ extends SceneTree
 #   godot --headless --path . --script res://tests/walkthrough_080.gd
 
 var out: Array = []
+var explorer_id := "neutral"
 
 func _initialize() -> void:
     var seeds := {"CALIBRATION": 4242, "DEAD_AIR": 5151, "GLASS_GARDEN": 6161, "ECHO_WARD": 7171, "SILENT_ORBIT": 8181}
     for case_id in ["CALIBRATION", "DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD", "SILENT_ORBIT"]:
         _play(case_id, int(seeds[case_id]), "GUARDIAN" if case_id == "SILENT_ORBIT" else "NONE", case_id == "DEAD_AIR")
+    for id in ["serin", "mika"]:
+        explorer_id = id
+        for case_id in ["CALIBRATION", "DEAD_AIR", "GLASS_GARDEN", "SILENT_ORBIT"]:
+            _play(case_id, int(seeds[case_id]), "GUARDIAN" if case_id == "SILENT_ORBIT" else "NONE", false)
     DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://build/qa"))
     var file := FileAccess.open("res://build/qa/walkthrough_080.txt", FileAccess.WRITE)
     file.store_string("\n".join(PackedStringArray(out)))
@@ -68,6 +73,9 @@ func _read_story(s: AstraGameSession) -> void:
 func _play(case_id: String, seed_value: int, protocol: String, wrong_first: bool) -> void:
     var s := AstraGameSession.new()
     s.setup(case_id, seed_value, protocol)
+    if explorer_id in AstraExplorerCatalog.ORDER:
+        s.set_player_profile(AstraExplorerCatalog.profile_for(explorer_id))
+    w("탐사요원: %s · seed %d" % [s.player_profile()["name"], seed_value])
     w("")
     w("==================== %s · STAGE %d · %s ====================" % [AstraCaseCatalog.part_label(case_id), s.stage_index(), str(AstraVoyageContent.chapter(case_id).get("title", ""))])
     var guard := 0
@@ -124,6 +132,14 @@ func _play(case_id: String, seed_value: int, protocol: String, wrong_first: bool
                         var e: Dictionary = s.meeting_feed[i]
                         w("   %s: %s" % [_name(s, str(e.get("speaker", ""))), str(e.get("text", ""))])
                     shown = s.meeting_feed.size()
+                    if explorer_id != "neutral":
+                        var checks := s.clarification_options()
+                        if not checks.is_empty():
+                            w("   >> 재확인: " + str(checks[0]["label"]))
+                            var checked := s.intervene("clarify", str(checks[0]["ref"]))
+                            for line in checked.get("lines", []):
+                                w("   %s: %s" % [_name(s, str(line.get("speaker", ""))), str(line.get("text", ""))])
+                            shown = s.meeting_feed.size()
                     var options := s.meeting_options()
                     if not options.is_empty():
                         var labels: Array = []
@@ -144,6 +160,14 @@ func _play(case_id: String, seed_value: int, protocol: String, wrong_first: bool
                 for i in range(shown, s.meeting_feed.size()):
                     var e3: Dictionary = s.meeting_feed[i]
                     w("   %s: %s" % [_name(s, str(e3.get("speaker", ""))), str(e3.get("text", ""))])
+                var responses := 0
+                var repeats := 0
+                var previous := ""
+                for line in s.meeting_feed:
+                    responses += 1 if str(line.get("thread_role", "")) in ["response", "challenge"] else 0
+                    repeats += 1 if str(line.get("text", "")) == previous else 0
+                    previous = str(line.get("text", ""))
+                w("   [QA] arcs=%d responses/challenges=%d immediate_repeats=%d checks_used=%d" % [s.stage_state().get("meeting_arcs", []).size(), responses, repeats, 3-int(s.stage_state().get("clarifications_left", 3))])
                 s.advance()
             "VOTE":
                 w("")

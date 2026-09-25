@@ -32,7 +32,7 @@ func _run() -> void:
         var s: AstraGameSession = app.session
         var stage := AstraCaseCatalog.stage_index(str(data["case_id"]))
         s.setup(str(data["case_id"]), 3131, "GUARDIAN" if stage >= 5 else "NONE", "STANDARD")
-        s.set_player_profile({"name": "하윤", "preset": "p%d" % (1 + shown % 6)})
+        s.set_player_profile(AstraExplorerCatalog.profile_for(AstraExplorerCatalog.ORDER[shown % 6]))
         app.show_session_screen()
         var guard := 0
         while str(s.story_scene().get("kind", "")) != "interlude" and not s.story_finished() and guard < 40:

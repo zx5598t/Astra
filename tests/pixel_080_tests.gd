@@ -22,7 +22,7 @@ func _initialize() -> void:
     var sheets: Array = []
     for id in AstraCrewCatalog.ORDER:
         sheets.append(AstraPixelActor.crew_sheet(str(id)))
-    for preset in AstraPlayerSetup.PRESETS:
+    for preset in AstraPlayerSetup.PRESETS + AstraExplorerCatalog.ART_IDS:
         sheets.append(AstraPixelActor.player_sheet(str(preset)))
         check(ResourceLoader.exists("res://assets/pixel080/player/%s_face.png" % preset), "face icon for " + str(preset))
     for path in sheets:
@@ -33,9 +33,12 @@ func _initialize() -> void:
         var image := tex.get_image()
         if image.is_compressed():
             image.decompress()
-        check(image.get_width() == AstraPixelActor.FRAME.x * 3 and image.get_height() == AstraPixelActor.FRAME.y * 4, "sheet is 3x4 frames: " + str(path))
+        var info := AstraPixelManifest.sheet(str(path).get_file().get_basename())
+        var cols := int(info.get("frames", 0))
+        check(cols in [3, 4], "manifest knows the sheet: " + str(path))
+        check(image.get_width() == AstraPixelActor.FRAME.x * cols and image.get_height() == AstraPixelActor.FRAME.y * 4, "sheet is frames x 4: " + str(path))
         for row in range(4):
-            for column in range(3):
+            for column in range(cols):
                 var frame := image.get_region(Rect2i(column * AstraPixelActor.FRAME.x, row * AstraPixelActor.FRAME.y, AstraPixelActor.FRAME.x, AstraPixelActor.FRAME.y))
                 var used := frame.get_used_rect()
                 check(used.size.x > 20 and used.size.y > 60, "frame %d,%d drawn: %s" % [row, column, path])
@@ -72,7 +75,7 @@ func _initialize() -> void:
         room.free()
     _motion_tests()
     _life_tests()
-    _action_sheet_tests()
+    _pose_tests()
     _cue_tests()
     _interlude_flow_test()
     _finish()
@@ -102,12 +105,16 @@ func _motion_tests() -> void:
         peak = maxi(peak, a.band_offsets()[0].y)
     check(peak >= 3, "a nod lowers the head")
     check(a.gesture_active() == "", "a nod ends by itself")
-    a.gesture("hop", true)
+    # a person without a drawn cheer hops with the bands
+    var legacy := AstraPixelActor.new()
+    legacy.setup(AstraPixelActor.player_sheet("p1"), "player", "", Color.WHITE)
+    legacy.gesture("hop", true)
     var hop := 0
     for i in range(10):
-        a._process(0.03)
-        hop = maxi(hop, int(a.band_offsets()[2]))
+        legacy._process(0.03)
+        hop = maxi(hop, int(legacy.band_offsets()[2]))
     check(hop >= 6, "a hop leaves the floor")
+    legacy.free()
     a.gesture("shift", true)
     a._process(0.05)
     check(a._sprite.animation == &"walk_down" and a._sprite.frame == 0, "a weight shift shows a step frame")
@@ -120,6 +127,7 @@ func _motion_tests() -> void:
         a._process(0.05)
     check(a.emote_active() == "", "an emote goes away")
     a.set_moving(true)
+    a._push_until = -1.0
     a._sprite.pause()
     a._sprite.frame = 0
     a._process(0.0)
@@ -148,8 +156,7 @@ func _motion_tests() -> void:
     a.talking = false
     a.seated = true
     a._process(0.0)
-    check(a._sprite.position.y == float(AstraPixelActor.SIT_DROP), "sitting lowers the body behind the table")
-    check(a.current_animation() == "idle_down", "without an action sheet sitting uses the standing frame")
+    check(a._sprite.position.y == float(AstraPixelActor.SIT_DROP_DRAWN) and a.current_animation().begins_with("pose_sit_"), "sitting uses the drawn sitting pose behind the table")
     AstraUI.reduce_motion = true
     a.seated = false
     a.gesture("hop", true)
@@ -202,35 +209,93 @@ func _life_tests() -> void:
     check(p.position == held and not p.moving, "a pacing person stops for you")
     p.free()
 
-func _action_sheet_tests() -> void:
-    # Stand-in: the walking sheet itself has the 3x4 layout of an action sheet.
+# Drawn poses (0.9.0): every person has a pose sheet with no blank cell, poses
+# play with a dip in and out, turning round passes through a side frame, a walk
+# settles when it stops, explorers walk on four drawn frames, and reduced
+# motion keeps the poses but drops the dips.
+func _pose_tests() -> void:
+    var keys: Array = AstraCrewCatalog.ORDER.duplicate()
+    keys.append_array(AstraExplorerCatalog.ART_IDS)
+    for key in keys:
+        var info := AstraPixelManifest.sheet(str(key))
+        var poses: Dictionary = info.get("poses", {})
+        check(poses.size() >= 6, "several drawn poses: %s" % key)
+        for name in ["greet", "surprised", "cheer"]:
+            check(poses.has(name), "%s has %s" % [key, name])
+        var tex: Texture2D = load(str(info.get("poses_sheet", ""))) if ResourceLoader.exists(str(info.get("poses_sheet", ""))) else null
+        check(tex != null, "pose sheet loads: %s" % key)
+        if tex == null:
+            continue
+        var image := tex.get_image()
+        if image.is_compressed():
+            image.decompress()
+        var cols := int(info.get("pose_cols", 8))
+        var seen := {}
+        for name in poses:
+            for cell in poses[name]:
+                if seen.has(cell):
+                    continue
+                seen[cell] = true
+                var frame := image.get_region(Rect2i((int(cell) % cols) * AstraPixelActor.POSE_FRAME.x, (int(cell) / cols) * AstraPixelActor.POSE_FRAME.y, AstraPixelActor.POSE_FRAME.x, AstraPixelActor.POSE_FRAME.y))
+                var used := frame.get_used_rect()
+                check(used.size.y > 50 and used.size.x > 30, "pose %s/%s drawn" % [key, name])
+                check(used.end.y >= AstraPixelActor.POSE_FRAME.y - 6, "pose %s/%s stands on the floor" % [key, name])
+                # the same person at the same size: a standing pose is never
+                # much taller than the walking figure
+                check(used.size.y <= 132, "pose %s/%s keeps the figure's size" % [key, name])
+    for art in AstraExplorerCatalog.ART_IDS:
+        var e := AstraPixelActor.new()
+        e.setup(AstraPixelActor.player_sheet(str(art)), "player", "", Color.WHITE)
+        check(e.walk_frame_count() == 4, "explorers walk on four drawn frames: " + str(art))
+        var fr: SpriteFrames = e._sprite.sprite_frames
+        for dir in AstraPixelActor.DIRECTIONS:
+            check(fr.get_frame_count("walk_" + dir) == 4 and fr.get_frame_count("carry_walk_" + dir) == 4, "walk and carry walk %s: %s" % [dir, art])
+        e.carrying = true
+        check(e.current_animation() == "carry_idle_down", "carrying their tool: " + str(art))
+        e.free()
     var d := AstraPixelActor.new()
-    d.setup(AstraPixelActor.crew_sheet("noa"), "noa", "노아", Color.WHITE, AstraPixelActor.crew_sheet("noa"))
-    check(d.has_action_sheet(), "an action sheet is picked up")
-    var fr: SpriteFrames = d._sprite.sprite_frames
-    for anim in ["work_up", "talk_down", "sit_down", "sit_talk", "react_0", "react_1", "react_2"]:
-        check(fr.has_animation(anim), "action loop: " + anim)
-    d.face("up")
-    d.working = true
-    check(d.current_animation() == "work_up", "the drawn work pose at a console")
-    d.working = false
+    d.setup(AstraPixelActor.crew_sheet("noa"), "noa", "노아", Color.WHITE)
+    check(d.has_action_sheet() and d.has_pose("cheer"), "drawn poses are picked up")
     d.face("down")
-    d.talking = true
-    check(d.current_animation() == "talk_down", "the drawn talking pose")
-    d.talking = false
-    d.seated = true
-    check(d.current_animation() == "sit_down", "the drawn sitting pose")
-    d.seated = false
     d.gesture("startle", true)
-    check(d.current_animation() == "react_0", "the drawn start")
-    for i in range(12):
+    check(d.pose_active() == "surprised" and d.current_animation() == "idle_down", "a drawn start begins with a dip on the standing frame")
+    d._process(0.04)
+    check(d.band_offsets()[1].y == 1, "anticipation: the body dips before the pose")
+    d._process(0.06)
+    check(str(d._sprite.animation).begins_with("pose_surprised_") and d._sprite.offset.y == -AstraPixelActor.POSE_FRAME.y + 4.0, "then the drawn pose, anchored at the feet")
+    for i in range(24):
         d._process(0.05)
-    check(d.current_animation() == "idle_down" and d._sprite.animation == &"idle_down", "back to standing after a drawn reaction")
+    check(d.pose_active() == "" and d._sprite.animation == &"idle_down", "back to standing after a drawn reaction")
+    d.face("left")
+    d.gesture("tilt", true)
+    check(d.pose_active() == "" and d.gesture_active() == "tilt", "a small front pose does not turn a side-facing person: band tilt instead")
+    for i in range(20):
+        d._process(0.05)
+    d.face("right")
+    check(d.current_animation() == "idle_down", "turning round passes through the front")
+    d._process(0.1)
+    check(d.current_animation() == "idle_right", "and ends facing the new way")
+    d.set_moving(true)
+    d._process(0.2)
+    d.set_moving(false)
+    d._process(0.02)
+    check(d.band_offsets()[1].y == 1, "a walk settles when it stops")
+    d.talking = true
+    var talked := false
+    d.face("down")
+    for i in range(80):
+        d._process(0.05)
+        talked = talked or str(d._sprite.animation).begins_with("pose_talk_")
+    check(talked, "a long line comes with a drawn talking gesture")
+    d.talking = false
+    for i in range(30):
+        d._process(0.05)
+    AstraUI.reduce_motion = true
+    d.gesture("hop", true)
+    d._process(0.01)
+    check(str(d._sprite.animation).begins_with("pose_cheer_") and d.band_offsets()[1].y == 0, "reduced motion: the pose without the dip")
+    AstraUI.reduce_motion = false
     d.free()
-    var plain := AstraPixelActor.new()
-    plain.setup(AstraPixelActor.crew_sheet("mira"), "mira", "미라", Color.WHITE)
-    check(plain.has_action_sheet() == ResourceLoader.exists(AstraPixelActor.action_sheet(AstraPixelActor.crew_sheet("mira"))), "no action sheet: made-up poses")
-    plain.free()
 
 func _cue_tests() -> void:
     var view := AstraInterludeView.new()
@@ -253,7 +318,7 @@ func _interlude_flow_test() -> void:
     s.setup("CONTINUITY", 3131, "GUARDIAN", "STANDARD")
     var view := AstraInterludeView.new()
     root.add_child(view)
-    view.setup(s, "continuity_evening", "p1")
+    view.setup(s, "continuity_evening", "serin_a")
     var got := {"result": ""}
     view.done.connect(func(r: String): got["result"] = r)
     check(view.actors["lyra"].seated and view.actors["mira"].seated and not view.actors["rho"].seated, "the lounge seats two at dinner")

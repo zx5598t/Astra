@@ -23,7 +23,7 @@ func _open(case_id: String, preset: String):
     var s: AstraGameSession = app.session
     var stage := AstraCaseCatalog.stage_index(case_id)
     s.setup(case_id, 4242, "GUARDIAN" if stage >= 5 else "NONE", "STANDARD")
-    s.set_player_profile({"name": "하윤", "preset": preset})
+    s.set_player_profile(AstraExplorerCatalog.profile_for(preset) if preset in AstraExplorerCatalog.ORDER else {"name": "하윤", "preset": preset})
     app.show_session_screen()
     var guard := 0
     while str(s.story_scene().get("kind", "")) != "interlude" and not s.story_finished() and guard < 40:
@@ -51,7 +51,7 @@ func _run() -> void:
     root.size = Vector2i(1366, 768)
     DisplayServer.window_set_size(Vector2i(1366, 768))
     await wait_frames(4)
-    var inter = await _open("ECHO_WARD", "p3")
+    var inter = await _open("ECHO_WARD", "serin")
     if inter == null:
         print("NO INTERLUDE")
         quit(1)
@@ -70,7 +70,7 @@ func _run() -> void:
         inter._task._finish("success")
     await capture("4_task_done", 0.12)
     await capture("4b_task_done", 0.25)
-    inter = await _open("CONTINUITY", "p2")
+    inter = await _open("CONTINUITY", "rael")
     if inter != null:
         inter.consume_advance()
         await _walk(inter, inter.actors["mira"].position + Vector2(0, 120), 1.6)

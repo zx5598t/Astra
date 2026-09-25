@@ -1,3 +1,49 @@
+# 0.9.0 HUMAN VARIABLE — LOCAL VALIDATION — 2026-09-25
+
+기준: `main` 9ed806c (v0.8.2) · branch `astra-0.9.0-human-variable` · VERSION **0.9.0** · Snapshot v4 · Meta save v12 · migration 없음
+(새 필드 `explorer_id`/`art_id`는 기존 프로필 dictionary 안의 선택 필드, 기존 p1–p6 저장은 중립 탐사요원으로 로드).
+
+## 이번 패스에서 바로잡은 것
+- 이전 0.9.0 초안은 탐사요원 초상화를 **생성 이미지**(`assets/player_src/*_portrait.png`)로 넣고, 도트를 임시 외형 p1–p6에
+  임의로 묶어 두었다(세린=p2 등). 사용자가 넣은 `플레이어/` 전신 6장·표정 시트 4장과 `미니 도트 캐릭/<이름>*.png`는 쓰이지 않았다.
+  생성 이미지를 제거하고 여섯 명 모두 사용자 원본으로 교체했다(`tools/import_explorers_090.gd`, `tools/import_pixel_090.gd`).
+- 새로 추가된 승무원 동작 시트(`<이름>1.png`, `<이름>2.png`, 16장)가 게임에서 쓰이지 않았다 → 176개 포즈 칸으로 연결.
+- `루칸1.png`(소렌 그림)·`소렌2.png`(루칸 그림) 이름 뒤바뀜을 그림 기준으로 매핑.
+- 미카·라엘·시아 걷기 시트의 옆모습 두 줄이 같은 방향 → 왼쪽은 좌우 반전으로 생성.
+- 96px 폭에서 긴 머리·코트가 잘리던 걷기 프레임(0.8 importer 경고 40여 건) → 128px, 잘림 0.
+- 대화·회의에서 탐사요원 얼굴이 일러스트 머리(같은 원본)로 표시됨. 기록 열기·압박 대사도 탐사요원 말투.
+
+## 자동 검증 (Windows 로컬, Godot 4.7.2, `tests/ci_suite.txt` 22개 전부)
+- `ASTRA TESTS OK · 61,840 checks` (40 games/Stage). 기준치 변경 없음:
+  TOTAL smart **92%** · random **67%** · passive **63%** · PART II smart 90% / passive **53%** ·
+  기여 smart 1.70 공개 사실/게임 vs passive 0.66.
+- Stage별 smart/random/passive: CALIBRATION 100/70/65 · DEAD_AIR 95/82/87 · GLASS_GARDEN 100/87/95 · ECHO_WARD 95/95/97 ·
+  SILENT_ORBIT 100/70/57 · RED_SHIFT 90/57/55 · LAST_LIGHT 92/40/40 · SECOND_WATCH 87/55/65 · BORROWED_DAYS 87/57/37 ·
+  BLIND_DECK 92/70/65 · THREE_MINUTES_DARK 92/77/52 · CONTINUITY 80/65/50 · THRESHOLD 92/55/55.
+- Stage 2~4 paired agency (8 seeds): ACTIVE/PASSIVE 승리 7/7·8/8·8/8, 경과 일수 합계 11/14·13/17·13/18, 무고한 격리 합계 4/7·5/9·5/10,
+  희생 4/7·5/9·5/10, 공개 사실 11/0·22/0·20/0, 회의 판단 변화 8/0·10/0·16/0, 투표 의향 변화 9/0·14/0·23/0.
+- `ASTRA HUMAN VARIABLE 090 TESTS OK · 1,176 checks`: 같은 seed·다른 탐사요원 → packet·Null 동일, 여섯 가지 실제 대화/회의 문장,
+  저장·복원, 여섯 명 모두 전신·머리·흉상 5 mood·도트·얼굴 존재, 탐사요원 도트 4프레임 보행, 레거시 p1–p6 중립 유지.
+- `ASTRA PIXEL 080 TESTS OK · 1,711 checks`: 20개 걷기 시트(승무원 8·탐사요원 6·레거시 6) 모든 칸 비어 있지 않음·발 바닥,
+  14명 포즈 시트의 모든 칸 비어 있지 않음·바닥·걷기 인물보다 크지 않음, 준비/회복 박자, 제자리 돌기, 멈춤 settle, 말하기 손짓,
+  줄인 움직임.
+- UI smoke OK (첫 의미 있는 선택 17클릭, 첫 투표 24클릭), campaign 219, deep 66, agency 66, walkthrough 2,479줄, 나머지 보존 suite 전부 PASS.
+- 변환 감사(`assets/pixel080/manifest.json`): 포즈 176칸, 잘림 0, 걷기 한 방향 안에서 머리 끝 흔들림 ≤ 4px(0–1px 78/104 방향).
+
+## 시각 확인 (창 모드)
+- `visual_human_090.gd` OK: 선택 화면 6명 × 1366×768·1920×1080(카드·시작 버튼 화면 안), 14명 × 두 해상도 동작 시트
+  (모든 걷기 프레임, 띠 동작, 전환, 포즈) → `build/qa/explorer090_*`, `build/qa/motion090_*`.
+- `visual_life_080.gd` OK: 탐사요원(세린·라엘)으로 방 입장·알아챔·대화·과제 완료(그려진 환호)·저녁 식탁(그려진 앉은 자세).
+
+## 남은 한계 (사람이 판단할 것)
+- PART I Stage 2~4 PASSIVE 승률은 여전히 높다(87/95/97%). 이번 패스는 그림·동작·정체성 연결이 중심이고 증거 곡선은 바꾸지 않았다.
+  대신 ACTIVE는 같은 seed 8개 합계로 3~5일 빨리 끝나고, 무고한 격리와 희생이 3~5명 적다.
+- 동작 시트 중 제이스·라엘은 걷기 시트보다 머리를 크게 그린 편이라(머리 폭 비율 0.75~0.77) 포즈에서 머리가 걷기보다
+  약간 커 보일 수 있다(키 기준으로 맞추고 머리 폭을 25% 반영).
+- 대사 자연스러움·재미는 자동 검사로 판정하지 않는다. `build/qa/walkthrough_080.txt`의 세린/미카 비교 구간을 읽어 볼 것.
+
+---
+
 # 0.8.2 PLAYER MATTERS — FINAL VALIDATION — 2026-09-25
 
 기준 main 시작점: `f0ff5a97c49f7d1e5404db16df91145d270d0fcb`  

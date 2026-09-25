@@ -1150,7 +1150,7 @@ func question_options(npc_id: String) -> Array:
     if member == null or not member.is_alive() or phase != "INTERROGATION" or outcome != "":
         return []
     if not conversation_open(npc_id):
-        return [{"intent": "STATEMENT", "label": "이야기를 듣는다", "hint": "%s에 어디 있었는지, 무엇을 봤는지 듣습니다. 대화 1회를 씁니다." % incident_time(),
+        return [{"intent": "STATEMENT", "label": AstraExplorerCatalog.question(str(player_profile()["explorer_id"]), "STATEMENT", "이야기를 듣는다").replace("{time}", incident_time()), "hint": "%s에 어디 있었는지, 무엇을 봤는지 듣습니다. 대화 1회를 씁니다." % incident_time(),
             "enabled": conversations_left() > 0, "key": true}]
     var enabled := followups_left(npc_id) > 0
     var asked := _asked(npc_id)
@@ -1197,6 +1197,7 @@ func question_options(npc_id: String) -> Array:
         options.append({"intent": "EMPATHY", "label": "표정을 읽는다 · 엠패스", "hint": "추가 질문 1회. 감정 반응과 방어 태도, 관계를 읽습니다. 거짓말 판정은 아닙니다.", "enabled": true, "_p": 0.0})
     for option in options:
         option.erase("_p")
+        option["label"] = AstraExplorerCatalog.question(str(player_profile()["explorer_id"]), str(option["intent"]), str(option["label"])).replace("{time}", incident_time())
     return options
 
 func _checkable_record(npc_id: String) -> Dictionary:
@@ -1393,6 +1394,21 @@ func _statement(member: AstraCrewMember, result: Dictionary) -> void:
     var mates: Array = claim.get("companions", [])
     var params := {"time": incident_time(), "pos": room_name(str(claim.get("position", ""))), "mates": AstraJosa.join_names(_names(mates)),
         "room": room_name(str(incident().get("room", "")))}
+    # Who the explorer is shows first: their own opening on the first talk of
+    # a Stage, and with some people a short exchange that sets the starting
+    # tone between the two (AstraExplorerCatalog.FIRST_CONTACT, rotating by
+    # Stage). Wording only: no fact, weight or trust changes here.
+    var identity := str(player_profile()["explorer_id"])
+    var introduced: Dictionary = stage_state().get("explorer_introduced", {})
+    if day == 1 and not introduced.has(member.id) and identity in AstraExplorerCatalog.ORDER:
+        var contact := AstraExplorerCatalog.first_contact(identity, member.id, stage_index())
+        if not contact.is_empty():
+            _player_line(member, str(contact[1]), result, "explorer_contact")
+            _say_text(member, str(contact[2]), result, "explorer_tone")
+        elif introduced.is_empty():
+            _player_line(member, str(AstraExplorerCatalog.data(identity)["opening"]), result, "explorer_opening")
+        introduced[member.id] = true
+        stage_state()["explorer_introduced"] = introduced
     var opener := _conversation_opener(member)
     if opener != "":
         _say_text(member, opener, result, "opener")
@@ -2044,7 +2060,12 @@ func _analyst_fact(ref: String) -> Dictionary:
 func _pick(key: String) -> float:
     return _stable_noise("%s:%d" % [key, day])
 
+# The explorer's own public wording for a meeting move (same placeholders).
+func _voice(key: String, fallback: String) -> String:
+    return AstraExplorerCatalog.meeting_line(str(player_profile()["explorer_id"]), key, fallback)
+
 func _player_line(member: AstraCrewMember, text: String, result: Dictionary, intent: String) -> void:
+    text = AstraExplorerCatalog.spoken(str(player_profile()["explorer_id"]), intent, text).replace("{time}", incident_time())
     _transcript(member.id, "player", text, intent)
     result["lines"].append({"speaker": "player", "text": _josa_inline(text), "intent": intent})
 
@@ -2529,6 +2550,8 @@ func _open_meeting() -> void:
     state["meeting_moment"] = {}
     state["meeting_over"] = false
     state["meeting_day"] = day
+    state["clarifications_left"] = 3
+    state["meeting_arcs"] = []
     var mood := meeting_temperature()
     if mood == "grief":
         var last: Dictionary = casualties[casualties.size() - 1]
@@ -2627,6 +2650,7 @@ func meeting_continue() -> Array:
     if phase != "MEETING" or bool(state.get("meeting_over", false)):
         return []
     var start := meeting_feed.size()
+    _close_argument()
     var plan: Array = state.get("meeting_plan", [])
     state["meeting_moment"] = {}
     var played := false
@@ -2635,13 +2659,14 @@ func meeting_continue() -> Array:
         state["meeting_plan"] = plan
         if _play_thread(kind):
             state["meeting_played"] = int(state.get("meeting_played", 0)) + 1
+            _begin_argument(start)
             played = true
             break
     state["meeting_plan"] = plan
     if not played:
         state["meeting_over"] = true
         state["meeting_moment"] = {}
-        _feed_narration("더 꺼낼 말이 없다. 이제 한 사람을 정해야 한다.")
+        _meeting_closing()
     _refresh_npc_suspicion()
     _recompute_contradictions()
     changed.emit()
@@ -2658,6 +2683,113 @@ func _set_moment(kind: String, data: Dictionary) -> void:
     var moment := data.duplicate(true)
     moment["kind"] = kind
     stage_state()["meeting_moment"] = moment
+
+# A small extension of the current thread/moment, saved with stage_080. Soft
+# checks revisit public sources without altering weights or spending EMPATH.
+func clarification_options() -> Array:
+    if phase != "MEETING" or meeting_over() or outcome != "" or int(stage_state().get("clarifications_left", 3)) <= 0:
+        return []
+    var moment := meeting_moment()
+    if moment.is_empty() or bool(moment.get("clarified", false)):
+        return []
+    var ref := str(moment.get("ref", ""))
+    var item := fragment(ref)
+    if not item.is_empty() and AstraKnowledgeModel.is_public(flags, ref) and is_alive(str(item.get("owner", ""))):
+        return [{"kind": "clarify", "ref": ref, "label": "출처와 원문을 다시 확인한다", "tone": "calm"}]
+    var subject := str(moment.get("subject", ""))
+    if is_alive(subject) and public_claims.has(subject):
+        return [{"kind": "clarify", "ref": "claim:" + subject, "label": "%s의 설명과 남은 의문을 짚는다" % name_of(subject), "tone": "calm"}]
+    return []
+
+func _begin_argument(start: int) -> void:
+    var state := stage_state()
+    var arcs: Array = state.get("meeting_arcs", [])
+    var moment := meeting_moment()
+    if moment.is_empty():
+        return
+    arcs.append({"day": day, "start": start, "subject": str(moment.get("subject", "")),
+        "ref": str(moment.get("ref", "")), "kind": str(moment.get("kind", "")), "status": "unresolved", "closed": false})
+    state["meeting_arcs"] = arcs
+
+func _close_argument() -> void:
+    var arcs: Array = stage_state().get("meeting_arcs", [])
+    if arcs.is_empty() or bool(arcs.back().get("closed", false)):
+        return
+    var arc: Dictionary = arcs.back()
+    arc["end"] = meeting_feed.size()
+    arc["closed"] = true
+    var ref := str(arc.get("ref", ""))
+    var subject := str(arc.get("subject", ""))
+    var status := "unresolved"
+    if bool(stage_state().get("refuted_frames", {}).get(ref, false)):
+        status = "contradicted"
+    for item in current_packet().get("fragments", []):
+        if str(item.get("refutes", "")) == subject and contested_state(str(item.get("id", ""))) == "settled":
+            status = "contradicted"
+    if bool(stage_state().get("confessions", {}).get(subject, {}).get("public", false)):
+        status = "weakened"
+    arc["status"] = status
+    # The concrete unresolved statements stay in the feed. No suspicion score.
+
+func _clarify_argument(ref: String) -> Dictionary:
+    var legal := false
+    for option in clarification_options():
+        legal = legal or str(option["ref"]) == ref
+    if not legal:
+        return {"ok": false}
+    var start := meeting_feed.size()
+    var moment := meeting_moment()
+    var subject := str(moment.get("subject", ""))
+    var topic := "review:" + ref
+    _feed_line("player", subject, _voice("clarify", "잠깐, 확인된 말과 아직 추측인 부분을 나눠 볼게요."), "player", "clarify", topic)
+    if ref.begins_with("claim:"):
+        subject = ref.trim_prefix("claim:")
+        var claim := current_claim(subject)
+        var mates: Array = claim.get("companions", [])
+        var alibi := AstraDialogue.line(subject, "m_alibi_with" if not mates.is_empty() else "m_alibi_alone",
+            {"pos": room_name(str(claim.get("position", ""))), "mates": names_of(mates)}, 0)
+        _feed_line(subject, subject, alibi, "defense", "response", topic)
+        if mates.is_empty():
+            _feed_line(subject, subject, AstraSocialLines.review_line(subject, 1), "defense", "response", topic)
+    else:
+        var item := fragment(ref)
+        var owner := str(item.get("owner", ""))
+        if subject == "":
+            subject = _first_active(Array(moment.get("members", [])), [owner])
+        var retracted := bool(stage_state().get("refuted_frames", {}).get(ref, false))
+        if retracted:
+            _feed_narration("이미 반박된 목격 원문을 다시 확인한다: “%s”" % str(item.get("text", "")))
+        else:
+            var prefix := "내가 남긴 원문이야. “%s”" if owner in BANMAL_SPEAKERS else "제가 남긴 원문이에요. “%s”"
+            _feed_line(owner, subject, prefix % str(item.get("text", "")), "record", "clarify", topic)
+        if is_alive(subject) and subject != owner and not retracted:
+            _feed_line(subject, subject, AstraSocialLines.review_line(subject, 0), "defense", "response", topic)
+    # One listener states their own knowledge-based reservation, not a global
+    # answer. suspicion_breakdown(public_only) prevents private evidence leaks.
+    var listener := _first_active(["noa", "dax", "vale", "mira", "eli", "rho", "sena", "lyra"], [subject])
+    if listener != "" and subject != "":
+        var view := suspicion_breakdown(listener, subject, true)
+        var reason := _reason_text_for(listener, view.get("reasons", []))
+        if reason != "":
+            _feed_social(listener, "m_basis", {"target": name_of(subject), "reason": reason}, "react", subject, "close", topic)
+    stage_state()["meeting_moment"]["clarified"] = true
+    stage_state()["clarifications_left"] = int(stage_state().get("clarifications_left", 3)) - 1
+    var arcs: Array = stage_state().get("meeting_arcs", [])
+    if not arcs.is_empty():
+        arcs.back()["clarified"] = true
+        arcs.back()["review_subject"] = subject
+    changed.emit()
+    return {"ok": true, "lines": meeting_feed.slice(start), "shifts": []}
+
+func _meeting_closing() -> void:
+    var said := 0
+    for conflict in manual_contradictions:
+        if int(conflict.get("day", 0)) == day and str(conflict.get("kind", "")) == "public":
+            _feed_narration(str(conflict.get("detail", "")))
+            said += 1
+            if said == 2:
+                break
+    _feed_narration("여기까지 확인한 말로 판단해야 한다. 지목받은 사람들의 마지막 말을 듣고, 오늘 격리할 한 사람을 정한다.")
 
 func _add_accusation(speaker: String, target: String, weight: float = 1.0) -> void:
     var entry := {"day": day, "speaker": speaker, "target": target, "weight": weight}
@@ -3301,6 +3433,19 @@ func _feed_social(npc_id: String, key: String, params: Dictionary, kind: String,
     if not is_alive(npc_id):
         return
     var text := AstraSocialLines.line(npc_id, key, params, _pick(npc_id + key + topic))
+    if key == "m_deny":
+        # Only reference evidence already spoken publicly. Innocents can use
+        # the same resistance vocabulary, so wording is not a role detector.
+        var heard := false
+        for item in current_packet().get("fragments", []):
+            if AstraKnowledgeModel.is_public(flags, str(item.get("id", ""))):
+                heard = true
+                break
+        if heard:
+            var tactic := 2 if (null_style(npc_id) == "COUNTERATTACK" if npc_id in living_null_ids() else npc_id in ["noa", "vale", "dax"]) else 0
+            if public_contradiction_keys.has("excuse:" + npc_id):
+                tactic = 1
+            text = AstraSocialLines.resistance_line(npc_id, tactic)
     if text == "":
         return
     _feed_line(npc_id, target_id, text, kind, thread_role, topic)
@@ -3508,6 +3653,8 @@ func _public_conflicts() -> Array:
     return result.slice(0, 2)
 
 func intervene(kind: String, ref: String) -> Dictionary:
+    if kind == "clarify":
+        return _clarify_argument(ref)
     if phase != "MEETING" or meeting_actions_left <= 0 or outcome != "":
         return {"ok": false}
     var before := _meeting_tops()
@@ -3539,6 +3686,11 @@ func intervene(kind: String, ref: String) -> Dictionary:
     _use_daily("interventions")
     _refresh_npc_suspicion()
     var shifts := _opinion_shift_lines(before)
+    var arcs: Array = stage_state().get("meeting_arcs", [])
+    if not arcs.is_empty():
+        arcs.back()["player_action"] = kind
+        arcs.back()["player_ref"] = ref
+        arcs.back()["reaction_count"] = shifts.size()
     for shift in shifts:
         _agency_event("meeting_shift", {"npc": str(shift.get("npc", "")), "before": str(shift.get("before", "")),
             "after": str(shift.get("after", "")), "player_caused": true, "action": kind, "ref": ref})
@@ -3589,7 +3741,7 @@ func _intervene_present(ref: String) -> bool:
     var item := fragment(ref)
     if item.is_empty() or not player_knows(ref) or AstraKnowledgeModel.is_public(flags, ref):
         return false
-    _feed_line("player", str(item.get("subject", "")), "제가 들은 걸 공개할게요. %s" % str(item.get("text", "")), "player", "anchor", "present:" + ref)
+    _feed_line("player", str(item.get("subject", "")), _voice("present", "제가 들은 걸 공개할게요. %s") % str(item.get("text", "")), "player", "anchor", "present:" + ref)
     _publish_fragment(item, "player")
     stats["presented"] = int(stats.get("presented", 0)) + 1
     record_player_claim(AstraClaimLedger.KIND_WITNESS, "공개했다: " + str(item.get("text", "")), {"target": str(item.get("subject", item.get("refutes", "")))})
@@ -3636,7 +3788,7 @@ func _intervene_defend(target: String) -> bool:
         _publish_confession(target)
         crew[target].adjust_trust(0.06)
     else:
-        _feed_line("player", target, "%s|eul 몰아가기엔 근거가 부족해요. 확인된 것부터 봐요." % name_of(target), "player", "anchor", "defend:" + target)
+        _feed_line("player", target, _voice("defend", "%s|eul 몰아가기엔 근거가 부족해요. 확인된 것부터 봐요.") % name_of(target), "player", "anchor", "defend:" + target)
         _feed_social(target, "m_thanks", {}, "calm", target, "response", "defend:" + target)
     _maybe_challenge_player(target)
     notice.emit("defend", {"target": target})
@@ -3646,7 +3798,7 @@ func _intervene_contrast(a: String, b: String) -> bool:
     if not is_alive(a) or not is_alive(b):
         return false
     var key := "contrast:%s:%s" % [a, b]
-    _feed_line("player", a, "%s, %s. 두 사람 다 %s에 어디 있었는지 다시 말해 주세요." % [name_of(a), name_of(b), incident_time()], "player", "anchor", key)
+    _feed_line("player", a, _voice("compare", "%s, %s. 두 사람 다 %s에 어디 있었는지 다시 말해 주세요.") % [name_of(a), name_of(b), incident_time()], "player", "anchor", key)
     record_player_claim(AstraClaimLedger.KIND_WITNESS, "%s|wa %s|eul 대질했다." % [name_of(a), name_of(b)], {"target": a})
     for speaker in [a, b]:
         var claim := current_claim(speaker)
@@ -3667,7 +3819,7 @@ func _intervene_contrast(a: String, b: String) -> bool:
 func _intervene_support(target: String) -> bool:
     if not is_alive(target):
         return false
-    _feed_line("player", target, "저도 %s 쪽이 걸려요. 설명이 더 필요해요." % name_of(target), "player", "support", "suspicion:" + target)
+    _feed_line("player", target, _voice("support", "저도 %s 쪽이 걸려요. 설명이 더 필요해요.") % name_of(target), "player", "support", "suspicion:" + target)
     _add_accusation("player", target, 1.0)
     record_player_claim(AstraClaimLedger.KIND_ACCUSE, "%s에 대한 의심에 동의했다." % name_of(target), {"target": target})
     _feed_social(target, "m_defend_self", {"pos": room_name(str(current_claim(target).get("position", ""))), "mates": AstraJosa.join_names(_names(current_claim(target).get("companions", []))), "target": "탐사요원"}, "defense", target, "response", "suspicion:" + target)
@@ -3751,7 +3903,7 @@ func _intervene_group(ref: String) -> bool:
 func _intervene_press(target: String) -> bool:
     if not is_alive(target):
         return false
-    _feed_line("player", target, _josa_inline("%s, 그 시간 동선을 처음부터 다시 말해 주세요. 천천히요." % name_of(target)), "player", "anchor", "press:" + target)
+    _feed_line("player", target, _josa_inline(_voice("press", "%s, 그 시간 동선을 처음부터 다시 말해 주세요. 천천히요.") % name_of(target)), "player", "anchor", "press:" + target)
     _restate(target, "press:" + target, 0.12)
     _maybe_challenge_player(target)
     return true
@@ -3830,7 +3982,7 @@ func _intervene_coax(target: String) -> bool:
     if not is_alive(target) or _day_role(target) != "benign":
         return false
     var member: AstraCrewMember = crew[target]
-    _feed_line("player", target, _josa_inline("%s, 사건이랑 상관없는 일이라면 지금 말해도 괜찮아요. 그걸로 아무도 당신을 보내지 않아요." % name_of(target)), "player", "anchor", "coax:" + target)
+    _feed_line("player", target, _josa_inline(_voice("coax", "%s, 사건이랑 상관없는 일이라면 지금 말해도 괜찮아요. 그걸로 아무도 당신을 보내지 않아요.") % name_of(target)), "player", "anchor", "coax:" + target)
     if member.trust >= 0.5 or member.stress >= 0.55 or _pick("coax:" + target) < 0.35:
         var result := {"lines": []}
         _confess(member, result, false)
@@ -3855,7 +4007,7 @@ func _intervene_basis(speaker: String) -> bool:
         target = str(meeting_moment().get("subject", ""))
     if target == "" or target == speaker:
         return false
-    _feed_line("player", speaker, _josa_inline("잠깐요. %s, %s|eul 의심하는 근거부터 다시 말해 줄래요?" % [name_of(speaker), name_of(target)]), "player", "anchor", "basis:" + speaker)
+    _feed_line("player", speaker, _josa_inline(_voice("basis", "잠깐요. %s, %s|eul 의심하는 근거부터 다시 말해 줄래요?") % [name_of(speaker), name_of(target)]), "player", "anchor", "basis:" + speaker)
     var view := suspicion_breakdown(speaker, target, true)
     var hard := 0.0
     for reason in view.get("reasons", []):
@@ -3889,7 +4041,7 @@ func _intervene_source(ref: String) -> bool:
     var original := _hearsay_source(item)
     if not is_alive(via) or original.is_empty() or AstraKnowledgeModel.is_public(flags, str(original.get("id", ""))):
         return false
-    _feed_line("player", via, _josa_inline("%s, 직접 본 사람한테 듣고 싶어요. 정확히 무엇을 봤어요?" % name_of(via)), "player", "anchor", "hearsay:" + ref)
+    _feed_line("player", via, _josa_inline(_voice("hearsay", "%s, 직접 본 사람한테 듣고 싶어요. 정확히 무엇을 봤어요?") % name_of(via)), "player", "anchor", "hearsay:" + ref)
     _source_answers(item, original, via)
     stats["sources_checked"] = int(stats.get("sources_checked", 0)) + 1
     if bool(item.get("distorted", false)):
@@ -4388,6 +4540,16 @@ func final_statements() -> Array:
         # Someone hiding something harmless says so, without saying what.
         var hiding := _day_role(member.id) == "benign" and public_contradiction_keys.has("benign:" + member.id) and not bool(stage_state().get("confessions", {}).get(member.id, {}).get("public", false))
         var text := AstraSocialLines.line(member.id, "last_plea_secret" if hiding else "last_plea", {}, _pick(member.id + "plea"))
+        var defended := false
+        for entry in stage_state().get("public_defenses", []):
+            defended = defended or (str(entry.get("speaker", "")) == "player" and str(entry.get("target", "")) == member.id and int(entry.get("day", 0)) == day)
+        if defended:
+            text += " " + AstraSocialLines.review_line(member.id, 2)
+        else:
+            for arc in stage_state().get("meeting_arcs", []):
+                if str(arc.get("review_subject", arc.get("subject", ""))) == member.id and bool(arc.get("clarified", false)):
+                    text += " " + AstraSocialLines.review_line(member.id, 0)
+                    break
         statements.append({"id": member.id, "name": member.display_name, "text": _josa_inline(text), "votes_expected": int(tally.get(npc_id, 0))})
     return statements
 
@@ -4821,12 +4983,13 @@ func _interlude_cast_ready(id: String) -> bool:
 # Who the explorer is on screen: the name and look chosen at registration
 # (meta per save slot, passed in by the app). The crew still say 탐사요원.
 func player_profile() -> Dictionary:
-    var profile: Dictionary = flags.get("player_profile", {})
-    var name := str(profile.get("name", "")).strip_edges()
-    return {"name": name if name != "" else "탐사요원", "preset": str(profile.get("preset", "p1"))}
+    var profile := AstraExplorerCatalog.normalize(flags.get("player_profile", {}))
+    if str(profile["name"]) == "":
+        profile["name"] = "탐사요원"
+    return profile
 
 func set_player_profile(profile: Dictionary) -> void:
-    flags["player_profile"] = {"name": str(profile.get("name", "")), "preset": str(profile.get("preset", "p1"))}
+    flags["player_profile"] = AstraExplorerCatalog.normalize(profile)
 
 func interlude_result(id: String) -> String:
     return str(stage_state().get("interludes", {}).get(id, ""))
@@ -5280,7 +5443,7 @@ func _queue_result_story() -> void:
             scenes.append(_scene_entry({"id": "resolve_after_%s" % case_id.to_lower(), "art": art, "speaker": str(after[0][0]), "action": "", "lines": after}, "resolution"))
         var chapter := AstraVoyageContent.chapter(case_id)
         scenes.append(_scene_entry({"id": "story_hook_%s" % case_id.to_lower(), "art": art, "speaker": "", "action": "",
-            "lines": [["", str(chapter.get("outro", ""))], ["", str(chapter.get("next_hook", ""))]]}, "hook"))
+            "lines": [["", str(chapter.get("next_hook", ""))]]}, "hook"))
         if is_campaign_finale():
             scenes.append(_scene_entry(AstraStageStory.FINALE_CHOICE, "finale"))
         if not voyage.is_empty():

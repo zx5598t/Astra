@@ -23,3 +23,4 @@ campaign_080_tests.gd|ASTRA CAMPAIGN 080 TESTS OK|
 deep_080_tests.gd|ASTRA DEEP 080 TESTS OK|
 pixel_080_tests.gd|ASTRA PIXEL 080 TESTS OK|
 agency_082_tests.gd|ASTRA AGENCY 082 TESTS OK|
+human_variable_090_tests.gd|ASTRA HUMAN VARIABLE 090 TESTS OK|

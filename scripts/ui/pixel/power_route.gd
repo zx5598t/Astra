@@ -19,6 +19,9 @@ const NAMES := ["주 레버", "펌프 분기", "보안 분기", "보안 구역 �
 
 var helper_name: String = "준"
 var levers: Array = [false, true, false, false]
+var bypass: bool = false
+var goal: Array = GOAL.duplicate()
+var _status: Label
 var _tries: int = 0
 var _board: Control
 var _hint: Label
@@ -29,10 +32,12 @@ func setup(seed_value: int, helper: String) -> void:
     helper_name = helper
     var rng := RandomNumberGenerator.new()
     rng.seed = absi(hash("power_route|%d" % seed_value))
+    bypass = rng.randf() < 0.5
+    goal = [true, false, true, false] if bypass else GOAL.duplicate()
     # a start that is never already solved
     for i in range(4):
         levers[i] = rng.randf() < 0.5
-    if levers == GOAL:
+    if levers == goal:
         levers[1] = true
     set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     mouse_filter = Control.MOUSE_FILTER_STOP
@@ -47,18 +52,21 @@ func setup(seed_value: int, helper: String) -> void:
     panel.anchor_bottom = 0.5
     panel.offset_left = -400
     panel.offset_right = 400
-    panel.offset_top = -215
-    panel.offset_bottom = 215
+    panel.offset_top = -255
+    panel.offset_bottom = 255
     add_child(panel)
     var box := AstraUI.vbox(10)
     panel.add_child(box)
     box.add_child(AstraUI.label("분배반 · 보안 구역에 전력을", AstraUI.T_HEAD, AstraUI.GOLD))
+    box.add_child(AstraUI.prose("우회 회로 연결됨 · 4번 직결을 내리면 우회선이 연결됩니다." if bypass else "직결 회로 · 보안 분기와 4번 레버를 모두 올려 연결합니다.", AstraUI.T_UI, AstraUI.TEXT))
     _board = Control.new()
     _board.custom_minimum_size = Vector2(760, 250)
     _board.mouse_filter = Control.MOUSE_FILTER_STOP
     _board.draw.connect(_draw_board)
     _board.gui_input.connect(_on_board_input)
     box.add_child(_board)
+    _status = AstraUI.label("1–4 레버 전환 · Space 전력 확인 · 펌프 OFF / 보안 ON", AstraUI.T_META, AstraUI.CYAN)
+    box.add_child(_status)
     _hint = AstraUI.prose("%s: 레버를 눌러서 올리고 내려. 펌프랑 보안 구역을 같이 살리면 차단기가 떨어져." % helper_name, AstraUI.T_UI, AstraUI.MUTED)
     box.add_child(_hint)
     var row := AstraUI.hbox(10)
@@ -81,7 +89,7 @@ func _powered() -> Dictionary:
     var j1 := bool(levers[0])
     var pump := j1 and bool(levers[1])
     var j2 := j1 and bool(levers[2])
-    var security := j2 and bool(levers[3])
+    var security := j2 and (not bool(levers[3]) if bypass else bool(levers[3]))
     var lights := j2
     return {"pump": pump, "security": security, "lights": lights, "trip": pump and security}
 
@@ -103,7 +111,7 @@ func _try() -> void:
         _hint.text = "%s: 보안 구역까지 안 닿았어. 선을 따라가 봐." % helper_name
     if _tries >= 2:
         for i in range(4):
-            if bool(levers[i]) != bool(GOAL[i]):
+            if bool(levers[i]) != bool(goal[i]):
                 _hint.text += " …%s, 그거 하나 바꿔 봐." % str(NAMES[i])
                 break
     _board.queue_redraw()
@@ -141,6 +149,7 @@ func _draw_board() -> void:
     var size := _board.size
     _board.draw_rect(Rect2(Vector2.ZERO, size), Color("0b1520"))
     var p := _powered()
+    _status.text = "1–4 레버 · 펌프 %s / 보안 %s / %s" % ["ON" if p["pump"] else "OFF", "ON" if p["security"] else "OFF", "과부하" if p["trip"] else "안전"]
     var live := AstraUI.GOLD
     var dead := Color("2a3a4f")
     var bus := Vector2(40, size.y * 0.5)
@@ -166,6 +175,10 @@ func _draw_board() -> void:
     _wire(j2, Vector2(j2.x, l4.y), j2_live, live, dead)
     _wire(Vector2(j2.x, l4.y), l4, j2_live, live, dead)
     _wire(l4, sec, bool(p["security"]), live, dead)
+    if bypass:
+        _wire(l4 + Vector2(0, -35), sec + Vector2(0, -35), bool(p["security"]), live, dead)
+        _wire(l4, l4 + Vector2(0, -35), bool(p["security"]), live, dead)
+        _wire(sec + Vector2(0, -35), sec, bool(p["security"]), live, dead)
     _wire(j2, Vector2(j2.x, lights.y), j2_live, live, dead)
     _wire(Vector2(j2.x, lights.y), lights, j2_live, live, dead)
     _board.draw_circle(bus, 14.0, live)

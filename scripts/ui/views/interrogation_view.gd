@@ -255,6 +255,10 @@ func _line_node(speaker: String, text: String) -> Control:
         t.custom_minimum_size.x = 360
         bubble.add_child(t)
         row.add_child(bubble)
+        # the chosen explorer speaks with their own face
+        var face := AstraUI.player_face(s, Vector2(46, 46))
+        face.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+        row.add_child(face)
         return row
     if speaker == "narration" or speaker == "":
         if text.begins_with("기록 ·"):
