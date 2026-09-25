@@ -45,8 +45,9 @@ func test_contact_provenance() -> void:
 
 func _crowd_pick(s: AstraGameSession, pool: Array) -> String:
     var tally := {}
-    for voter in s.vote_intentions(pool):
-        var target := str(s.vote_intentions(pool)[voter])
+    var intentions := s.vote_intentions(pool)
+    for voter in intentions:
+        var target := str(intentions[voter])
         tally[target] = int(tally.get(target, 0)) + 1
     var best := str(pool[0])
     for target in pool:
