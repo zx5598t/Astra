@@ -260,6 +260,7 @@ func test_player_contact_changes_public_room() -> void:
         var fact_id := str(chosen.get("id", ""))
         AstraKnowledgeModel.share_with(active.flags, fact_id, "player", active.day, str(chosen.get("owner", "")))
         active._mark_read(fact_id)
+        active._record_player_contact(str(chosen.get("owner", "")), "TEST_CONTACT", fact_id)
         passive.advance()
         active.advance()
         passive._finish_meeting()
