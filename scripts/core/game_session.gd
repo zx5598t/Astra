@@ -6413,6 +6413,27 @@ func _incident_expert() -> String:
 # (Part I, where one Null means the ship knows the pod holds an innocent)
 # someone whose vote sent them there; otherwise now and then a habit. Never
 # evidence. Every person gets each kind of scene at most once per Stage.
+
+func _pick_low_exposure_id(options: Array, key: String) -> String:
+    if options.is_empty():
+        return ""
+    var exposure: Dictionary = voyage.get("speaker_exposure", {}) if not voyage.is_empty() else {}
+    var lowest := 999999
+    var pool: Array[String] = []
+    for raw in options:
+        var who := str(raw)
+        var score := int(exposure.get(who, 0))
+        if score < lowest:
+            lowest = score
+            pool = [who]
+        elif score == lowest:
+            pool.append(who)
+    var picked := pool[int(_pick(key) * pool.size()) % pool.size()]
+    if not voyage.is_empty():
+        exposure[picked] = int(exposure.get(picked, 0)) + 1
+        voyage["speaker_exposure"] = exposure
+    return picked
+
 func _vignette_080() -> Dictionary:
     var shown: Dictionary = stage_state().get("vignettes_080", {})
     var candidates := {"voted_wrong": [], "suspected": []}
@@ -6435,7 +6456,7 @@ func _vignette_080() -> Dictionary:
                 options.append(str(id))
         if options.is_empty() or _pick("v080:%s:%d" % [kind, day]) > 0.6:
             continue
-        var who := str(options[int(_pick("v080who:%s:%d" % [kind, day]) * options.size()) % options.size()])
+        var who := _pick_low_exposure_id(options, "v080who:%s:%d" % [kind, day])
         return _vignette_entry(kind, who, shown)
     if _pick("v080habit:%d" % day) < 0.35:
         var alive: Array = []
@@ -6443,7 +6464,7 @@ func _vignette_080() -> Dictionary:
             if not shown.has("habit:" + str(id)):
                 alive.append(str(id))
         if not alive.is_empty():
-            return _vignette_entry("habit", str(alive[int(_pick("v080habitwho:%d" % day) * alive.size()) % alive.size()]), shown)
+            return _vignette_entry("habit", _pick_low_exposure_id(alive, "v080habitwho:%d" % day), shown)
     return {}
 
 func _vignette_entry(kind: String, who: String, shown: Dictionary) -> Dictionary:

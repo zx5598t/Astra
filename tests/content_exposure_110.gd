@@ -39,6 +39,10 @@ func test_exposure_balancer() -> void:
     var picked := s._pick_exposure_balanced_scene(candidates, "exposure-test")
     check(str(picked.get("speaker", "")) == "vale", "optional scheduler prefers the least-exposed eligible speaker")
     check(int(s.voyage.get("speaker_exposure", {}).get("vale", 0)) == 1, "optional scheduler records exposure after selection")
+    s.voyage["speaker_exposure"] = {"mira":5,"noa":2,"vale":0}
+    var vignette_pick := s._pick_low_exposure_id(["mira","noa","vale"], "vignette-exposure-test")
+    check(vignette_pick == "vale", "personal vignette picker also prefers the least-exposed eligible speaker")
+    check(int(s.voyage.get("speaker_exposure", {}).get("vale", 0)) == 1, "personal vignette picker records exposure")
     check(JSON.stringify(s.truth) == before_truth, "exposure scheduling leaves case truth unchanged")
 
 func _count_strings(value: Variant) -> int:
