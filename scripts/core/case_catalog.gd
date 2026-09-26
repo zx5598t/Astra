@@ -215,7 +215,17 @@ const CASES := {
         "decoy_traces": 3,
         "mutual_alibi_chance": 0.6,
         "tamper_chance": 0.85,
-        "sightings": 1
+        "sightings": 1,
+        # Authored deduction profile. The generator/session read the meaning,
+        # not the case id, so future intersection chapters can opt into the
+        # same topology without growing ECHO_WARD-specific branches.
+        "deduction_profile": {
+            "style": "INTERSECTION",
+            "specific_scale": 0.0,
+            "force_two_source": true,
+            "unasked_share_scale": 0.58,
+            "min_reasonable_routes": 2
+        }
     },
     "SILENT_ORBIT": {
         "code": "INCIDENT THREE", "title": "SILENT ORBIT", "title_ko": "침묵의 궤도",
