@@ -75,10 +75,10 @@ func _minigames_minimum() -> void:
     root.size = Vector2i(1120, 700)
     var tasks: Array = []
 
-    var signal := AstraSignalTrace.new()
-    root.add_child(signal)
-    signal.setup(101, [], 0.05, "소렌")
-    tasks.append(["signal", signal])
+    var signal_task := AstraSignalTrace.new()
+    root.add_child(signal_task)
+    signal_task.setup(101, [], 0.05, "소렌")
+    tasks.append(["signal", signal_task])
 
     var circuit := AstraPowerRoute.new()
     root.add_child(circuit)
