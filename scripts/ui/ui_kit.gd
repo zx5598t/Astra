@@ -657,7 +657,10 @@ static func follow_bottom(scroll: ScrollContainer, force: bool = false) -> void:
     var tree := scroll.get_tree()
     await tree.process_frame
     await tree.process_frame
-    if not is_instance_valid(scroll):
+    if not is_instance_valid(scroll) or not scroll.is_inside_tree():
+        return
+    # If the reader moved while layout settled, cancel this queued follow.
+    if not force and not is_following(scroll):
         return
     var bar := scroll.get_v_scroll_bar()
     scroll.set_meta("programmatic", true)
