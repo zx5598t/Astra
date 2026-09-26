@@ -4962,7 +4962,13 @@ func _vote_target_for(voter_id: String, candidates: Array) -> Dictionary:
     var views := {}
     var ranked: Array = []
     for target in legal:
-        var view := suspicion_breakdown(voter_id, str(target))
+        # A ballot is not a hidden knowledge merge. Public material and the
+        # voter's own direct experience keep their force; facts privately
+        # relayed by somebody else are only weak context until the room verifies
+        # them aloud. SMART play can make those facts public and restore their
+        # full weight. This keeps private knowledge meaningful without letting
+        # eight private notebooks silently solve the case for the explorer.
+        var view := _vote_view(voter_id, str(target))
         view["score"] = float(view.get("score", 0.0)) + (_stable_noise("vote:%s:%s" % [voter_id, target]) - 0.5) * 0.04
         views[target] = view
         ranked.append(target)
@@ -5007,6 +5013,31 @@ func _vote_target_for(voter_id: String, candidates: Array) -> Dictionary:
     if best_reasons.is_empty():
         best_reasons = [AstraDecisionModel.reason("insufficient_evidence", 0.01)]
     return {"target": best, "mode": best_mode, "pusher": best_pusher, "trace": AstraDecisionModel.trace(voter_id, "vote", best, best_reasons, day)}
+
+func _vote_view(voter_id: String, target_id: String) -> Dictionary:
+    var full := suspicion_breakdown(voter_id, target_id)
+    var reasons: Array = []
+    var score := 0.0
+    for raw in full.get("reasons", []):
+        var reason: Dictionary = Dictionary(raw).duplicate(true)
+        var weight := float(reason.get("weight", 0.0))
+        var source := str(reason.get("source", ""))
+        var item := fragment(source)
+        if not item.is_empty() and not AstraKnowledgeModel.is_public(flags, source):
+            var owner := str(item.get("owner", ""))
+            if owner != voter_id:
+                # Privately relayed evidence is real knowledge, but it is not
+                # independent public verification. It can break a close call,
+                # not create room-wide certainty by itself.
+                weight *= 0.28
+            elif str(item.get("type", "")) == "HEARSAY":
+                # Even when this voter owns the retelling, its origin is still
+                # another witness; preserve the existing hearsay caution.
+                weight *= 0.7
+        reason["weight"] = weight
+        score += weight
+        reasons.append(reason)
+    return {"score": clampf(score, -2.0, 2.0), "reasons": reasons, "target": target_id}
 
 # How sure someone must be before the room stops mattering to them.
 func conviction_need(voter_id: String) -> float:
