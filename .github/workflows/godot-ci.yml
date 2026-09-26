@@ -62,6 +62,39 @@ jobs:
           path: quick-*.log
           if-no-files-found: ignore
 
+  balance-probe-100:
+    if: startsWith(github.ref, 'refs/heads/release/') || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot 4.7.2 stable
+        run: |
+          set -euo pipefail
+          url="https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip"
+          curl -fL --retry 5 --retry-all-errors --retry-delay 3 --connect-timeout 20 -o godot.zip "$url"
+          unzip -q godot.zip
+          chmod +x Godot_v4.7.2-stable_linux.x86_64
+          mv Godot_v4.7.2-stable_linux.x86_64 godot
+
+      - name: Import project
+        run: ./godot --headless --path . --import
+
+      - name: Run 100-game per Stage balance probe
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/balance_probe.gd -- --games=100 2>&1 | tee balance-100.log
+          grep -q "ASTRA BALANCE PROBE OK · games=100" balance-100.log
+
+      - name: Upload 100-game balance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: balance-probe-100
+          path: balance-100.log
+          if-no-files-found: error
+
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 30
