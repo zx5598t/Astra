@@ -1,7 +1,8 @@
 extends SceneTree
 
-# 1.0 UI release gate (headless). Drives the real screens at 1366x768,
-# 1600x900, 1920x1080 and 2560x1440 with synthetic long Korean lines (test
+# 1.0.1 UI release gate (headless). Drives the real screens at the official
+# minimum 1120x700 plus 1280x720, 1366x768, 1600x900, 1920x1080 and
+# 2560x1440 with synthetic long Korean lines (test
 # fixture only, never saved) and checks what a player would otherwise fight:
 #   * the last conversation / meeting line is fully inside its viewport
 #     without touching the wheel, with room under it;
@@ -36,8 +37,9 @@ func _wait(frames: int = 4) -> void:
 func _run() -> void:
     for path in [META_PATH, SETTINGS_PATH]:
         DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
-    for resolution in [Vector2i(1366, 768), Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(2560, 1440)]:
+    for resolution in [Vector2i(1120, 700), Vector2i(1280, 720), Vector2i(1366, 768), Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(2560, 1440)]:
         await _pass(resolution)
+    await _resize_roundtrip()
     await _rewind_flow()
     if failures.is_empty():
         print("ASTRA UI LAYOUT 100 OK · %d checks" % checks)
@@ -127,6 +129,44 @@ func _pass(resolution: Vector2i) -> void:
     var screen := Rect2(Vector2.ZERO, Vector2(resolution))
     check(screen.encloses(view._confirm.get_global_rect().grow(-1)), tag + ": the confirm button is on screen")
     _inside(app._current, resolution, tag + ": vote")
+    app.queue_free()
+    await _wait(3)
+
+func _resize_roundtrip() -> void:
+    root.size = Vector2i(1920, 1080)
+    for path in [META_PATH, SETTINGS_PATH]:
+        DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+    app = load("res://scenes/main.tscn").instantiate()
+    app.meta = AstraMetaProgress.new(META_PATH)
+    app.settings = AstraSettings.new(SETTINGS_PATH)
+    root.add_child(app)
+    await _wait(5)
+    app.session = AstraGameSession.new()
+    var s: AstraGameSession = app.session
+    s.setup("GLASS_GARDEN", 7711)
+    s.set_player_profile(AstraExplorerCatalog.profile_for("serin"))
+    app.show_session_screen()
+    await _wait(5)
+    var guard := 0
+    while s.phase == "BRIEFING" and guard < 5:
+        guard += 1
+        AstraTestBots._finish_morning(s)
+        await _wait(3)
+        if s.phase == "BRIEFING":
+            s.advance()
+    await _wait(4)
+    check(s.phase == "INTERROGATION", "resize: reached conversation")
+
+    root.size = Vector2i(1120, 700)
+    await _wait(8)
+    _buttons_fit(app._current, "resize 1920→1120")
+    _inside(app._current, Vector2i(1120, 700), "resize 1920→1120")
+
+    root.size = Vector2i(1920, 1080)
+    await _wait(8)
+    _buttons_fit(app._current, "resize 1120→1920")
+    _inside(app._current, Vector2i(1920, 1080), "resize 1120→1920")
+
     app.queue_free()
     await _wait(3)
 
