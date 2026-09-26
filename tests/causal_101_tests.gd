@@ -42,35 +42,6 @@ func _origin(item: Dictionary) -> String:
         return "expert:" + str(item.get("owner", ""))
     return "fact:" + str(item.get("id", ""))
 
-func _packet_route_signatures(s: AstraGameSession) -> Array:
-    var packet := s.current_packet()
-    var actor := str(packet.get("actor", ""))
-    if actor == "":
-        return []
-    var fragments: Array = []
-    for raw in packet.get("fragments", []):
-        var item: Dictionary = raw
-        if actor in Array(item.get("points_to", [])) and str(item.get("type", "")) in ["DIRECT_WITNESS", "SYSTEM_RECORD", "HEARSAY", "ALIBI_SUPPORT"]:
-            fragments.append(item)
-    var routes := {}
-    for i in range(fragments.size()):
-        for j in range(i + 1, fragments.size()):
-            var a: Dictionary = fragments[i]
-            var b: Dictionary = fragments[j]
-            var oa := _origin(a)
-            var ob := _origin(b)
-            if oa == ob:
-                continue
-            var left: Array = []
-            for id in Array(a.get("points_to", [])):
-                if id in Array(b.get("points_to", [])) and s.is_alive(str(id)):
-                    left.append(str(id))
-            if left.size() == 1 and str(left[0]) == actor:
-                var pair := [oa, ob]
-                pair.sort()
-                routes[str(pair)] = true
-    return routes.keys()
-
 func _auto_decisive_public(s: AstraGameSession) -> int:
     var unique := {}
     for raw in s.stage_state().get("public_log", []):
@@ -113,15 +84,12 @@ func _run_route(case_id: String, seed_value: int, active: bool) -> Dictionary:
     var meeting_clicks := 0
     var meeting_lines := 0
     var max_streak := 0
-    var route_signatures := {}
     var guard := 0
 
     while s.phase != "RESULT" and guard < 500:
         guard += 1
         match s.phase:
             "BRIEFING":
-                for signature in _packet_route_signatures(s):
-                    route_signatures[str(signature)] = true
                 AstraTestBots._finish_morning(s, active)
                 s.advance()
             "INTERROGATION":
@@ -226,7 +194,6 @@ func _run_route(case_id: String, seed_value: int, active: bool) -> Dictionary:
         "votes": int(metrics.get("player_caused_vote_changes", 0)),
         "raised": raised,
         "auto_decisive": _auto_decisive_public(s),
-        "routes": route_signatures.size(),
         "meeting_lines": meeting_lines,
         "meaningful": meaningful,
         "continue_only": continue_only,
@@ -245,7 +212,7 @@ func _sum(dst: Dictionary, row: Dictionary) -> void:
 
 func _bucket() -> Dictionary:
     return {"wins":0, "days":0, "innocent":0, "casualties":0, "public":0, "links":0, "meeting":0, "votes":0,
-        "raised":0, "auto_decisive":0, "routes":0, "meeting_lines":0, "meaningful":0, "continue_only":0,
+        "raised":0, "auto_decisive":0, "meeting_lines":0, "meaningful":0, "continue_only":0,
         "clarifications":0, "interventions":0, "max_streak":0, "meeting_clicks":0}
 
 func _run() -> void:
@@ -254,7 +221,6 @@ func _run() -> void:
     for case_id in CASES:
         var active := _bucket()
         var passive := _bucket()
-        var route_shortfall := 0
         for index in range(SEEDS):
             var seed_value := 1000 + index * 13
             var a := _run_route(case_id, seed_value, true)
@@ -263,18 +229,16 @@ func _run() -> void:
             _sum(passive, p)
             _sum(global_active, a)
             _sum(global_passive, p)
-            if int(a.get("routes", 0)) < int(AstraCaseCatalog.get_case(case_id).get("deduction_profile", {}).get("min_reasonable_routes", 1)):
-                route_shortfall += 1
-        print("CAUSAL %s · ACTIVE/PASSIVE wins=%d/%d days=%.2f/%.2f innocent=%.2f/%.2f casualties=%.2f/%.2f public=%d/%d links=%d/%d stance=%d/%d votes=%d/%d raised=%d/%d auto_decisive=%d/%d routes_avg=%.2f/%.2f" % [
+        print("CAUSAL %s · ACTIVE/PASSIVE wins=%d/%d days=%.2f/%.2f innocent=%.2f/%.2f casualties=%.2f/%.2f public=%d/%d links=%d/%d stance=%d/%d votes=%d/%d raised=%d/%d auto_decisive=%d/%d" % [
             case_id, active["wins"], passive["wins"], float(active["days"])/SEEDS, float(passive["days"])/SEEDS,
             float(active["innocent"])/SEEDS, float(passive["innocent"])/SEEDS, float(active["casualties"])/SEEDS,
             float(passive["casualties"])/SEEDS, active["public"], passive["public"], active["links"], passive["links"],
             active["meeting"], passive["meeting"], active["votes"], passive["votes"], active["raised"], passive["raised"],
-            active["auto_decisive"], passive["auto_decisive"], float(active["routes"])/SEEDS, float(passive["routes"])/SEEDS])
-        print("MEETING %s · lines=%.2f choices=%.2f continue_only=%.2f clarify=%.2f link/intervene=%.2f max_same_speaker=%d clicks_to_vote=%.2f route_shortfall=%d/%d" % [
+            active["auto_decisive"], passive["auto_decisive"]])
+        print("MEETING %s · lines=%.2f choices=%.2f continue_only=%.2f clarify=%.2f link/intervene=%.2f max_same_speaker=%d clicks_to_vote=%.2f" % [
             case_id, float(active["meeting_lines"])/SEEDS, float(active["meaningful"])/SEEDS, float(active["continue_only"])/SEEDS,
             float(active["clarifications"])/SEEDS, float(active["interventions"])/SEEDS, active["max_streak"],
-            float(active["meeting_clicks"])/SEEDS, route_shortfall, SEEDS])
+            float(active["meeting_clicks"])/SEEDS])
         check(active["public"] > passive["public"], case_id + " active play causes more public facts")
         check(active["meeting"] > passive["meeting"], case_id + " active play causes more stance changes")
         check(active["votes"] > passive["votes"], case_id + " active play changes more vote intentions")
