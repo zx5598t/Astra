@@ -26,4 +26,5 @@ func _initialize() -> void:
         n += games
         print("%-18s smart %3d%% random %3d%% passive %3d%% | smart days %.1f deaths %d %s" % [case_id, 100*w["smart"]/games, 100*w["random"]/games, 100*w["passive"]/games, days/games, deaths, str(reasons)])
     print("TOTAL smart %d%% random %d%% passive %d%%" % [100*totals["smart"]/n, 100*totals["random"]/n, 100*totals["passive"]/n])
+    print("ASTRA BALANCE PROBE OK · games=%d" % games)
     quit()
