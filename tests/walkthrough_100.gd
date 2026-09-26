@@ -2,7 +2,7 @@ extends SceneTree
 
 # 1.0 human-readable dump: build/qa/walkthrough_100.txt
 #   godot --headless --path . --script res://tests/walkthrough_100.gd
-# Stages 1, 2, 3, 5, 9 and 13 played by a thinking explorer (talks, follows
+# Stages 1, 2, 3, 4, 5, 9 and 13 played by a thinking explorer (talks, follows
 # up, links statements to evidence, asks clarifying questions, gives a reason
 # for each ballot), everything the player would read written out: morning,
 # conversations, meeting (with links and the room's answers), closing, final
@@ -16,7 +16,7 @@ func w(line: String) -> void:
 
 func _initialize() -> void:
     var plan := [["CALIBRATION", 4242, "serin"], ["DEAD_AIR", 5151, "rael"], ["GLASS_GARDEN", 6161, "serin"],
-        ["SILENT_ORBIT", 8181, "jace"], ["BORROWED_DAYS", 9191, "sia"], ["THRESHOLD", 1313, "logan"]]
+        ["ECHO_WARD", 7171, "mika"], ["SILENT_ORBIT", 8181, "jace"], ["BORROWED_DAYS", 9191, "sia"], ["THRESHOLD", 1313, "logan"]]
     for entry in plan:
         _play(str(entry[0]), int(entry[1]), str(entry[2]))
     w("")
