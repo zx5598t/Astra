@@ -1,7 +1,7 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **1.0.0** (CONVICTION; built on the 0.8.0 CONTAINMENT core and 0.9.0 explorers). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- Version **1.0.1** (CONVICTION RELEASE POLISH; stabilizes the 1.0.0 CONVICTION deduction loop). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
 - One Stage = one game; a Day = Morning → Conversation → Meeting → Vote → Night. PART I (Stages 1–4) one Null,
   PART II (Stage 5+) two Nulls and one protocol (GUARDIAN 5 / ANALYST 6 / EMPATH 7). No investigation phase,
   no exploration in the main loop, no abstention, exactly one isolation per Day, explorer death = immediate loss.
@@ -81,14 +81,18 @@ walking the node tree. Do not reintroduce that pattern.
   seed, one announced modifier per depth from 4, two Nulls from 7. A death closes the run file before anything
   can be reloaded. No stat upgrades.
 
-## 1.0.0 CONVICTION rules
+## 1.0.0 / 1.0.1 CONVICTION rules
 - **The room weighs only what was said aloud.** Board alibi conflicts count for NPCs after `_raise_pair` (a link,
   a contrast, a clarification to the companions, or `_thread_claims`); a public confession takes the conflict off.
-  Unasked keepers share at `UNASKED_SHARE`; a lone private glimpse is voted on, not accused with
-  (`_lone_private_conviction`). Do not bring back silent board weighting — it made the room solve Stages alone.
+  Private evidence can inform a ballot, but collective accusations require player-heard evidence, an independent
+  source, an explicit raised contradiction or a validating Link. Do not silently pool private notebooks into a
+  room-wide deduction engine. Stage-specific evidence topology belongs in authored `deduction_profile` data, not
+  `if case_id == ...` branches.
 - **Link verb** (`link_statements`, `link_evidence`, `judge_link`, `intervene("link", "stmt|ev[|ev2]")`): judged from
   content only (places, people, times, excuse method). Never read `_day_role`, `truth` or a fragment's `refutes` for a
-  group record there. Every logically equivalent piece of evidence must pass.
+  group record there. Every logically equivalent piece of evidence must pass. Evidence labels may expose provenance
+  (direct witness / hearsay chain / record / public-private visibility), never a score or answer likelihood. Repeating
+  the exact same Link combination must not reveal new information.
 - Meeting: `MEETING_INTERVENTIONS = 3` strong moves + 3 clarifications a Day; `board_status`, `meeting_summary`,
   `ballot_reasons`/`set_ballot_reason`. No numbers on screen.
 - **Rewind**: the app keeps the first save of each morning (`dawn_path`); a lost Stage can go back once
@@ -96,18 +100,27 @@ walking the node tree. Do not reintroduce that pattern.
 - **Walking** is whole frames only (no band motion while moving), distance-driven with the sheet's `stride`,
   torso-anchored frames. Gate: `tests/motion_100_tests.gd`. The selection screen shows main illustrations only.
 - **Tasks**: `AstraShipTask` housing; families signal / circuit / timeline / route (`minigame_100_tests.gd`).
+  All four families keep keyboard controls and must also complete through mouse input only; Signal frequency/phase
+  controls mutate the same state regardless of input device.
 - **UI**: growing logs use `AstraUI.track_follow` + `follow_bottom` (after layout, never while the reader scrolls back)
-  and end with `AstraUI.bottom_pad()`; multi-line choices use `AstraUI.choice_button`. Gate: `tests/ui_layout_100.gd`.
+  and end with `AstraUI.bottom_pad()`; a queued follow must re-check follow state after layout settles so wheel-up
+  read-back wins. Multi-line choices use `AstraUI.choice_button`. Minimum supported window is 1120×700 and
+  `tests/ui_layout_100.gd` covers minimum-size screens plus resize round-trips.
 
 ## Balance guardrails
 `tests/run_tests.gd` plays every Stage with three bots (SMART talks, follows up, intervenes and votes by
 its own knowledge; RANDOM uses legal options blindly; PASSIVE talks to nobody and votes with the room).
-0.8.0 gates (see `docs/QA_REPORT.md` for why these replace the 0.7.x "passive < 20%" rule, which measured an
-abstaining bot that can no longer exist):
+Keep the historical global gates, plus the 1.0.1 release-polish gates:
 - SMART wins ≥ 75% of Stages; SMART ≥ RANDOM + 10pp; SMART ≥ PASSIVE + 5pp; PART II PASSIVE ≤ 85%;
-- the explorer's play puts at least twice as many facts on the table as passive play.
-Do not lower a gate to make a change pass; change the rules or the content and explain it in QA_REPORT.
-`tests/balance_probe.gd` prints per-Stage win rates for tuning.
+- Stage 2–4 quick ceiling: each PASSIVE ≤ 85% and ECHO_WARD must stay below the release ceiling;
+- player contribution must materially exceed passive play; `causal_101_tests.gd` uses 100 same-seed ACTIVE/PASSIVE
+  pairs per Stage and compares resolution time, innocent isolations, casualties, public facts, Links, stance changes,
+  vote-intention changes, raised contradictions and meeting dead space;
+- `fairness_101_tests.gd` separately audits 100 seeds/Stage for alternative proof routes and role-tell collapse.
+PASSIVE win rate is a regression ceiling, not the design objective. Do not make NPCs random, forget known evidence,
+remove fair clues, or weaken SMART just to lower PASSIVE. Prefer explicit player proof (Link/source verification/
+clarification/presentation) changing the room. Do not lower a gate to make a change pass; change rules/content and
+explain it in QA_REPORT. `tests/balance_probe.gd` prints the 100-game per-Stage tuning report.
 
 ## Before pushing
 ```bash
