@@ -1401,7 +1401,10 @@ func _statement(member: AstraCrewMember, result: Dictionary) -> void:
     # Who the explorer is shows first: their own opening on the first talk of
     # a Stage, and with some people a short exchange that sets the starting
     # tone between the two (AstraExplorerCatalog.FIRST_CONTACT, rotating by
-    # Stage). Wording only: no fact, weight or trust changes here.
+    # Stage). Identity never changes case truth, evidence, RNG or action count.
+    # The authored tone may apply only the bounded social-trust nudge below;
+    # because trust affects social following, that influence is intentionally
+    # indirect and documented rather than pretending votes are invariant.
     var identity := str(player_profile()["explorer_id"])
     var introduced: Dictionary = stage_state().get("explorer_introduced", {})
     if day == 1 and not introduced.has(member.id) and identity in AstraExplorerCatalog.ORDER:
