@@ -4020,14 +4020,37 @@ func intervene(kind: String, ref: String) -> Dictionary:
             "after": str(shift.get("after", "")), "player_caused": true, "action": kind, "ref": ref})
     var votes_after := _npc_vote_targets()
     var vote_changes: Array = stage_state().get("agency_vote_changes", [])
+    var spoken_shift := false
     for voter in votes_before:
         if votes_after.has(voter) and str(votes_before[voter]) != str(votes_after[voter]):
-            vote_changes.append({"day": day, "voter": str(voter), "before": str(votes_before[voter]),
-                "after": str(votes_after[voter]), "action": kind, "ref": ref})
+            var before_target := str(votes_before[voter])
+            var after_target := str(votes_after[voter])
+            vote_changes.append({"day": day, "voter": str(voter), "before": before_target,
+                "after": after_target, "action": kind, "ref": ref})
+            if not spoken_shift and is_alive(str(voter)):
+                _speak_stance_shift(str(voter), before_target, after_target, kind, ref)
+                spoken_shift = true
     stage_state()["agency_vote_changes"] = vote_changes
     _recompute_contradictions()
     changed.emit()
     return {"ok": true, "lines": meeting_feed.slice(start), "shifts": shifts}
+
+func _speak_stance_shift(voter: String, before_target: String, after_target: String, action: String, ref: String) -> void:
+    var casual := voter in BANMAL_SPEAKERS
+    var after_name := name_of(after_target)
+    var before_name := name_of(before_target)
+    var line := ""
+    match action:
+        "link", "present":
+            line = ("%s까지 같은 쪽을 가리키면 얘기가 달라져. %s 쪽부터 다시 볼게." if casual else "%s까지 같은 쪽을 가리키면 얘기가 달라져요. %s 쪽부터 다시 볼게요.") % [
+                "그 근거" if ref == "" else "방금 확인한 근거", after_name]
+        "source", "clarify", "basis":
+            line = ("직접 확인한 말이라면 아까 판단은 바꿀게. %s 쪽이 더 걸려." if casual else "직접 확인한 말이라면 아까 판단은 바꿀게요. %s 쪽이 더 걸려요.") % after_name
+        "defend", "support", "coax":
+            line = ("%s만 붙잡고 있을 수는 없겠어. %s 쪽도 다시 봐야 해." if casual else "%s만 붙잡고 있을 수는 없겠어요. %s 쪽도 다시 봐야 해요.") % [before_name, after_name]
+        _:
+            line = ("방금 말까지 들으니 생각이 바뀌었어. %s 쪽을 다시 볼게." if casual else "방금 말까지 들으니 생각이 바뀌었어요. %s 쪽을 다시 볼게요.") % after_name
+    _feed_line(voter, after_target, line, "react", "followup", "stance_shift:" + voter)
 
 func _npc_vote_targets() -> Dictionary:
     var result := {}
