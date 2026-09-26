@@ -206,7 +206,7 @@ func _run_route(case_id: String, seed_value: int, active: bool) -> Dictionary:
 func _sum(dst: Dictionary, row: Dictionary) -> void:
     dst["wins"] += 1 if str(row.get("outcome", "")) == "WIN" else 0
     for key in ["days", "innocent", "casualties", "public", "links", "meeting", "votes", "raised", "auto_decisive",
-        "routes", "meeting_lines", "meaningful", "continue_only", "clarifications", "interventions", "meeting_clicks"]:
+        "meeting_lines", "meaningful", "continue_only", "clarifications", "interventions", "meeting_clicks"]:
         dst[key] += int(row.get(key, 0))
     dst["max_streak"] = maxi(int(dst["max_streak"]), int(row.get("max_streak", 0)))
 
