@@ -743,7 +743,10 @@ static func _build_day_packet(case_id: String, stage_seed: int, day: int, active
     # the room, and testimony needs a second voice before the crew leans on it.
     var second_witness := ""
     var second_group := {}
-    if not w_specific and not e_specific and best_cost >= 1.0 and want >= 2:
+    if not w_specific and not e_specific and ((best_cost >= 1.0 and want >= 2) or case_id == "ECHO_WARD"):
+        # ECHO_WARD teaches intersection: even when today's target is one
+        # person, prefer two partial sightings whose overlap yields that one
+        # person instead of falling back to a single direct identification.
         var pair := _pick_second_sighting(actor, active, str(w_group.get("category", "")), want)
         if not pair.is_empty():
             for id in witness_pool:
