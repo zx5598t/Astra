@@ -129,8 +129,9 @@ func _run_route(case_id: String, seed_value: int, active: bool) -> Dictionary:
                     var order: Array = s.living_ids().duplicate()
                     var leads := s.talk_leads()
                     order.sort_custom(func(a, b):
-                        return s.suspicion_score("player", str(a)) + (1.0 if leads.has(str(a)) else 0.0) >
-                            s.suspicion_score("player", str(b)) + (1.0 if leads.has(str(b)) else 0.0))
+                        var score_a := s.suspicion_score("player", str(a)) + (1.0 if leads.has(str(a)) else 0.0)
+                        var score_b := s.suspicion_score("player", str(b)) + (1.0 if leads.has(str(b)) else 0.0)
+                        return score_a > score_b)
                     for npc_id in order:
                         if s.conversations_left() <= 0:
                             break
