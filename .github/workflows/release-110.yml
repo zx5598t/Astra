@@ -1,0 +1,91 @@
+name: Publish ASTRA 1.1.0
+
+on:
+  workflow_run:
+    workflows: ["Godot CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: publish-astra-1.1.0
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the exact tested source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Gate ASTRA 1.1.0 and avoid duplicate publication
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="$(tr -d '\r\n' < VERSION)"
+          if [ "$version" != "1.1.0" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "main is $version, not 1.1.0; nothing to publish."
+            exit 0
+          fi
+          if gh release view "v$version" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "v$version already exists; leaving the existing release untouched."
+            exit 0
+          fi
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Download the Windows artifact produced by this exact CI run
+        if: steps.gate.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          VERSION: ${{ steps.gate.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/release
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name "ASTRA-$VERSION-windows-rc" --dir build/release
+          zip_path="$(find build/release -type f -name "ASTRA-$VERSION-windows.zip" -print -quit)"
+          sha_path="$(find build/release -type f -name "ASTRA-$VERSION-windows.zip.sha256" -print -quit)"
+          test -n "$zip_path"
+          test -n "$sha_path"
+          actual="$(sha256sum "$zip_path" | awk '{print tolower($1)}')"
+          expected="$(awk '{print tolower($1)}' "$sha_path")"
+          test "$actual" = "$expected"
+          echo "ZIP_PATH=$zip_path" >> "$GITHUB_ENV"
+          echo "SHA_PATH=$sha_path" >> "$GITHUB_ENV"
+          echo "ASSET_SHA256=$actual" >> "$GITHUB_ENV"
+          echo "ASSET_SIZE=$(stat -c%s "$zip_path")" >> "$GITHUB_ENV"
+
+      - name: Create release notes for 1.1.0
+        if: steps.gate.outputs.publish == 'true'
+        run: |
+          set -euo pipefail
+          awk '
+            /^# ASTRA 1\.1\.0 — LIVING PATHS/ {on=1}
+            on && /^---$/ {exit}
+            on {print}
+          ' docs/RELEASE_NOTES.md > build/release/release-notes.md
+          test -s build/release/release-notes.md
+
+      - name: Publish tag, release and exact tested assets
+        if: steps.gate.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.gate.outputs.version }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          gh release create "v$VERSION" "$ZIP_PATH" "$SHA_PATH"             --repo "$GITHUB_REPOSITORY"             --target "$SOURCE_SHA"             --title "ASTRA 1.1.0 — LIVING PATHS"             --notes-file build/release/release-notes.md
+          echo "ASTRA 1.1.0 RELEASE SOURCE: $SOURCE_SHA"
+          echo "ASTRA 1.1.0 WINDOWS ZIP SIZE: $ASSET_SIZE bytes"
+          echo "ASTRA 1.1.0 WINDOWS SHA256: $ASSET_SHA256"

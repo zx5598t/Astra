@@ -241,7 +241,7 @@ jobs:
           if-no-files-found: ignore
 
   release-candidate-windows:
-    if: startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'pull_request'
+    if: startsWith(github.ref, 'refs/heads/release/') || github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
     runs-on: windows-latest
     timeout-minutes: 40
     steps:
@@ -294,7 +294,7 @@ jobs:
           if-no-files-found: ignore
 
   visual-review-windows:
-    if: startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'pull_request'
+    if: startsWith(github.ref, 'refs/heads/release/') || github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
     runs-on: windows-latest
     timeout-minutes: 30
     steps:

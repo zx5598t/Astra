@@ -19,6 +19,7 @@ func _initialize() -> void:
     if failures.is_empty():
         print("ASTRA CHOICE 110 TESTS OK · %d checks" % checks)
         quit(0)
+        return
     for failure in failures:
         printerr("FAIL · " + failure)
     printerr("ASTRA CHOICE 110 TESTS FAILED · %d/%d" % [failures.size(), checks])

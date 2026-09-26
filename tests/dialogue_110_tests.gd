@@ -4,6 +4,8 @@ extends SceneTree
 var failures: Array[String] = []
 var checks := 0
 var report: PackedStringArray = []
+var witness_context_samples := 0
+var record_context_samples := 0
 
 func check(condition: bool, label: String) -> void:
     checks += 1
@@ -14,6 +16,7 @@ func _initialize() -> void:
     test_source_leaks()
     test_branch_speakers()
     test_stance_lines()
+    test_question_response_context()
     build_editorial_report()
     DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://build/qa"))
     var file := FileAccess.open("res://build/qa/dialogue_110_report.txt", FileAccess.WRITE)
@@ -22,6 +25,7 @@ func _initialize() -> void:
     if failures.is_empty():
         print("ASTRA DIALOGUE 110 TESTS OK · %d checks" % checks)
         quit(0)
+        return
     for failure in failures:
         printerr("FAIL · " + failure)
     quit(1)
@@ -101,6 +105,83 @@ func _clarification_pool_size() -> int:
                     total += _pool_size(by_person[key])
     return total
 
+
+func _fresh_interrogation(case_id: String, seed_value: int) -> AstraGameSession:
+    var s := AstraGameSession.new()
+    s.setup(case_id, seed_value)
+    s.begin_voyage({})
+    if s.phase == "BRIEFING":
+        AstraTestBots._finish_morning(s, true)
+        if s.phase == "BRIEFING":
+            s.advance()
+    return s
+
+func _npc_answer(result: Dictionary, npc_id: String) -> String:
+    for raw in result.get("lines", []):
+        var line: Dictionary = raw
+        if str(line.get("speaker", "")) == npc_id and str(line.get("text", "")).strip_edges() != "":
+            return str(line.get("text", "")).strip_edges()
+    return ""
+
+func _looks_like_generic_non_answer(text: String) -> bool:
+    for phrase in ["기록을 다시 확인", "다시 봐요", "근거가 부족", "더 확인해야", "아직 모르겠어요"]:
+        if phrase in text:
+            return true
+    return false
+
+func test_question_response_context() -> void:
+    # WITNESS is the clearest regression for “그 시간에 누구를 봤어요?”.
+    # Every current crew member must answer the question itself before any
+    # extra personality/expertise texture.
+    var seed := 61101
+    for npc_raw in AstraCrewCatalog.ORDER:
+        var npc_id := str(npc_raw)
+        var s := _fresh_interrogation("THREE_MINUTES_DARK", seed)
+        seed += 37
+        check(s.phase == "INTERROGATION", "context fixture reaches conversation for " + npc_id)
+        var opened := s.ask(npc_id, "STATEMENT")
+        check(bool(opened.get("ok", false)), "context fixture opens conversation for " + npc_id)
+        var result := s.ask(npc_id, "WITNESS")
+        check(bool(result.get("ok", false)), "WITNESS is answerable for " + npc_id)
+        var answer := _npc_answer(result, npc_id)
+        check(answer != "", "WITNESS gets an NPC answer for " + npc_id)
+        check(not _looks_like_generic_non_answer(answer), "WITNESS answer is not a generic verification dodge for " + npc_id)
+        witness_context_samples += 1
+
+    # RECORD options are only offered when that person actually has a
+    # checkable record. If the UI offers it, the answer must return the record
+    # itself plus a speaker response, not a generic “check again” line.
+    var found := 0
+    for case_id in ["DEAD_AIR","GLASS_GARDEN","ECHO_WARD","THREE_MINUTES_DARK"]:
+        for sample in range(5):
+            if found >= 6:
+                break
+            var probe := _fresh_interrogation(case_id, 63000 + sample * 211 + AstraCaseCatalog.STAGE_ORDER.find(case_id) * 1009)
+            if probe.phase != "INTERROGATION":
+                continue
+            for npc_raw in probe.living_ids():
+                if found >= 6:
+                    break
+                var npc_id := str(npc_raw)
+                var s := _fresh_interrogation(case_id, 63000 + sample * 211 + AstraCaseCatalog.STAGE_ORDER.find(case_id) * 1009)
+                s.ask(npc_id, "STATEMENT")
+                var record_option := {}
+                for option in s.question_options(npc_id):
+                    if str(option.get("intent", "")) == "RECORD" and bool(option.get("enabled", false)):
+                        record_option = option
+                        break
+                if record_option.is_empty():
+                    continue
+                var result := s.ask(npc_id, "RECORD", str(record_option.get("ref", "")))
+                check(bool(result.get("ok", false)), "RECORD option executes for %s/%s" % [case_id, npc_id])
+                check(not Dictionary(result.get("record", {})).is_empty(), "RECORD question returns the opened record for %s/%s" % [case_id, npc_id])
+                var answer := _npc_answer(result, npc_id)
+                check(answer != "", "RECORD gets an NPC answer for %s/%s" % [case_id, npc_id])
+                check(not _looks_like_generic_non_answer(answer), "RECORD answer is not a generic verification dodge for %s/%s" % [case_id, npc_id])
+                found += 1
+                record_context_samples += 1
+    check(record_context_samples >= 3, "runtime samples at least three actual RECORD question/answer paths")
+
 func build_editorial_report() -> void:
     var authored: Array[String] = []
     for pool in [
@@ -149,6 +230,8 @@ func build_editorial_report() -> void:
     report.append("- Link responses: %d" % _pool_size(AstraSocialLines.LINK_LINES))
     report.append("- final statements: %d" % _pool_size(AstraSocialLines.LAST_LINES))
     report.append("- stance-change lines: %d" % _pool_size(AstraSocialLines.STANCE_SHIFT_110))
+    report.append("- runtime WITNESS question/answer samples: %d" % witness_context_samples)
+    report.append("- runtime RECORD question/answer samples: %d" % record_context_samples)
     report.append("")
     report.append("Branch anchors:")
     for anchor in AstraStageStory.BRANCH_ANCHORS:

@@ -15,6 +15,7 @@ func _initialize() -> void:
     if failures.is_empty():
         print("ASTRA REPLAY 110 TESTS OK · %d checks" % checks)
         quit(0)
+        return
     for failure in failures:
         printerr("FAIL · " + failure)
     quit(1)

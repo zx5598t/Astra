@@ -17,6 +17,7 @@ func _initialize() -> void:
     if failures.is_empty():
         print("ASTRA CONTENT EXPOSURE 110 OK · %d checks" % checks)
         quit(0)
+        return
     for failure in failures:
         printerr("FAIL · " + failure)
     printerr("ASTRA CONTENT EXPOSURE 110 FAILED · %d/%d" % [failures.size(), checks])
@@ -67,13 +68,58 @@ func _authored_counts() -> Dictionary:
             personal[who] = int(personal[who]) + 1
     return {"all":counts,"personal":personal}
 
-func _drive_smart(s: AstraGameSession) -> void:
+func _scene_speakers(scene: Dictionary) -> Array[String]:
+    var speakers: Array[String] = []
+    var primary := str(scene.get("speaker", ""))
+    if primary in AstraCrewCatalog.ORDER and primary not in speakers:
+        speakers.append(primary)
+    for line in scene.get("lines", []):
+        var who := str(line[0])
+        if who in AstraCrewCatalog.ORDER and who not in speakers:
+            speakers.append(who)
+    return speakers
+
+func _record_story_scene(scene: Dictionary, visible: Dictionary, personal: Dictionary) -> void:
+    var scene_id := str(scene.get("id", ""))
+    if scene_id == "":
+        return
+    var is_personal := str(scene.get("category", "")) in ["PERSONAL","RELATIONSHIP"] or str(scene.get("kind", "")) in ["micro_arc","relationship"]
+    for who in _scene_speakers(scene):
+        if not visible.has(who):
+            visible[who] = {}
+        visible[who][scene_id] = true
+        if is_personal:
+            if not personal.has(who):
+                personal[who] = {}
+            personal[who][scene_id] = true
+
+func _finish_story_recording(s: AstraGameSession, visible: Dictionary, personal: Dictionary) -> void:
+    var guard := 0
+    while not s.story_finished() and guard < 220:
+        guard += 1
+        var scene := s.story_scene()
+        _record_story_scene(scene, visible, personal)
+        if str(scene.get("kind", "")) == "interlude":
+            s.finish_interlude(str(scene.get("interlude", "")), "success")
+        elif not Array(scene.get("choices", [])).is_empty():
+            s.story_choose(0)
+        else:
+            s.story_next()
+
+func _record_meeting_lines(s: AstraGameSession, meeting_lines: Dictionary) -> void:
+    for raw in s.meeting_feed:
+        var line: Dictionary = raw
+        var who := str(line.get("speaker", ""))
+        if who in AstraCrewCatalog.ORDER:
+            meeting_lines[who] = int(meeting_lines.get(who, 0)) + 1
+
+func _drive_smart(s: AstraGameSession, visible: Dictionary, personal: Dictionary, meeting_lines: Dictionary) -> void:
     var steps := 0
     while s.phase != "RESULT" and steps < 400:
         steps += 1
         match s.phase:
             "BRIEFING":
-                AstraTestBots._finish_morning(s, true)
+                _finish_story_recording(s, visible, personal)
                 if s.phase == "BRIEFING":
                     s.advance()
             "INTERROGATION":
@@ -106,6 +152,7 @@ func _drive_smart(s: AstraGameSession) -> void:
                 s.advance()
             "MEETING":
                 AstraTestBots._smart_meeting(s)
+                _record_meeting_lines(s, meeting_lines)
                 s.advance()
             "VOTE":
                 AstraTestBots._vote(s, AstraTestBots._player_top(s))
@@ -115,58 +162,52 @@ func _drive_smart(s: AstraGameSession) -> void:
                 s.advance()
             _:
                 s.advance()
+    if s.phase == "RESULT":
+        _finish_story_recording(s, visible, personal)
 
-func _run_winning_stage(case_id: String, seed_base: int, memory: Dictionary) -> AstraGameSession:
+
+func _run_winning_stage(case_id: String, seed_base: int, memory: Dictionary, visible: Dictionary, personal: Dictionary, meeting_lines: Dictionary) -> AstraGameSession:
     var last: AstraGameSession = null
     for attempt in range(8):
+        var local_visible := {}
+        var local_personal := {}
+        var local_meeting := {}
         var s := AstraGameSession.new()
         s.setup(case_id, seed_base + attempt * 100003)
         s.begin_voyage(memory)
-        _drive_smart(s)
+        _drive_smart(s, local_visible, local_personal, local_meeting)
         last = s
         if s.outcome == "WIN":
+            for who in local_visible:
+                if not visible.has(who): visible[who] = {}
+                for scene_id in Dictionary(local_visible[who]): visible[who][scene_id] = true
+            for who in local_personal:
+                if not personal.has(who): personal[who] = {}
+                for scene_id in Dictionary(local_personal[who]): personal[who][scene_id] = true
+            for who in local_meeting:
+                meeting_lines[who] = int(meeting_lines.get(who, 0)) + int(local_meeting[who])
             return s
     return last
-
-func _add_visible(s: AstraGameSession, output: Dictionary) -> void:
-    for raw_id in s.voyage.get("visible_scene_ids", []):
-        var scene_id := str(raw_id)
-        var scene := AstraVoyageContent.scene(scene_id)
-        if scene.is_empty():
-            continue
-        var who := str(scene.get("speaker", ""))
-        if who == "" or who not in AstraCrewCatalog.ORDER:
-            continue
-        if not output.has(who):
-            output[who] = {}
-        output[who][scene_id] = true
 
 func _campaign(seed_base: int, start_memory: Dictionary = {}) -> Dictionary:
     var memory: Dictionary = start_memory.duplicate(true)
     var visible := {}
+    var personal := {}
+    var meeting_lines := {}
     var stage_offset := 0
     for case_id in AstraCaseCatalog.STAGE_ORDER:
-        var s := _run_winning_stage(str(case_id), seed_base + stage_offset * 997, memory)
+        var s := _run_winning_stage(str(case_id), seed_base + stage_offset * 997, memory, visible, personal, meeting_lines)
         check(s != null and s.outcome == "WIN", "exposure campaign clears " + str(case_id))
-        if s == null:
-            stage_offset += 1
-            continue
-        _add_visible(s, visible)
-        if s.outcome == "WIN":
+        if s != null and s.outcome == "WIN":
             memory = s.voyage_memory()
         stage_offset += 1
-    return {"memory":memory,"visible":visible}
+    return {"memory":memory,"visible":visible,"personal":personal,"meeting_lines":meeting_lines}
 
 func _count_visible(map: Dictionary, npc_id: String) -> int:
     return Dictionary(map.get(npc_id, {})).size()
 
 func _count_personal_visible(map: Dictionary, npc_id: String) -> int:
-    var total := 0
-    for scene_id in Dictionary(map.get(npc_id, {})):
-        var scene := AstraVoyageContent.scene(str(scene_id))
-        if _is_optional_personal(scene):
-            total += 1
-    return total
+    return Dictionary(map.get(npc_id, {})).size()
 
 func _union_maps(maps: Array) -> Dictionary:
     var result := {}
@@ -196,6 +237,8 @@ func run_report() -> void:
     var sample_d := _campaign(91100)
     var first_visible: Dictionary = first.get("visible", {})
     var repeat_visible: Dictionary = repeat.get("visible", {})
+    var first_personal: Dictionary = first.get("personal", {})
+    var repeat_personal: Dictionary = repeat.get("personal", {})
     var sampled_union := _union_maps([
         first_visible, repeat_visible,
         Dictionary(sample_c.get("visible", {})),
@@ -205,9 +248,9 @@ func run_report() -> void:
     var lines: PackedStringArray = []
     lines.append("ASTRA 1.1.0 — character content exposure report")
     lines.append("Representative runtime measurement: first campaign + continued repeat campaign + 2 independent campaign samples.")
-    lines.append("runtime_sampled is observed reachability, not a proof that every authored conditional scene is exhaustively reachable.")
+    lines.append("runtime_reached_sample counts actual displayed story_queue scenes observed in those campaigns; it is a measured sample, not a proof of exhaustive reachability.")
     lines.append("")
-    lines.append("id\tauthored\truntime_sampled\tfirst_visible\trepeat_visible\tnew_in_repeat\tpersonal_authored\tpersonal_first\tpersonal_repeat\tmeeting_variants")
+    lines.append("id\tauthored_library\truntime_reached_sample\tfirst_visible\trepeat_visible\tnew_in_repeat\tpersonal_authored\tpersonal_first\tpersonal_repeat\tmeeting_first_lines\tmeeting_repeat_lines\tmeeting_authored_variants")
 
     var total_new := 0
     for npc_raw in AstraCrewCatalog.ORDER:
@@ -218,18 +261,21 @@ func run_report() -> void:
         var first_count := _count_visible(first_visible, npc_id)
         var repeat_count := _count_visible(repeat_visible, npc_id)
         var new_repeat := _new_count(first_visible, repeat_visible, npc_id)
-        var personal_first := _count_personal_visible(first_visible, npc_id)
-        var personal_repeat := _count_personal_visible(repeat_visible, npc_id)
-        var meeting_count := _meeting_variants(npc_id)
+        var personal_first := _count_personal_visible(first_personal, npc_id)
+        var personal_repeat := _count_personal_visible(repeat_personal, npc_id)
+        var meeting_first := int(Dictionary(first.get("meeting_lines", {})).get(npc_id, 0))
+        var meeting_repeat := int(Dictionary(repeat.get("meeting_lines", {})).get(npc_id, 0))
+        var meeting_variants := _meeting_variants(npc_id)
         total_new += new_repeat
-        lines.append("%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d" % [
+        lines.append("%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d" % [
             npc_id, authored_count, runtime_sampled, first_count, repeat_count, new_repeat,
-            personal_authored, personal_first, personal_repeat, meeting_count
+            personal_authored, personal_first, personal_repeat, meeting_first, meeting_repeat, meeting_variants
         ])
         check(authored_count > 0, npc_id + " has authored content")
-        check(runtime_sampled > 0, npc_id + " appears in sampled runtime content")
-        check(meeting_count > 0, npc_id + " has meeting dialogue variants")
-    check(total_new > 0, "continued repeat campaign exposes at least one new authored scene")
+        check(runtime_sampled > 0, npc_id + " appears in sampled runtime story scenes")
+        check(meeting_variants > 0, npc_id + " has authored meeting dialogue variants")
+        check(meeting_first > 0, npc_id + " speaks during representative first-campaign meetings")
+    check(total_new > 0, "continued repeat campaign exposes at least one new displayed story scene")
     check(_count_visible(sampled_union, "vale") > 0, "Soren runtime exposure is non-zero")
     check(_count_visible(sampled_union, "eli") > 0, "Lucan runtime exposure is non-zero")
     lines.append("")
@@ -239,3 +285,4 @@ func run_report() -> void:
     var file := FileAccess.open("res://build/qa/content_exposure_110.txt", FileAccess.WRITE)
     file.store_string("\n".join(lines))
     file.close()
+
