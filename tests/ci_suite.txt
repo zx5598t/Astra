@@ -31,3 +31,8 @@ minigame_100_tests.gd|ASTRA MINIGAME 100 TESTS OK|
 deduction_100_tests.gd|ASTRA DEDUCTION 100 TESTS OK|
 ui_layout_100.gd|ASTRA UI LAYOUT 100 OK|
 walkthrough_100.gd|ASTRA WALKTHROUGH 100 OK|
+choice_110_tests.gd|ASTRA CHOICE 110 TESTS OK|
+replay_110_tests.gd|ASTRA REPLAY 110 TESTS OK|
+dialogue_110_tests.gd|ASTRA DIALOGUE 110 TESTS OK|
+finale_110_tests.gd|ASTRA FINALE 110 TESTS OK|
+walkthrough_110.gd|ASTRA WALKTHROUGH 110 OK|
