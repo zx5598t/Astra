@@ -3563,17 +3563,21 @@ func _collective_accusation_ready(speaker: String, target: String) -> bool:
         if float(reason.get("weight", 0.0)) <= 0.0:
             continue
         var code := str(reason.get("code", ""))
-        if code not in ["HARD_RECORD", "DIRECT_WITNESS", "TIMELINE", "EXPERT_INFERENCE", "CHANGED_STORY", "FALSE_SIGHTING"]:
-            continue
         var source := str(reason.get("source", ""))
         var item := fragment(source)
+        if not item.is_empty() and str(item.get("owner", "")) == speaker and player_knows(source):
+            # The explorer deliberately heard this person's own information.
+            # They can now stand behind it in public even when the information
+            # is weak (for example hearsay); weakness affects weight, not whether
+            # the speaker is allowed to say what they told the explorer.
+            player_heard = true
+        if code not in ["HARD_RECORD", "DIRECT_WITNESS", "TIMELINE", "EXPERT_INFERENCE", "CHANGED_STORY", "FALSE_SIGHTING"]:
+            continue
         if item.is_empty():
             continue
         var origin := _evidence_origin(item)
         if origin != "":
             origins[origin] = true
-        if str(item.get("owner", "")) == speaker and player_knows(source):
-            player_heard = true
     return player_heard or origins.size() >= 2
 
 func _lone_private_conviction(speaker: String, target: String) -> bool:
@@ -4875,7 +4879,7 @@ func _thread_claims() -> bool:
                 continue
             var catcher := ""
             for candidate in ["noa", "dax", "eli", "vale", "mira", "sena", "lyra", "rho"]:
-                if is_alive(candidate) and candidate not in [a, b] and _pick("notice:%s:%s:%s" % [candidate, a, b]) < float(CONNECTS.get(candidate, 0.4)) * 0.42:
+                if is_alive(candidate) and candidate not in [a, b] and _pick("notice:%s:%s:%s" % [candidate, a, b]) < float(CONNECTS.get(candidate, 0.4)) * 0.22:
                     catcher = candidate
                     break
             if catcher == "":
@@ -4962,12 +4966,11 @@ func _vote_target_for(voter_id: String, candidates: Array) -> Dictionary:
     var views := {}
     var ranked: Array = []
     for target in legal:
-        # A ballot is not a hidden knowledge merge. Public material and the
-        # voter's own direct experience keep their force; facts privately
-        # relayed by somebody else are only weak context until the room verifies
-        # them aloud. SMART play can make those facts public and restore their
-        # full weight. This keeps private knowledge meaningful without letting
-        # eight private notebooks silently solve the case for the explorer.
+        # A ballot is not a hidden knowledge merge. Public material keeps full
+        # force; private information remains personal and discounted until the
+        # room verifies it aloud. SMART play can make those facts public and
+        # restore full weight. This keeps private knowledge meaningful without
+        # letting eight private notebooks silently solve the case for the explorer.
         var view := _vote_view(voter_id, str(target))
         view["score"] = float(view.get("score", 0.0)) + (_stable_noise("vote:%s:%s" % [voter_id, target]) - 0.5) * 0.04
         views[target] = view
