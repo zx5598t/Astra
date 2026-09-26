@@ -76,10 +76,10 @@ func _route_dump(anchor: String, route: String, seed: int) -> Dictionary:
     for scene in s.story_queue():
         if str(scene.get("id", "")).begins_with("110_consequence_"):
             w("다음 Day 결과 · %s" % _scene_text(scene))
-    var next_case := {
+    var next_case := str({
         "DEAD_AIR":"GLASS_GARDEN", "ECHO_WARD":"SILENT_ORBIT", "RED_SHIFT":"LAST_LIGHT",
         "BORROWED_DAYS":"BLIND_DECK", "THREE_MINUTES_DARK":"CONTINUITY"
-    }.get(anchor, "")
+    }.get(anchor, ""))
     var callback := AstraStageStory.cross_stage_callback(str(next_case), s.voyage.get("route_choices", {}))
     if not callback.is_empty():
         w("다음 Stage callback · %s" % _scene_text(callback))
