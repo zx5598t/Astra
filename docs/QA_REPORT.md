@@ -1,3 +1,157 @@
+# 1.0.1 CONVICTION RELEASE POLISH — RELEASE QA — 2026-09-26
+
+기준 소스: 1.0.0 구현본 `release/1.0.0` **ef3856cc079f515733f34fc16fba046c2f9bcffe**.  
+1.0.1 기능 검증 branch: `release/1.0.1`. 기능/테스트 기준 commit **4685c313389adc57d26e28beda3a922dad2244d6**.  
+GitHub Actions **Godot CI #675 / run 36220261581: SUCCESS** — Linux validate, Windows validate, quick stabilization,
+100-game balance probe, Windows visual QA, Windows release-candidate export/boot 모두 success. 이 run은 기능 코드를 최종 검증한 뒤
+VERSION을 1.0.1로 올리기 직전의 1.0.0 표시 상태다. 이후 VERSION/project/docs만 1.0.1로 승격하며 동일 전체 CI를 다시 통과한
+commit만 main/tag 후보로 삼는다.
+
+Snapshot **v4**, meta save **v12** 유지. migration 없음. 새 규칙/telemetry는 기존 `flags["stage_080"]` 선택 필드와
+기존 case metadata를 사용하며 새 Manager·persistent schema를 만들지 않았다.
+
+## 1.0.0 GitHub CI 실패와 해결
+1.0.0 GitHub Actions **#616 / run 36152925419**는 Windows validate와 Windows RC가 PASS했지만 Linux validate가 FAIL했다.
+실패는 `ui_smoke.gd`의 **"meeting pauses with a few options"**였다. 새 회의는 `clarification_options()` + `meeting_options()`
++ Link picker가 player-visible action을 구성하는데 smoke가 `meeting_options()` 하나만 세고 있었다. 1.0.1은 assertion을
+`>= 0` 식으로 약화하지 않고 실제 player-visible meaningful action을 검사한다. #675에서 Linux/Windows UI smoke 모두 PASS.
+
+## 40-game official gate (#675)
+`run_tests.gd --games=40` → **ASTRA TESTS OK · 63,634 checks**.
+
+| Stage | SMART | RANDOM | PASSIVE |
+|---|---:|---:|---:|
+| CALIBRATION | 100 | 70 | 65 |
+| DEAD_AIR | 95 | 87 | 80 |
+| GLASS_GARDEN | 100 | 85 | 85 |
+| ECHO_WARD | 97 | 67 | 75 |
+| SILENT_ORBIT | 92 | 57 | 42 |
+| RED_SHIFT | 90 | 57 | 47 |
+| LAST_LIGHT | 87 | 50 | 42 |
+| SECOND_WATCH | 85 | 55 | 52 |
+| BORROWED_DAYS | 92 | 52 | 32 |
+| BLIND_DECK | 90 | 55 | 62 |
+| THREE_MINUTES_DARK | 95 | 62 | 60 |
+| CONTINUITY | 95 | 42 | 40 |
+| THRESHOLD | 95 | 52 | 47 |
+| **TOTAL** | **93** | **61** | **56** |
+
+PART II SMART/PASSIVE **91/47%**. Stage 2~4 PASSIVE 평균 **80%** (80/85/75).
+공개 기여 SMART **5.58 facts/game** vs PASSIVE **1.14**. 이 PASSIVE 수치는 회귀 ceiling이지 최종 재미 목표가 아니다.
+
+## 100-game/Stage tuning probe (#675)
+`balance_probe.gd --games=100` → **ASTRA BALANCE PROBE OK · games=100**.
+
+| Stage | SMART | RANDOM | PASSIVE |
+|---|---:|---:|---:|
+| CALIBRATION | 97 | 74 | 62 |
+| DEAD_AIR | 95 | 78 | 67 |
+| GLASS_GARDEN | 99 | 83 | 73 |
+| ECHO_WARD | 96 | 75 | 81 |
+| SILENT_ORBIT | 99 | 52 | 50 |
+| RED_SHIFT | 88 | 50 | 38 |
+| LAST_LIGHT | 88 | 54 | 46 |
+| SECOND_WATCH | 96 | 52 | 50 |
+| BORROWED_DAYS | 92 | 52 | 45 |
+| BLIND_DECK | 90 | 56 | 49 |
+| THREE_MINUTES_DARK | 90 | 53 | 43 |
+| CONTINUITY | 91 | 52 | 40 |
+| THRESHOLD | 89 | 49 | 46 |
+| **TOTAL** | **93** | **60** | **53** |
+
+ECHO_WARD 100-game PASSIVE는 **81%**로 여전히 높은 편이므로 숫자 하나를 60%에 맞추기 위한 추가 보정은 중단했다.
+대신 아래 same-seed 인과 QA와 fairness QA에서 적극 플레이의 실제 이득과 공정성을 release gate로 고정했다.
+
+## ACTIVE vs PASSIVE causal QA — 100 same-seed pairs/Stage
+`causal_101_tests.gd` → **ASTRA CAUSAL 101 TESTS OK · 300 paired seeds**.
+
+| Stage | ACTIVE/PASSIVE win | avg days | innocent isolation | casualties | player public facts | Links | stance shifts | vote-intention shifts | raised contradiction | auto decisive public |
+|---|---|---|---|---|---|---|---|---|---|---|
+| DEAD_AIR | 89/80 | 1.38/1.82 | 0.49/1.02 | 0.49/1.02 | 197/0 | 213/0 | 159/0 | 226/0 | 213/0 | 11/16 |
+| GLASS_GARDEN | 98/82 | 1.31/2.06 | 0.33/1.24 | 0.33/1.11 | 243/0 | 197/0 | 181/0 | 242/0 | 197/0 | 11/28 |
+| ECHO_WARD | 94/81 | 1.48/2.39 | 0.54/1.58 | 0.54/1.58 | 235/0 | 231/0 | 213/0 | 410/0 | 231/0 | 3/19 |
+
+회의 템포(ACTIVE 평균): DEAD_AIR **25.65 lines / 2.72 meaningful choices / 0.00 continue-only / 5.39 clicks-to-vote**,
+GLASS_GARDEN **24.93 / 2.74 / 0.00 / 5.45**, ECHO_WARD **28.66 / 3.08 / 0.00 / 6.02**.
+같은 NPC 연속 발언 최대는 각각 **4/3/3**. PASSIVE 숫자만 낮추는 대신, 적극적인 조사/Link가 더 빠른 해결·적은 무고 격리·
+적은 희생·명시적인 public/stance/vote 변화를 만드는 것을 우선한다.
+
+## Evidence fairness / role-tell audit
+`fairness_101_tests.gd` → **ASTRA FAIRNESS 101 TESTS OK · 909 checks**.
+Stage 2~4 각각 100 seed에서 **zero-route 0 / one-route 0 / multi-route 100**. 즉 대표 3일 packet을 합쳐 2~3 conversation budget으로
+접근 가능한 서로 다른 합리적 proof route가 모든 seed에 둘 이상 존재했다.
+
+- DEAD_AIR route families: expert excuse 195 · intersection 140 · frame refute 164 · direct claim 116 · claim conflict 7.
+- GLASS_GARDEN: 261 · 128 · 153 · 108 · 2.
+- ECHO_WARD: expert excuse 236 · frame refute 227 · intersection 87 · claim conflict 5.
+- Role-tell audit: Null false sightings **549**, innocent mistaken sightings **94**, benign innocent discrepancies **523**.
+  따라서 “증언 번복/틀린 목격/방어적 행동 하나 = Null” 같은 단일 공식이 되지 않는다.
+
+ECHO_WARD의 intersection 동작은 `case_id == "ECHO_WARD"` 예외 누적으로 두지 않고 case catalog의 authored
+`deduction_profile`로 정의한다. generator/session에는 ECHO_WARD 이름 직접 분기가 없다.
+
+## Deduction / meeting
+`deduction_100_tests.gd` → **11,350 checks PASS**. 판정 tally:
+IRRELEVANT 2,116 · CONTRADICTION 188 · innocent-target contradiction 275 · equivalent 39 · intersection 3 · narrows-pair 23 ·
+clarification kind 7.
+
+- Link evidence는 직접 목격 / 전언 chain / 기록 / 공개·개인 상태 provenance를 보여 주되 점수·정답 확률은 표시하지 않는다.
+- 동일 statement×evidence 조합 반복은 새 정보를 만들지 않는다.
+- NPC 투표 의향이 플레이어 행동 때문에 바뀌면 최대 한 명이 근거/출처를 짚는 짧은 stance-change line을 말한다.
+- `meeting_view.gd`는 기존 패널 안에서 확인 / 연결 / 개입을 구분한다.
+- UI smoke: first meaningful choice **17 clicks**, first vote **23 clicks**, PASS.
+
+## UI / scrolling / resolutions
+`ui_layout_100.gd` → **2,450 checks PASS**.
+검사 해상도: **1120×700, 1280×720, 1366×768, 1600×900, 1920×1080, 2560×1440**.
+1120×700에서 explorer selection, conversation, meeting, Link statement/evidence picker, vote, glossary, rewind/result,
+4 minigames를 검사하고 **1920→1120→1920** resize round-trip도 검사한다.
+
+`AstraUI.follow_bottom()`은 layout settle 뒤 실제 scroll 직전에 follow 상태를 다시 검사한다. 새 긴 line 예약 후 첫 frame에 wheel-up하면
+두 번째 frame에서 bottom으로 끌어내리지 않고 unread chip을 표시하는 race regression이 PASS한다.
+Windows `visual_100.gd`는 **1120×700 / 1366×768 / 1920×1080** 캡처를 만들었고 #675 visual-review job PASS.
+실제 캡처에서 selection pixel preview 재등장, 주요 text/button clipping, missing confirm은 보이지 않았다.
+
+## Minigames
+`minigame_100_tests.gd` → **559 checks PASS**.
+Signal / Circuit / Timeline / Route 모두 keyboard path 유지 + mouse-only 성공 경로 검사.
+Signal은 mouse로 interference channel → real channel → frequency → phase → lock → source → confirm까지 완료 가능.
+reset, partial, seed variation, wrong-attempt recovery와 dead-end 없음도 보존한다.
+
+## Motion / explorer / rewind / save
+- `motion_100_tests.gd` → **1,699 checks PASS**: 14명 × 4방향 leg alternation, per-sheet stride, torso axis, turn,
+  blocked no-walk-in-place, reduced-motion walking. 걷는 동안 upper-body band motion을 다시 사용하지 않는다.
+- explorer selection은 main illustration only; pixel preview / RPG stat / difficulty stars 없음.
+- explorer identity는 dialogue/tone/relationship texture와 bounded ±0.02 social trust만 허용. Null assignment, truth, evidence,
+  RNG sequence, puzzle answer, deduction power, ability/action count는 바꾸지 않는다.
+- Rewind: Stage당 1회, same truth, memory only, Deep 없음. snapshot truth invariant 회귀 유지.
+- **Meta save v12 / session snapshot v4 유지**. 기존 migration path를 변경하지 않음.
+
+## CI / build provenance
+기능 기준 GitHub Actions **#675 / 36220261581**:
+- Linux import/parse/full `ci_suite.txt`/UI smoke/main boot: **PASS**
+- Windows import/full suite/UI smoke/main boot: **PASS**
+- quick stabilization (early balance + deduction + causal + fairness): **PASS**
+- 100-game balance probe: **PASS**
+- Windows visual QA: **PASS**
+- Windows RC export + exported EXE boot: **PASS**
+- human-readable `walkthrough_100.txt` artifact: **PASS**
+
+#675에서 VERSION이 아직 1.0.0이었으므로 RC 파일은 `ASTRA-1.0.0-windows.zip` **113,100,176 bytes**,
+SHA256 **4bb14b33ab95d4539ba6680005a5aca664f4cc4e10878b9ad3d13705315e8418**였다.
+이 파일을 1.0.1 release asset으로 재사용하지 않는다. VERSION/project/docs 1.0.1 bump 후 동일 pipeline이 만든
+`ASTRA-1.0.1-windows.zip`만 최종 release candidate로 인정한다.
+
+## 남은 human-only risk
+자동 검증으로 “재미있다”를 단정하지 않는다. 남는 사람 판단 항목은:
+- 45~60분 실제 플레이에서 Link picker와 25~29줄 회의가 피곤하지 않은지
+- ECHO_WARD 100-game PASSIVE 81%가 실제 체감에서 여전히 “방이 알아서 푼다”로 느껴지는지
+- stance-change 한 줄이 반복적으로 들리지 않고 각 캐릭터 말투로 자연스럽게 읽히는지
+- 긴 세션에서 한국어 clarification / Link response / final statement의 반복 피로
+- mouse slider 손맛과 1120×700의 실제 다양한 DPI/OS font 환경.
+
+---
+
 # 1.0.0 CONVICTION — LOCAL VALIDATION — 2026-09-26
 
 기준: `main` 2f0fc5a (v0.9.0) · branch `astra-1.0.0-conviction` · VERSION **1.0.0** · Snapshot **v4** · Meta save **v12** ·
