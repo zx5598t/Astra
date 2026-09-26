@@ -147,9 +147,8 @@ godot --path . --script res://tests/visual_080.gd                           # sc
 Commit `.import` and `.uid` files together with the assets/scripts they belong to.
 
 ## Release process
-1. Work on a feature/release branch; bump `VERSION` and `config/version` in `project.godot`; update `CHANGELOG.md`
-   and `docs/RELEASE_NOTES.md`.
-2. Push; wait for `Godot CI` to pass.
-3. Fast-forward `main` to the release branch.
-4. Tag `vX.Y.Z` on `main` → the `Windows build` workflow publishes `ASTRA-X.Y.Z-windows.zip` as a Release.
-5. The Windows job must validate the source and boot the actual exported `ASTRA.exe` before publishing.
+1. Work on a feature/release branch; bump `VERSION`, `project.godot` and Windows resource metadata; update changelog/release/QA docs.
+2. Push and require the complete `Godot CI` matrix to pass on the release branch.
+3. Fast-forward the tested release head to `main`; do not tag an untested merge result.
+4. Require `Godot CI` to pass again on that exact main SHA, including Windows RC export and exported `ASTRA.exe` boot.
+5. The version-specific publish workflow downloads the Windows artifact from that exact successful run, verifies its SHA256, then creates the `vX.Y.Z` tag and GitHub Release against the same main SHA. Never reuse an earlier-version RC artifact.
