@@ -5103,8 +5103,10 @@ func _vote_view(voter_id: String, target_id: String) -> Dictionary:
                 # A person's own private observation is valid voting evidence,
                 # just not equivalent to a fact the room has cross-checked.
                 # Public presentation restores full weight, so explorer action
-                # matters without deleting NPC agency.
-                weight *= 0.62
+                # matters without deleting NPC agency. Intersection-authored
+                # chapters can require a little more verification without
+                # hard-coding a Stage name here.
+                weight *= float(_deduction_profile().get("private_vote_scale", 0.62))
                 if str(item.get("type", "")) == "HEARSAY":
                     # A retelling is weaker again even when this voter owns it.
                     weight *= 0.7
