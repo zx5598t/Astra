@@ -214,7 +214,13 @@ func test_consequence_bridge() -> void:
     next_loop._drain_consequences("NEXT_LOOP", false)
     check(int(next_loop.voyage.get("consequence_stats", {}).get("NEXT_LOOP", 0)) >= 1, "NEXT_LOOP consequence is delivered as residue")
     var tags: Array = next_loop.voyage.get("memory_tags", [])
-    check("sena_protection_conflict_echo" in tags, "NEXT_LOOP residue uses memory tag rather than episodic dialogue")
+    check("sena:sena_protection_conflict_echo" in tags, "NEXT_LOOP residue stores the authored character-scoped memory tag")
+    var loop_event := {}
+    for event in next_loop.voyage.get("consequence_history", []):
+        if str(event.get("id", "")) == "sena-risk-loop":
+            loop_event = event
+            break
+    check(str(loop_event.get("followup_scene", "")) == "", "NEXT_LOOP residue does not replay an episodic follow-up scene")
 
 func test_snapshot_dedup() -> void:
     var path := "user://choice_110_snapshot.cfg"
