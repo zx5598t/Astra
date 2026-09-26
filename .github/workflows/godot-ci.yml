@@ -161,6 +161,7 @@ jobs:
             build/qa/walkthrough_100.txt
             build/qa/walkthrough_110.txt
             build/qa/dialogue_110_report.txt
+            build/qa/content_exposure_110.txt
           if-no-files-found: error
 
       - name: Boot main scene headlessly

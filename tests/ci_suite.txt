@@ -36,3 +36,4 @@ replay_110_tests.gd|ASTRA REPLAY 110 TESTS OK|
 dialogue_110_tests.gd|ASTRA DIALOGUE 110 TESTS OK|
 finale_110_tests.gd|ASTRA FINALE 110 TESTS OK|
 walkthrough_110.gd|ASTRA WALKTHROUGH 110 OK|
+content_exposure_110.gd|ASTRA CONTENT EXPOSURE 110 OK|

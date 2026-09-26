@@ -1,6 +1,6 @@
 extends SceneTree
 
-# 1.0.1 UI release gate (headless). Drives the real screens at the official
+# 1.1.0 UI release gate (headless). Drives the real screens at the official
 # minimum 1120x700 plus 1280x720, 1366x768, 1600x900, 1920x1080 and
 # 2560x1440 with synthetic long Korean lines (test
 # fixture only, never saved) and checks what a player would otherwise fight:
@@ -38,6 +38,7 @@ func _run() -> void:
     for path in [META_PATH, SETTINGS_PATH]:
         DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
     await _selection_minimum()
+    await _living_paths_choice_minimum()
     for resolution in [Vector2i(1120, 700), Vector2i(1280, 720), Vector2i(1366, 768), Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(2560, 1440)]:
         await _pass(resolution)
     await _minigames_minimum()
@@ -69,6 +70,30 @@ func _selection_minimum() -> void:
             path = (rect.texture as AtlasTexture).atlas.resource_path
         check(not path.contains("/pixel") and not path.contains("pixel080"), "1120x700: selection uses no pixel preview")
     setup.queue_free()
+    await _wait(3)
+
+
+func _living_paths_choice_minimum() -> void:
+    root.size = Vector2i(1120, 700)
+    var stage := AstraVNStage.new()
+    root.add_child(stage)
+    await _wait(3)
+    var choices := AstraStageStory.branch_choices("THREE_MINUTES_DARK")
+    check(choices.size() == 3, "1120x700: THREE_MINUTES_DARK exposes 3 intended routes")
+    stage.show_beat({
+        "speaker":"sena",
+        "action":"세 구역이 동시에 끊겼다. 당신은 한 곳만 직접 확인할 수 있다.",
+        "text":"어디로 갈지 정해야 해. 나머지는 사람의 말과 기록으로 확인하게 된다.",
+        "choices":choices
+    })
+    await _wait(5)
+    check(stage._choices.get_child_count() == 3, "1120x700: Living Paths renders all 3 branch buttons")
+    for child in stage._choices.get_children():
+        if child is Button:
+            check((child as Button).custom_minimum_size.y >= 58.0, "1120x700: branch hint button keeps two-line height")
+    _buttons_fit(stage, "1120x700: Living Paths 3-choice hints")
+    _inside(stage, Vector2i(1120, 700), "1120x700: Living Paths 3-choice hints")
+    stage.queue_free()
     await _wait(3)
 
 func _minigames_minimum() -> void:
