@@ -474,7 +474,7 @@ const STAGE_THEMES := {
     "CALIBRATION": {"benign_day1": 0.35, "benign_later": 0.3, "hearsay_chance": 0.3, "hearsay_distort": 0.0},
     "DEAD_AIR": {"benign_day1": 0.95, "benign_later": 0.7, "hearsay_chance": 0.45, "hearsay_distort": 0.1},
     "GLASS_GARDEN": {"benign_day1": 0.5, "benign_later": 0.45, "hearsay_chance": 0.9, "hearsay_overnight": 0.8, "hearsay_distort": 0.55},
-    "ECHO_WARD": {"benign_day1": 0.55, "benign_later": 0.5, "hearsay_chance": 0.6, "hearsay_distort": 0.25, "frame_bonus": 0.2, "specific_scale": 0.35},
+    "ECHO_WARD": {"benign_day1": 0.55, "benign_later": 0.5, "hearsay_chance": 0.6, "hearsay_distort": 0.25, "frame_bonus": 0.2, "specific_scale": 0.0},
     "SILENT_ORBIT": {"hearsay_distort": 0.25, "frame_bonus": 0.1},
     "RED_SHIFT": {"benign_day1": 0.75, "hearsay_distort": 0.3},
     "LAST_LIGHT": {"hearsay_distort": 0.3, "frame_bonus": 0.15},
