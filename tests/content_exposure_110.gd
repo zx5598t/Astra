@@ -30,6 +30,7 @@ func test_exposure_balancer() -> void:
     s.setup("THREE_MINUTES_DARK", 61001)
     s.begin_voyage({})
     s.voyage["speaker_exposure"] = {"mira":4,"noa":3,"vale":0}
+    var before_truth := JSON.stringify(s.truth)
     var candidates: Array = [
         {"id":"x_mira","speaker":"mira","lines":[["mira","x"]]},
         {"id":"x_noa","speaker":"noa","lines":[["noa","x"]]},
@@ -38,7 +39,7 @@ func test_exposure_balancer() -> void:
     var picked := s._pick_exposure_balanced_scene(candidates, "exposure-test")
     check(str(picked.get("speaker", "")) == "vale", "optional scheduler prefers the least-exposed eligible speaker")
     check(int(s.voyage.get("speaker_exposure", {}).get("vale", 0)) == 1, "optional scheduler records exposure after selection")
-    check(JSON.stringify(s.truth) == JSON.stringify(s.truth), "exposure scheduling does not require truth mutation")
+    check(JSON.stringify(s.truth) == before_truth, "exposure scheduling leaves case truth unchanged")
 
 func _count_strings(value: Variant) -> int:
     if value is String:
