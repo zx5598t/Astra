@@ -63,11 +63,15 @@ walking the node tree. Do not reintroduce that pattern.
   `WAIST_ROW`, legs planted) — never redraw or stretch the sheets. Drawn poses are cut from the user's action
   sheets at the walking figure's size, with a one-pixel dip in and out (`docs/PIXEL_ACTIONS_100.md`). Interlude actors carry `idle` (watch/work/sit/alert/pace); a seated
   actor needs a prop marked `front` (drawn again over them by y-sort).
-- **Explorers (0.9.0)**: a new campaign picks one of six explorers (`AstraExplorerCatalog`): `explorer_id` is who,
-  `art_id` which drawings (`serin_a`...). Identity changes wording only — questions, first-contact exchanges
-  (`FIRST_CONTACT`, rotating by Stage), meeting voice (`MEETING_VOICE`) — never truth, roles, weights, votes or
-  RNG. Portraits: `tools/import_explorers_090.gd` → `assets/explorers/`. Old saves keep p1-p6 as a neutral
-  explorer (`AstraMetaProgress.player_profile_for_slot`); never map a legacy look to one of the six.
+- **Explorers (0.9.0/1.0.1 contract)**: a new campaign picks one of six explorers (`AstraExplorerCatalog`):
+  `explorer_id` is who, `art_id` which drawings (`serin_a`...). Identity may change dialogue wording,
+  first-contact tone (`FIRST_CONTACT`, rotating by Stage), relationship texture, a bounded social-trust starting
+  nudge (`TONE_NUDGE`, at most ±0.02), meeting voice (`MEETING_VOICE`) and the next-day callback. That trust can
+  indirectly affect later social following; do not claim same-seed NPC votes are invariant. Identity must never
+  change Null assignment, case truth, generated/available evidence, RNG sequence, puzzle answers, direct deduction
+  power, special abilities or action counts. Portraits: `tools/import_explorers_090.gd` → `assets/explorers/`.
+  Old saves keep p1-p6 as a neutral explorer (`AstraMetaProgress.player_profile_for_slot`); never map a legacy look
+  to one of the six.
 - **Failure / echo**: the explorer's death ends the reconstruction at once; a retry is a new reconstruction
   (`AstraGameSession.fresh_seed(previous)`), a load is the same one. Residual Echo and the death echo leave at
   most one beat of feeling at the next first morning — never a role or an answer.
