@@ -32,6 +32,7 @@ func _run() -> void:
     _timeline()
     _route()
     _interlude_data()
+    await _mouse_paths()
     await process_frame
     if failures.is_empty():
         print("ASTRA MINIGAME 100 TESTS OK · %d checks" % checks)
@@ -280,6 +281,122 @@ func _path(t: AstraFieldTask, from: int, to: int) -> Array:
     while path[0] != from:
         path.push_front(prev[path[0]])
     return path
+
+func _mouse_click(task: AstraShipTask, at: Vector2) -> void:
+    var down := InputEventMouseButton.new()
+    down.button_index = MOUSE_BUTTON_LEFT
+    down.pressed = true
+    down.position = at
+    down.global_position = at
+    task.body.gui_input.emit(down)
+    var up := InputEventMouseButton.new()
+    up.button_index = MOUSE_BUTTON_LEFT
+    up.pressed = false
+    up.position = at
+    up.global_position = at
+    task.body.gui_input.emit(up)
+
+func _mouse_primary(task: AstraShipTask) -> void:
+    task._action.pressed.emit()
+
+func _mouse_paths() -> void:
+    # Signal: mouse-only from interference selection through two sliders,
+    # channel locks and final source selection.
+    var sig := AstraSignalTrace.new()
+    root.add_child(sig)
+    sig.setup(10101, [], 0.05, "소렌")
+    await process_frame
+    var sout := _outcome(sig)
+    var lane_h := sig.body.size.y / 3.0
+    _mouse_click(sig, Vector2(24, (float(sig.noise_channel) + 0.5) * lane_h))
+    _mouse_primary(sig)
+    check(sig.step == 1, "mouse signal: interference selection advances")
+    for c in range(3):
+        if c == sig.noise_channel:
+            continue
+        var fr: Rect2 = sig._freq_rect(c)
+        var pr: Rect2 = sig._phase_rect(c)
+        _mouse_click(sig, Vector2(fr.position.x + fr.size.x * float(sig.freq_targets[c]), fr.get_center().y))
+        _mouse_click(sig, Vector2(pr.position.x + pr.size.x * float(sig.phase_targets[c]), pr.get_center().y))
+        _mouse_primary(sig)
+        check(bool(sig.locked[c]), "mouse signal: sliders align and lock channel %s" % "ABC"[c])
+    check(sig.step == 2, "mouse signal: both channels reach source selection")
+    _mouse_click(sig, Vector2(sig.body.size.x * 0.8, 40.0 + sig.source * 70.0 + 29.0))
+    _mouse_primary(sig)
+    check(sout == ["success"], "mouse signal: source choice succeeds")
+    sig.queue_free()
+
+    var sig_reset := AstraSignalTrace.new()
+    root.add_child(sig_reset)
+    sig_reset.setup(20202, [], 0.05, "소렌")
+    await process_frame
+    _mouse_click(sig_reset, Vector2(24, (float((sig_reset.noise_channel + 1) % 3) + 0.5) * (sig_reset.body.size.y / 3.0)))
+    sig_reset._reset.pressed.emit()
+    check(sig_reset.step == 0 and sig_reset._answer == -1 and not bool(sig_reset.locked[0]) and not bool(sig_reset.locked[1]) and not bool(sig_reset.locked[2]), "mouse signal: reset returns to a clean start")
+    sig_reset.queue_free()
+
+    # Circuit: measurement, diagnosis and safe bypass are all clickable.
+    var circuit := AstraPowerRoute.new()
+    root.add_child(circuit)
+    circuit.setup(30303, "준")
+    await process_frame
+    var cout := _outcome(circuit)
+    _mouse_click(circuit, circuit._tp_rect(0).get_center())
+    _mouse_primary(circuit)
+    check(circuit.step == 1, "mouse circuit: measurement can advance to diagnosis")
+    _mouse_click(circuit, circuit._module_rect(circuit.failed).get_center())
+    _mouse_primary(circuit)
+    check(circuit.step == 2, "mouse circuit: module can be selected")
+    var fs := circuit._section_of(circuit.failed)
+    var safe := -1
+    for i in range(circuit.jumpers.size()):
+        var j: Dictionary = circuit.jumpers[i]
+        if int(j["from"]) <= fs and fs < int(j["to"]) and int(j["cap"]) >= circuit.load_amps:
+            safe = i
+            break
+    check(safe >= 0, "mouse circuit: safe bypass exists")
+    _mouse_click(circuit, circuit._jumper_rect(safe).get_center())
+    _mouse_primary(circuit)
+    check(cout == ["success"], "mouse circuit: full mouse path succeeds")
+    circuit.queue_free()
+
+    # Timeline: cards, boundary and interpretation are all clickable.
+    var tdata: Dictionary = AstraInterludes.data("red_shift_samples").get("task", {})
+    var timeline := AstraOrderTask.new()
+    root.add_child(timeline)
+    timeline.setup(40404, tdata, "노아")
+    await process_frame
+    var tout := _outcome(timeline)
+    for rank in range(timeline.items.size()):
+        for i in range(timeline.items.size()):
+            if int(timeline.items[i][1]) == rank:
+                _mouse_click(timeline, timeline._card_rect(i).get_center())
+                break
+    _mouse_primary(timeline)
+    check(timeline.step == 1, "mouse timeline: cards can be placed")
+    _mouse_click(timeline, timeline._gap_rect(timeline.gap_after).get_center())
+    _mouse_primary(timeline)
+    check(timeline.step == 2, "mouse timeline: boundary can be chosen")
+    var answer := timeline._conclusions.find(timeline.insight)
+    _mouse_click(timeline, timeline._conclusion_rect(answer).get_center())
+    _mouse_primary(timeline)
+    check(tout == ["success"], "mouse timeline: full mouse path succeeds")
+    timeline.queue_free()
+
+    # Route: choose every node in a valid out-and-back path by click.
+    var rdata: Dictionary = AstraInterludes.data("blind_deck_door").get("task", {})
+    var route := AstraFieldTask.new()
+    root.add_child(route)
+    route.setup(50505, rdata)
+    await process_frame
+    var rout := _outcome(route)
+    var path := _path(route, 0, route.target)
+    var back := _path(route, route.target, 0)
+    for node in path.slice(1) + back.slice(1):
+        _mouse_click(route, route._point(int(node)))
+    _mouse_primary(route)
+    check(rout == ["success"], "mouse route: full mouse path succeeds")
+    route.queue_free()
 
 func _interlude_data() -> void:
     var families := {}
