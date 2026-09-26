@@ -288,5 +288,6 @@ func _run() -> void:
     if failures.is_empty():
         print("ASTRA CAUSAL 101 TESTS OK · %d paired seeds" % (SEEDS * CASES.size()))
         quit(0)
+        return
     print("ASTRA CAUSAL 101 TESTS FAILED · %d" % failures.size())
     quit(1)
