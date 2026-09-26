@@ -474,7 +474,7 @@ const STAGE_THEMES := {
     "CALIBRATION": {"benign_day1": 0.35, "benign_later": 0.3, "hearsay_chance": 0.3, "hearsay_distort": 0.0},
     "DEAD_AIR": {"benign_day1": 0.95, "benign_later": 0.7, "hearsay_chance": 0.45, "hearsay_distort": 0.1},
     "GLASS_GARDEN": {"benign_day1": 0.5, "benign_later": 0.45, "hearsay_chance": 0.9, "hearsay_overnight": 0.8, "hearsay_distort": 0.55},
-    "ECHO_WARD": {"benign_day1": 0.55, "benign_later": 0.5, "hearsay_chance": 0.6, "hearsay_distort": 0.25, "frame_bonus": 0.2},
+    "ECHO_WARD": {"benign_day1": 0.55, "benign_later": 0.5, "hearsay_chance": 0.6, "hearsay_distort": 0.25, "frame_bonus": 0.2, "specific_scale": 0.35},
     "SILENT_ORBIT": {"hearsay_distort": 0.25, "frame_bonus": 0.1},
     "RED_SHIFT": {"benign_day1": 0.75, "hearsay_distort": 0.3},
     "LAST_LIGHT": {"hearsay_distort": 0.3, "frame_bonus": 0.15},
@@ -714,8 +714,9 @@ static func _build_day_packet(case_id: String, stage_seed: int, day: int, active
     # fallback for a small roster: the record and the kind of sighting are
     # chosen together to land as close to the Day's curve as the roster allows.
     var want := _narrow_target(case_id, day, rng)
-    var w_specific := rng.randf() < float([0.12, 0.18, 0.24][clampi(day - 1, 0, 2)])
-    var e_specific := rng.randf() < float([0.05, 0.12, 0.18][clampi(day - 1, 0, 2)])
+    var specific_scale := float(STAGE_THEMES.get(case_id, {}).get("specific_scale", 1.0))
+    var w_specific := rng.randf() < float([0.12, 0.18, 0.24][clampi(day - 1, 0, 2)]) * specific_scale
+    var e_specific := rng.randf() < float([0.05, 0.12, 0.18][clampi(day - 1, 0, 2)]) * specific_scale
     if w_specific and e_specific:
         e_specific = false
     var record_type := ""
