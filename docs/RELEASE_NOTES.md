@@ -1,3 +1,25 @@
+# ASTRA 1.1.0 — LIVING PATHS
+
+**진실을 찾는 것뿐 아니라, 그 진실을 누구와 어떤 순서로 다룰지도 직접 고르는 업데이트입니다.**
+
+1.0.1의 Link 추리·회의·투표·공정성은 그대로 유지하고, “버튼은 여러 개인데 다음 플레이가 비슷하다”는 문제를 줄였습니다.
+
+- **다섯 개의 강한 분기점** — DEAD_AIR, ECHO_WARD, RED_SHIFT, BORROWED_DAYS, THREE_MINUTES_DARK. 각 선택은 같은 canon으로 다시 합류하지만 다음 장면, 공개 범위, provenance, 사람의 행동, 회의 시작 맥락, 다음 Stage callback 중 둘 이상을 실제로 바꿉니다.
+- **THREE_MINUTES_DARK는 진짜 관찰 경로가 갈립니다.** 동력/통신/보안 중 한 곳만 직접 확인하며, 나머지는 NPC 보고·기록으로 얻게 됩니다. Null과 사건 진실은 같은 seed에서 그대로입니다.
+- **기존 consequence가 실제로 다시 작동합니다.** 선택 결과는 기존 AstraConsequenceModel을 통해 IMMEDIATE / DELAYED / NEXT_DAY / NEXT_LOOP로 전달되고, 저장·불러오기 뒤 같은 event가 두 번 발동하지 않습니다.
+- **좋은 기존 storylet만 선별 복귀했습니다.** 소렌 Listening Fatigue, 루칸 Risk Route, 마렌 Save One Sample 등 8개 micro-arc를 선택적으로 연결했습니다.
+- **의미 없는 선택은 줄였습니다.** 실제 후속이 거의 없던 구형 resolution 버튼 39개를 런타임에서 제거했습니다. 데이터는 호환을 위해 남깁니다.
+- **사람마다 추리하는 방법이 더 다릅니다.** 미라는 사람 상태, 준은 장비·작업 순서, 다렌은 조건·전제, 노아는 원문·출처, 세나는 출입 순서, 소렌은 원음·간격, 루칸은 거리·경로, 마렌은 생장·환경을 중심으로 Link/판단 변화/마지막 말을 합니다.
+- **질문에는 질문대로 대답합니다.** WITNESS/RECORD 런타임 응답 context를 직접 검사하고, raw 조사 token·미치환 token·speaker/roster 오류를 release gate로 둡니다.
+- **같은 Stage를 다시 해도 내 선택이 남습니다.** branch callback과 선택된 micro-arc가 다르게 나타납니다. reset 이후에는 과거를 직접 기억한다고 말하지 않고 익숙함·경계심 같은 residue로만 돌아옵니다.
+- **마지막 버튼 하나가 정서를 전부 정하지 않습니다.** share / wake / keep 행동은 그대로 선택되지만, 캠페인에서 사람을 어떻게 다뤘는지에 따라 warm / cautious / strained reception과 마지막 callback texture가 달라집니다.
+- **1120×700에서도 실제 분기 선택을 검증합니다.** THREE_MINUTES_DARK의 3개 선택 + 결과 힌트가 초상화/본문과 함께 화면 안에 들어옵니다.
+- **저장 형식은 그대로입니다.** Meta v12 / Snapshot v4. 1.0.1 저장에 과거 branch를 임의로 만들어 넣지 않습니다.
+
+실측 QA: player-visible choice scene set **22**, 2-option **9**, 3-option **13**, consequence-enabled **13**, selected unreachable **0**. 100-game SMART/RANDOM/PASSIVE **93/60/53%**, ECHO_WARD **96/75/81%**. 자세한 수치는 `docs/QA_REPORT.md`에 있습니다.
+
+---
+
 # ASTRA 1.0.1 — CONVICTION RELEASE POLISH
 
 1.0.0의 직접 추리 구조는 그대로 두고, 출시 직전 실제 플레이에서 걸리던 자동 해결·마우스 조작·스크롤·최소 창 크기·CI 문제를 정리한 안정화 업데이트입니다.
