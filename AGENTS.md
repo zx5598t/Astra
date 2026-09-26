@@ -1,7 +1,8 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **1.0.1** (CONVICTION RELEASE POLISH; stabilizes the 1.0.0 CONVICTION deduction loop). Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- Version **1.1.0 — LIVING PATHS**. Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- 1.1 keeps the 1.0.1 deduction/fairness contract and adds reconverging player-chosen routes, existing consequence delivery, replay variation and history-sensitive finale reception.
 - One Stage = one game; a Day = Morning → Conversation → Meeting → Vote → Night. PART I (Stages 1–4) one Null,
   PART II (Stage 5+) two Nulls and one protocol (GUARDIAN 5 / ANALYST 6 / EMPATH 7). No investigation phase,
   no exploration in the main loop, no abstention, exactly one isolation per Day, explorer death = immediate loss.
@@ -106,6 +107,18 @@ walking the node tree. Do not reintroduce that pattern.
   and end with `AstraUI.bottom_pad()`; a queued follow must re-check follow state after layout settles so wheel-up
   read-back wins. Multi-line choices use `AstraUI.choice_button`. Minimum supported window is 1120×700 and
   `tests/ui_layout_100.gd` covers minimum-size screens plus resize round-trips.
+
+## 1.1.0 LIVING PATHS rules
+- Do not add a BranchManager/NarrativeGraph/second story state machine. Route state belongs in existing GameSession/voyage nested dictionaries.
+- Canon, hidden Null identity, base Day Packet and puzzle answers never select a story branch. Branch inputs are visible player choice/knowledge/relationships/consequences only.
+- Five campaign anchors are authoritative: DEAD_AIR, ECHO_WARD, RED_SHIFT, BORROWED_DAYS, THREE_MINUTES_DARK.
+- A meaningful branch changes at least two observable categories: scene, knowledge scope, provenance, NPC behavior, callback/relationship texture, meeting context, next Day/Stage or finale reception.
+- Choice consequences use AstraConsequenceModel only. Preserve event-id deduplication across save/load/rewind.
+- Deep Reconstruction does not expose campaign branch anchors.
+- NEXT_LOOP callbacks are residue/familiarity, never explicit episodic memory.
+- Finale action is never overwritten by history; history changes reception/callback texture only.
+- Optional story exposure uses existing speaker_exposure and must never read role/truth/evidence to decide who gets a scene.
+- Preserve Meta save v12 / Snapshot v4 unless a real schema requirement is documented and migrated.
 
 ## Balance guardrails
 `tests/run_tests.gd` plays every Stage with three bots (SMART talks, follows up, intervenes and votes by
