@@ -51,6 +51,119 @@ func _pick_route(s: AstraGameSession, anchor: String, route: String) -> bool:
             return s.story_choose(index)
     return false
 
+func _choice_scene_has_consequence(scene: Dictionary) -> bool:
+    for choice in scene.get("choices", []):
+        if not Array(choice.get("consequences", [])).is_empty():
+            return true
+    return false
+
+func _choice_scene_expressive_only(scene: Dictionary) -> bool:
+    var choices: Array = scene.get("choices", [])
+    if choices.is_empty():
+        return false
+    for choice in choices:
+        if not bool(choice.get("expressive_choice", false)):
+            return false
+    return true
+
+func _micro_runtime_slot(scene: Dictionary) -> bool:
+    var speaker := str(scene.get("speaker", ""))
+    var chapters: Array = scene.get("chapters", [])
+    for case_id in AstraCaseCatalog.STAGE_ORDER:
+        if not chapters.is_empty() and case_id not in chapters:
+            continue
+        if speaker in AstraCaseCatalog.roster(AstraCaseCatalog.get_case(case_id)):
+            return true
+    return false
+
+func _write_choice_audit(retired_options: int) -> void:
+    var branch_scenes: Array = []
+    var branch_two := 0
+    var branch_three := 0
+    var branch_consequence := 0
+    var branch_expressive := 0
+    for anchor in AstraStageStory.BRANCH_ANCHORS:
+        var scene := {"id":"branch_" + str(anchor), "choices":AstraStageStory.branch_choices(str(anchor))}
+        branch_scenes.append(scene)
+        var count := Array(scene["choices"]).size()
+        if count == 2: branch_two += 1
+        if count == 3: branch_three += 1
+        if _choice_scene_has_consequence(scene): branch_consequence += 1
+        if _choice_scene_expressive_only(scene): branch_expressive += 1
+
+    var micro_scenes: Array = []
+    var micro_two := 0
+    var micro_three := 0
+    var micro_consequence := 0
+    var micro_expressive := 0
+    var unreachable := 0
+    for scene_id in AstraGameSession.LIVING_PATHS_CHOICE_SCENES:
+        var scene := AstraVoyageContent.scene(scene_id)
+        micro_scenes.append(scene)
+        var count := Array(scene.get("choices", [])).size()
+        if count == 2: micro_two += 1
+        if count == 3: micro_three += 1
+        if _choice_scene_has_consequence(scene): micro_consequence += 1
+        if _choice_scene_expressive_only(scene): micro_expressive += 1
+        if not _micro_runtime_slot(scene):
+            unreachable += 1
+
+    var probe := AstraGameSession.new()
+    var protocol_scenes := 0
+    var protocol_two := 0
+    var protocol_three := 0
+    for stage in range(1, AstraCaseCatalog.STAGE_ORDER.size() + 1):
+        var count := probe.protocols_for_stage(stage).size()
+        if count > 1:
+            protocol_scenes += 1
+            if count == 2: protocol_two += 1
+            if count == 3: protocol_three += 1
+
+    var finale_count := Array(AstraStageStory.FINALE_CHOICE.get("choices", [])).size()
+    var finale_two := 1 if finale_count == 2 else 0
+    var finale_three := 1 if finale_count == 3 else 0
+
+    var choice_scene_count := branch_scenes.size() + micro_scenes.size() + protocol_scenes + 1
+    var two_option_count := branch_two + micro_two + protocol_two + finale_two
+    var three_option_count := branch_three + micro_three + protocol_three + finale_three
+    var consequence_scene_count := branch_consequence + micro_consequence
+    var expressive_only_count := branch_expressive + micro_expressive
+
+    var timing_source: Array = branch_scenes.duplicate(true)
+    timing_source.append_array(micro_scenes)
+    var timings := AstraConsequenceModel.timing_counts(timing_source)
+
+    check(choice_scene_count == 22, "1.1 main-loop choice scene set is 22")
+    check(two_option_count == 9, "1.1 main-loop has 9 two-option scenes")
+    check(three_option_count == 13, "1.1 main-loop has 13 three-option scenes")
+    check(consequence_scene_count == 13, "13 selected 1.1 choice scenes have authored consequences")
+    check(unreachable == 0, "selected 1.1 choice scene definitions all have a valid runtime roster/chapter slot")
+
+    var lines: PackedStringArray = [
+        "ASTRA 1.1.0 — choice audit",
+        "",
+        "player_visible_choice_scene_set\t%d" % choice_scene_count,
+        "retired_meaningless_resolution_options\t%d" % retired_options,
+        "branch_choice_scenes\t%d" % branch_scenes.size(),
+        "selected_micro_choice_scenes\t%d" % micro_scenes.size(),
+        "protocol_choice_scenes\t%d" % protocol_scenes,
+        "finale_choice_scenes\t1",
+        "two_option_scenes\t%d" % two_option_count,
+        "three_option_scenes\t%d" % three_option_count,
+        "consequence_enabled_scenes\t%d" % consequence_scene_count,
+        "expressive_only_scenes\t%d" % expressive_only_count,
+        "unreachable_selected_choice_scenes\t%d" % unreachable,
+        "",
+        "consequence_IMMEDIATE\t%d" % int(timings.get("IMMEDIATE", 0)),
+        "consequence_DELAYED\t%d" % int(timings.get("DELAYED", 0)),
+        "consequence_NEXT_DAY\t%d" % int(timings.get("NEXT_DAY", 0)),
+        "consequence_NEXT_LOOP\t%d" % int(timings.get("NEXT_LOOP", 0))
+    ]
+    DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://build/qa"))
+    var file := FileAccess.open("res://build/qa/choice_110_report.txt", FileAccess.WRITE)
+    file.store_string("\n".join(lines))
+    file.close()
+
 func _history_count(s: AstraGameSession, event_id: String) -> int:
     var count := 0
     for event in s.voyage.get("consequence_history", []):
@@ -75,6 +188,7 @@ func test_branch_reachability() -> void:
         if count == 2: micro_two += 1
         if count == 3: micro_three += 1
     print("CHOICE 110 AUDIT · retired_resolution_options=%d · branch_options=11 · selected_micro_options=%d · micro_2choice=%d · micro_3choice=%d" % [retired_options, micro_options, micro_two, micro_three])
+    _write_choice_audit(retired_options)
     check(retired_options >= 30, "30+ shallow resolution buttons retired (%d)" % retired_options)
     var expected := {
         "DEAD_AIR":["PUBLIC","VERIFY_FIRST"],
