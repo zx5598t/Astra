@@ -159,7 +159,6 @@ jobs:
           name: walkthrough-100
           path: build/qa/walkthrough_100.txt
           if-no-files-found: error
-          if-no-files-found: ignore
 
       - name: Boot main scene headlessly
         run: |
