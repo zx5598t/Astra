@@ -48,6 +48,12 @@ jobs:
           ./godot --headless --path . --script res://tests/causal_101_tests.gd 2>&1 | tee quick-causal.log
           grep -q "ASTRA CAUSAL 101 TESTS OK" quick-causal.log
 
+      - name: Alternative-route and role-tell fairness gate
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/fairness_101_tests.gd 2>&1 | tee quick-fairness.log
+          grep -q "ASTRA FAIRNESS 101 TESTS OK" quick-fairness.log
+
       - name: Preserve quick-gate logs
         if: always()
         uses: actions/upload-artifact@v4
