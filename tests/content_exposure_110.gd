@@ -221,6 +221,14 @@ func _campaign(seed_base: int, start_memory: Dictionary = {}) -> Dictionary:
         stage_offset += 1
     return {"memory":memory,"visible":visible,"personal":personal,"meeting_lines":meeting_lines}
 
+
+func _available_stage_count(npc_id: String) -> int:
+    var total := 0
+    for case_id in AstraCaseCatalog.STAGE_ORDER:
+        if npc_id in AstraCaseCatalog.roster(AstraCaseCatalog.get_case(case_id)):
+            total += 1
+    return total
+
 func _count_visible(map: Dictionary, npc_id: String) -> int:
     return Dictionary(map.get(npc_id, {})).size()
 
@@ -268,15 +276,17 @@ func run_report() -> void:
     lines.append("Representative runtime measurement: first campaign + continued repeat campaign + 2 independent campaign samples.")
     lines.append("runtime_reached_sample counts actual displayed story_queue scenes observed in those campaigns; it is a measured sample, not a proof of exhaustive reachability.")
     lines.append("")
-    lines.append("id\tauthored_library\truntime_reached_sample\tfirst_visible\trepeat_visible\tnew_in_repeat\tpersonal_authored\tpersonal_first\tpersonal_repeat\tmeeting_first_lines\tmeeting_repeat_lines\tmeeting_authored_variants")
+    lines.append("id\tavailable_stages\tauthored_library\truntime_reached_sample\tfirst_visible\tfirst_per_available_stage\trepeat_visible\tnew_in_repeat\tpersonal_authored\tpersonal_first\tpersonal_repeat\tmeeting_first_lines\tmeeting_repeat_lines\tmeeting_authored_variants")
 
     var total_new := 0
     for npc_raw in AstraCrewCatalog.ORDER:
         var npc_id := str(npc_raw)
+        var available_stages := _available_stage_count(npc_id)
         var authored_count := int(Dictionary(authored.get("all", {})).get(npc_id, 0))
         var personal_authored := int(Dictionary(authored.get("personal", {})).get(npc_id, 0))
         var runtime_sampled := _count_visible(sampled_union, npc_id)
         var first_count := _count_visible(first_visible, npc_id)
+        var first_per_stage := float(first_count) / float(maxi(1, available_stages))
         var repeat_count := _count_visible(repeat_visible, npc_id)
         var new_repeat := _new_count(first_visible, repeat_visible, npc_id)
         var personal_first := _count_personal_visible(first_personal, npc_id)
@@ -285,9 +295,10 @@ func run_report() -> void:
         var meeting_repeat := int(Dictionary(repeat.get("meeting_lines", {})).get(npc_id, 0))
         var meeting_variants := _meeting_variants(npc_id)
         total_new += new_repeat
-        lines.append("%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d" % [
-            npc_id, authored_count, runtime_sampled, first_count, repeat_count, new_repeat,
-            personal_authored, personal_first, personal_repeat, meeting_first, meeting_repeat, meeting_variants
+        lines.append("%s\t%d\t%d\t%d\t%d\t%.2f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d" % [
+            npc_id, available_stages, authored_count, runtime_sampled, first_count, first_per_stage,
+            repeat_count, new_repeat, personal_authored, personal_first, personal_repeat,
+            meeting_first, meeting_repeat, meeting_variants
         ])
         check(authored_count > 0, npc_id + " has authored content")
         check(runtime_sampled > 0, npc_id + " appears in sampled runtime story scenes")

@@ -6342,6 +6342,7 @@ func _queue_morning(day_index: int, recovered: Array = []) -> void:
         scenes.append(_scene_entry({"id": "incident_%s_%d" % [case_id.to_lower(), day_index], "art": art, "speaker": _incident_expert(),
             "action": str(info.get("summary", "")),
             "lines": [[_incident_expert(), AstraSocialLines.line(_incident_expert(), "incident_note", {"room": room_name(str(info.get("room", ""))), "time": incident_time(), "stake": str(info.get("stake", ""))}, _pick("inc"))]]}, "incident"))
+        _mark_story_queue_exposure(scenes)
         var vignette := _choice_micro_arc_vignette()
         if vignette.is_empty():
             vignette = _vignette_080()
@@ -6349,6 +6350,7 @@ func _queue_morning(day_index: int, recovered: Array = []) -> void:
             vignette = _morning_vignette()
         if not vignette.is_empty():
             scenes.append(vignette)
+    _mark_story_queue_exposure(scenes)
     _set_story_queue(scenes)
 
 # Part II: the recovered security protocols are explained by the people who
@@ -6504,6 +6506,18 @@ func _mark_optional_scene_exposure(scene: Dictionary) -> void:
     for who in _optional_scene_speakers(scene):
         exposure[who] = int(exposure.get(who, 0)) + 1
     voyage["speaker_exposure"] = exposure
+
+
+func _mark_story_queue_exposure(scenes: Array) -> void:
+    # Count the authored beats the player is about to read before choosing an
+    # optional vignette. The day guard prevents the final _set_story_queue call
+    # from double-counting the same morning.
+    if voyage.is_empty() or int(stage_state().get("speaker_exposure_marked_day", 0)) == day:
+        return
+    for raw in scenes:
+        var scene: Dictionary = raw
+        _mark_optional_scene_exposure(scene)
+    stage_state()["speaker_exposure_marked_day"] = day
 
 func _pick_exposure_balanced_scene(candidates: Array, key: String) -> Dictionary:
     if candidates.is_empty():
