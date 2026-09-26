@@ -252,7 +252,15 @@ const OPENINGS := {
             "lines":[["noa","{time}, 외부 송신 채널이 닫혔어요. 절차 순서가 정확해요. 실수로 누른 게 아니에요."],
                 ["dax","하나 더 있어. 기록보관실에 목적지가 서로 다른 원본 문서가 두 장이야. 둘 다 진짜 서명이고."],
                 ["sena","교신을 끊고, 목적지를 두 개로 만들고. 누가 우리 발을 묶으려는 거네."],
-                ["rho","또 그거야? 우리 중 누가…"]]},
+                ["rho","또 그거야? 우리 중 누가…"]],
+            "choices":[
+                {"label":"두 원본을 승무원 전원에게 공개한다","hint":"승무원 모두가 이 기록을 알고 대화를 시작한다.","effect":"branch:DEAD_AIR:PUBLIC","memory_tag":"110_dead_air_public","route_anchor":"DEAD_AIR","route_id":"PUBLIC","observable_categories":["knowledge_scope","meeting_context","next_stage_callback"],"provenance":{"destination_originals":"PUBLIC_RECORD"},"consequences":[
+                    {"id":"110-dead-air-public-now","timing":"IMMEDIATE","followup_scene":"110_dead_air_public_now","who":"noa"},
+                    {"id":"110-dead-air-public-day","timing":"NEXT_DAY","note":"노아가 공개본 옆에 두 원본의 출처 표기를 다시 붙여 두었다.","who":"noa"}]},
+                {"label":"노아와 원본부터 따로 대조한다","hint":"공개는 늦어지지만 서명과 출처를 먼저 확인한다.","effect":"branch:DEAD_AIR:VERIFY_FIRST","memory_tag":"110_dead_air_verify","route_anchor":"DEAD_AIR","route_id":"VERIFY_FIRST","observable_categories":["provenance","private_followup","meeting_context"],"provenance":{"destination_originals":"NOA_VERIFIED_COPY"},"consequences":[
+                    {"id":"110-dead-air-verify-now","timing":"IMMEDIATE","followup_scene":"110_dead_air_verify_now","who":"noa"},
+                    {"id":"110-dead-air-verify-day","timing":"NEXT_DAY","note":"노아가 공개 전 대조표를 완성해 원본과 사본의 출처를 나눠 표시했다.","who":"noa"}]}
+            ]},
         {"id":"open_dead_3", "art":"bridge", "action":"세나가 팔짱을 끼고 사람들을 한 명씩 본다.",
             "lines":[["sena","규정은 알아. 오늘 안에 한 명 격리. 대신 몰아가기는 안 돼. 말을 듣고 정하자."],
                 ["mira","세나 말이 맞아요. 누가 어디 있었는지부터 들어요."]]}
@@ -279,7 +287,15 @@ const OPENINGS := {
             "lines":[["vale","이 목소리… 저예요. 그런데 이 시간에 전 포드 안에 있었어요."],
                 ["mira","생체 기록상 소렌은 분명 자고 있었어요. 그 시간 내내요."],
                 ["dax","그럼 누가 이 신호를 받아들였는지부터 보자. 수신 승인은 사람 손이 필요해."],
-                ["eli","시간이 두 개로 갈라진 것처럼 말하지 마. 하나씩 맞추면 돼."]]}
+                ["eli","시간이 두 개로 갈라진 것처럼 말하지 마. 하나씩 맞추면 돼."]],
+            "choices":[
+                {"label":"소렌에게 녹음을 전부 들려준다","hint":"소렌이 자기 목소리를 직접 듣고 분석에 참여한다.","effect":"branch:ECHO_WARD:TELL_SOREN","memory_tag":"110_echo_tell","route_anchor":"ECHO_WARD","route_id":"TELL_SOREN","observable_categories":["speaker_knowledge","emotional_scene","meeting_context"],"provenance":{"soren_signal":"SOREN_FIRSTHAND_REVIEW"},"consequences":[
+                    {"id":"110-echo-tell-now","timing":"IMMEDIATE","followup_scene":"110_echo_tell_now","who":"vale"},
+                    {"id":"110-echo-tell-day","timing":"NEXT_DAY","note":"소렌은 다음 분석표에 원음과 전언을 다른 줄로 나눠 적었다.","who":"vale"}]},
+                {"label":"의료 기록부터 독립적으로 검증한다","hint":"소렌에게 전부 알리기 전에 수면 기록과 신호 시각을 대조한다.","effect":"branch:ECHO_WARD:VERIFY_FIRST","memory_tag":"110_echo_verify","route_anchor":"ECHO_WARD","route_id":"VERIFY_FIRST","observable_categories":["information_order","medical_source","later_callback"],"provenance":{"soren_signal":"MEDICAL_CROSSCHECK"},"consequences":[
+                    {"id":"110-echo-verify-now","timing":"IMMEDIATE","followup_scene":"110_echo_verify_now","who":"mira"},
+                    {"id":"110-echo-verify-day","timing":"NEXT_DAY","note":"미라와 노아가 수면 기록과 원음 시각을 맞춘 대조표를 남겼다.","who":"mira"}]}
+            ]}
     ],
     "SILENT_ORBIT": [
         {"id":"open_orbit_1", "art":"medical", "action":"마지막 포드가 열린다. 생태학자 마렌이 물컵을 받아 들고 생태 구역 상태표부터 찾는다. 이제 여덟 명이 모두 깨어 있다.",
@@ -303,7 +319,16 @@ const OPENINGS := {
         {"id":"open_red_2", "art":"garden", "action":"생태 단말에 '정착용' 분류표가 줄지어 떠 있다.",
             "lines":[["lyra","{time}, 표본들이 '정착용'으로 재분류됐어요. 도착하지도 않았는데 도착 이후 분류라니."],
                 ["eli","분류표만 틀렸다고 보긴 어려워. 채집 장비 기록도 같은 날짜를 말하고 있어."],
-                ["mira","누군가 오늘 그걸 바꿔 놓았다면, 그 사람은 이 시료가 뭘 말하는지 알고 있는 거예요."]]}
+                ["mira","누군가 오늘 그걸 바꿔 놓았다면, 그 사람은 이 시료가 뭘 말하는지 알고 있는 거예요."],
+                ["noa","잠깐. 이 시료 라벨 필체, 탐사요원 거예요. 숫자 끝을 올리는 습관까지 같아요."]],
+            "choices":[
+                {"label":"“이거 내 글씨예요”라고 바로 밝힌다","hint":"승무원 모두가 탐사요원도 과거 기록과 연결됐음을 알게 된다.","effect":"branch:RED_SHIFT:REVEAL","memory_tag":"110_red_reveal","route_anchor":"RED_SHIFT","route_id":"REVEAL","observable_categories":["public_identity_context","npc_behavior","meeting_context"],"provenance":{"player_handwriting":"PUBLIC_ADMISSION"},"consequences":[
+                    {"id":"110-red-reveal-now","timing":"IMMEDIATE","followup_scene":"110_red_reveal_now","who":"noa"},
+                    {"id":"110-red-reveal-day","timing":"NEXT_DAY","note":"노아는 탐사요원의 현재 필체와 시료 라벨을 같은 화면에 공개 대조해 두었다.","who":"noa"}]},
+                {"label":"노아와 원본 필체부터 개인적으로 대조한다","hint":"공개 시점을 늦추고 현재 필체와 원본을 먼저 검증한다.","effect":"branch:RED_SHIFT:WITHHOLD_VERIFY","memory_tag":"110_red_verify","route_anchor":"RED_SHIFT","route_id":"WITHHOLD_VERIFY","observable_categories":["private_verification","information_order","later_callback"],"provenance":{"player_handwriting":"PRIVATE_ORIGINAL_CHECK"},"consequences":[
+                    {"id":"110-red-verify-now","timing":"IMMEDIATE","followup_scene":"110_red_verify_now","who":"noa"},
+                    {"id":"110-red-verify-day","timing":"NEXT_DAY","note":"노아가 공개하지 않은 필체 대조 결과를 봉인 표기와 함께 정리했다.","who":"noa"}]}
+            ]}
     ],
     "LAST_LIGHT": [
         {"id":"open_last_1", "art":"engine", "action":"전력 계통이 불안정하게 오르내린다. 모든 시스템을 동시에 살릴 수는 없다.",
@@ -329,7 +354,15 @@ const OPENINGS := {
         {"id":"open_borrowed_1", "art":"lounge", "action":"라운지. 세나가 묻지도 않고 준에게 정확한 공구를 건넨다. 둘 다 그걸 알아차리지 못한다.",
             "lines":[["noa","지금 기록엔 두 분이 이번 항해에서 처음 만났다고 되어 있어요."],
                 ["rho","근데 방금… 뭐 달라고 하기도 전에 받았어. 이상하게 놀랍지가 않네."],
-                ["","당신은 기억한다. 누군가 기록을 고쳐 쓰던 밤을. 고쳐지지 않은 건 사람들의 손이었다."]]},
+                ["","당신은 기억한다. 누군가 기록을 고쳐 쓰던 밤을. 고쳐지지 않은 건 사람들의 손이었다."]],
+            "choices":[
+                {"label":"세나와 준에게 방금 행동을 바로 말한다","hint":"둘이 서로의 익숙한 행동을 의식한 채 직접 확인한다.","effect":"branch:BORROWED_DAYS:TELL","memory_tag":"110_borrowed_tell","route_anchor":"BORROWED_DAYS","route_id":"TELL","observable_categories":["relationship_scene","shared_knowledge","meeting_context"],"provenance":{"habit_evidence":"DIRECT_CONVERSATION"},"consequences":[
+                    {"id":"110-borrowed-tell-now","timing":"IMMEDIATE","followup_scene":"110_borrowed_tell_now","who":"sena"},
+                    {"id":"110-borrowed-tell-day","timing":"NEXT_DAY","note":"세나와 준은 서로 먼저 손이 가는 공구와 동선을 따로 적어 두었다.","who":"rho"}]},
+                {"label":"말하지 않고 한 번 더 습관을 관찰한다","hint":"둘의 자연스러운 행동을 한 번 더 본 뒤 나중에 확인한다.","effect":"branch:BORROWED_DAYS:OBSERVE","memory_tag":"110_borrowed_observe","route_anchor":"BORROWED_DAYS","route_id":"OBSERVE","observable_categories":["behavioral_observation","information_order","later_callback"],"provenance":{"habit_evidence":"BEHAVIORAL_OBSERVATION"},"consequences":[
+                    {"id":"110-borrowed-observe-now","timing":"IMMEDIATE","followup_scene":"110_borrowed_observe_now","who":"rho"},
+                    {"id":"110-borrowed-observe-day","timing":"NEXT_DAY","note":"두 사람은 설명 없이도 같은 동선에서 서로 비켜 서는 습관을 한 번 더 보였다.","who":"sena"}]}
+            ]},
         {"id":"open_borrowed_2", "art":"lounge", "action":"라운지 공용 기록 창이 비어 있다.",
             "lines":[["noa","{time}, 제가 적어 둔 습관 목록이 지워졌어요. 누가 누구 컵을 어디 두는지까지 적었던 거예요."],
                 ["lyra","그런 걸 왜 지워요? 그건 그냥 사는 모습인데."],
@@ -350,7 +383,18 @@ const OPENINGS := {
             "lines":[["eli","난 동력 쪽 갈게. 내가 직접 보는 것만 확정해서 말할 거야."],
                 ["noa","직접 확인, 시스템 기록, 전달받은 판단. 세 가지를 섞지 않을게요."],
                 ["vale","전달된 말은 한 번 거칠 때마다 조금씩 달라져요. 원본 음성이 남아 있으면 제가 찾을게요. …누가 먼저 말했는지까지요."],
-                ["","당신은 기억한다. 지도 밖의 길을. 이번에는 길이 아니라 판단이 지워지려 한다."]]},
+                ["","당신은 기억한다. 지도 밖의 길을. 이번에는 길이 아니라 판단이 지워지려 한다."]],
+            "choices":[
+                {"label":"동력 구역으로 간다","hint":"동력은 직접 보고, 통신과 보안은 사람·기록을 통해 확인한다.","effect":"branch:THREE_MINUTES_DARK:POWER","memory_tag":"110_dark_power","route_anchor":"THREE_MINUTES_DARK","route_id":"POWER","observable_categories":["direct_source","indirect_sources","meeting_context"],"provenance":{"POWER":"DIRECT","COMMS":"NPC_REPORT","SECURITY":"RECORD"},"consequences":[
+                    {"id":"110-dark-power-now","timing":"IMMEDIATE","followup_scene":"110_dark_power_now","who":"rho"},
+                    {"id":"110-dark-power-day","timing":"NEXT_DAY","note":"세 갈래 기록에서 동력 줄만 탐사요원 직접 확인으로 표시됐다.","who":"noa"}]},
+                {"label":"통신 구역으로 간다","hint":"통신은 직접 듣고, 동력과 보안은 사람·기록을 통해 확인한다.","effect":"branch:THREE_MINUTES_DARK:COMMS","memory_tag":"110_dark_comms","route_anchor":"THREE_MINUTES_DARK","route_id":"COMMS","observable_categories":["direct_source","indirect_sources","meeting_context"],"provenance":{"POWER":"NPC_REPORT","COMMS":"DIRECT","SECURITY":"RECORD"},"consequences":[
+                    {"id":"110-dark-comms-now","timing":"IMMEDIATE","followup_scene":"110_dark_comms_now","who":"vale"},
+                    {"id":"110-dark-comms-day","timing":"NEXT_DAY","note":"세 갈래 기록에서 통신 줄만 탐사요원 직접 확인으로 표시됐다.","who":"noa"}]},
+                {"label":"보안 구역으로 간다","hint":"보안은 직접 보고, 동력과 통신은 사람·기록을 통해 확인한다.","effect":"branch:THREE_MINUTES_DARK:SECURITY","memory_tag":"110_dark_security","route_anchor":"THREE_MINUTES_DARK","route_id":"SECURITY","observable_categories":["direct_source","indirect_sources","meeting_context"],"provenance":{"POWER":"RECORD","COMMS":"NPC_REPORT","SECURITY":"DIRECT"},"consequences":[
+                    {"id":"110-dark-security-now","timing":"IMMEDIATE","followup_scene":"110_dark_security_now","who":"sena"},
+                    {"id":"110-dark-security-day","timing":"NEXT_DAY","note":"세 갈래 기록에서 보안 줄만 탐사요원 직접 확인으로 표시됐다.","who":"noa"}]}
+            ]},
         {"id":"open_dark_2", "art":"engine", "action":"심장로 패널에 손으로 내린 레버가 그대로 남아 있다.",
             "lines":[["rho","{time}, 첫 경보는 누가 손으로 일으켰어. 레버가 이렇게 내려가 있을 리 없어."],
                 ["mira","오늘은 누가 무엇을 직접 봤는지가 제일 중요해요. 들은 말과 본 것을 구분해요."]]}
@@ -375,6 +419,111 @@ const OPENINGS := {
                 ["sena","오늘은 그걸 지운 손부터 찾자."]]}
     ]
 }
+
+
+# ---------------------------------------------------------------- 1.1.0 LIVING PATHS
+# Five reconverging branch anchors. Choices change information order, provenance,
+# people and callbacks; they never read or mutate hidden Null identity or case truth.
+const BRANCH_ANCHORS := ["DEAD_AIR","ECHO_WARD","RED_SHIFT","BORROWED_DAYS","THREE_MINUTES_DARK"]
+
+const BRANCH_SCENES := {
+    "110_dead_air_public_now":{"id":"110_dead_air_public_now","art":"bridge","speaker":"noa","action":"노아가 두 원본을 같은 화면에 올리고 봉인 번호까지 공개한다.","lines":[
+        ["noa","두 장 다 원본 표기를 그대로 보여 줄게요. 어느 하나를 먼저 진짜라고 부르진 않겠어요."],
+        ["sena","좋아. 이제 다들 같은 문서를 봤다는 전제로 말해. 추측은 추측이라고 붙이고."]]},
+    "110_dead_air_verify_now":{"id":"110_dead_air_verify_now","art":"archive","speaker":"noa","action":"노아가 공개 화면을 끄고 원본의 서명과 보존 이력을 따로 대조한다.","lines":[
+        ["noa","종이와 서명, 보존 번호부터 맞출게요. 확인 전 사본을 사실처럼 퍼뜨리진 않겠어요."],
+        ["mira","그동안 사람들 반응은 그대로 볼 수 있겠네요. 나중에 공개할 땐 확인한 범위도 같이 말해요."]]},
+    "110_echo_tell_now":{"id":"110_echo_tell_now","art":"medical","speaker":"vale","action":"소렌이 헤드셋을 다시 쓰고 자기 목소리가 든 구간을 처음부터 듣는다.","lines":[
+        ["vale","…제 숨 쉬는 간격까지 맞아요. 누가 흉내 낸 소리라고 넘기긴 어렵겠어요."],
+        ["vale","원음하고 전해 들은 말을 따로 표시할게요. 제가 들은 건 제가 책임지고 말할게요."]]},
+    "110_echo_verify_now":{"id":"110_echo_verify_now","art":"medical","speaker":"mira","action":"미라가 포드 생체 기록을, 노아가 신호 원본 시각을 나란히 띄운다.","lines":[
+        ["mira","소렌은 이 구간 내내 수면 상태였어요. 이건 제 기록에서 먼저 확인할 수 있어요."],
+        ["noa","신호 시각도 원본 헤더와 맞아요. 소렌에게 들려주기 전에 여기까지는 독립적으로 고정해 둘게요."]]},
+    "110_red_reveal_now":{"id":"110_red_reveal_now","art":"garden","speaker":"noa","action":"탐사요원이 현재 메모와 시료 라벨을 같은 조명 아래 놓는다.","lines":[
+        ["player","이거 내 글씨예요. 적어도 지금 제 필체하고는 같아요."],
+        ["noa","그럼 탐사요원도 이 기록 바깥의 관찰자는 아니에요. 필체가 같다는 사실과 누가 왜 썼는지는 분리해서 볼게요."],
+        ["sena","좋아. 숨기지 않았다는 건 알겠어. 그렇다고 결론을 대신 내리진 않을게."]]},
+    "110_red_verify_now":{"id":"110_red_verify_now","art":"archive","speaker":"noa","action":"노아가 탐사요원의 새 필기와 시료 라벨을 둘만 볼 수 있는 확대 화면에 겹친다.","lines":[
+        ["noa","획 순서까지 비슷해요. 그래도 지금 바로 사람들 앞에서 의미까지 단정하진 말죠."],
+        ["player","먼저 원본이 맞는지 확인해요. 공개는 그다음에 할게요."]]},
+    "110_borrowed_tell_now":{"id":"110_borrowed_tell_now","art":"lounge","speaker":"sena","action":"세나와 준이 방금 건넨 공구를 사이에 놓고 서로를 본다.","lines":[
+        ["sena","내가 네가 뭘 찾는지 먼저 알았어. 기록대로 처음 보는 사이면 설명이 안 돼."],
+        ["rho","나도 받을 때 하나도 안 놀랐어. 기억은 없는데 손은 알고 있었네."],
+        ["noa","그 반응 자체를 기록할게요. 과거 관계의 결론이 아니라, 지금 확인한 행동으로요."]]},
+    "110_borrowed_observe_now":{"id":"110_borrowed_observe_now","art":"lounge","speaker":"rho","action":"말을 붙이지 않자 준이 빈 컵을 들고 일어난다. 세나는 보지도 않고 한쪽으로 비켜 선다.","lines":[
+        ["","둘은 좁은 통로에서 한 번도 부딪히지 않는다. 처음 맞춰 보는 동선이라기엔 너무 자연스럽다."],
+        ["rho","…왜 내가 네가 어디로 갈지 알고 있었지?"],
+        ["sena","나도 방금 같은 생각 했어."]]},
+    "110_dark_power_now":{"id":"110_dark_power_now","art":"engine","speaker":"rho","action":"탐사요원이 동력 구역으로 뛰어간다. 내려간 레버와 탄 냄새를 직접 확인한다.","lines":[
+        ["player","동력은 내가 봤어요. 레버는 손으로 내려가 있고 자동 전환 흔적은 없어요."],
+        ["rho","그건 직접 본 사실로 적어. 통신은 소렌 보고, 보안은 출입 기록을 받아서 따로 놓자."]]},
+    "110_dark_comms_now":{"id":"110_dark_comms_now","art":"bridge","speaker":"vale","action":"탐사요원이 통신 구역에서 끊기는 원음을 직접 듣는다.","lines":[
+        ["player","통신은 직접 들었어요. 두 번째 호출 전에 짧은 공백이 있었어요."],
+        ["vale","그 공백은 원음에서 같이 확인해요. 동력은 준의 보고, 보안은 기록으로 따로 표시할게요."]]},
+    "110_dark_security_now":{"id":"110_dark_security_now","art":"breach","speaker":"sena","action":"탐사요원이 보안 구역에서 비상 잠금이 풀리는 순서를 직접 본다.","lines":[
+        ["player","보안은 내가 봤어요. 바깥문보다 안쪽 잠금이 먼저 풀렸어요."],
+        ["sena","좋아. 네가 본 순서는 직접 증언. 동력과 통신은 각각 보고와 기록으로 분리하자."]]}
+}
+
+const BRANCH_MEETING_CONTEXT := {
+    "DEAD_AIR":{
+        "PUBLIC":"두 목적지 원본은 이미 모두에게 공개돼 있다. 회의는 두 문서가 모두 원본이라는 사실을 공유한 채 시작한다.",
+        "VERIFY_FIRST":"원본 대조 결과는 아직 탐사요원과 노아가 먼저 확인했다. 회의에서 무엇을 검증했고 언제 공개할지 직접 설명해야 한다."},
+    "ECHO_WARD":{
+        "TELL_SOREN":"소렌은 자기 목소리의 원음을 직접 들었다. 회의에서 원음과 전언의 차이를 스스로 설명할 수 있다.",
+        "VERIFY_FIRST":"소렌이 전체 녹음을 듣기 전, 의료 기록과 신호 시각이 먼저 독립 검증됐다. 회의는 그 출처 순서를 구분해 다룬다."},
+    "RED_SHIFT":{
+        "REVEAL":"탐사요원의 필체가 과거 시료에 있다는 사실은 이미 공개됐다. 회의는 탐사요원도 과거 기록과 연결될 수 있다는 전제에서 시작한다.",
+        "WITHHOLD_VERIFY":"필체 대조는 먼저 개인적으로 검증됐다. 공개되지 않은 해석과 확인된 필체 사실을 구분해야 한다."},
+    "BORROWED_DAYS":{
+        "TELL":"세나와 준은 서로의 익숙한 행동을 이미 알고 있다. 회의에서 둘은 같은 행동을 각자 설명할 수 있다.",
+        "OBSERVE":"탐사요원은 두 사람에게 말하기 전에 두 번째 습관 행동을 직접 봤다. 관찰과 당사자의 해석은 아직 분리돼 있다."},
+    "THREE_MINUTES_DARK":{
+        "POWER":"탐사요원은 동력을 직접 봤다. 통신과 보안은 다른 사람의 보고와 기록으로만 알고 있다.",
+        "COMMS":"탐사요원은 통신을 직접 확인했다. 동력과 보안은 다른 사람의 보고와 기록으로만 알고 있다.",
+        "SECURITY":"탐사요원은 보안을 직접 봤다. 동력과 통신은 다른 사람의 보고와 기록으로만 알고 있다."}
+}
+
+const CROSS_STAGE_BRANCH_CALLBACKS := {
+    "GLASS_GARDEN":{"anchor":"DEAD_AIR","routes":{
+        "PUBLIC":{"id":"110_cross_dead_public","art":"garden","speaker":"noa","action":"노아가 새 기록을 열자마자 사본을 두 개 만든다.","lines":[["noa","이상하게 오늘은 원본을 혼자 들고 있기 싫어요. 확인되는 대로 같이 볼 수 있게 둘게요."]]},
+        "VERIFY_FIRST":{"id":"110_cross_dead_verify","art":"garden","speaker":"noa","action":"노아가 새 기록의 봉인 번호부터 확인한다.","lines":[["noa","원본부터 확인하고 싶네요. 왜 이렇게 익숙한 순서인지는 모르겠지만요."]]}}},
+    "SILENT_ORBIT":{"anchor":"ECHO_WARD","routes":{
+        "TELL_SOREN":{"id":"110_cross_echo_tell","art":"bridge","speaker":"vale","action":"소렌이 헤드셋을 쓰기 전에 원음 파일 이름부터 확인한다.","lines":[["vale","이상하게 제 목소리면 제가 먼저 들어야 할 것 같아요. 대신 원음인지부터 확인할게요."]]},
+        "VERIFY_FIRST":{"id":"110_cross_echo_verify","art":"bridge","speaker":"mira","action":"미라가 시간표 옆에 생체 기록 창을 먼저 띄운다.","lines":[["mira","이번엔 목소리보다 몸의 시간을 먼저 맞춰 보고 싶어요. 이유는 잘 모르겠지만요."]]}}},
+    "LAST_LIGHT":{"anchor":"RED_SHIFT","routes":{
+        "REVEAL":{"id":"110_cross_red_reveal","art":"archive","speaker":"noa","action":"노아가 새 기록의 필체 비교 칸을 공개 화면에 함께 띄운다.","lines":[["noa","누가 썼는지도 숨기지 말고 같이 보죠. 사실과 의미는 그다음에 나눠도 돼요."]]},
+        "WITHHOLD_VERIFY":{"id":"110_cross_red_verify","art":"archive","speaker":"noa","action":"노아가 원본 확인 칸을 먼저 확대한다.","lines":[["noa","이상하게 공개보다 원본 확인이 먼저 손에 잡혀요. 확인한 범위부터 분명히 해 둘게요."]]}}},
+    "BLIND_DECK":{"anchor":"BORROWED_DAYS","routes":{
+        "TELL":{"id":"110_cross_borrowed_tell","art":"breach","speaker":"sena","action":"세나가 준에게 설명 없이 손전등을 건넨다. 둘 다 잠깐 멈춘다.","lines":[["sena","또 이러네. 기억은 없는데 네가 뭘 찾는지는 알 것 같아."]]},
+        "OBSERVE":{"id":"110_cross_borrowed_observe","art":"breach","speaker":"rho","action":"준이 세나의 동선을 한 걸음 먼저 비켜 준다.","lines":[["rho","내가 왜 네가 이쪽으로 올 줄 알았지? …일단 적어 두자."]]}}},
+    "CONTINUITY":{"anchor":"THREE_MINUTES_DARK","routes":{
+        "POWER":{"id":"110_cross_dark_power","art":"garden","speaker":"rho","action":"준이 새 기록에 ‘직접 봄’ 칸을 먼저 만든다.","lines":[["rho","이번엔 내가 손으로 본 거랑 남이 전한 걸 처음부터 칸을 갈라 둘게."]]},
+        "COMMS":{"id":"110_cross_dark_comms","art":"garden","speaker":"vale","action":"소렌이 원음과 전언을 서로 다른 트랙에 놓는다.","lines":[["vale","말이 한 사람을 거칠 때마다 바뀌니까요. 이번엔 처음부터 원음을 따로 둘게요."]]},
+        "SECURITY":{"id":"110_cross_dark_security","art":"garden","speaker":"sena","action":"세나가 출입 순서 칸을 먼저 그린다.","lines":[["sena","누가 어디 있었는지보다 문이 열린 순서부터 적자. 그게 덜 흔들려."]]}}}
+}
+
+static func branch_scene(scene_id: String) -> Dictionary:
+    return Dictionary(BRANCH_SCENES.get(scene_id, {})).duplicate(true)
+
+static func branch_choices(case_id: String) -> Array:
+    var result: Array = []
+    for scene in Array(OPENINGS.get(case_id, [])):
+        for choice in scene.get("choices", []):
+            if str(choice.get("route_anchor", "")) == case_id:
+                result.append(Dictionary(choice).duplicate(true))
+    return result
+
+static func branch_meeting_context(case_id: String, route_id: String) -> String:
+    return str(Dictionary(BRANCH_MEETING_CONTEXT.get(case_id, {})).get(route_id, ""))
+
+static func cross_stage_callback(case_id: String, route_choices: Dictionary) -> Dictionary:
+    var spec: Dictionary = CROSS_STAGE_BRANCH_CALLBACKS.get(case_id, {})
+    if spec.is_empty():
+        return {}
+    var anchor := str(spec.get("anchor", ""))
+    var route := str(route_choices.get(anchor, ""))
+    return Dictionary(Dictionary(spec.get("routes", {})).get(route, {})).duplicate(true)
 
 static func opening(case_id: String) -> Array:
     return Array(OPENINGS.get(case_id, [])).duplicate(true)
@@ -698,6 +847,22 @@ const EPILOGUES := {
 }
 
 const FINALE_TONE := {"share": "TRUST", "wake": "FRACTURE", "keep": "DISCOVERY"}
+
+const FINALE_RECEPTIONS := {
+    "WARM":{"id":"finale_reception_warm","art":"lounge","speaker":"mira","action":"결정을 들은 뒤에도 아무도 바로 자리를 뜨지 않는다.","lines":[
+        ["mira","지금 당장 모든 걸 믿는다는 뜻은 아니에요. 그래도 당신이 사람을 지키려고 했던 건 남아 있어요."],
+        ["noa","결정과 기록을 따로 남길게요. 우리가 왜 받아들였는지도 같이요."]]},
+    "CAUTIOUS":{"id":"finale_reception_cautious","art":"lounge","speaker":"noa","action":"사람들은 결정을 받아 적지만, 서로의 표정을 한 번 더 확인한다.","lines":[
+        ["noa","결정은 그대로 기록할게요. 다만 우리가 확인하지 못한 부분도 같이 남겨요."],
+        ["sena","따를 거야. 대신 다음 문은 다 같이 확인하고 열자."]]},
+    "STRAINED":{"id":"finale_reception_strained","art":"lounge","speaker":"sena","action":"결정은 실행되지만 방 안의 거리는 쉽게 줄지 않는다.","lines":[
+        ["sena","결정은 네가 한 대로 간다. 그게 우리가 겪은 일까지 없애 주는 건 아니야."],
+        ["noa","그래서 더 자세히 남길게요. 믿지 못했던 순간까지 포함해서요."]]}
+}
+
+static func finale_reception_scene(reception: String) -> Dictionary:
+    return Dictionary(FINALE_RECEPTIONS.get(reception, FINALE_RECEPTIONS["CAUTIOUS"])).duplicate(true)
+
 
 # What each person says at the end about what the explorer did for or to them
 # across the campaign. They do not remember it; it stays as feeling (echo).

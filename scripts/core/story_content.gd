@@ -96,11 +96,11 @@ static func personal(id: String, variation: int) -> String:
     return str(lines[posmod(variation,lines.size())])
 static func tutorial(phase: String, practiced: bool = false) -> String:
     match phase:
-        "BRIEFING": return "미라 · 먼저 사건의 시각과 조작을 확인해요. 준비되면 ‘현장으로’ 눌러 주세요."
-        "INVESTIGATION": return "노아 · 단서는 조사 노트에 보관돼요. 다른 흔적의 시간·장소를 대조해 보세요." if practiced else "노아 · 장소를 고른 뒤 빛나는 조사 지점을 눌러요. 이동과 노트 열기는 시간을 쓰지 않아요."
+        "BRIEFING": return "미라 · 먼저 사건의 시각과 조작을 확인해요. 장면이 끝나면 바로 사람들과 대화할 수 있어요."
+        "INVESTIGATION": return "노아 · 지금은 별도 조사 단계가 없어요. 사람의 말과 공개된 기록의 시간·출처를 대조해 보세요." if practiced else "노아 · 지금은 별도 조사 단계가 없어요. 먼저 사람에게 사건 시각의 일을 직접 물어보세요."
         "INTERROGATION": return "미라 · 이름을 눌러 상대를 바꿀 수 있어요. 먼저 사건 시각에 어디 있었는지 물어봐요. 거짓말에도 사정이 있을 수 있어요."
         "MEETING": return "세나 · 모두의 진술을 듣고 단서를 공개하십시오. 노트의 가설을 회의에서 제시할 수도 있습니다."
-        "VOTE": return "세나 · 이름을 고르고 투표를 확정하십시오. 최다 득표자를 격리하며, 동률이면 아무도 격리하지 않습니다."
+        "VOTE": return "세나 · 이름을 고르고 투표를 확정하십시오. 동률이면 결선 투표, 결선도 동률이면 탐사요원이 결정합니다."
         "NIGHT": return "미라 · 오늘 밤 할 수 있는 일은 하나예요. 사람을 지킬지, 사라질 기록을 지킬지 선택해요."
     return ""
 
@@ -134,8 +134,8 @@ static func calibration(phase: String, practiced: bool = false) -> String:
             return "미라 · 07:30에서 07:40 사이에 일어난 일이에요. 이 시간만 기억하면 돼요."
         "INVESTIGATION":
             if practiced:
-                return "노아 · 찾은 기록은 노트에 저장돼요. 남은 지점도 마저 살펴봐요."
-            return "노아 · 장소를 누르고, 노란 동그라미가 있는 곳을 눌러요. 그게 조사예요."
+                return "노아 · 별도 조사 단계는 없어요. 지금 가진 말과 기록에서 아직 확인하지 않은 출처를 보세요."
+            return "노아 · 별도 조사 단계는 없어요. 사람을 누르고 사건 시각에 무엇을 봤는지부터 물어봐요."
         "INTERROGATION":
             if practiced:
                 return "미라 · 나머지 사람에게도 같은 걸 물어봐요. 네 명 전부요."

@@ -152,7 +152,12 @@ func show_beat(beat: Dictionary) -> void:
     for index in range(choices.size()):
         var choice = choices[index]
         var label := str(choice.get("label", "")) if choice is Dictionary else str(choice)
-        var button := AstraUI.choice_button(label, AstraUI.GOLD, AstraUI.T_UI, true)
+        var hint := str(choice.get("hint", "")) if choice is Dictionary else ""
+        var button_text := label if hint == "" else (label + "\n  ↳ " + hint)
+        var button := AstraUI.choice_button(button_text, AstraUI.GOLD, AstraUI.T_UI, true)
+        if hint != "":
+            button.custom_minimum_size.y = 58.0
+            button.tooltip_text = hint
         button.pressed.connect(func(): chose.emit(index))
         _choices.add_child(button)
     _more.visible = not _has_choices

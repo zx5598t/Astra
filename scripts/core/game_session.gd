@@ -876,6 +876,7 @@ func advance() -> void:
     if outcome != "" and phase != "RESULT":
         _enter("RESULT")
         return
+    _advance_consequence_clock()
     match phase:
         "BRIEFING":
             _enter("INTERROGATION")
@@ -2607,6 +2608,9 @@ func _open_meeting() -> void:
             _feed_narration("모두가 %s에 있던 곳을 말한다. 이제 누구도 돌려 말하지 않는다." % incident_time())
         _:
             _feed_narration("모두가 %s에 있던 곳을 말한다. 목소리가 조금씩 높아진다." % incident_time())
+    var route_context := AstraStageStory.branch_meeting_context(case_id, branch_route(case_id))
+    if route_context != "":
+        _feed_narration(route_context)
     state["meeting_plan"] = _plan_threads()
     meeting_continue()
 
@@ -6080,7 +6084,8 @@ func story_choose(index: int) -> bool:
     var choice: Dictionary = choices[index]
     var who := str(scene.get("speaker", ""))
     var effect := str(choice.get("effect", ""))
-    # The last decision of the campaign sets the epilogue's tone (§35).
+    # The last decision remains the player's action. Campaign history changes
+    # how the room receives it, never which action was selected.
     if effect.begins_with("finale:"):
         _story_advance_scene()
         _queue_finale(effect.trim_prefix("finale:"))
@@ -6096,6 +6101,7 @@ func story_choose(index: int) -> bool:
         _story_advance_scene()
         changed.emit()
         return true
+    _record_branch_choice(scene, choice)
     if not voyage.is_empty() and who != "":
         voyage["choices"][effect] = int(voyage["choices"].get(effect, 0)) + 1
         var delta := float(AstraVoyageContent.RESPONSES.get(who, {}).get(effect, 0.0))
@@ -6111,6 +6117,7 @@ func story_choose(index: int) -> bool:
             tags.append(scoped)
         voyage["memory_tags"] = tags
     stage_state()["story_choice_" + str(scene.get("id", ""))] = effect
+    _enqueue_choice_consequences(choice, who, str(scene.get("id", "")))
     var reaction := AstraVoyageContent.resolution_reaction(case_id, memory_tag, roster)
     _story_advance_scene()
     if not reaction.is_empty():
@@ -6119,6 +6126,49 @@ func story_choose(index: int) -> bool:
         stage_state()["story_queue"] = queue
     changed.emit()
     return true
+
+
+# ---------------------------------------------------------------- 1.1.0 choice / branch state
+
+func _record_branch_choice(scene: Dictionary, choice: Dictionary) -> void:
+    if voyage.is_empty():
+        return
+    var anchor := str(choice.get("route_anchor", ""))
+    var route := str(choice.get("route_id", ""))
+    if anchor == "" or route == "":
+        return
+    var routes: Dictionary = voyage.get("route_choices", {})
+    routes[anchor] = route
+    voyage["route_choices"] = routes
+    var provenance: Dictionary = voyage.get("branch_provenance", {})
+    provenance[anchor] = Dictionary(choice.get("provenance", {})).duplicate(true)
+    voyage["branch_provenance"] = provenance
+    var history: Array = voyage.get("route_history", [])
+    var signature := "%s:%s:%d:%d" % [anchor, route, int(voyage.get("loop", 0)), day]
+    if not history.any(func(x): return str(x.get("signature", "")) == signature):
+        history.append({"signature":signature, "anchor":anchor, "route":route,
+            "scene":str(scene.get("id", "")), "loop":int(voyage.get("loop", 0)), "day":day})
+    voyage["route_history"] = history
+    stage_state()["route_choice_" + anchor] = route
+
+func branch_route(anchor: String = "") -> String:
+    var key := case_id if anchor == "" else anchor
+    return str(voyage.get("route_choices", {}).get(key, "")) if not voyage.is_empty() else ""
+
+func branch_provenance(anchor: String = "") -> Dictionary:
+    var key := case_id if anchor == "" else anchor
+    return Dictionary(voyage.get("branch_provenance", {}).get(key, {})).duplicate(true) if not voyage.is_empty() else {}
+
+func branch_signature() -> String:
+    if voyage.is_empty():
+        return ""
+    var parts: Array[String] = []
+    var routes: Dictionary = voyage.get("route_choices", {})
+    for anchor in AstraStageStory.BRANCH_ANCHORS:
+        var route := str(routes.get(anchor, ""))
+        if route != "":
+            parts.append("%s:%s" % [anchor, route])
+    return " | ".join(PackedStringArray(parts))
 
 func _story_advance_scene() -> void:
     var scene := story_scene()
@@ -6239,10 +6289,14 @@ func _queue_morning(day_index: int, recovered: Array = []) -> void:
             if is_alive(by):
                 scenes.append(_scene_entry({"id": "recovered_%s" % str(note.get("id", "")), "art": art, "speaker": by, "action": "",
                     "lines": [[by, AstraSocialLines.line(by, "recovered_record", {"from": name_of(str(note.get("from", "")))}, _pick("rec"))]]}, "morning"))
+        for pending_scene in _take_pending_consequence_scenes(2):
+            scenes.append(pending_scene)
         scenes.append(_scene_entry({"id": "incident_%s_%d" % [case_id.to_lower(), day_index], "art": art, "speaker": _incident_expert(),
             "action": str(info.get("summary", "")),
             "lines": [[_incident_expert(), AstraSocialLines.line(_incident_expert(), "incident_note", {"room": room_name(str(info.get("room", ""))), "time": incident_time(), "stake": str(info.get("stake", ""))}, _pick("inc"))]]}, "incident"))
-        var vignette := _vignette_080()
+        var vignette := _choice_micro_arc_vignette()
+        if vignette.is_empty():
+            vignette = _vignette_080()
         if vignette.is_empty():
             vignette = _morning_vignette()
         if not vignette.is_empty():
@@ -6348,6 +6402,59 @@ func _vignette_entry(kind: String, who: String, shown: Dictionary) -> Dictionary
     var pair := AstraStageStory.vignette(kind, who)
     return _scene_entry({"id": "vignette_%s_%s_%d" % [kind, who, day], "art": str(AstraStageStory.STAGE_ART.get(case_id, "lounge")),
         "speaker": who, "action": str(pair[0]), "lines": [[who, str(pair[1])]]}, "vignette")
+
+
+const LIVING_PATHS_CHOICE_SCENES := [
+    "054_vale_listening_fatigue_2",
+    "054_eli_risk_route_2",
+    "054_lyra_save_sample_2",
+    "054_noa_private_copy_2",
+    "054_sena_overprotection_2",
+    "054_rho_mistake_2",
+    "054_dax_failed_model_2",
+    "054_mira_self_neglect_2"
+]
+
+# Deliberately narrow revival of the best authored choices. We do not remove the
+# old blanket filter and flood the 1.0 loop; at most one active micro-arc choice
+# can occupy a later morning, and only when its actor/chapters are valid.
+func _choice_micro_arc_vignette() -> Dictionary:
+    if voyage.is_empty() or _pick("choice110:%d" % day) > 0.48:
+        return {}
+    var alive := active_participants()
+    var active_arcs: Array = voyage.get("active_arcs", [])
+    var candidates: Array = []
+    for scene_id in LIVING_PATHS_CHOICE_SCENES:
+        var scene := AstraVoyageContent.scene(scene_id)
+        if scene.is_empty():
+            continue
+        var chain_id := str(scene.get("chain_id", ""))
+        if chain_id == "" or chain_id not in active_arcs:
+            continue
+        if str(scene.get("speaker", "")) not in alive:
+            continue
+        if scene.has("chapters") and case_id not in Array(scene.get("chapters", [])):
+            continue
+        if int(voyage.get("seen_ever", {}).get(scene_id, 0)) > 0:
+            continue
+        candidates.append(scene)
+    if candidates.is_empty():
+        return {}
+    var picked: Dictionary = candidates[int(_pick("choice110pick:%d" % day) * candidates.size()) % candidates.size()]
+    var scene_id := str(picked.get("id", ""))
+    var seen_ever: Dictionary = voyage.get("seen_ever", {})
+    seen_ever[scene_id] = int(seen_ever.get(scene_id, 0)) + 1
+    voyage["seen_ever"] = seen_ever
+    var visible_ids: Array = voyage.get("visible_scene_ids", [])
+    if scene_id not in visible_ids:
+        visible_ids.append(scene_id)
+    voyage["visible_scene_ids"] = visible_ids
+    var arc_state: Dictionary = voyage.get("micro_arc_state", {})
+    arc_state[str(picked.get("chain_id", ""))] = maxi(2, int(picked.get("stage", 2)))
+    voyage["micro_arc_state"] = arc_state
+    var entry := _scene_entry(picked, "micro_arc")
+    entry["art"] = str(AstraStageStory.STAGE_ART.get(case_id, "lounge"))
+    return entry
 
 # One small authored crew moment from the existing storylet library, between
 # people who are all still here. Pure texture: it never carries evidence.
@@ -6469,16 +6576,45 @@ func finale_tone() -> String:
 
 # The epilogue for the decision, then what each person keeps of the
 # explorer as feeling (the campaign tally), then ASTRA's last line.
+func finale_action() -> String:
+    return str(stage_state().get("finale_action", ""))
+
+func finale_reception() -> String:
+    return str(stage_state().get("finale_reception", ""))
+
+func _count_tally_entries(counts: Dictionary) -> int:
+    var total := 0
+    for id in counts:
+        total += int(counts[id])
+    return total
+
+func _finale_reception_from_history() -> String:
+    var tally := _campaign_tally()
+    var supported := _count_tally_entries(Dictionary(tally.get("defended", {}))) + _count_tally_entries(Dictionary(tally.get("saved", {})))
+    var harmed := _count_tally_entries(Dictionary(tally.get("sent_wrong", {})))
+    if harmed >= 3 and harmed > supported:
+        return "STRAINED"
+    if supported >= 3 and harmed <= 1:
+        return "WARM"
+    return "CAUTIOUS"
+
 func _queue_finale(choice: String) -> void:
     var tone := str(AstraStageStory.FINALE_TONE.get(choice, "DISCOVERY"))
+    var reception := _finale_reception_from_history()
     stage_state()["finale_tone"] = tone
+    stage_state()["finale_action"] = choice
+    stage_state()["finale_reception"] = reception
     if not voyage.is_empty():
         var tags: Array = voyage.get("memory_tags", [])
         tags.append("finale:" + choice)
+        tags.append("finale_reception:" + reception.to_lower())
         voyage["memory_tags"] = tags
     var queue := story_queue()
     var at := int(stage_state().get("story_index", 0))
-    var extra: Array = [_scene_entry(AstraStageStory.EPILOGUES[tone], "finale")]
+    var extra: Array = [
+        _scene_entry(AstraStageStory.EPILOGUES[tone], "finale"),
+        _scene_entry(AstraStageStory.finale_reception_scene(reception), "finale")
+    ]
     var tally := _campaign_tally()
     var lines: Array = []
     for kind in ["saved", "defended", "sent_wrong"]:
@@ -6500,7 +6636,7 @@ func _queue_finale(choice: String) -> void:
     for index in range(extra.size()):
         queue.insert(at + index, extra[index])
     stage_state()["story_queue"] = queue
-    _log("최종 선택 · %s → %s" % [choice, tone])
+    _log("최종 선택 · %s → %s · reception %s" % [choice, tone, reception])
 
 func _callback_speakers(lines: Array) -> Array:
     var ids: Array = []
@@ -7039,6 +7175,10 @@ func _hydrate_054_voyage_defaults() -> void:
     if not voyage.has("cooperative_history"): voyage["cooperative_history"] = []
     if not voyage.has("information_sources"): voyage["information_sources"] = {}
     if not voyage.has("canon_post_arrival_seen"): voyage["canon_post_arrival_seen"] = []
+    if not voyage.has("route_choices"): voyage["route_choices"] = {}
+    if not voyage.has("route_history"): voyage["route_history"] = []
+    if not voyage.has("branch_provenance"): voyage["branch_provenance"] = {}
+    if not voyage.has("pending_consequence_scenes"): voyage["pending_consequence_scenes"] = []
     if Dictionary(voyage.get("motives",{})).is_empty():
         voyage["motives"] = AstraPersonalMotiveModel.assign(
             seed_value,int(voyage.get("loop",0)),case_id,roster,active_participants(),truth.get("nulls",[])
@@ -7437,7 +7577,11 @@ func begin_voyage(memory: Dictionary = {}) -> void:
         "delegation_history":memory.get("delegation_history",[]).duplicate(true), "delegation_used":false,
         "cooperative_history":[], "information_sources":{},
         "story_resolution_seen":false, "story_hook_seen":false,
-        "canon_post_arrival_seen":memory.get("canon_post_arrival_seen",[]).duplicate()}
+        "canon_post_arrival_seen":memory.get("canon_post_arrival_seen",[]).duplicate(),
+        "route_choices":memory.get("route_choices",{}).duplicate(true),
+        "route_history":memory.get("route_history",[]).duplicate(true),
+        "branch_provenance":memory.get("branch_provenance",{}).duplicate(true),
+        "pending_consequence_scenes":[]}
     voyage["chapters"] = memory.get("chapters",[]).duplicate()
     voyage["previous_review"] = str(memory.get("first_review",""))
     var previous: Dictionary = memory.get("memories", {})
@@ -7484,6 +7628,8 @@ func begin_voyage(memory: Dictionary = {}) -> void:
     # relationships, loop memory, codex and callbacks; everyone awake is met.
     voyage["met"] = roster.duplicate()
     _queue_echo_beat(memory)
+    _insert_cross_stage_branch_callback()
+    _drain_consequences("NEXT_LOOP", true)
     changed.emit()
 
 # One beat of residue at the first morning, at most (§16-19, §30): after a
@@ -7538,6 +7684,17 @@ func _insert_morning_scene(entry: Dictionary) -> void:
             break
     queue.insert(at, entry)
     stage_state()["story_queue"] = queue
+
+
+# 1.1.0: a carried route may leave a residue in the next Stage. The line never
+# claims episodic memory; it is familiarity/wariness consistent with canon.
+func _insert_cross_stage_branch_callback() -> void:
+    if voyage.is_empty() or is_deep() or day != 1:
+        return
+    var scene := AstraStageStory.cross_stage_callback(case_id, voyage.get("route_choices", {}))
+    if scene.is_empty():
+        return
+    _insert_morning_scene(_scene_entry(scene, "branch_callback"))
 
 # Canonical (order-independent) pair history for the current roster.
 #
@@ -7830,8 +7987,13 @@ func _apply_consequence_memory(event: Dictionary) -> void:
     voyage["memory_tags"] = tags
 
 func _apply_consequence_event(event: Dictionary, allow_scene: bool = true) -> bool:
-    if event.is_empty():
+    if event.is_empty() or voyage.is_empty():
         return false
+    var event_id := str(event.get("id", ""))
+    if event_id != "":
+        for applied in voyage.get("consequence_history", []):
+            if str(applied.get("id", "")) == event_id:
+                return false
     _apply_consequence_memory(event)
     var timing := str(event.get("timing","DELAYED"))
     var stats_054: Dictionary = voyage.get("consequence_stats",{})
@@ -7839,7 +8001,7 @@ func _apply_consequence_event(event: Dictionary, allow_scene: bool = true) -> bo
     voyage["consequence_stats"] = stats_054
     var history_event: Dictionary = event.duplicate(true)
     history_event["applied_day"] = day
-    history_event["visible_feedback"] = str(event.get("note","")) != "" and str(event.get("source_scene","")) != ""
+    history_event["visible_feedback"] = (str(event.get("note","")) != "" or str(event.get("followup_scene","")) != "") and str(event.get("source_scene","")) != ""
     voyage["consequence_history"].append(history_event)
     var note := str(event.get("note",""))
     if note != "" and note not in voyage.get("notes",[]):
@@ -7851,21 +8013,120 @@ func _apply_consequence_event(event: Dictionary, allow_scene: bool = true) -> bo
     if not allow_scene:
         if note != "":
             _log("후속 · " + note)
+        if str(event.get("followup_scene","")) != "" or note != "":
+            var pending: Array = voyage.get("pending_consequence_scenes", [])
+            if event_id == "" or not pending.any(func(x): return str(x.get("id", "")) == event_id):
+                pending.append(event.duplicate(true))
+            while pending.size() > 4:
+                pending.pop_front()
+            voyage["pending_consequence_scenes"] = pending
         return false
+    return _show_consequence_event(event)
+
+func _show_consequence_event(event: Dictionary, insert_at: int = -1) -> bool:
+    var who := str(event.get("who",""))
     var followup_id := str(event.get("followup_scene",""))
     if followup_id != "":
         var followup := AstraVoyageContent.scene(followup_id)
+        if followup.is_empty():
+            followup = AstraStageStory.branch_scene(followup_id)
         if not followup.is_empty():
-            _queue_extra_scene(_apply_scene_variants(followup,str(followup.get("speaker",who))), "consequence")
+            _queue_consequence_scene(_apply_scene_variants(followup,str(followup.get("speaker",who))), "consequence", insert_at)
             return true
+    var note := str(event.get("note",""))
     if note != "":
-        _queue_extra_scene({
-            "id":"054_consequence_" + str(event.get("id","event")).replace(":","_"),
+        _queue_consequence_scene({
+            "id":"110_consequence_" + str(event.get("id","event")).replace(":","_"),
             "speaker":who,"tag":"consequence","category":"CONSEQUENCE",
             "action":note,"lines":[],"choices":[]
-        }, "consequence")
+        }, "consequence", insert_at)
         return true
     return false
+
+func _queue_consequence_scene(scene: Dictionary, kind: String, insert_at: int = -1) -> void:
+    if scene.is_empty():
+        return
+    var queue := story_queue()
+    var entry := _scene_entry(scene, kind)
+    if insert_at >= 0:
+        queue.insert(mini(insert_at, queue.size()), entry)
+    else:
+        queue.append(entry)
+    stage_state()["story_queue"] = queue
+
+func _enqueue_choice_consequences(choice: Dictionary, who: String, source_scene: String) -> void:
+    if voyage.is_empty() or Array(choice.get("consequences", [])).is_empty():
+        return
+    var generated := AstraConsequenceModel.from_choice(
+        choice, who, source_scene, int(voyage.get("actions",0)),
+        int(voyage.get("loop",0)), day
+    )
+    var applied_ids := {}
+    for applied in voyage.get("consequence_history", []):
+        applied_ids[str(applied.get("id", ""))] = true
+    var fresh: Array = []
+    for event in generated:
+        if not applied_ids.has(str(event.get("id", ""))):
+            fresh.append(event)
+    voyage["consequence_queue"] = AstraConsequenceModel.enqueue(voyage.get("consequence_queue",[]), fresh)
+    _drain_consequences("IMMEDIATE", true, true)
+
+func _drain_consequences(timing_filter: String, allow_scene: bool, insert_after_current: bool = false) -> int:
+    if voyage.is_empty():
+        return 0
+    var applied := 0
+    var insert_at := int(stage_state().get("story_index", 0)) + 1
+    while true:
+        var popped := AstraConsequenceModel.pop_due(
+            voyage.get("consequence_queue",[]), int(voyage.get("actions",0)),
+            int(voyage.get("loop",0)), day, timing_filter
+        )
+        voyage["consequence_queue"] = popped.get("queue",[])
+        var event: Dictionary = popped.get("event",{})
+        if event.is_empty():
+            break
+        if allow_scene and insert_after_current:
+            _apply_consequence_event(event, false)
+            var pending: Array = voyage.get("pending_consequence_scenes", [])
+            pending = pending.filter(func(x): return str(x.get("id", "")) != str(event.get("id", "")))
+            voyage["pending_consequence_scenes"] = pending
+            _show_consequence_event(event, insert_at)
+            insert_at += 1
+        else:
+            _apply_consequence_event(event, allow_scene)
+        applied += 1
+    return applied
+
+func _advance_consequence_clock() -> void:
+    if voyage.is_empty():
+        return
+    voyage["actions"] = int(voyage.get("actions", 0)) + 1
+    _drain_consequences("DELAYED", false)
+
+func _take_pending_consequence_scenes(limit: int = 2) -> Array:
+    var result: Array = []
+    if voyage.is_empty():
+        return result
+    var pending: Array = voyage.get("pending_consequence_scenes", [])
+    var kept: Array = []
+    for event in pending:
+        if result.size() >= limit:
+            kept.append(event)
+            continue
+        var followup_id := str(event.get("followup_scene", ""))
+        var followup := AstraVoyageContent.scene(followup_id) if followup_id != "" else {}
+        if followup.is_empty() and followup_id != "":
+            followup = AstraStageStory.branch_scene(followup_id)
+        if not followup.is_empty():
+            result.append(_scene_entry(_apply_scene_variants(followup,str(followup.get("speaker",str(event.get("who",""))))), "consequence"))
+        elif str(event.get("note","")) != "":
+            result.append(_scene_entry({
+                "id":"110_pending_" + str(event.get("id","event")).replace(":","_"),
+                "speaker":str(event.get("who","")),"action":str(event.get("note","")),
+                "lines":[],"choices":[]
+            }, "consequence"))
+    voyage["pending_consequence_scenes"] = kept
+    return result
 
 func _deliver_due_consequence(timing_filter: String = "") -> bool:
     var popped := AstraConsequenceModel.pop_due(
@@ -8410,6 +8671,9 @@ func voyage_memory() -> Dictionary:
         "momentum_state":next_momentum,
         "delegation_history":voyage.get("delegation_history",[]).duplicate(true),
         "canon_post_arrival_seen":voyage.get("canon_post_arrival_seen",[]).duplicate(),
+        "route_choices":voyage.get("route_choices",{}).duplicate(true),
+        "route_history":voyage.get("route_history",[]).duplicate(true),
+        "branch_provenance":voyage.get("branch_provenance",{}).duplicate(true),
         "changes":voyage.get("changes",[]).duplicate(),
         "choices":choices,
         "losses":casualties.duplicate(),
