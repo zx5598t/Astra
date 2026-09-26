@@ -3572,7 +3572,7 @@ func _collective_accusation_ready(speaker: String, target: String) -> bool:
         var origin := _evidence_origin(item)
         if origin != "":
             origins[origin] = true
-        if str(item.get("owner", "")) == speaker and player_knows(source) and conversation_open(speaker):
+        if str(item.get("owner", "")) == speaker and player_knows(source):
             player_heard = true
     return player_heard or origins.size() >= 2
 
@@ -5030,10 +5030,15 @@ func _vote_view(voter_id: String, target_id: String) -> Dictionary:
                 # independent public verification. It can break a close call,
                 # not create room-wide certainty by itself.
                 weight *= 0.28
-            elif str(item.get("type", "")) == "HEARSAY":
-                # Even when this voter owns the retelling, its origin is still
-                # another witness; preserve the existing hearsay caution.
-                weight *= 0.7
+            else:
+                # A person's own private observation is valid voting evidence,
+                # just not equivalent to a fact the room has cross-checked.
+                # Public presentation restores full weight, so explorer action
+                # matters without deleting NPC agency.
+                weight *= 0.62
+                if str(item.get("type", "")) == "HEARSAY":
+                    # A retelling is weaker again even when this voter owns it.
+                    weight *= 0.7
         reason["weight"] = weight
         score += weight
         reasons.append(reason)
