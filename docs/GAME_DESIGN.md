@@ -25,7 +25,7 @@ NEXT_LOOP callback은 “지난번에 네가…” 같은 직접 기억이 아�
 
 ---
 
-# ASTRA 설계 — 1.0.0 CONVICTION (현재 기준)
+# ASTRA 설계 — 1.0.0 CONVICTION (1.1.0의 바탕)
 
 > 1.0.0 절이 현재 규칙이다. 0.8.0 절의 뼈대(Stage/Day, Day Packet, 지식 모델, 판단 모델)는 그대로이며, 1.0.0이 바꾼 곳만 여기 적는다.
 
