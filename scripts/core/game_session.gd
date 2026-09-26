@@ -3573,8 +3573,11 @@ func _collective_accusation_ready(speaker: String, target: String) -> bool:
             player_heard = true
         if code not in ["HARD_RECORD", "DIRECT_WITNESS", "TIMELINE", "EXPERT_INFERENCE", "CHANGED_STORY", "FALSE_SIGHTING"]:
             continue
-        if item.is_empty():
+        if item.is_empty() or not AstraKnowledgeModel.is_public(flags, source):
             continue
+        # Two-source collective certainty must be inspectable by the room.
+        # Two facts that exist only inside one NPC's private notebook are valid
+        # for that NPC's ballot, but cannot silently become a public accusation.
         var origin := _evidence_origin(item)
         if origin != "":
             origins[origin] = true
