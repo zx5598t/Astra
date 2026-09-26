@@ -197,3 +197,48 @@ jobs:
           name: windows-release-candidate-logs
           path: build/logs/*
           if-no-files-found: ignore
+
+  visual-review-windows:
+    if: startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'pull_request'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot 4.7.2 stable for visual QA
+        shell: pwsh
+        run: |
+          $base = 'https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable'
+          $zip = "$env:RUNNER_TEMP/godot-visual.zip"
+          Invoke-WebRequest "$base/Godot_v4.7.2-stable_win64.exe.zip" -OutFile $zip
+          Expand-Archive $zip "$env:RUNNER_TEMP/godot-visual"
+          "GODOT_VISUAL=$env:RUNNER_TEMP/godot-visual/Godot_v4.7.2-stable_win64_console.exe" >> $env:GITHUB_ENV
+
+      - name: Import project for visual QA
+        shell: pwsh
+        run: |
+          & $env:GODOT_VISUAL --headless --path . --import 2>&1 | Tee-Object -FilePath visual-import.log
+          if (Select-String -Path visual-import.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Visual QA import reported script errors.' }
+
+      - name: Capture visual QA screens
+        shell: pwsh
+        run: |
+          & $env:GODOT_VISUAL --path . --script res://tests/visual_100.gd 2>&1 | Tee-Object -FilePath visual-100.log
+          if (-not (Select-String -Path visual-100.log -Pattern 'ASTRA VISUAL 100 OK')) { throw 'visual_100.gd did not complete.' }
+          if (Select-String -Path visual-100.log -Pattern 'SCRIPT ERROR|Parse Error|Compile Error|Failed to load script') { throw 'Visual QA reported script errors.' }
+
+      - name: Upload visual QA captures
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-qa-100
+          path: build/qa/100/*.png
+          if-no-files-found: error
+
+      - name: Preserve visual QA log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-qa-logs
+          path: visual-*.log
+          if-no-files-found: ignore
+
