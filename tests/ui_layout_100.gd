@@ -107,7 +107,7 @@ func _minigames_minimum() -> void:
         await _wait(4)
         _buttons_fit(task, "1120x700: task " + name)
         _inside(task, Vector2i(1120, 700), "1120x700: task " + name)
-        check(task._action != null and Rect2(Vector2.ZERO, Vector2(1120, 700)).encloses(task._action.get_global_rect().grow(-1)), "1120x700: task %s confirm visible" % name)
+        check(task._action != null and root.get_visible_rect().grow(1.0).encloses(task._action.get_global_rect().grow(-1)), "1120x700: task %s confirm visible" % name)
     for pair in tasks:
         (pair[1] as AstraShipTask).queue_free()
     await _wait(3)
@@ -228,7 +228,7 @@ func _pass(resolution: Vector2i) -> void:
     view.refresh()
     await _wait(4)
     _buttons_fit(app._current, tag + ": vote reasons")
-    var screen := Rect2(Vector2.ZERO, Vector2(resolution))
+    var screen := root.get_visible_rect().grow(1.0)
     check(screen.encloses(view._confirm.get_global_rect().grow(-1)), tag + ": the confirm button is on screen")
     _inside(app._current, resolution, tag + ": vote")
     app.queue_free()
@@ -344,8 +344,14 @@ func _buttons_fit(node: Node, label: String) -> void:
         var need := text_label.get_minimum_size().y
         check(b.size.y + 0.5 >= need + 8.0, label + ": a wrapped button is tall enough (%.0f for %.0f)" % [b.size.y, need])
 
-func _inside(node: Node, resolution: Vector2i, label: String) -> void:
-    var screen := Rect2(Vector2(-1, -1), Vector2(resolution) + Vector2(2, 2))
+func _inside(node: Node, _resolution: Vector2i, label: String) -> void:
+    # Control global_rect is expressed in the stretched canvas' logical
+    # coordinates, not raw OS-window pixels. At e.g. 1120x700 with
+    # canvas_items + expand, comparing it directly to Rect2(0,0,1120,700)
+    # reports visible controls as off-screen even though Windows renders them
+    # correctly. Use the Window's actual visible logical rectangle; visual_100
+    # separately captures the physical 1120x700 window on Windows CI.
+    var screen := root.get_visible_rect().grow(1.0)
     for child in node.find_children("*", "Control", true, false):
         var c := child as Control
         if not c.is_visible_in_tree() or _in_scroll(c) or c.get_global_rect().size == Vector2.ZERO:
