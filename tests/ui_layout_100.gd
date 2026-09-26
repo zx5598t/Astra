@@ -108,6 +108,24 @@ func _pass(resolution: Vector2i) -> void:
     view._new_chip.pressed.emit()
     await _wait(5)
     _last_visible(view._feed_scroll, view._feed, tag + ": the chip brings the last line into view")
+
+    # Race regression: start at bottom, append a long line (which queues a
+    # two-frame follow), then wheel/read back after the first frame. The queued
+    # follow must be cancelled and the unread-line chip must appear.
+    s._feed_line(npc, "", LONG + " · race", "dispute", "anchor", "layout-race")
+    view._timer.stop()
+    view._reveal_next()
+    await process_frame
+    view._feed_scroll.scroll_vertical = 0
+    var race_bar: VScrollBar = view._feed_scroll.get_v_scroll_bar()
+    race_bar.value_changed.emit(race_bar.value)
+    await _wait(4)
+    check(view._feed_scroll.scroll_vertical <= 2, tag + ": mid-await user scroll cancels queued follow")
+    check(not AstraUI.is_following(view._feed_scroll), tag + ": mid-await scroll leaves follow disabled")
+    check(view._new_chip.visible, tag + ": mid-await scroll shows the new-line chip")
+    view._new_chip.pressed.emit()
+    await _wait(5)
+    _last_visible(view._feed_scroll, view._feed, tag + ": race chip returns to the full last line")
     _buttons_fit(app._current, tag + ": meeting actions")
     _inside(app._current, resolution, tag + ": meeting")
     # the link picker, both steps
