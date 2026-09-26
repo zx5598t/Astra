@@ -4537,7 +4537,12 @@ func _judge_claim(who: String, evidence_ref: String, second_ref: String) -> Dict
     if second_ref != "" and not second_ref.begins_with("claim:") and not second_ref.begins_with("earlier:"):
         var other_item := fragment(second_ref)
         var other_placed := _placed(other_item)
-        var independent := str(other_item.get("owner", "")) not in [owner, who] and str(other_item.get("via", "")) != owner and str(item.get("via", "")) != str(other_item.get("owner", ""))
+        # Provenance, not the last person who repeated the sentence, defines
+        # independence. Direct testimony and hearsay of that same witness are
+        # one source; two separate records/witnesses can corroborate.
+        var origin_a := _evidence_origin(item)
+        var origin_b := _evidence_origin(other_item)
+        var independent := origin_a != "" and origin_b != "" and origin_a != origin_b
         if who in Array(other_placed["people"]) and str(other_placed["room"]) == str(placed["room"]) and not bool(other_placed["hearsay"]):
             var both: Array = group.filter(func(x): return x in Array(other_placed["people"]))
             if not independent:
