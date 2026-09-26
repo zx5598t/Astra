@@ -24,6 +24,10 @@ func _initialize() -> void:
     printerr("ASTRA CHOICE 110 TESTS FAILED · %d/%d" % [failures.size(), checks])
     quit(1)
 
+func _prepare(s: AstraGameSession) -> void:
+    if s.voyage.is_empty():
+        s.begin_voyage({})
+
 func _seek_anchor(s: AstraGameSession, anchor: String) -> Dictionary:
     var queue := s.story_queue()
     for index in range(queue.size()):
@@ -36,6 +40,7 @@ func _seek_anchor(s: AstraGameSession, anchor: String) -> Dictionary:
     return {}
 
 func _pick_route(s: AstraGameSession, anchor: String, route: String) -> bool:
+    _prepare(s)
     var scene := _seek_anchor(s, anchor)
     if scene.is_empty():
         return false
@@ -148,6 +153,7 @@ func test_rewind_boundary() -> void:
     AstraGameSession.delete_snapshot(path)
     var dawn := AstraGameSession.new()
     dawn.setup("ECHO_WARD", 14001)
+    dawn.begin_voyage({})
     var inherited: Dictionary = dawn.voyage.get("route_choices", {})
     inherited["DEAD_AIR"] = "PUBLIC"
     dawn.voyage["route_choices"] = inherited
@@ -172,6 +178,7 @@ func test_deep_boundary() -> void:
     check(deep.branch_signature() == "", "Deep starts without campaign route signature")
 
 func _install_scene(s: AstraGameSession, scene_id: String) -> bool:
+    _prepare(s)
     var scene := AstraVoyageContent.scene(scene_id)
     if scene.is_empty():
         return false

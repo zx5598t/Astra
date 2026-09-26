@@ -781,6 +781,61 @@ const LINK_LINES := {
         "m_doubt_explorer": ["탐사요원, 너무 서두르는 것 같아요. 그 연결은 당신 생각이잖아요."]},
 }
 
+const STANCE_SHIFT_110 := {
+    "mira":{
+        "evidence":"사람 상태 기록까지 같이 보면 {after|eul} 다시 봐야겠어요. 아까 판단은 바꿀게요.",
+        "source":"직접 확인한 사람의 말이라면 무게가 달라져요. {after} 쪽부터 다시 볼게요.",
+        "support":"{before}한테 생긴 결과까지 보면 한쪽만 붙잡을 순 없어요. {after} 쪽도 같이 봐요.",
+        "other":"사람에게 남은 결과까지 들으니 판단이 달라졌어요. {after} 쪽을 다시 볼게요."},
+    "rho":{
+        "evidence":"작업 흔적까지 붙으면 얘기 다르지. {after} 쪽 패널부터 다시 볼게.",
+        "source":"직접 본 사람이 확인했으면 순서를 바꿔야지. {after} 쪽 작업부터 보자.",
+        "support":"{before}만 잡고 있긴 어렵네. 실제로 손댄 흔적 있는 {after} 쪽도 다시 볼게.",
+        "other":"방금 얘기 들으니 공구 순서가 다시 보이네. {after} 쪽부터 볼게."},
+    "dax":{
+        "evidence":"조건 하나가 바뀌었어. 같은 결론을 유지할 근거가 없으니 {after} 쪽을 다시 계산하지.",
+        "source":"출처가 직접 확인됐으면 입력값이 달라진 거야. {after} 쪽 가정부터 다시 볼게.",
+        "support":"{before}만 전제로 둔 모델은 깨졌어. {after}까지 넣어서 다시 보자.",
+        "other":"새 조건이 들어왔어. 결론도 바뀌어야지. {after} 쪽을 다시 볼게."},
+    "noa":{
+        "evidence":"원문 근거까지 맞아요. 아까 표시는 지우고 {after} 쪽 기록부터 다시 볼게요.",
+        "source":"누가 처음 말했는지 확인됐어요. 전언보다 원출처를 기준으로 {after} 쪽을 다시 적을게요.",
+        "support":"{before}에 붙인 표시만 남길 수는 없겠어요. 새 근거와 함께 {after} 쪽도 다시 적을게요.",
+        "other":"기록 하나가 추가됐으니 표시도 바꿀게요. {after} 쪽부터 다시 정리해요."},
+    "sena":{
+        "evidence":"출입 순서까지 맞네. 아까 판단 접고 {after} 동선부터 다시 볼게.",
+        "source":"직접 본 사람 확인됐으면 그걸 기준으로 가. {after}가 어느 문을 지났는지 다시 보자.",
+        "support":"{before}만 막고 있을 이유는 없어졌네. {after} 쪽 출입 순서도 다시 볼게.",
+        "other":"방금 말로 동선이 달라졌어. {after}가 어디를 통과했는지부터 다시 보자."},
+    "vale":{
+        "evidence":"…원음하고 같은 쪽을 가리켜요. 아까 판단보다 {after} 쪽을 다시 들어 볼게요.",
+        "source":"…직접 들은 사람까지 확인됐어요. 전언은 빼고 {after} 쪽 목소리부터 다시 들을게요.",
+        "support":"…{before}만 듣고 있으면 놓치는 게 있겠어요. {after} 쪽 간격도 다시 들어 볼게요.",
+        "other":"…방금 말의 간격이 달라요. {after} 쪽을 다시 들어 볼게요."},
+    "eli":{
+        "evidence":"거리까지 맞는다. 아까 경로는 버리고 {after} 동선으로 옮긴다.",
+        "source":"직접 확인된 위치면 기준점을 바꿔야 해. {after}까지 거리를 다시 잰다.",
+        "support":"{before}만 보는 경로는 막혔어. {after} 쪽 이동 가능성도 다시 본다.",
+        "other":"위치 하나가 바뀌었어. {after} 쪽 경로부터 다시 본다."},
+    "lyra":{
+        "evidence":"환경 흔적까지 이어져요. 아까 판단보다 {after} 쪽 변화를 다시 볼게요.",
+        "source":"직접 본 시점이 확인됐네요. {after} 쪽 흔적이 언제 생겼는지부터 다시 볼게요.",
+        "support":"{before}만 떼어 보면 전체 변화를 놓칠 것 같아요. {after} 쪽도 같이 봐요.",
+        "other":"새 흔적을 같이 보니까 흐름이 달라 보여요. {after} 쪽부터 다시 볼게요."}
+}
+
+static func stance_shift_line(npc_id: String, action: String, before_name: String, after_name: String) -> String:
+    var mode := "other"
+    if action in ["link","present"]:
+        mode = "evidence"
+    elif action in ["source","clarify","basis"]:
+        mode = "source"
+    elif action in ["defend","support","coax"]:
+        mode = "support"
+    var by_person: Dictionary = STANCE_SHIFT_110.get(npc_id, {})
+    var template := str(by_person.get(mode, by_person.get("other", "")))
+    return AstraJosa.fill(template, {"before":before_name, "after":after_name})
+
 const FALLBACK := {
     "open_with": "{time}엔 {pos}에 있었어. {mates|wa} 같이.",
     "open_alone": "{time}엔 {pos}에 혼자 있었어.",

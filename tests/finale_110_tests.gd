@@ -21,6 +21,7 @@ func _initialize() -> void:
 func _session_with_tally(tally: Dictionary) -> AstraGameSession:
     var s := AstraGameSession.new()
     s.setup("THRESHOLD", 41001)
+    s.begin_voyage({})
     s.voyage["campaign_tally_in"] = tally.duplicate(true)
     return s
 

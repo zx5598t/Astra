@@ -20,6 +20,8 @@ func _initialize() -> void:
     quit(1)
 
 func _choose(s: AstraGameSession, anchor: String, route: String) -> bool:
+    if s.voyage.is_empty():
+        s.begin_voyage({})
     var queue := s.story_queue()
     for si in range(queue.size()):
         var scene: Dictionary = queue[si]

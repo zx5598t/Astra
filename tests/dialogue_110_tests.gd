@@ -13,6 +13,7 @@ func check(condition: bool, label: String) -> void:
 func _initialize() -> void:
     test_source_leaks()
     test_branch_speakers()
+    test_stance_lines()
     build_editorial_report()
     DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://build/qa"))
     var file := FileAccess.open("res://build/qa/dialogue_110_report.txt", FileAccess.WRITE)
@@ -63,13 +64,91 @@ func test_branch_speakers() -> void:
             var scene := AstraStageStory.cross_stage_callback(case_id, routes)
             _check_lines(Array(scene.get("lines", [])), roster, "callback " + case_id)
 
+func test_stance_lines() -> void:
+    for npc_id in AstraCrewCatalog.ORDER:
+        for action in ["link","source","defend","other"]:
+            var line := AstraSocialLines.stance_shift_line(str(npc_id), str(action), "미라", "노아")
+            check(line != "", "stance line exists for %s/%s" % [str(npc_id), str(action)])
+            check("{" not in line and "|" not in line, "stance line is fully formatted for %s/%s" % [str(npc_id), str(action)])
+
+func _collect_strings(value: Variant, output: Array[String]) -> void:
+    if value is String:
+        var text := str(value)
+        if text != "":
+            output.append(text)
+    elif value is Array:
+        for item in value:
+            _collect_strings(item, output)
+    elif value is Dictionary:
+        var dict: Dictionary = value
+        for key in dict:
+            _collect_strings(dict[key], output)
+
+func _pool_size(value: Variant) -> int:
+    var lines: Array[String] = []
+    _collect_strings(value, lines)
+    return lines.size()
+
+func _clarification_pool_size() -> int:
+    var total := 0
+    var keys := ["m_confirm","m_basis","m_basis_thin","m_settle","m_hold_sighting"]
+    for container in [AstraSocialLines.LINES, AstraSocialLines.MORE, AstraSocialLines.MORE2]:
+        var root: Dictionary = container
+        for npc_id in root:
+            var by_person: Dictionary = root[npc_id]
+            for key in keys:
+                if by_person.has(key):
+                    total += _pool_size(by_person[key])
+    return total
+
 func build_editorial_report() -> void:
-    var social := FileAccess.get_file_as_string("res://scripts/core/social_lines_080.gd")
+    var authored: Array[String] = []
+    for pool in [
+        AstraSocialLines.REVIEW_VOICE, AstraSocialLines.RESISTANCE, AstraSocialLines.LINES,
+        AstraSocialLines.MORE, AstraSocialLines.MORE2, AstraSocialLines.RECORD_OTHER,
+        AstraSocialLines.HEARSAY_LINES, AstraSocialLines.ISOLATED_STATE_LINES,
+        AstraSocialLines.SHIELD_LINES, AstraSocialLines.ANALYST_LINES,
+        AstraSocialLines.LINK_LINES, AstraSocialLines.LAST_LINES, AstraSocialLines.STANCE_SHIFT_110
+    ]:
+        _collect_strings(pool, authored)
+
+    var exact_counts := {}
+    var prefix_counts := {}
+    for line in authored:
+        exact_counts[line] = int(exact_counts.get(line, 0)) + 1
+        var compact := line.strip_edges()
+        var prefix_len := mini(12, compact.length())
+        var prefix := compact.left(prefix_len)
+        if prefix != "":
+            prefix_counts[prefix] = int(prefix_counts.get(prefix, 0)) + 1
+
+    var duplicate_groups := 0
+    var repeated_prefixes := 0
+    for line in exact_counts:
+        if int(exact_counts[line]) > 1:
+            duplicate_groups += 1
+    for prefix in prefix_counts:
+        if int(prefix_counts[prefix]) >= 3:
+            repeated_prefixes += 1
+
     report.append("ASTRA 1.1.0 — dialogue editorial report")
     report.append("")
-    report.append("High-frequency functional expression source counts:")
-    for phrase in ["확인해요","다시 봐","기록을 봐","근거가 부족","더 확인","아직 모르","맞지 않"]:
-        report.append("- %s: %d" % [phrase, social.count(phrase)])
+    report.append("Authored line population: %d" % authored.size())
+    report.append("Exact duplicate groups: %d" % duplicate_groups)
+    report.append("Same-opening groups (first 12 chars, 3+ uses): %d" % repeated_prefixes)
+    report.append("")
+    report.append("High-frequency functional expressions across authored pools:")
+    for phrase in ["확인","다시 보","기록","근거","아직","모르","맞지 않"]:
+        var count := 0
+        for line in authored:
+            count += line.count(phrase)
+        report.append("- %s: %d" % [phrase, count])
+    report.append("")
+    report.append("High-exposure authored pools:")
+    report.append("- clarification responses: %d" % _clarification_pool_size())
+    report.append("- Link responses: %d" % _pool_size(AstraSocialLines.LINK_LINES))
+    report.append("- final statements: %d" % _pool_size(AstraSocialLines.LAST_LINES))
+    report.append("- stance-change lines: %d" % _pool_size(AstraSocialLines.STANCE_SHIFT_110))
     report.append("")
     report.append("Branch anchors:")
     for anchor in AstraStageStory.BRANCH_ANCHORS:
@@ -78,4 +157,5 @@ func build_editorial_report() -> void:
             labels.append(str(choice.get("label", "")))
         report.append("- %s: %s" % [anchor, " / ".join(PackedStringArray(labels))])
     report.append("")
-    report.append("Automated checks cover raw Josa/token leaks and speaker reachability; naturalness remains a human editorial judgment.")
+    report.append("Automation reports repetition/exposure only. Korean naturalness and AI-like symmetry remain a human editorial judgement.")
+
