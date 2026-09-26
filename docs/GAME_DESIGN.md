@@ -1,3 +1,30 @@
+# ASTRA 설계 — 1.1.0 LIVING PATHS (현재 기준)
+
+> 1.0.1의 직접 Link 추리·회의·투표·공정성 계약을 그대로 두고, 1.1.0은 **선택 이후의 장면·정보 순서·출처·사람 반응·다회차**를 개선한다. Canon/Null/사건 정답을 분기시키지 않는다.
+
+## 1.1.0 핵심 — "무엇을 알았나 + 그 진실을 누구와 어떻게 다뤘나"
+
+- **reconverging branch.** 공통 진실 → 중요한 선택 → 1~2 Stage의 다른 정보/사람/대사 → 다시 공통 canon으로 합류. 별도 BranchManager/route graph 없음.
+- **다섯 anchor.** DEAD_AIR, ECHO_WARD, RED_SHIFT, BORROWED_DAYS, THREE_MINUTES_DARK. 기본은 2개 선택, 세 전략이 실제로 다른 THREE_MINUTES_DARK만 3개.
+- **선택의 비용은 콘텐츠.** 공개 시점, 누구와 먼저 확인했는지, 직접 본 것과 전언의 차이, 후속 개인 scene과 meeting context가 바뀐다. karma/affinity/branch currency 없음.
+- **KnowledgeModel까지 바뀐다.** PUBLIC은 실제 public fact, verify-first는 특정 사람과의 share, THREE_MINUTES_DARK는 선택 구역만 DIRECT provenance.
+- **기존 ConsequenceModel 사용.** IMMEDIATE / DELAYED / NEXT_DAY / NEXT_LOOP. event id dedup, save/load, rewind, next reconstruction residue를 새 시스템 없이 처리.
+- **선별 micro-arc.** consequence가 실제 있는 8개 authored choice scene만 1.0 loop에 제한적으로 복귀. scheduler의 breathing room/노출 철학 유지.
+- **Replay.** 같은 seed/Null/base packet에서도 선택한 route에 따라 visible scene, provenance, meeting opener, next-Stage callback이 달라진다.
+- **Finale.** share/wake/keep action은 플레이어가 고른 그대로. visible campaign history가 reception과 callback texture만 바꾼다.
+- **Save.** Meta v12 / Snapshot v4. route choices/provenance/history는 기존 nested voyage/stage state의 optional field.
+
+## 대사 원칙
+NPC는 먼저 질문에 대답하고, 그다음 자기 방식으로 해석한다. 인물별 추리 방법: 미라=사람 상태/의료 한계, 준=장비/작업 순서,
+다렌=조건/전제, 노아=원문/출처, 세나=출입/문/동선, 소렌=원음/간격/전언 과정, 루칸=위치/거리/경로, 마렌=생장/환경/생활 흔적.
+Link/final/stance line은 이 차이를 우선하며, 단순 말투 치환으로 캐릭터를 구분하지 않는다.
+
+## Deep / rewind / replay
+Deep에는 campaign branch anchor가 나오지 않는다. Dawn rewind는 그 아침 이전 route history는 유지하고 이후 선택은 되돌린다.
+NEXT_LOOP callback은 “지난번에 네가…” 같은 직접 기억이 아니라 익숙한 확인 순서·경계심 같은 residue로만 표현한다.
+
+---
+
 # ASTRA 설계 — 1.0.0 CONVICTION (현재 기준)
 
 > 1.0.0 절이 현재 규칙이다. 0.8.0 절의 뼈대(Stage/Day, Day Packet, 지식 모델, 판단 모델)는 그대로이며, 1.0.0이 바꾼 곳만 여기 적는다.
