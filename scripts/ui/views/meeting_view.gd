@@ -185,8 +185,17 @@ func _append(node: Control, animate: bool) -> void:
     if animate:
         AstraUI.fade_in(node, 0.2)
     if AstraUI.is_following(_feed_scroll):
-        AstraUI.follow_bottom(_feed_scroll)
+        _follow_after_layout()
     else:
+        _new_chip.visible = true
+
+func _follow_after_layout() -> void:
+    await AstraUI.follow_bottom(_feed_scroll)
+    if not is_instance_valid(_feed_scroll) or not is_instance_valid(_new_chip):
+        return
+    # The reader can move during AstraUI's two-frame layout settle. If that
+    # cancelled the queued follow, make the unread-line affordance visible.
+    if not AstraUI.is_following(_feed_scroll):
         _new_chip.visible = true
 
 func _reveal_all() -> void:
