@@ -574,6 +574,8 @@ func test_simulations(games: int) -> void:
     var n2 := 0
     var delta := {"smart_public": 0, "passive_public": 0, "smart_shifts": 0, "smart_confessions": 0}
     var early_passive := 0
+    var early_peak := 0.0
+    var early_peak_stage := ""
     for case_id in AstraCaseCatalog.STAGE_ORDER:
         var stage := AstraCaseCatalog.stage_index(case_id)
         var proto := "GUARDIAN" if stage >= 5 else "NONE"
@@ -594,6 +596,10 @@ func test_simulations(games: int) -> void:
             delta["smart_confessions"] += int(ss.get("confessions", 0)) + int(ss.get("admissions", 0))
         if stage in [2, 3, 4]:
             early_passive += w["passive"]
+            var stage_passive_rate := float(w["passive"]) / float(games)
+            if stage_passive_rate > early_peak:
+                early_peak = stage_passive_rate
+                early_peak_stage = case_id
         for k in w:
             totals[k] += w[k]
             if stage >= 5:
@@ -625,5 +631,8 @@ func test_simulations(games: int) -> void:
     print("EARLY Stage 2-4 passive %d%%" % int(early_rate * 100))
     check(smart_rate >= random_rate + 0.15, "1.0: thinking beats random by 15 points (%.0f%% vs %.0f%%)" % [smart_rate * 100, random_rate * 100])
     check(smart_rate >= passive_rate + 0.20, "1.0: thinking beats being carried by 20 points (%.0f%% vs %.0f%%)" % [smart_rate * 100, passive_rate * 100])
-    check(early_rate <= 0.85, "1.0: Stages 2-4 do not carry a passive player (%.0f%%)" % (early_rate * 100))
+    check(early_rate <= 0.85, "1.0: Stages 2-4 do not carry a passive player on average (%.0f%%)" % (early_rate * 100))
+    # 1.0.1 closes the loophole where the average passed while one early Stage
+    # (notably ECHO_WARD) still solved itself for a passive explorer.
+    check(early_peak <= 0.85, "1.0.1: no Stage 2-4 carries passive above 85%% (%s %.0f%%)" % [early_peak_stage, early_peak * 100])
     check(delta["smart_public"] > delta["passive_public"] * 3, "1.0: the explorer's play puts three times as much on the table")
