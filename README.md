@@ -46,4 +46,4 @@ powershell -File tools/build_windows.ps1 -Godot "C:\path\to\godot.exe"     # tes
 ```
 
 CI(`.github/workflows/godot-ci.yml`)와 Windows 빌드 스크립트는 같은 목록(`tests/ci_suite.txt`)을 실행합니다.
-사람이 읽어야 하는 검증은 `tests/walkthrough_080.gd`(1~5 STAGE 대사 전문)와 `tests/visual_080.gd`(1366×768 · 1920×1080 화면)로 만듭니다.
+사람이 읽어야 하는 검증은 `tests/walkthrough_100.gd` + `tests/walkthrough_110.gd`와 Windows `tests/visual_100.gd`로 만듭니다. 1.1은 branch 비교·대사 편집 report·content exposure report도 `build/qa` artifact로 보존합니다.
