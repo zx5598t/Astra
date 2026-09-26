@@ -26,6 +26,8 @@ var _active := 0
 var _misses := 0
 var _answer := -1
 var _seed := 0
+var _drag_channel := -1
+var _drag_kind := ""
 
 func setup(seed_value: int, _pieces: Array = [], tol: float = 0.05, listener: String = "소렌") -> void:
     _seed = seed_value
@@ -124,7 +126,7 @@ func primary_action() -> void:
                 return
             if _answer == noise_channel:
                 set_step(1)
-                instruct("남은 두 채널을 흐린 기준 파형에 겹치세요. 주파수 ← →, 위상 ↑ ↓, Tab으로 채널 전환, 맞으면 고정.")
+                instruct("남은 두 채널을 흐린 기준 파형에 겹치세요. 오른쪽 주파수/위상 슬라이더를 마우스로 조절하거나 ← → / ↑ ↓로 맞추고, 맞으면 고정하세요.")
                 say("좋아요. 그건 그냥 배 안의 잡음이에요. 나머지 둘은 같은 걸 듣고 있어요.")
                 _answer = -1
                 _update_lock_button()
@@ -163,24 +165,63 @@ func primary_action() -> void:
                 say("그 방향이면 시간 차이가 반대로 나와야 해요. …신호는 확실하지만 방향은 모르겠네요.")
                 finish("partial")
 
-func _on_body_input(event: InputEvent) -> void:
-    if not (event is InputEventMouseButton) or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
+func _freq_rect(c: int) -> Rect2:
+    var lane_h := body.size.y / 3.0
+    return Rect2(body.size.x - 250.0, c * lane_h + lane_h * 0.38, 220.0, 18.0)
+
+func _phase_rect(c: int) -> Rect2:
+    var rect := _freq_rect(c)
+    rect.position.y += 42.0
+    return rect
+
+func _set_slider(kind: String, c: int, x: float) -> void:
+    if c == noise_channel or bool(locked[c]):
         return
-    var y: float = (event as InputEventMouseButton).position.y
-    var lane := int(y / (body.size.y / 3.0))
+    _active = c
+    var rect := _freq_rect(c) if kind == "freq" else _phase_rect(c)
+    var value := clampf((x - rect.position.x) / maxf(1.0, rect.size.x), 0.0, 1.0)
+    if kind == "freq":
+        freq[c] = value
+    else:
+        phase[c] = value
+    _update_lock_button()
+    body.queue_redraw()
+
+func _on_body_input(event: InputEvent) -> void:
+    if event is InputEventMouseMotion and step == 1 and _drag_channel >= 0 and _drag_kind != "":
+        var motion := event as InputEventMouseMotion
+        if (motion.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0:
+            _set_slider(_drag_kind, _drag_channel, motion.position.x)
+        return
+    if not (event is InputEventMouseButton) or event.button_index != MOUSE_BUTTON_LEFT:
+        return
+    var mouse := event as InputEventMouseButton
+    if not mouse.pressed:
+        _drag_channel = -1
+        _drag_kind = ""
+        return
+    var y: float = mouse.position.y
+    var lane := clampi(int(y / (body.size.y / 3.0)), 0, 2)
     match step:
         0:
-            _answer = clampi(lane, 0, 2)
+            _answer = lane
             _action.text = AstraJosa.i("채널 " + "ABC"[_answer]) + " 간섭이다"
             _action.disabled = false
         1:
-            var c := clampi(lane, 0, 2)
-            if c != noise_channel and not bool(locked[c]):
-                _active = c
-                _update_lock_button()
+            if lane != noise_channel and not bool(locked[lane]):
+                _active = lane
+                if _freq_rect(lane).grow(8.0).has_point(mouse.position):
+                    _drag_channel = lane
+                    _drag_kind = "freq"
+                    _set_slider("freq", lane, mouse.position.x)
+                elif _phase_rect(lane).grow(8.0).has_point(mouse.position):
+                    _drag_channel = lane
+                    _drag_kind = "phase"
+                    _set_slider("phase", lane, mouse.position.x)
+                else:
+                    _update_lock_button()
         2:
-            var x: float = (event as InputEventMouseButton).position.x
-            if x > body.size.x * 0.62:
+            if mouse.position.x > body.size.x * 0.62:
                 _answer = clampi(int((y - 40.0) / 70.0), 0, 2)
                 set_action("발신: " + str(SOURCES[_answer]), true)
     body.queue_redraw()
@@ -228,13 +269,23 @@ func _draw_body() -> void:
                     ghost.append(Vector2(x, mid - _target_wave(c, x / 60.0) * lane_h * 0.32))
                 body.draw_polyline(ghost, Color(AstraUI.MUTED, 0.45), 3.0)
             var pts := PackedVector2Array()
-            for x in range(90, int(w) - 10, 3):
+            var wave_end := int(w) - (280 if step == 1 and c == _active and c != noise_channel and not bool(locked[c]) else 10)
+            for x in range(90, wave_end, 3):
                 var v := _target_wave(c, x / 60.0) if bool(locked[c]) else _wave(c, x / 60.0)
                 pts.append(Vector2(x, mid - v * lane_h * 0.32))
             var ink := AstraUI.GREEN if bool(locked[c]) else (AstraUI.DIM if (step >= 1 and c == noise_channel) else AstraUI.CYAN)
             body.draw_polyline(pts, ink, 2.0)
-            if step == 1 and c == _active:
-                draw_text(body, Vector2(w - 330, top + 26), "주파수 %d%% · 위상 %d%%" % [int(float(freq[c]) * 100), int(float(phase[c]) * 100)], AstraUI.GOLD, 14)
+            if step == 1 and c == _active and c != noise_channel and not bool(locked[c]):
+                var fr := _freq_rect(c)
+                var pr := _phase_rect(c)
+                draw_text(body, Vector2(fr.position.x, fr.position.y - 8), "주파수 %d%%" % int(float(freq[c]) * 100), AstraUI.GOLD, 13)
+                draw_text(body, Vector2(pr.position.x, pr.position.y - 8), "위상 %d%%" % int(float(phase[c]) * 100), AstraUI.GOLD, 13)
+                body.draw_rect(fr, Color(AstraUI.DIM, 0.35))
+                body.draw_rect(pr, Color(AstraUI.DIM, 0.35))
+                body.draw_rect(Rect2(fr.position, Vector2(fr.size.x * float(freq[c]), fr.size.y)), Color(AstraUI.CYAN, 0.65))
+                body.draw_rect(Rect2(pr.position, Vector2(pr.size.x * float(phase[c]), pr.size.y)), Color(AstraUI.VIOLET, 0.65))
+                body.draw_circle(Vector2(fr.position.x + fr.size.x * float(freq[c]), fr.get_center().y), 7.0, AstraUI.GOLD)
+                body.draw_circle(Vector2(pr.position.x + pr.size.x * float(phase[c]), pr.get_center().y), 7.0, AstraUI.GOLD)
         return
     # Step 3: two antennas, one pulse each, on a millisecond axis.
     var axis_w := w * 0.58
