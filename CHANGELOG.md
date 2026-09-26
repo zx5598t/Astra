@@ -1,3 +1,26 @@
+## 1.0.1 — CONVICTION RELEASE POLISH
+
+Release-stabilization pass over 1.0.0. No new mode, Act, character, protocol, manager or save schema.
+
+- **Linux 1.0.0 CI failure fixed.** The old smoke test only counted `meeting_options()` and ignored the new clarification/Link action paths. The smoke now checks player-visible meeting actions without weakening the assertion. The full Linux/Windows suite passes.
+- **Stage 2–4 agency tightened without making NPCs random or forgetful.** Private evidence remains usable, but collective accusations require authored verification paths. ECHO_WARD now reads an authored `deduction_profile` (intersection topology, private/public weighting, unasked-share behavior) instead of growing case-name branches.
+- **ACTIVE now changes the room, not just the win rate.** A 100-seed same-seed ACTIVE/PASSIVE gate records days, innocent isolations, casualties, player-caused public facts, Links, stance shifts, vote-intention shifts, raised contradictions, automatic decisive facts and meeting pacing.
+- **Alternative proof routes and role-tell audit.** Stage 2–4 generator QA verifies multiple rational proof routes across 100 seeds per Stage and confirms that false sightings/contradictory behavior are not Null-only tells.
+- **Link provenance is readable.** Evidence labels distinguish direct witness, hearsay chain, records and public/private visibility without exposing suspicion scores or answer likelihood. Exact duplicate Link combinations produce no new information.
+- **NPC stance changes are explainable.** When a player intervention materially flips a vote intention, at most one character voices a short reason tied to the evidence/source rather than exposing hidden scores.
+- **Signal Analysis is fully mouse-completable** while retaining keyboard controls; all four task families now have mouse-path regression coverage including success, partial/reset and recovery paths.
+- **Auto-scroll read-back race fixed.** `follow_bottom()` re-checks follow state after layout settles; a mid-await wheel-up cancels the queued follow and exposes the unread-line chip.
+- **Minimum-size UI coverage expanded** to 1120×700 and 1280×720 plus resize round-trips, Link pickers, glossary, explorer selection and all four minigames. Windows visual QA also captures 1120×700.
+- **Meeting actions are clearer** as 확인 / 연결 / 개입 within the existing panel; Link choices are relevance-ordered but never filtered to the correct answer.
+- **Explorer identity contract reconciled.** Identity may affect wording/relationship texture and a bounded ±0.02 social-trust tone, but never Null assignment, truth, evidence generation/availability, RNG sequence, puzzle answer, direct deduction power, abilities or action counts.
+- **Save compatibility unchanged:** meta save v12 and session snapshot v4.
+
+Measured release-candidate results before the metadata-only 1.0.1 version bump:
+- 40-game official gate: SMART **93%**, RANDOM **61%**, PASSIVE **56%**; Stage 2–4 PASSIVE **80/85/75%**.
+- 100-game probe: SMART **93%**, RANDOM **60%**, PASSIVE **53%**; DEAD_AIR **95/78/67**, GLASS_GARDEN **99/83/73**, ECHO_WARD **96/75/81** (SMART/RANDOM/PASSIVE).
+- 300 paired seeds: ACTIVE resolves faster and with fewer innocent isolations/casualties in all three early Stages; player-caused public/stance/vote changes are non-zero only on ACTIVE.
+- Mouse task, motion, deduction, UI layout, fairness, walkthrough, Linux/Windows boot and Windows export gates pass.
+
 ## 1.0.0 — CONVICTION
 
 The room no longer solves the case on its own; the explorer connects what people said and moves the room.
