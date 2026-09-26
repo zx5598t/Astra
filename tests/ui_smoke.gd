@@ -118,8 +118,19 @@ func _run() -> void:
     _click()
     meeting._reveal_all()
     await _wait(2)
-    var moment_options := s.meeting_options()
-    _expect(moment_options.size() >= 1 and moment_options.size() <= 4, "meeting pauses with a few options")
+    # 1.0 meeting actions are split across contextual clarifications and
+    # strong interventions (including Link). Test what the player can actually
+    # see, not meeting_options() in isolation.
+    var soft_options := s.clarification_options()
+    var strong_options := s.meeting_options()
+    var player_actions: Array = soft_options + strong_options
+    _expect(not player_actions.is_empty(), "meeting pauses with a meaningful player-visible action")
+    var action_kinds := {}
+    for option in player_actions:
+        action_kinds[str(option.get("kind", ""))] = true
+    _expect(player_actions.size() <= 9, "meeting action list stays bounded")
+    if not s.link_statements().is_empty() and not soft_options.is_empty():
+        _expect(action_kinds.size() >= 2, "contested meeting exposes meaningfully different action types")
     guard = 0
     while not s.meeting_over() and guard < 10:
         guard += 1
