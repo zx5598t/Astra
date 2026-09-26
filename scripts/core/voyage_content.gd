@@ -382,6 +382,14 @@ static func resolution_thread(case_id: String, memory_tags: Array = []) -> Dicti
     if not RESOLUTION_BEATS.has(case_id):
         return {}
     var data: Dictionary = RESOLUTION_BEATS[case_id].duplicate(true)
+    # 1.1.0: the old three-button resolution menus mostly changed only
+    # memory_tag + one reaction line. Keep their authored data for old-save
+    # callbacks, but stop presenting them as player choices.
+    var legacy_choices: Array = data.get("choices", []).duplicate(true)
+    if not legacy_choices.is_empty():
+        data["legacy_choices_110"] = legacy_choices
+        data["choices"] = []
+        data["choice_audit_110"] = "retired_redundant_resolution"
     var participants: Array = data.get("participants",[]).duplicate()
     var callback := ""
     var callback_source_tag := ""

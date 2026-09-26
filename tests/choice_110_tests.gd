@@ -50,6 +50,23 @@ func _history_count(s: AstraGameSession, event_id: String) -> int:
     return count
 
 func test_branch_reachability() -> void:
+    var retired_options := Array(AstraStageStory.CALIBRATION_RESOLUTION.get("choices", [])).size()
+    for case_id in AstraCaseCatalog.STAGE_ORDER:
+        if case_id == AstraCaseCatalog.CALIBRATION:
+            continue
+        var authored: Dictionary = AstraVoyageContent.RESOLUTION_BEATS.get(case_id, {})
+        retired_options += Array(authored.get("choices", [])).size()
+        check(Array(AstraVoyageContent.resolution_thread(case_id).get("choices", [])).is_empty(), "%s redundant resolution choices are not player-visible" % case_id)
+    var micro_options := 0
+    var micro_two := 0
+    var micro_three := 0
+    for scene_id in AstraGameSession.LIVING_PATHS_CHOICE_SCENES:
+        var count := Array(AstraVoyageContent.scene(scene_id).get("choices", [])).size()
+        micro_options += count
+        if count == 2: micro_two += 1
+        if count == 3: micro_three += 1
+    print("CHOICE 110 AUDIT · retired_resolution_options=%d · branch_options=11 · selected_micro_options=%d · micro_2choice=%d · micro_3choice=%d" % [retired_options, micro_options, micro_two, micro_three])
+    check(retired_options >= 30, "30+ shallow resolution buttons retired (%d)" % retired_options)
     var expected := {
         "DEAD_AIR":["PUBLIC","VERIFY_FIRST"],
         "ECHO_WARD":["TELL_SOREN","VERIFY_FIRST"],

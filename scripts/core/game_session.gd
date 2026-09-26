@@ -6537,6 +6537,9 @@ func _queue_result_story() -> void:
             beat = AstraStageStory.CALIBRATION_RESOLUTION.duplicate(true)
             beat["id"] = "story_resolution_calibration"
             beat["speaker"] = "noa"
+            beat["legacy_choices_110"] = Array(beat.get("choices", [])).duplicate(true)
+            beat["choices"] = []
+            beat["choice_audit_110"] = "retired_redundant_resolution"
         if not beat.is_empty():
             beat["art"] = art
             scenes.append(_scene_entry(beat, "resolution"))
