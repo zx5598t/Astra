@@ -3218,7 +3218,17 @@ func _thread_frame() -> bool:
             continue
         var framer := str(item.get("owner", ""))
         var scapegoat := str(item.get("subject", ""))
-        if not is_alive(framer) or not is_alive(scapegoat) or _pick("frame:" + id) >= 0.85:
+        if not is_alive(framer) or not is_alive(scapegoat):
+            continue
+        # 1.0's generic record/witness threads already make unasked sharing
+        # rare, but frames accidentally bypassed that rule at a flat 85%.
+        # ECHO_WARD therefore surfaced its most decisive accusation even when
+        # the explorer never spoke to the witness. Keep the testimony eager
+        # once the explorer has heard it; otherwise use the same temperament-
+        # bounded unasked-sharing rule as other evidence.
+        var told := player_knows(id)
+        var share_chance := 0.94 if told else float(MEETING_SHARE.get(framer, 0.6)) * UNASKED_SHARE * 1.6
+        if _pick("frame:" + id) >= share_chance:
             continue
         # The board is public: a Null does not stand up and claim to have seen
         # someone whose companion is sitting right there to deny it. Someone
@@ -3452,10 +3462,12 @@ func _thread_accusation() -> bool:
             var need := conviction_need(str(speaker)) * (0.95 if meeting_temperature() == "low" else 0.8)
             if value < need:
                 continue
-            # One person's own private glimpse is enough to vote on, not to
-            # name a colleague in front of everyone — unless the explorer
-            # already heard it from them, or something else points the same way.
-            if _lone_private_conviction(str(speaker), target):
+            # A strong private hunch is enough to vote on, not enough to turn
+            # into a collective accusation. The room needs an independent
+            # source, a contradiction somebody actually raised, a validating
+            # Link, or testimony the explorer deliberately heard from this
+            # speaker. Retellings of the same witness do not count twice.
+            if not _collective_accusation_ready(str(speaker), target):
                 continue
             value += (0.4 - AstraDecisionModel.judgement(str(speaker), "conviction")) * 0.5
         if value > best_value:
@@ -3514,23 +3526,57 @@ func _thread_accusation() -> bool:
     _set_moment("accuse", {"speaker": best_speaker, "subject": best_target})
     return true
 
-func _lone_private_conviction(speaker: String, target: String) -> bool:
+func _evidence_origin(item: Dictionary) -> String:
+    if item.is_empty():
+        return ""
+    var type := str(item.get("type", ""))
+    if type == "HEARSAY":
+        var original := _hearsay_source(item)
+        if not original.is_empty():
+            return "witness:" + str(original.get("owner", ""))
+        return "witness:" + str(item.get("via", ""))
+    if type in ["DIRECT_WITNESS", "NULL_DECEPTION", "BENIGN_EXPOSURE", "COVER_EXPOSURE"]:
+        return "witness:" + str(item.get("owner", ""))
+    if type in ["SYSTEM_RECORD", "ALIBI_SUPPORT"]:
+        return "record:%s:%s:%s" % [str(item.get("record_type", "")), str(item.get("time", "")), str(item.get("room", ""))]
+    if type == "EXPERT_INFERENCE":
+        return "expert:" + str(item.get("owner", ""))
+    return "fact:" + str(item.get("id", ""))
+
+func _collective_accusation_ready(speaker: String, target: String) -> bool:
+    # A player-raised Link is already explicit verification in the room.
+    for entry in stage_state().get("links", []):
+        if int(entry.get("day", 0)) == day and str(entry.get("result", "")) == "CONTRADICTION" and target in Array(entry.get("targets", [])):
+            return true
+    # A contradiction only counts after somebody actually said it aloud.
+    for other in living_ids():
+        if str(other) != target and _conflict_raised(target, str(other)):
+            return true
+
     var view := suspicion_breakdown(speaker, target)
     var origins := {}
-    var private_own := false
+    var player_heard := false
     for reason in view.get("reasons", []):
         if float(reason.get("weight", 0.0)) <= 0.0:
+            continue
+        var code := str(reason.get("code", ""))
+        if code not in ["HARD_RECORD", "DIRECT_WITNESS", "TIMELINE", "EXPERT_INFERENCE", "CHANGED_STORY", "FALSE_SIGHTING"]:
             continue
         var source := str(reason.get("source", ""))
         var item := fragment(source)
         if item.is_empty():
-            if str(reason.get("code", "")) in ["CONTRADICTION", "CHANGED_STORY", "FALSE_SIGHTING", "EXPERT_INFERENCE", "HARD_RECORD", "TIMELINE"]:
-                origins[source] = true
             continue
-        origins[str(item.get("owner", ""))] = true
-        if str(item.get("owner", "")) == speaker and not AstraKnowledgeModel.is_public(flags, source) and not player_knows(source):
-            private_own = true
-    return private_own and origins.size() < 2
+        var origin := _evidence_origin(item)
+        if origin != "":
+            origins[origin] = true
+        if str(item.get("owner", "")) == speaker and player_knows(source) and conversation_open(speaker):
+            player_heard = true
+    return player_heard or origins.size() >= 2
+
+func _lone_private_conviction(speaker: String, target: String) -> bool:
+    # Kept as a compatibility helper for tests/debug callers. A conviction is
+    # "lone/private" exactly when it is not ready to become a room accusation.
+    return not _collective_accusation_ready(speaker, target)
 
 func _first_reason_code(reasons: Array) -> String:
     for item in reasons:
