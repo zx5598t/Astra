@@ -987,16 +987,13 @@ const VOLUNTEER := {"sena":0.8, "rho":0.75, "lyra":0.7, "mira":0.6, "dax":0.55, 
 # Once the explorer has heard it from them, they stand behind it (0.9+): what
 # reaches the room depends on who the explorer talked to (1.0).
 const UNASKED_SHARE := 0.13
-# ECHO_WARD is specifically about checking distorted retellings and misplaced
-# time/place testimony. If the room volunteers those private facts at the same
-# rate as other Stages, a passive explorer can be carried through the chapter.
-# Asked/heard facts still use their 0.9+ share path; only unasked NPC sharing is
-# reduced here.
-const STAGE_UNASKED_SHARE_SCALE := {"ECHO_WARD": 0.58}
 const MEETING_SHARE := {"noa":0.85, "dax":0.8, "sena":0.85, "rho":0.72, "vale":0.55, "eli":0.65, "mira":0.65, "lyra":0.62}
 
+func _deduction_profile() -> Dictionary:
+    return Dictionary(AstraCaseCatalog.get_case(case_id).get("deduction_profile", {}))
+
 func _unasked_share_scale() -> float:
-    return float(STAGE_UNASKED_SHARE_SCALE.get(case_id, 1.0))
+    return float(_deduction_profile().get("unasked_share_scale", 1.0))
 
 func conversations_max() -> int:
     return AstraCaseCatalog.talk_budget(case_id)
@@ -3234,8 +3231,8 @@ func _thread_frame() -> bool:
             continue
         # 1.0's generic record/witness threads already make unasked sharing
         # rare, but frames accidentally bypassed that rule at a flat 85%.
-        # ECHO_WARD therefore surfaced its most decisive accusation even when
-        # the explorer never spoke to the witness. Keep the testimony eager
+        # A high unasked share can surface decisive accusations even when the
+        # explorer never spoke to the witness. Keep the testimony eager
         # once the explorer has heard it; otherwise use the same temperament-
         # bounded unasked-sharing rule as other evidence.
         var told := player_knows(id)
