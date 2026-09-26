@@ -37,10 +37,11 @@ func _catalog_and_truth() -> void:
         restored.load_data()
         check(restored.player_profile_for_slot(1) == profile, "slot identity round trip")
     check(names.size() == 6, "six identities")
+    check(absf(AstraExplorerCatalog.TONE_NUDGE) <= 0.02, "explorer first-contact trust nudge stays bounded")
     var legacy := AstraExplorerCatalog.normalize({"name": "기존이름", "preset": "p3"})
     check(legacy["explorer_id"] == "neutral" and legacy["preset"] == "p3" and legacy["name"] == "기존이름", "legacy is neutral with same art/name")
     check(AstraExplorerCatalog.normalize({"explorer_id": "bad", "preset": "../../x"})["preset"] == "p1", "invalid profile safe")
-    for case_id in ["CALIBRATION", "DEAD_AIR", "GLASS_GARDEN", "SILENT_ORBIT"]:
+    for case_id in ["CALIBRATION", "DEAD_AIR", "GLASS_GARDEN", "ECHO_WARD", "SILENT_ORBIT"]:
         for seed in [4242, 5151, 7919]:
             var baseline := AstraGameSession.new()
             baseline.setup(case_id, seed)
