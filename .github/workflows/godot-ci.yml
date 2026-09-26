@@ -42,6 +42,12 @@ jobs:
           ./godot --headless --path . --script res://tests/deduction_100_tests.gd 2>&1 | tee quick-deduction.log
           grep -q "ASTRA DEDUCTION 100 TESTS OK" quick-deduction.log
 
+      - name: Active vs passive causal gate
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/causal_101_tests.gd 2>&1 | tee quick-causal.log
+          grep -q "ASTRA CAUSAL 101 TESTS OK" quick-causal.log
+
       - name: Preserve quick-gate logs
         if: always()
         uses: actions/upload-artifact@v4
