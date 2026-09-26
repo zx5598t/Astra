@@ -1,3 +1,112 @@
+# 1.1.0 LIVING PATHS — RELEASE QA — 2026-09-26
+
+Base: main **1161591486bfeaa80112a93c7c064fadff872d31** (official v1.0.1 source).  
+Feature branch: `release/1.1.0`. Full pre-metadata gameplay/test candidate: **455604ffff2fcfd7d624ef09769775f7501c1a7a**.  
+GitHub Actions **Godot CI #699 / run 36247482979: SUCCESS** — Linux full suite, Windows full suite, quick stabilization,
+100-game balance probe, Windows visual QA, Windows release-candidate export and exported-EXE boot all succeeded.
+
+The final `v1.1.0` tag/Release is created only after this metadata/docs commit reaches main and the same Godot CI succeeds again.
+The release workflow checks out that exact tested main SHA, downloads that run's own Windows artifact, verifies its SHA256, and creates the
+tag/Release against the same SHA. The GitHub tag target is therefore the authoritative Final SHA.
+
+Snapshot **v4** / Meta save **v12** remain unchanged. No migration. No BranchManager/NarrativeGraph/new deduction engine/new protocol/new
+character/new minigame.
+
+## Choice audit
+- player-visible choice scene set **22**
+- shallow legacy resolution buttons retired **39**
+- branch choice scenes **5**; selected micro-arc choice scenes **8**; protocol choice scenes **8**; finale **1**
+- two-option scenes **9**; three-option scenes **13**
+- consequence-enabled scenes **13**
+- expressive-only scenes in this selected set **0**
+- selected unreachable choice scenes **0**
+- consequence metadata: IMMEDIATE **15**, DELAYED **8**, NEXT_DAY **18**, NEXT_LOOP **4**
+
+## Branch / replay
+- DEAD_AIR: PUBLIC vs VERIFY_FIRST — actual public KnowledgeModel state vs player+Noa verify-first state.
+- ECHO_WARD: TELL_SOREN vs VERIFY_FIRST — firsthand Soren review vs medical/source cross-check first.
+- RED_SHIFT: REVEAL vs WITHHOLD_VERIFY — public handwriting admission vs private original verification first.
+- BORROWED_DAYS: TELL vs OBSERVE — shared relationship observation vs one more private behavior observation.
+- THREE_MINUTES_DARK: POWER / COMMS / SECURITY — exactly the chosen area is DIRECT; the other two retain valid indirect provenance.
+
+Every branch route is selectable/reachable, has 2+ observable consequence categories, a different immediate beat and no dead end.
+Same-seed replay keeps truth/base packet invariant while scenes/text/provenance/meeting context differ in 2+ visible dimensions.
+
+## Consequence / rewind / save
+`story_choose()` uses existing `AstraConsequenceModel.from_choice()` + `enqueue()`. IMMEDIATE / DELAYED / NEXT_DAY / NEXT_LOOP are
+delivered through existing timing paths; event-id dedup prevents double application after save/load. Dawn rewind preserves prior-Stage route
+history but rolls back post-dawn choice. Deep exposes no campaign anchors. 1.0.1 saves default route state to empty rather than fabricating choices.
+
+## Dialogue
+- authored editorial population **1,196**
+- exact duplicate groups **5**; same-opening groups (first 12 chars, 3+ uses) **53**
+- clarification pool **40**, Link responses **64**, final statements **48**, stance-change lines **32**
+- runtime WITNESS question/answer samples **8**, RECORD samples **6**
+- malformed AstraJosa forms repaired **16**
+- raw Josa markers / unresolved tokens / selected branch speaker errors **0**
+- current player-facing old Investigation instructions and old tie=no-isolation text removed
+
+## Content exposure
+Runtime sample: first campaign + continued repeat campaign + two independent campaigns. It counts actual displayed story-queue scenes and
+meeting-line exposure; it is not claimed exhaustive. Optional story/personal-vignette scheduling uses existing `speaker_exposure` to prefer
+eligible crew who have appeared less in the current Stage, without reading role/truth/evidence.
+
+Measured pre-metadata sample from #699 still shows Soren as the lowest absolute authored/story exposure because he joins later and has the
+smallest authored library. 1.1 therefore improves scheduling rather than inventing a large new Soren pack or hardcoding character bonuses.
+
+## Finale
+All three final actions **share / wake / keep** stay selectable. Visible defended/saved/wrongly-isolated campaign history changes
+**WARM / CAUTIOUS / STRAINED** reception; route handling adds OPEN / VERIFY / MIXED residue texture. Hidden role/truth are not inputs and
+campaign history never overwrites the chosen action.
+
+## 100-game balance
+| Stage | SMART | RANDOM | PASSIVE |
+|---|---:|---:|---:|
+| CALIBRATION | 97 | 74 | 62 |
+| DEAD_AIR | 95 | 78 | 67 |
+| GLASS_GARDEN | 99 | 83 | 73 |
+| ECHO_WARD | 96 | 75 | 81 |
+| SILENT_ORBIT | 99 | 52 | 50 |
+| RED_SHIFT | 88 | 50 | 38 |
+| LAST_LIGHT | 88 | 54 | 46 |
+| SECOND_WATCH | 96 | 52 | 50 |
+| BORROWED_DAYS | 92 | 52 | 45 |
+| BLIND_DECK | 90 | 56 | 49 |
+| THREE_MINUTES_DARK | 90 | 53 | 43 |
+| CONTINUITY | 91 | 52 | 40 |
+| THRESHOLD | 89 | 49 | 46 |
+| **TOTAL** | **93** | **60** | **53** |
+
+This matches the 1.0.1 100-game baseline. ECHO_WARD PASSIVE remains **81%**; no number-chasing correction was added.
+
+Causal QA **300 paired seeds PASS**. DEAD_AIR / GLASS_GARDEN / ECHO_WARD ACTIVE resolves faster with fewer innocent isolations/casualties,
+while player public facts, Links, stance changes and vote-intention changes remain non-zero only on ACTIVE in the measured paths.
+Fairness QA **909 checks PASS**: Stage 2–4 zero-route 0, one-route 0, multi-route 100/100. Role-tell audit retains Null false sightings **549**,
+innocent mistaken sightings **94**, benign innocent discrepancies **523**.
+
+## UI / CI / platform
+- `ui_layout_100.gd` **2,476 checks PASS**
+- THREE_MINUTES_DARK 3-choice + two-line hint layout explicitly PASS at **1120×700**
+- visual QA **1120×700 / 1366×768 / 1920×1080**
+- Linux import/parse/full suite/main boot PASS
+- Windows full suite/main boot PASS
+- quick stabilization PASS
+- 100-game balance probe PASS
+- Windows RC export + exported `ASTRA.exe` boot PASS
+- no fifth minigame; four existing task families retained
+
+## Legacy/private audit
+`private_events.gd` remains retained authored/legacy material; current GameSession direct `AstraPrivateEvents` references measured **0**.
+It was not blindly deleted or wholesale revived. Current storylet/consequence paths are selectively integrated instead.
+
+## Human-only remaining risks
+Automation does not prove:
+- 45–60 minute reading fatigue is ideal, especially ECHO_WARD's ~29-line ACTIVE meeting and repeated Link-picker use;
+- Korean naturalness across every long-session combination;
+- replay novelty feels exactly “60–75%” to every player;
+- final reception emotion is equally strong for all three actions;
+- every DPI/font/OS combination matches the tested resolutions.
+
 # 1.0.1 CONVICTION RELEASE POLISH — RELEASE QA — 2026-09-26
 
 기준 소스: 1.0.0 구현본 `release/1.0.0` **ef3856cc079f515733f34fc16fba046c2f9bcffe**.  
