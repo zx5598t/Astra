@@ -49,6 +49,24 @@ func test_actions_and_reception() -> void:
     a._queue_finale("share")
     b._queue_finale("share")
     check(a.finale_reception() == b.finale_reception(), "same visible history + action is deterministic")
+
+    var open_routes := {"DEAD_AIR":"PUBLIC","ECHO_WARD":"TELL_SOREN","RED_SHIFT":"REVEAL","BORROWED_DAYS":"TELL","THREE_MINUTES_DARK":"COMMS"}
+    var verify_routes := {"DEAD_AIR":"VERIFY_FIRST","ECHO_WARD":"VERIFY_FIRST","RED_SHIFT":"WITHHOLD_VERIFY","BORROWED_DAYS":"OBSERVE","THREE_MINUTES_DARK":"SECURITY"}
+    var open_s := _session_with_tally({})
+    open_s.voyage["route_choices"] = open_routes
+    open_s._queue_finale("share")
+    var verify_s := _session_with_tally({})
+    verify_s.voyage["route_choices"] = verify_routes
+    verify_s._queue_finale("share")
+    var open_ids: Array[String] = []
+    var verify_ids: Array[String] = []
+    for scene in open_s.story_queue():
+        open_ids.append(str(scene.get("id", "")))
+    for scene in verify_s.story_queue():
+        verify_ids.append(str(scene.get("id", "")))
+    check("finale_route_open" in open_ids, "open-handling campaign leaves a finale residue callback")
+    check("finale_route_verify" in verify_ids, "verify-first campaign leaves a different finale residue callback")
+    check(open_s.finale_action() == verify_s.finale_action(), "route history changes reception texture, not final action")
     var source := FileAccess.get_file_as_string("res://scripts/core/game_session.gd")
     var start := source.find("func _finale_reception_from_history")
     var stop := source.find("\nfunc ", start + 6)

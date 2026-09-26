@@ -11,8 +11,11 @@ func check(condition: bool, label: String) -> void:
 
 func _initialize() -> void:
     test_branch_reachability()
+    test_branch_knowledge()
     test_consequence_bridge()
     test_snapshot_dedup()
+    test_rewind_boundary()
+    test_deep_boundary()
     if failures.is_empty():
         print("ASTRA CHOICE 110 TESTS OK · %d checks" % checks)
         quit(0)
@@ -105,6 +108,68 @@ func test_branch_reachability() -> void:
             AstraTestBots._finish_morning(s)
             check(s.story_finished(), "%s/%s has no story dead end" % [anchor, route])
         seed += 97
+
+
+func test_branch_knowledge() -> void:
+    var public_s := AstraGameSession.new()
+    public_s.setup("DEAD_AIR", 11501)
+    check(_pick_route(public_s, "DEAD_AIR", "PUBLIC"), "DEAD_AIR public knowledge fixture")
+    var dead_fact := public_s.branch_fact_id("DEAD_AIR")
+    check(AstraKnowledgeModel.is_public(public_s.flags, dead_fact), "DEAD_AIR PUBLIC becomes actual public knowledge")
+    var public_steps := AstraKnowledgeModel.provenance(public_s.flags, dead_fact)
+    check(not public_steps.is_empty() and str(public_steps.back().get("reason", "")) == "branch_choice", "public branch provenance records branch_choice")
+
+    var verify_s := AstraGameSession.new()
+    verify_s.setup("DEAD_AIR", 11501)
+    check(_pick_route(verify_s, "DEAD_AIR", "VERIFY_FIRST"), "DEAD_AIR verify knowledge fixture")
+    var verify_fact := verify_s.branch_fact_id("DEAD_AIR")
+    check(not AstraKnowledgeModel.is_public(verify_s.flags, verify_fact), "VERIFY_FIRST stays non-public")
+    check(AstraKnowledgeModel.knows(verify_s.flags, "player", verify_fact) and AstraKnowledgeModel.knows(verify_s.flags, "noa", verify_fact), "VERIFY_FIRST is initially shared only through the verification route")
+
+    var borrowed := AstraGameSession.new()
+    borrowed.setup("BORROWED_DAYS", 11502)
+    check(_pick_route(borrowed, "BORROWED_DAYS", "OBSERVE"), "BORROWED_DAYS observe knowledge fixture")
+    var habit_fact := borrowed.branch_fact_id("BORROWED_DAYS")
+    check(AstraKnowledgeModel.knows(borrowed.flags, "player", habit_fact), "OBSERVE gives the player the observation")
+    check(not AstraKnowledgeModel.knows(borrowed.flags, "sena", habit_fact) and not AstraKnowledgeModel.knows(borrowed.flags, "rho", habit_fact), "OBSERVE does not pre-share the observation with Sena/Jun")
+
+    var dark := AstraGameSession.new()
+    dark.setup("THREE_MINUTES_DARK", 11503)
+    check(_pick_route(dark, "THREE_MINUTES_DARK", "COMMS"), "THREE_MINUTES_DARK provenance fixture")
+    for area in ["POWER","COMMS","SECURITY"]:
+        var fact_id := dark.branch_fact_id("THREE_MINUTES_DARK", area)
+        check(AstraKnowledgeModel.knows(dark.flags, "player", fact_id), "TMD %s remains reachable to player" % area)
+        var steps := AstraKnowledgeModel.provenance(dark.flags, fact_id)
+        check(not steps.is_empty(), "TMD %s has provenance path" % area)
+    check(str(dark.voyage.get("information_sources", {}).get(dark.branch_fact_id("THREE_MINUTES_DARK", "COMMS"), "")) == "DIRECT", "chosen TMD area is actually DIRECT in runtime state")
+
+func test_rewind_boundary() -> void:
+    var path := "user://choice_110_dawn.cfg"
+    AstraGameSession.delete_snapshot(path)
+    var dawn := AstraGameSession.new()
+    dawn.setup("ECHO_WARD", 14001)
+    var inherited: Dictionary = dawn.voyage.get("route_choices", {})
+    inherited["DEAD_AIR"] = "PUBLIC"
+    dawn.voyage["route_choices"] = inherited
+    check(dawn.save_snapshot(path), "rewind fixture dawn snapshot saves")
+    check(_pick_route(dawn, "ECHO_WARD", "TELL_SOREN"), "post-dawn route can be chosen")
+    check(dawn.branch_route("ECHO_WARD") == "TELL_SOREN", "post-dawn route recorded before rewind")
+    var restored := AstraGameSession.new()
+    check(restored.load_snapshot(path), "dawn snapshot restores")
+    check(restored.branch_route("DEAD_AIR") == "PUBLIC", "pre-dawn prior-Stage route survives rewind")
+    check(restored.branch_route("ECHO_WARD") == "", "post-dawn route is rolled back")
+    check(_pick_route(restored, "ECHO_WARD", "VERIFY_FIRST"), "rewind lets player choose the branch again")
+    AstraGameSession.delete_snapshot(path)
+
+func test_deep_boundary() -> void:
+    var deep := AstraGameSession.new()
+    deep.setup_deep("ECHO_WARD", 15001, "ANALYST", 9, "SILENT_DECK")
+    var branch_choice_seen := false
+    for scene in deep.story_queue():
+        for choice in scene.get("choices", []):
+            branch_choice_seen = branch_choice_seen or str(choice.get("route_anchor", "")) != ""
+    check(not branch_choice_seen, "Deep does not expose campaign branch anchors")
+    check(deep.branch_signature() == "", "Deep starts without campaign route signature")
 
 func _install_scene(s: AstraGameSession, scene_id: String) -> bool:
     var scene := AstraVoyageContent.scene(scene_id)

@@ -6130,6 +6130,64 @@ func story_choose(index: int) -> bool:
 
 # ---------------------------------------------------------------- 1.1.0 choice / branch state
 
+const BRANCH_FACT_IDS := {
+    "DEAD_AIR":"branch:DEAD_AIR:dual_originals",
+    "ECHO_WARD":"branch:ECHO_WARD:soren_voice",
+    "RED_SHIFT":"branch:RED_SHIFT:player_handwriting",
+    "BORROWED_DAYS":"branch:BORROWED_DAYS:habit_memory",
+    "THREE_MINUTES_DARK":"branch:THREE_MINUTES_DARK"
+}
+
+func branch_fact_id(anchor: String, area: String = "") -> String:
+    var base := str(BRANCH_FACT_IDS.get(anchor, ""))
+    if anchor == "THREE_MINUTES_DARK" and area != "":
+        return base + ":" + area
+    return base
+
+func _apply_branch_knowledge(anchor: String, route: String, choice: Dictionary) -> void:
+    if voyage.is_empty():
+        return
+    var fact_id := branch_fact_id(anchor)
+    match anchor:
+        "DEAD_AIR":
+            if route == "PUBLIC":
+                AstraKnowledgeModel.make_public(flags, fact_id, active_participants(), day, "player", "branch_choice")
+            else:
+                AstraKnowledgeModel.discover_player(flags, fact_id, day, "branch_choice")
+                if "noa" in active_participants():
+                    AstraKnowledgeModel.share_with(flags, fact_id, "noa", day, "player")
+        "ECHO_WARD":
+            AstraKnowledgeModel.discover_player(flags, fact_id, day, "branch_choice")
+            if route == "TELL_SOREN":
+                if "vale" in active_participants():
+                    AstraKnowledgeModel.share_with(flags, fact_id, "vale", day, "player")
+            else:
+                for npc_id in ["mira","noa"]:
+                    if npc_id in active_participants():
+                        AstraKnowledgeModel.share_with(flags, fact_id, npc_id, day, "player")
+        "RED_SHIFT":
+            if route == "REVEAL":
+                AstraKnowledgeModel.make_public(flags, fact_id, active_participants(), day, "player", "branch_choice")
+            else:
+                AstraKnowledgeModel.discover_player(flags, fact_id, day, "branch_choice")
+                if "noa" in active_participants():
+                    AstraKnowledgeModel.share_with(flags, fact_id, "noa", day, "player")
+        "BORROWED_DAYS":
+            AstraKnowledgeModel.discover_player(flags, fact_id, day, "branch_choice")
+            if route == "TELL":
+                for npc_id in ["sena","rho"]:
+                    if npc_id in active_participants():
+                        AstraKnowledgeModel.share_with(flags, fact_id, npc_id, day, "player")
+        "THREE_MINUTES_DARK":
+            var provenance: Dictionary = choice.get("provenance", {})
+            var information_sources: Dictionary = voyage.get("information_sources", {})
+            for area in ["POWER","COMMS","SECURITY"]:
+                var area_fact := branch_fact_id(anchor, area)
+                var source := str(provenance.get(area, "RECORD"))
+                AstraKnowledgeModel.discover_player(flags, area_fact, day, source)
+                information_sources[area_fact] = source
+            voyage["information_sources"] = information_sources
+
 func _record_branch_choice(scene: Dictionary, choice: Dictionary) -> void:
     if voyage.is_empty():
         return
@@ -6150,6 +6208,7 @@ func _record_branch_choice(scene: Dictionary, choice: Dictionary) -> void:
             "scene":str(scene.get("id", "")), "loop":int(voyage.get("loop", 0)), "day":day})
     voyage["route_history"] = history
     stage_state()["route_choice_" + anchor] = route
+    _apply_branch_knowledge(anchor, route, choice)
 
 func branch_route(anchor: String = "") -> String:
     var key := case_id if anchor == "" else anchor
@@ -6618,6 +6677,9 @@ func _queue_finale(choice: String) -> void:
         _scene_entry(AstraStageStory.EPILOGUES[tone], "finale"),
         _scene_entry(AstraStageStory.finale_reception_scene(reception), "finale")
     ]
+    var route_callback := AstraStageStory.finale_route_callback(voyage.get("route_choices", {}) if not voyage.is_empty() else {})
+    if not route_callback.is_empty():
+        extra.append(_scene_entry(route_callback, "finale"))
     var tally := _campaign_tally()
     var lines: Array = []
     for kind in ["saved", "defended", "sent_wrong"]:

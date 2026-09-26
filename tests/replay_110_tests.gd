@@ -50,7 +50,8 @@ func _snapshot(anchor: String, route: String, seed: int) -> Dictionary:
         "text":"|".join(PackedStringArray(text)),
         "provenance":JSON.stringify(s.branch_provenance(anchor)),
         "meeting":AstraStageStory.branch_meeting_context(anchor, route),
-        "signature":s.branch_signature()
+        "signature":s.branch_signature(),
+        "public_fact":AstraKnowledgeModel.is_public(s.flags, s.branch_fact_id(anchor)) if anchor != "THREE_MINUTES_DARK" else false
     }
 
 func test_same_seed_routes() -> void:
@@ -76,6 +77,7 @@ func test_same_seed_routes() -> void:
             if str(rows[index]["text"]) != str(rows[0]["text"]): differences += 1
             if str(rows[index]["provenance"]) != str(rows[0]["provenance"]): differences += 1
             if str(rows[index]["meeting"]) != str(rows[0]["meeting"]): differences += 1
+            if bool(rows[index]["public_fact"]) != bool(rows[0]["public_fact"]): differences += 1
             check(differences >= 2, "%s routes differ in 2+ player-visible dimensions" % anchor)
         seed += 101
 

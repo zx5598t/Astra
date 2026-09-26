@@ -55,7 +55,7 @@ static func share_with(flags: Dictionary, fact_id: String, npc_id: String, day: 
     root["propagation"] = propagation
     _store(flags, root)
 
-static func make_public(flags: Dictionary, fact_id: String, participants: Array, day: int, source: String = "player") -> void:
+static func make_public(flags: Dictionary, fact_id: String, participants: Array, day: int, source: String = "player", reason: String = "meeting") -> void:
     if fact_id == "":
         return
     var root := _root(flags)
@@ -70,7 +70,7 @@ static func make_public(flags: Dictionary, fact_id: String, participants: Array,
     entry["knowers"] = knowers
     entry["public"] = true
     var provenance: Array = entry.get("provenance", [])
-    provenance.append({"from":source,"to":"public","day":day,"reason":"meeting"})
+    provenance.append({"from":source,"to":"public","day":day,"reason":reason})
     entry["provenance"] = provenance
     facts[fact_id] = entry
     root["facts"] = facts
