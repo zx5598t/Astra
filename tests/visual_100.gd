@@ -9,7 +9,7 @@ extends SceneTree
 #                           180-degree turn, idle -> talk -> idle (3x)
 #   screen_<name>_<w>.png   selection, conversation (long), meeting, link
 #                           picker, vote with reasons, lost Stage with rewind,
-#                           the four task families — at 1366x768 and 1920x1080
+#                           the four task families — at 1120x700, 1366x768 and 1920x1080
 
 const OUT := "res://build/qa/100/"
 var app
@@ -36,7 +36,7 @@ func _run() -> void:
     for key in sheets:
         await _walk_sheet(str(key))
         await _sequence(str(key))
-    for resolution in [Vector2i(1366, 768), Vector2i(1920, 1080)]:
+    for resolution in [Vector2i(1120, 700), Vector2i(1366, 768), Vector2i(1920, 1080)]:
         DisplayServer.window_set_size(resolution)
         root.size = resolution
         await _wait(4)
