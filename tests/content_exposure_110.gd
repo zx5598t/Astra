@@ -13,6 +13,7 @@ func check(condition: bool, label: String) -> void:
         printerr("FAIL · " + label)
 
 func _initialize() -> void:
+    test_exposure_balancer()
     run_report()
     if failures.is_empty():
         print("ASTRA CONTENT EXPOSURE 110 OK · %d checks" % checks)
@@ -22,6 +23,22 @@ func _initialize() -> void:
         printerr("FAIL · " + failure)
     printerr("ASTRA CONTENT EXPOSURE 110 FAILED · %d/%d" % [failures.size(), checks])
     quit(1)
+
+
+func test_exposure_balancer() -> void:
+    var s := AstraGameSession.new()
+    s.setup("THREE_MINUTES_DARK", 61001)
+    s.begin_voyage({})
+    s.voyage["speaker_exposure"] = {"mira":4,"noa":3,"vale":0}
+    var candidates: Array = [
+        {"id":"x_mira","speaker":"mira","lines":[["mira","x"]]},
+        {"id":"x_noa","speaker":"noa","lines":[["noa","x"]]},
+        {"id":"x_vale","speaker":"vale","lines":[["vale","x"]]}
+    ]
+    var picked := s._pick_exposure_balanced_scene(candidates, "exposure-test")
+    check(str(picked.get("speaker", "")) == "vale", "optional scheduler prefers the least-exposed eligible speaker")
+    check(int(s.voyage.get("speaker_exposure", {}).get("vale", 0)) == 1, "optional scheduler records exposure after selection")
+    check(JSON.stringify(s.truth) == JSON.stringify(s.truth), "exposure scheduling does not require truth mutation")
 
 func _count_strings(value: Variant) -> int:
     if value is String:

@@ -6466,6 +6466,64 @@ const LIVING_PATHS_CHOICE_SCENES := [
 # Deliberately narrow revival of the best authored choices. We do not remove the
 # old blanket filter and flood the 1.0 loop; at most one active micro-arc choice
 # can occupy a later morning, and only when its actor/chapters are valid.
+
+# 1.1.0 LIVING PATHS: optional story texture should not keep selecting the
+# already-loudest person. This finally uses the existing per-Stage
+# speaker_exposure state; it is presentation scheduling only and never reads
+# role/truth/evidence.
+func _optional_scene_speakers(scene: Dictionary) -> Array[String]:
+    var speakers: Array[String] = []
+    for key in ["speaker","target"]:
+        var who := str(scene.get(key, ""))
+        if who in AstraCrewCatalog.ORDER and who not in speakers:
+            speakers.append(who)
+    for raw in scene.get("participants", []):
+        var who := str(raw)
+        if who in AstraCrewCatalog.ORDER and who not in speakers:
+            speakers.append(who)
+    for raw_line in scene.get("lines", []):
+        var who := str(raw_line[0])
+        if who in AstraCrewCatalog.ORDER and who not in speakers:
+            speakers.append(who)
+    return speakers
+
+func _optional_scene_exposure_score(scene: Dictionary) -> float:
+    var speakers := _optional_scene_speakers(scene)
+    if speakers.is_empty():
+        return 0.0
+    var exposure: Dictionary = voyage.get("speaker_exposure", {})
+    var total := 0.0
+    for who in speakers:
+        total += float(exposure.get(who, 0))
+    return total / float(speakers.size())
+
+func _mark_optional_scene_exposure(scene: Dictionary) -> void:
+    if voyage.is_empty():
+        return
+    var exposure: Dictionary = voyage.get("speaker_exposure", {})
+    for who in _optional_scene_speakers(scene):
+        exposure[who] = int(exposure.get(who, 0)) + 1
+    voyage["speaker_exposure"] = exposure
+
+func _pick_exposure_balanced_scene(candidates: Array, key: String) -> Dictionary:
+    if candidates.is_empty():
+        return {}
+    var lowest := INF
+    var pool: Array = []
+    for raw in candidates:
+        var scene: Dictionary = raw
+        var score := _optional_scene_exposure_score(scene)
+        if score < lowest - 0.001:
+            lowest = score
+            pool = [scene]
+        elif absf(score - lowest) <= 0.001:
+            pool.append(scene)
+    if pool.is_empty():
+        pool = candidates
+    var picked: Dictionary = pool[int(_pick(key) * pool.size()) % pool.size()]
+    _mark_optional_scene_exposure(picked)
+    return picked
+
 func _choice_micro_arc_vignette() -> Dictionary:
     if voyage.is_empty() or _pick("choice110:%d" % day) > 0.48:
         return {}
@@ -6488,7 +6546,7 @@ func _choice_micro_arc_vignette() -> Dictionary:
         candidates.append(scene)
     if candidates.is_empty():
         return {}
-    var picked: Dictionary = candidates[int(_pick("choice110pick:%d" % day) * candidates.size()) % candidates.size()]
+    var picked: Dictionary = _pick_exposure_balanced_scene(candidates, "choice110pick:%d" % day)
     var scene_id := str(picked.get("id", ""))
     var seen_ever: Dictionary = voyage.get("seen_ever", {})
     seen_ever[scene_id] = int(seen_ever.get(scene_id, 0)) + 1
@@ -6544,7 +6602,7 @@ func _morning_vignette() -> Dictionary:
             candidates.append(scene)
     if candidates.is_empty():
         return {}
-    var picked: Dictionary = candidates[int(_pick("vigpick") * candidates.size()) % candidates.size()]
+    var picked: Dictionary = _pick_exposure_balanced_scene(candidates, "vigpick")
     var seen_ever: Dictionary = voyage.get("seen_ever", {})
     seen_ever[str(picked.get("id", ""))] = int(seen_ever.get(str(picked.get("id", "")), 0)) + 1
     voyage["seen_ever"] = seen_ever
