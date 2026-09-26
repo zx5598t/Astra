@@ -224,6 +224,7 @@ const CASES := {
             "specific_scale": 0.0,
             "force_two_source": true,
             "unasked_share_scale": 0.58,
+            "private_vote_scale": 0.45,
             "min_reasonable_routes": 2
         }
     },
