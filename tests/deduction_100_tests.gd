@@ -67,6 +67,10 @@ func _meeting_fixture(case_id: String, seed: int) -> void:
         for ev in evidence:
             var eref := str(ev["ref"])
             check(eref.begins_with("claim:") or eref.begins_with("earlier:") or s.player_knows(eref), "link evidence is only what the explorer knows")
+            if str(ev.get("kind", "")) == "fragment":
+                var label := str(ev.get("label", ""))
+                check(label.begins_with("[") and ("공개" in label or "개인적으로 들음" in label), "fragment evidence exposes provenance/visibility without a score")
+                check("%" not in label and "의심" not in label and "정답" not in label, "provenance label does not grade the answer")
             var verdict := s.judge_link(sref, eref)
             var result := str(verdict["result"])
             check(result in ["CONTRADICTION", "NARROWS", "SUPPORT", "HEARSAY_ONLY", "SAME_SOURCE", "ALREADY_EXPLAINED", "UNCLEAR", "IRRELEVANT"], "a known verdict (%s)" % result)
@@ -106,8 +110,11 @@ func _meeting_fixture(case_id: String, seed: int) -> void:
         if link != "" and s.meeting_actions_left > 0:
             var start2 := s.meeting_feed.size()
             var trust_before := _trust(s)
+            var link_parts := link.split("|")
             var result := s.intervene("link", link)
             check(bool(result.get("ok", false)), "a holding link is accepted")
+            if link_parts.size() >= 2:
+                check(not bool(s.intervene("link", link).get("ok", false)), "the same Link combination cannot be brute-forced twice")
             var lines: Array = s.meeting_feed.slice(start2)
             var speakers := {}
             for line in lines:
