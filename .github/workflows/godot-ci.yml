@@ -151,6 +151,14 @@ jobs:
         with:
           name: linux-test-logs
           path: test-*.log
+
+      - name: Preserve human-readable Stage walkthrough
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: walkthrough-100
+          path: build/qa/walkthrough_100.txt
+          if-no-files-found: error
           if-no-files-found: ignore
 
       - name: Boot main scene headlessly
