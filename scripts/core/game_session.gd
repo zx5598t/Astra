@@ -987,7 +987,16 @@ const VOLUNTEER := {"sena":0.8, "rho":0.75, "lyra":0.7, "mira":0.6, "dax":0.55, 
 # Once the explorer has heard it from them, they stand behind it (0.9+): what
 # reaches the room depends on who the explorer talked to (1.0).
 const UNASKED_SHARE := 0.13
+# ECHO_WARD is specifically about checking distorted retellings and misplaced
+# time/place testimony. If the room volunteers those private facts at the same
+# rate as other Stages, a passive explorer can be carried through the chapter.
+# Asked/heard facts still use their 0.9+ share path; only unasked NPC sharing is
+# reduced here.
+const STAGE_UNASKED_SHARE_SCALE := {"ECHO_WARD": 0.58}
 const MEETING_SHARE := {"noa":0.85, "dax":0.8, "sena":0.85, "rho":0.72, "vale":0.55, "eli":0.65, "mira":0.65, "lyra":0.62}
+
+func _unasked_share_scale() -> float:
+    return float(STAGE_UNASKED_SHARE_SCALE.get(case_id, 1.0))
 
 func conversations_max() -> int:
     return AstraCaseCatalog.talk_budget(case_id)
@@ -3086,7 +3095,7 @@ func _thread_hearsay() -> bool:
         if not original.is_empty() and AstraKnowledgeModel.is_public(flags, str(original.get("id", ""))) and not bool(item.get("distorted", false)):
             continue
         var told := player_knows(id)
-        var chance := 0.92 if told else float(MEETING_SHARE.get(owner, 0.6)) * UNASKED_SHARE * 1.6
+        var chance := 0.92 if told else float(MEETING_SHARE.get(owner, 0.6)) * UNASKED_SHARE * _unasked_share_scale() * 1.6
         if _pick("heard:" + id) >= chance:
             continue
         _publish_fragment(item, owner)
@@ -3144,7 +3153,7 @@ func _thread_record() -> bool:
         # What the explorer never drew out mostly stays with its keeper; what
         # they already heard, the keeper is ready to stand behind in public.
         var told := player_knows(id)
-        var share_chance := 0.94 if told else float(MEETING_SHARE.get(owner, 0.6)) * UNASKED_SHARE
+        var share_chance := 0.94 if told else float(MEETING_SHARE.get(owner, 0.6)) * UNASKED_SHARE * _unasked_share_scale()
         if _pick("share:%s:%s" % [owner, id]) >= share_chance:
             continue
         _publish_fragment(item, owner)
@@ -3195,7 +3204,7 @@ func _thread_witness() -> bool:
         if not is_alive(owner):
             continue
         var told := player_knows(id)
-        var chance := 0.94 if told else float({"sena":0.85, "rho":0.8, "lyra":0.75, "mira":0.65, "dax":0.55, "eli":0.55, "noa":0.45, "vale":0.4}.get(owner, 0.6)) * UNASKED_SHARE * (0.5 if deep_modifier() == "STATIC" else 1.0)
+        var chance := 0.94 if told else float({"sena":0.85, "rho":0.8, "lyra":0.75, "mira":0.65, "dax":0.55, "eli":0.55, "noa":0.45, "vale":0.4}.get(owner, 0.6)) * UNASKED_SHARE * _unasked_share_scale() * (0.5 if deep_modifier() == "STATIC" else 1.0)
         if _pick("witness:" + id) >= chance:
             continue
         _publish_fragment(item, owner)
@@ -3230,7 +3239,7 @@ func _thread_frame() -> bool:
         # once the explorer has heard it; otherwise use the same temperament-
         # bounded unasked-sharing rule as other evidence.
         var told := player_knows(id)
-        var share_chance := 0.94 if told else float(MEETING_SHARE.get(framer, 0.6)) * UNASKED_SHARE * 1.6
+        var share_chance := 0.94 if told else float(MEETING_SHARE.get(framer, 0.6)) * UNASKED_SHARE * _unasked_share_scale() * 1.6
         if _pick("frame:" + id) >= share_chance:
             continue
         # The board is public: a Null does not stand up and claim to have seen
@@ -3628,7 +3637,7 @@ func _respond_to_evidence(subject: String, item: Dictionary, topic: String) -> v
                 var expert := str(other.get("owner", ""))
                 # The expert speaks up if the explorer already asked them, or
                 # by temperament.
-                var chance := 0.9 if player_knows(str(other.get("id", ""))) else float(MEETING_SHARE.get(expert, 0.6)) * UNASKED_SHARE * 2.5
+                var chance := 0.9 if player_knows(str(other.get("id", ""))) else float(MEETING_SHARE.get(expert, 0.6)) * UNASKED_SHARE * _unasked_share_scale() * 2.5
                 if _pick("rebut:" + str(other.get("id", ""))) >= chance:
                     break
                 _publish_fragment(other, expert)
