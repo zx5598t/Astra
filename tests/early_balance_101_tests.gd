@@ -38,6 +38,8 @@ func _run() -> void:
         # 85% is only a regression ceiling, not the release-quality target.
         # Causal/fairness gates judge whether active reasoning actually matters.
         check(passive_rate <= 0.85, "%s passive carry must stay at or below the 85%% regression ceiling (%.0f%%)" % [case_id, passive_rate * 100.0])
+        if case_id == "ECHO_WARD":
+            check(passive_rate < 0.80, "ECHO_WARD passive carry must stay below 80%% (%.0f%%)" % (passive_rate * 100.0))
         check(smart_rate >= 0.80, "%s smart play must remain viable (%.0f%%)" % [case_id, smart_rate * 100.0])
     var passive_average := float(passive_total) / float(GAMES * CASES.size())
     var smart_average := float(smart_total) / float(GAMES * CASES.size())
