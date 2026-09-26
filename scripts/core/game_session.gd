@@ -4440,11 +4440,10 @@ func link_evidence(statement_ref: String) -> Array:
         var type := str(item.get("type", ""))
         if int(item.get("day", day)) != day and type not in ["SYSTEM_RECORD", "DIRECT_WITNESS", "ALIBI_SUPPORT"]:
             continue
-        var owner := str(item.get("owner", ""))
-        var tag: String = {"SYSTEM_RECORD": "기록", "DIRECT_WITNESS": "목격", "HEARSAY": "전언", "EXPERT_INFERENCE": "전문 소견",
-            "ALIBI_SUPPORT": "기록", "ROUTINE": "관찰", "NULL_DECEPTION": "목격", "BENIGN_EXPOSURE": "목격", "COVER_EXPOSURE": "목격"}.get(type, "정보")
-        var source := "공개됨" if AstraKnowledgeModel.is_public(flags, id) else "당신만 들음"
-        result.append({"ref": id, "kind": "fragment", "label": "[%s · %s · %s] %s" % [tag, name_of(owner), source, _short_text(str(item.get("text", "")))]})
+        var provenance := _link_provenance_label(item, id)
+        result.append({"ref": id, "kind": "fragment",
+            "label": "%s %s" % [provenance, _short_text(str(item.get("text", "")))],
+            "provenance": provenance})
     for npc_id in living_ids():
         if "claim:" + str(npc_id) == statement_ref:
             continue
@@ -4478,6 +4477,25 @@ func link_evidence(statement_ref: String) -> Array:
     for entry in result:
         entry.erase("_link_order")
     return result
+
+func _link_provenance_label(item: Dictionary, id: String) -> String:
+    var type := str(item.get("type", ""))
+    var owner := str(item.get("owner", ""))
+    var visibility := "공개" if AstraKnowledgeModel.is_public(flags, id) else "개인적으로 들음"
+    match type:
+        "HEARSAY":
+            var origin := str(item.get("via", ""))
+            return "[전언 · %s → %s · %s]" % [name_of(origin), name_of(owner), visibility]
+        "SYSTEM_RECORD", "ALIBI_SUPPORT":
+            var place := room_name(str(item.get("room", "")))
+            return "[기록 · %s · %s]" % [place if place != "" else name_of(owner), visibility]
+        "DIRECT_WITNESS", "NULL_DECEPTION", "BENIGN_EXPOSURE", "COVER_EXPOSURE":
+            return "[직접 목격 · %s · %s]" % [name_of(owner), visibility]
+        "EXPERT_INFERENCE":
+            return "[전문 소견 · %s · %s]" % [name_of(owner), visibility]
+        "ROUTINE":
+            return "[직접 관찰 · %s · %s]" % [name_of(owner), visibility]
+    return "[정보 · %s · %s]" % [name_of(owner), visibility]
 
 func _short_text(text: String) -> String:
     var plain := text
