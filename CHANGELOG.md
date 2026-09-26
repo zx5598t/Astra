@@ -1,3 +1,21 @@
+## 1.1.0 — LIVING PATHS
+
+A replay/choice pass over 1.0.1. The 13-Stage canon and deduction engine stay intact; fewer choices now change who knows what, how it was learned, which scene follows, and how the room receives the explorer later.
+
+- **Five reconverging branch anchors.** DEAD_AIR, ECHO_WARD, RED_SHIFT, BORROWED_DAYS and THREE_MINUTES_DARK now have 2–3 strong strategies that rejoin the same canon truth.
+- **Real knowledge/provenance differences.** Public/verify-first routes write through the existing KnowledgeModel. THREE_MINUTES_DARK records exactly one DIRECT source and valid indirect routes for the other two areas.
+- **Existing consequence pipeline restored.** Choice consequences flow through AstraConsequenceModel with IMMEDIATE / DELAYED / NEXT_DAY / NEXT_LOOP delivery and event-id deduplication across save/load.
+- **Eight authored micro-arcs selectively revived.** Listening Fatigue, Risk Route, Save One Sample, Private Copy, Overprotection, Mistake, Failed Model and Self Neglect can re-enter the 1.0 loop without flooding it.
+- **Shallow choices removed.** 39 legacy resolution buttons are retained as compatibility data but no longer shown as player choices.
+- **Character-specific reasoning voice.** Link, final-statement and stance-change pools now lean on each person's actual method rather than a common functional template.
+- **Replay variation.** Branch callbacks, route provenance and selected micro-arcs differ under the same seed without changing Null assignment, base incident or puzzle answer.
+- **Finale = action + reception.** share / wake / keep remain the player's actions; visible campaign history changes reception and route-residue callbacks without overriding the action.
+- **Korean cleanup.** 16 malformed AstraJosa token forms were repaired; raw marker/unresolved-token regressions and obsolete investigation/tie text are gated.
+- **Exposure scheduling uses existing speaker exposure.** Optional scenes/personal vignettes prefer eligible crew who have appeared less in the current Stage; no role/truth/evidence input is used.
+- **Save compatibility unchanged.** Meta save v12 and Snapshot v4.
+
+Measured candidate #699 / run 36247482979: 22 choice scenes; 9 two-option; 13 three-option; 13 consequence-enabled; 0 selected unreachable; 100-game SMART/RANDOM/PASSIVE **93/60/53%**; DEAD_AIR **95/78/67**, GLASS_GARDEN **99/83/73**, ECHO_WARD **96/75/81**. Linux/Windows full suite, causal/fairness, visual QA, 1120×700 branch-choice UI and exported-EXE boot pass.
+
 ## 1.0.1 — CONVICTION RELEASE POLISH
 
 Release-stabilization pass over 1.0.0. No new mode, Act, character, protocol, manager or save schema.
