@@ -4382,6 +4382,21 @@ func link_statements() -> Array:
             continue
         result.append({"ref": "said:" + str(item.get("id", "")), "speaker": str(item.get("owner", "")), "subject": str(item.get("subject", "")),
             "label": _josa_inline("%s의 목격: %s" % [name_of(str(item.get("owner", ""))), _short_text(str(item.get("text", "")))])})
+    var moment := meeting_moment()
+    var moment_subject := str(moment.get("subject", ""))
+    var moment_ref := str(moment.get("ref", ""))
+    for entry in result:
+        var p := 0
+        if str(entry.get("subject", "")) == moment_subject and moment_subject != "":
+            p += 4
+        if str(entry.get("speaker", "")) in [str(moment.get("owner", "")), str(moment.get("speaker", "")), str(moment.get("via", ""))]:
+            p += 2
+        if str(entry.get("ref", "")) == "said:" + moment_ref:
+            p += 5
+        entry["_link_order"] = p
+    result.sort_custom(func(a, b): return int(a.get("_link_order", 0)) > int(b.get("_link_order", 0)))
+    for entry in result:
+        entry.erase("_link_order")
     return result
 
 # Everything the explorer holds that could bear on a statement. Not filtered
@@ -4413,6 +4428,26 @@ func link_evidence(statement_ref: String) -> Array:
             "label": _josa_inline("[진술 · %s] %s" % [name_of(str(npc_id)), ("%s에서 %s|wa 함께" % [where, names_of(mates)]) if not mates.is_empty() else ("%s에 혼자" % where)])})
     if subject != "" and not AstraClaimLedger.self_conflicts(claim_ledger, subject).is_empty():
         result.append({"ref": "earlier:" + subject, "kind": "earlier", "label": _josa_inline("[이전 진술 · %s] 전에 한 말" % name_of(subject))})
+    # Keep every legal choice, but put today's and statement-relevant material
+    # first so a long notebook is not a search puzzle. This never grades or
+    # hides the wrong answers.
+    for entry in result:
+        var p := 0
+        var ref := str(entry.get("ref", ""))
+        if ref == "claim:" + subject or ref == "earlier:" + subject:
+            p += 5
+        elif not ref.begins_with("claim:") and not ref.begins_with("earlier:"):
+            var item := fragment(ref)
+            if int(item.get("day", 0)) == day:
+                p += 3
+            if subject in Array(item.get("points_to", [])) or str(item.get("subject", "")) == subject or str(item.get("supports", "")) == subject or str(item.get("refutes", "")) == subject:
+                p += 4
+            if AstraKnowledgeModel.is_public(flags, ref):
+                p += 1
+        entry["_link_order"] = p
+    result.sort_custom(func(a, b): return int(a.get("_link_order", 0)) > int(b.get("_link_order", 0)))
+    for entry in result:
+        entry.erase("_link_order")
     return result
 
 func _short_text(text: String) -> String:
@@ -4626,6 +4661,19 @@ func _intervene_link(ref: String) -> bool:
     var statement_ref := str(parts[0])
     var evidence_ref := str(parts[1])
     var second_ref := str(parts[2]) if parts.size() > 2 else ""
+    var attempted_evidence: Array = [evidence_ref]
+    if second_ref != "":
+        attempted_evidence.append(second_ref)
+    attempted_evidence.sort()
+    for prior in stage_state().get("links", []):
+        if int(prior.get("day", 0)) != day or str(prior.get("statement", "")) != statement_ref:
+            continue
+        var prior_evidence: Array = [str(prior.get("evidence", ""))]
+        if str(prior.get("second", "")) != "":
+            prior_evidence.append(str(prior.get("second", "")))
+        prior_evidence.sort()
+        if prior_evidence == attempted_evidence:
+            return false
     var verdict := judge_link(statement_ref, evidence_ref, second_ref)
     var result := str(verdict.get("result", "INVALID"))
     if result == "INVALID":
