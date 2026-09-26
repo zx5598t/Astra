@@ -302,29 +302,22 @@ func _render_actions() -> void:
             check_button.pressed.connect(_intervene.bind("clarify", str(option["ref"])))
             _actions.add_child(check_button)
     var options := s.meeting_options()
-    if not options.is_empty():
-        _actions.add_child(AstraUI.label("발언 · 오늘 %d번 남음" % s.meeting_actions_left, AstraUI.T_UI, AstraUI.GOLD))
-        for option in options:
-            var kind := str(option.get("kind", ""))
-            var accent: Color = TONE_COLOR.get(str(option.get("tone", "calm")), AstraUI.CYAN)
-            var button := AstraUI.choice_button(str(option.get("label", "")), accent, AstraUI.T_UI)
-            match kind:
-                "accuse":
-                    button.pressed.connect(func():
-                        _picker = "accuse"
-                        _render_actions()
-                    )
-                "link":
-                    button.pressed.connect(func():
-                        _picker = "link_statement"
-                        _render_actions()
-                    )
-                _:
-                    button.pressed.connect(_intervene.bind(kind, str(option.get("ref", ""))))
-            _actions.add_child(button)
-            var detail := str(option.get("detail", ""))
-            if detail != "":
-                _actions.add_child(AstraUI.label(detail, AstraUI.T_META - 2, AstraUI.DIM, true))
+    var links: Array = []
+    var interventions: Array = []
+    for option in options:
+        if str(option.get("kind", "")) == "link":
+            links.append(option)
+        else:
+            interventions.append(option)
+    if not links.is_empty():
+        _actions.add_child(AstraUI.label("연결 · 말 ↔ 근거", AstraUI.T_UI, AstraUI.GOLD))
+        _actions.add_child(AstraUI.label("들은 진술을 내가 아는 근거와 직접 이어 봅니다.", AstraUI.T_META - 2, AstraUI.DIM, true))
+        for option in links:
+            _add_meeting_option(option)
+    if not interventions.is_empty():
+        _actions.add_child(AstraUI.label("개입 · 오늘 %d번 남음" % s.meeting_actions_left, AstraUI.T_UI, AstraUI.PINK))
+        for option in interventions:
+            _add_meeting_option(option)
     if not s.meeting_over():
         var listen := AstraUI.choice_button("계속 듣는다  ▸", AstraUI.CYAN, AstraUI.T_UI, true)
         listen.pressed.connect(_continue)
@@ -336,6 +329,28 @@ func _render_actions() -> void:
         vote.pressed.connect(func(): screen.advance_phase())
         _actions.add_child(vote)
     _finish_actions()
+
+func _add_meeting_option(option: Dictionary) -> void:
+    var kind := str(option.get("kind", ""))
+    var accent: Color = TONE_COLOR.get(str(option.get("tone", "calm")), AstraUI.CYAN)
+    var button := AstraUI.choice_button(str(option.get("label", "")), accent, AstraUI.T_UI)
+    match kind:
+        "accuse":
+            button.pressed.connect(func():
+                _picker = "accuse"
+                _render_actions()
+            )
+        "link":
+            button.pressed.connect(func():
+                _picker = "link_statement"
+                _render_actions()
+            )
+        _:
+            button.pressed.connect(_intervene.bind(kind, str(option.get("ref", ""))))
+    _actions.add_child(button)
+    var detail := str(option.get("detail", ""))
+    if detail != "":
+        _actions.add_child(AstraUI.label(detail, AstraUI.T_META - 2, AstraUI.DIM, true))
 
 # The first actionable control gets focus (keyboard play) and the list keeps
 # room under its last button.
