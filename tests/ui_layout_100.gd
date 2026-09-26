@@ -37,8 +37,10 @@ func _wait(frames: int = 4) -> void:
 func _run() -> void:
     for path in [META_PATH, SETTINGS_PATH]:
         DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+    await _selection_minimum()
     for resolution in [Vector2i(1120, 700), Vector2i(1280, 720), Vector2i(1366, 768), Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(2560, 1440)]:
         await _pass(resolution)
+    await _minigames_minimum()
     await _resize_roundtrip()
     await _rewind_flow()
     if failures.is_empty():
@@ -47,6 +49,68 @@ func _run() -> void:
     else:
         print("ASTRA UI LAYOUT 100 FAILED · %d/%d" % [failures.size(), checks])
         quit(1)
+
+func _selection_minimum() -> void:
+    root.size = Vector2i(1120, 700)
+    var setup := AstraPlayerSetup.new()
+    root.add_child(setup)
+    setup.setup(AstraExplorerCatalog.profile_for("serin"))
+    await _wait(5)
+    _buttons_fit(setup, "1120x700: explorer selection")
+    _inside(setup, Vector2i(1120, 700), "1120x700: explorer selection")
+    var start := setup.find_child("StartButton", true, false) as Button
+    check(start != null and start.is_visible_in_tree(), "1120x700: explorer confirm visible")
+    for tex_node in setup.find_children("*", "TextureRect", true, false):
+        var rect := tex_node as TextureRect
+        if rect.texture == null:
+            continue
+        var path := rect.texture.resource_path
+        if rect.texture is AtlasTexture:
+            path = (rect.texture as AtlasTexture).atlas.resource_path
+        check(not path.contains("/pixel") and not path.contains("pixel080"), "1120x700: selection uses no pixel preview")
+    setup.queue_free()
+    await _wait(3)
+
+func _minigames_minimum() -> void:
+    root.size = Vector2i(1120, 700)
+    var tasks: Array = []
+
+    var signal := AstraSignalTrace.new()
+    root.add_child(signal)
+    signal.setup(101, [], 0.05, "소렌")
+    tasks.append(["signal", signal])
+
+    var circuit := AstraPowerRoute.new()
+    root.add_child(circuit)
+    circuit.setup(202, "준")
+    circuit.visible = false
+    tasks.append(["circuit", circuit])
+
+    var timeline := AstraOrderTask.new()
+    root.add_child(timeline)
+    timeline.setup(303, AstraInterludes.data("second_watch_logs")["task"], "노아")
+    timeline.visible = false
+    tasks.append(["timeline", timeline])
+
+    var route := AstraFieldTask.new()
+    root.add_child(route)
+    route.setup(404, AstraInterludes.data("blind_deck_door")["task"])
+    route.visible = false
+    tasks.append(["route", route])
+
+    for pair in tasks:
+        var name := str(pair[0])
+        var task := pair[1] as AstraShipTask
+        for other in tasks:
+            (other[1] as AstraShipTask).visible = false
+        task.visible = true
+        await _wait(4)
+        _buttons_fit(task, "1120x700: task " + name)
+        _inside(task, Vector2i(1120, 700), "1120x700: task " + name)
+        check(task._action != null and Rect2(Vector2.ZERO, Vector2(1120, 700)).encloses(task._action.get_global_rect().grow(-1)), "1120x700: task %s confirm visible" % name)
+    for pair in tasks:
+        (pair[1] as AstraShipTask).queue_free()
+    await _wait(3)
 
 func _pass(resolution: Vector2i) -> void:
     root.size = resolution
@@ -132,7 +196,27 @@ func _pass(resolution: Vector2i) -> void:
     view._picker = "link_statement"
     view._render_actions()
     await _wait(3)
-    _buttons_fit(app._current, tag + ": link picker")
+    _buttons_fit(app._current, tag + ": link statement picker")
+    _inside(app._current, resolution, tag + ": link statement picker")
+    var statements := s.link_statements()
+    if not statements.is_empty():
+        view._link_statement = str(statements[0]["ref"])
+        view._picker = "link_evidence"
+        view._render_actions()
+        await _wait(3)
+        _buttons_fit(app._current, tag + ": link evidence picker")
+        _inside(app._current, resolution, tag + ": link evidence picker")
+    view._picker = ""
+    if resolution == Vector2i(1120, 700):
+        app._current.open_glossary()
+        await _wait(3)
+        check(app.modal_open(), tag + ": glossary opens at minimum size")
+        _buttons_fit(app.overlay_root(), tag + ": glossary")
+        _inside(app.overlay_root(), resolution, tag + ": glossary")
+        for child in app.overlay_root().get_children():
+            if child.has_method("close"):
+                child.close(-1)
+        await _wait(2)
     s._finish_meeting()
     s.advance()
     await _wait(5)
