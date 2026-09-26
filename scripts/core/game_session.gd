@@ -3581,9 +3581,25 @@ func _collective_accusation_ready(speaker: String, target: String) -> bool:
     return player_heard or origins.size() >= 2
 
 func _lone_private_conviction(speaker: String, target: String) -> bool:
-    # Kept as a compatibility helper for tests/debug callers. A conviction is
-    # "lone/private" exactly when it is not ready to become a room accusation.
-    return not _collective_accusation_ready(speaker, target)
+    # Narrow diagnostic meaning retained from 1.0.0: is this conviction resting
+    # on the speaker's own still-private fragment with fewer than two origins?
+    # The live meeting uses _collective_accusation_ready(), which is stricter.
+    var view := suspicion_breakdown(speaker, target)
+    var origins := {}
+    var private_own := false
+    for reason in view.get("reasons", []):
+        if float(reason.get("weight", 0.0)) <= 0.0:
+            continue
+        var source := str(reason.get("source", ""))
+        var item := fragment(source)
+        if item.is_empty():
+            if str(reason.get("code", "")) in ["CONTRADICTION", "CHANGED_STORY", "FALSE_SIGHTING", "EXPERT_INFERENCE", "HARD_RECORD", "TIMELINE"]:
+                origins[source] = true
+            continue
+        origins[str(item.get("owner", ""))] = true
+        if str(item.get("owner", "")) == speaker and not AstraKnowledgeModel.is_public(flags, source) and not player_knows(source):
+            private_own = true
+    return private_own and origins.size() < 2
 
 func _first_reason_code(reasons: Array) -> String:
     for item in reasons:
