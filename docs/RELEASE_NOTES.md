@@ -1,3 +1,25 @@
+# ASTRA 1.1.1 — HUMAN RHYTHM
+
+**더 많은 기능이 아니라, 같은 선택과 추리를 더 적은 피로로 사람답게 느끼게 하는 마감 업데이트입니다.**
+
+1.1.0 LIVING PATHS의 다섯 branch anchor, Link, consequence, micro-arc, finale 구조는 그대로 유지합니다. 이번 버전은 긴 세션에서 반복되던 회의 재설명과 만능 질문을 줄이고, 각 인물이 무엇을 근거로 판단하는지 더 분명하게 보이게 합니다.
+
+- **회의가 같은 사실을 다시 읽지 않습니다.** 성공한 Link 뒤 출처 확인·당사자 답변·제3자 재요약·입장 변경이 한꺼번에 겹치던 경로를 줄였고, 마지막 summary는 확정된 사실 전체가 아니라 아직 남은 쟁점과 방의 방향만 전달합니다.
+- **질문이 실제 질문처럼 달라집니다.** 기록 출처, 시각, 직접 목격, 전언 원출처, 동행자, 동기, 남은 해명은 각각 다른 질문으로 묻습니다. “확인된 말과 추측을 나눠 보자” 같은 만능 문장을 반복하지 않습니다.
+- **Link 목록은 더 빨리 읽되 정답을 골라 주지 않습니다.** 오늘의 논점·같은 장소·최근 언급된 사람 같은 화면에 드러난 맥락만 정렬에 사용합니다. 직접 목격/전언/기록/공개·개인 provenance와 틀린 후보는 그대로 남습니다.
+- **마지막 말이 같은 알리바이를 복사하지 않습니다.** 이미 회의에서 해명했다면 남은 의문, 실제 흔적, 관계나 감정 쪽으로 한 번 더 인간적인 마지막 말을 합니다.
+- **선택의 결과를 전수 검사했습니다.** revived micro-arc 8개, 총 20개 option을 모두 실행해 consequence, timing, memory, follow-up, save/load와 선택 간 실제 차이를 검증합니다.
+- **분기 callback은 설명보다 행동으로 보여 줍니다.** 노아는 원본 번호부터 펼치고, 세나는 출입 순서를 먼저 그리고, 소렌은 전언보다 원음 트랙부터 여는 식으로 과거 선택의 residue가 드러납니다.
+- **소렌은 세 장면만 정밀 보강했습니다.** 실제 runtime exposure가 가장 낮은 것을 확인한 뒤 원음 보존, 전언과 원출처 분리, 호흡 간격을 듣는 습관을 짧게 보강했습니다. 등장 확률을 억지로 올리지 않았습니다.
+- **2회차는 canon을 건너뛰지 않습니다.** 동일 route는 안정적으로 같은 핵심을 유지하고 alternate route는 장면·provenance·회의 맥락·다음 Stage callback이 실제로 달라집니다. 이해를 해칠 수 있는 자동 mandatory-scene skip은 넣지 않았습니다.
+- **Finale는 버튼 이름만 바뀌지 않습니다.** SHARE / WAKE / KEEP의 중심 감정과 WARM / CAUTIOUS / STRAINED reception을 유지하며, route history는 반응 texture만 바꾸고 최종 행동을 덮어쓰지 않습니다.
+- **릴리스도 버전별 복사 workflow를 없앴습니다.** 현재 VERSION과 release-note heading을 읽고, 성공한 Godot CI가 테스트한 정확한 SHA의 Windows RC만 받아 SHA256을 검증해 배포합니다.
+- **저장 형식은 그대로입니다.** Meta v12 / Snapshot v4. 1.1.0 저장의 branch route와 consequence queue를 그대로 읽습니다.
+
+실제 pacing·dialogue exposure·character exposure·micro-choice·replay·finale·balance 수치는 `docs/QA_REPORT.md`에 기록합니다.
+
+---
+
 # ASTRA 1.1.0 — LIVING PATHS
 
 **진실을 찾는 것뿐 아니라, 그 진실을 누구와 어떤 순서로 다룰지도 직접 고르는 업데이트입니다.**
