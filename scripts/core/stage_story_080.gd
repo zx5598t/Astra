@@ -898,12 +898,12 @@ const FINALE_CALLBACKS := {
 
 
 const FINALE_ROUTE_CALLBACKS := {
-    "OPEN":{"id":"finale_route_open","art":"archive","speaker":"noa","action":"노아가 마지막 기록을 혼자 들고 있지 않고 화면 가운데에 놓는다.","lines":[
-        ["noa","이상하게 이번에도 같이 보고 싶어요. 당신 옆에선 중요한 기록을 혼자 들고 있으면 안 될 것 같은 기분이 들어요."]]},
-    "VERIFY":{"id":"finale_route_verify","art":"archive","speaker":"noa","action":"노아가 마지막 기록의 원본 번호와 작성 시각부터 적는다.","lines":[
-        ["noa","이상하게 원본부터 확인하고 싶어요. 당신과 있으면 공개하기 전에 출처를 적어 두는 순서가 익숙해요."]]},
-    "MIXED":{"id":"finale_route_mixed","art":"archive","speaker":"noa","action":"노아가 공개 화면과 원본 확인 창을 나란히 둔다.","lines":[
-        ["noa","어떤 건 같이 보고, 어떤 건 원본부터 확인해야 할 것 같아요. 이유는 모르겠는데 둘 다 낯설지 않아요."]]}
+    "OPEN":{"id":"finale_route_open","art":"archive","speaker":"noa","action":"노아는 마지막 기록을 혼자 들고 있지 않는다. 화면을 돌려 모두가 같은 원문을 보게 한다.","lines":[
+        ["noa","사본은 나중에 만들게요. 지금은 같은 줄을 같이 봐요."]]},
+    "VERIFY":{"id":"finale_route_verify","art":"archive","speaker":"noa","action":"노아는 공개 버튼보다 먼저 원본 봉인 번호와 작성 시각을 두 칸에 나눠 적는다.","lines":[
+        ["noa","원본 번호부터 맞출게요. 공개는 그다음이에요."]]},
+    "MIXED":{"id":"finale_route_mixed","art":"archive","speaker":"noa","action":"노아는 공개 화면과 원본 확인 창을 나란히 띄우고, 손을 두 창 사이에서 잠깐 멈춘다.","lines":[
+        ["noa","이건 같이 보고, 이쪽은 출처부터 확인해요. 순서는 섞지 않을게요."]]}
 }
 
 static func finale_route_callback(route_choices: Dictionary) -> Dictionary:
