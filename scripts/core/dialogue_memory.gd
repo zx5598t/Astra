@@ -11,7 +11,8 @@ extends RefCounted
 # available, which keeps the seed reproducible (§74) while removing the tape
 # loop.
 
-const WINDOW := 18
+const WINDOW := 48
+const HARD_COOLDOWN := 10
 
 # `recent` is a plain Array of "npc:key:index" strings living in the save file.
 static func remember(recent: Array, npc_id: String, key: String, index: int) -> void:
@@ -31,7 +32,10 @@ static func penalty(recent: Array, npc_id: String, key: String, index: int) -> f
     for position in range(recent.size()):
         if str(recent[position]) == token:
             # Later in the array means more recent, so it costs more.
+            var distance := recent.size() - position
             score += 1.0 + float(position) / float(maxi(1, recent.size()))
+            if distance <= HARD_COOLDOWN:
+                score += 6.0 * (1.0 - float(distance - 1) / float(HARD_COOLDOWN))
     return score
 
 # Picks a variant index out of `size` options, avoiding what was used recently.
