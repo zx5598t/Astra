@@ -2102,7 +2102,18 @@ func _pick(key: String) -> float:
 
 # The explorer's own public wording for a meeting move (same placeholders).
 func _voice(key: String, fallback: String) -> String:
-    return AstraExplorerCatalog.meeting_line(str(player_profile()["explorer_id"]), key, fallback)
+    var explorer_id := str(player_profile()["explorer_id"])
+    var voiced := AstraExplorerCatalog.meeting_line(explorer_id, key, "")
+    if voiced != "":
+        return voiced
+    # Clarification subtypes must keep the concrete question (source/time/etc.)
+    # while still sounding like the selected explorer. The catalogue intentionally
+    # owns one shared "clarify" voice per explorer instead of seven duplicated keys.
+    if key.begins_with("clarify_"):
+        var lead := AstraExplorerCatalog.meeting_line(explorer_id, "clarify", "")
+        if lead != "":
+            return lead + " " + fallback
+    return fallback
 
 func _player_line(member: AstraCrewMember, text: String, result: Dictionary, intent: String, preserve_context: bool = false) -> void:
     if not preserve_context:
