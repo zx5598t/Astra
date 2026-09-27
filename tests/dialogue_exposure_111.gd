@@ -90,6 +90,8 @@ func _clarification_mode(ref: String) -> String:
 func _play_stage(case_id: String, seed_value: int, memory: Dictionary, alternate: bool) -> Dictionary:
     var s := AstraGameSession.new()
     s.setup(case_id, seed_value)
+    var explorers := ["serin", "mika", "jace", "rael", "logan", "sia"]
+    s.set_player_profile(AstraExplorerCatalog.profile_for(str(explorers[posmod(seed_value, explorers.size())])))
     s.begin_voyage(memory)
     var guard := 0
     while s.phase != "RESULT" and guard < 500:
@@ -191,6 +193,7 @@ func _probe_missing_clarifications() -> void:
                 break
             var s := AstraGameSession.new()
             s.setup(case_id, 24111 + offset * 83 + AstraCaseCatalog.stage_index(case_id) * 1000)
+            s.set_player_profile(AstraExplorerCatalog.profile_for(["serin","mika","logan"][offset % 3]))
             AstraTestBots._finish_morning(s, true)
             if s.phase == "BRIEFING":
                 s.advance()
