@@ -4492,8 +4492,8 @@ func link_evidence(statement_ref: String) -> Array:
     if subject != "" and not AstraClaimLedger.self_conflicts(claim_ledger, subject).is_empty():
         result.append({"ref": "earlier:" + subject, "kind": "earlier", "label": _josa_inline("[이전 진술 · %s] 전에 한 말" % name_of(subject))})
     # Keep every legal choice. Ordering may use only visible context: today's
-    # topic, people just mentioned, place and recency. It never reads verdict,
-    # role, truth or answer likelihood.
+    # topic, people just mentioned, place and recency. It never reads hidden
+    # state or answer likelihood.
     var recent_people := {}
     for index in range(maxi(0, meeting_feed.size() - 6), meeting_feed.size()):
         var recent: Dictionary = meeting_feed[index]
