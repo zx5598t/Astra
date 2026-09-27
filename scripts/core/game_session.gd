@@ -2106,13 +2106,8 @@ func _voice(key: String, fallback: String) -> String:
     var voiced := AstraExplorerCatalog.meeting_line(explorer_id, key, "")
     if voiced != "":
         return voiced
-    # Clarification subtypes must keep the concrete question (source/time/etc.)
-    # while still sounding like the selected explorer. The catalogue intentionally
-    # owns one shared "clarify" voice per explorer instead of seven duplicated keys.
     if key.begins_with("clarify_"):
-        var lead := AstraExplorerCatalog.meeting_line(explorer_id, "clarify", "")
-        if lead != "":
-            return lead + " " + fallback
+        return AstraExplorerCatalog.clarification_line(explorer_id, fallback)
     return fallback
 
 func _player_line(member: AstraCrewMember, text: String, result: Dictionary, intent: String, preserve_context: bool = false) -> void:
