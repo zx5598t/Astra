@@ -166,6 +166,7 @@ jobs:
             build/qa/dialogue_exposure_111.txt
             build/qa/micro_choice_111.txt
             build/qa/walkthrough_111.txt
+            build/qa/replay_fatigue_111.txt
             build/qa/choice_110_report.txt
           if-no-files-found: error
 
