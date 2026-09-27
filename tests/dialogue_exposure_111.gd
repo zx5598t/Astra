@@ -280,6 +280,14 @@ func run_exposure() -> void:
     out.append_array(transcript)
 
     check(exposed > 0, "runtime exposure report contains displayed dialogue")
+    for retired_generic in [
+        "잠깐, 확인된 말과 아직 추측인 부분을 나눠 볼게요.",
+        "그 시간쯤 누구를 봤어요? 지나가는 사람이라도요.",
+        "그 기록, 지금 같이 열어 볼 수 있어요?",
+        "여기까지 확인한 말로 판단해야 한다. 지목받은 사람들의 마지막 말을 듣고, 오늘 격리할 한 사람을 정한다."
+    ]:
+        check(int(exact.get(_normalize(retired_generic), 0)) == 0,
+            "retired generic runtime line stays removed: " + retired_generic)
     DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://build/qa"))
     var file := FileAccess.open("res://build/qa/dialogue_exposure_111.txt", FileAccess.WRITE)
     file.store_string("\n".join(out))
