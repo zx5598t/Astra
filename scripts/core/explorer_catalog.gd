@@ -294,8 +294,23 @@ static func spoken(id: String, intent: String, fallback: String) -> String:
         return str(SPOKEN[id][intent])
     return question(id, intent, fallback)
 
+# A brief personal lead for concrete clarification questions. This carries
+# explorer voice without replacing source/time/witness/etc. with one generic
+# semantic sentence.
+const CLARIFY_LEAD := {
+    "serin": "순서부터 볼게. ",
+    "mika": "좋아, 이거부터. ",
+    "jace": "여기부터 맞추자. ",
+    "rael": "천천히 확인할게. ",
+    "logan": "확인. ",
+    "sia": "잠깐, 이거부터! "
+}
+
 static func meeting_line(id: String, key: String, fallback: String) -> String:
     return str(MEETING_VOICE.get(id, {}).get(key, fallback))
+
+static func clarification_line(id: String, concrete_question: String) -> String:
+    return str(CLARIFY_LEAD.get(id, "")) + concrete_question
 
 # Kept for 0.9.0 callers: the crew's side of a first contact, any Stage.
 static func first_tone(id: String, crew_id: String) -> String:
