@@ -3013,9 +3013,9 @@ func _meeting_closing() -> void:
         _feed_narration(str(line))
         has_open_conflict = has_open_conflict or str(line).begins_with("아직 남은 충돌")
     if has_open_conflict:
-        _feed_narration("남은 충돌은 표로 판단해야 한다. 마지막 말을 듣고 오늘 격리할 한 사람을 정한다.")
+        _feed_narration("여기까지 확인한 말로는 충돌이 남는다. 마지막 말을 듣고 오늘 격리할 한 사람을 정한다.")
     else:
-        _feed_narration("더 확인할 수 있는 건 여기까지다. 마지막 말을 듣고 오늘 격리할 한 사람을 정한다.")
+        _feed_narration("여기까지 확인한 말로는 더 좁힐 수 없다. 마지막 말을 듣고 오늘 격리할 한 사람을 정한다.")
 
 # The explorer's own reason for a ballot (1.0): chosen from what they actually
 # know, or plain instinct. Stored with the Day; never graded.
