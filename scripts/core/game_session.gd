@@ -1594,7 +1594,13 @@ func _owns_type(npc_id: String, types: Array) -> bool:
 
 func _ask_seen(member: AstraCrewMember, result: Dictionary) -> void:
     _mark_asked(member.id, "seen")
-    _player_line(member, "그 시간쯤 누구를 봤어요? 지나가는 사람이라도요.", result, "WITNESS")
+    var claim := current_claim(member.id)
+    var mates: Array = claim.get("companions", [])
+    var where := room_name(str(claim.get("position", "")))
+    var witness_question := "그 시간쯤 %s에서 누가 오가는 걸 봤어요?" % where
+    if not mates.is_empty():
+        witness_question = "같이 있었다는 %s 말고, 그 시간에 다른 사람도 봤어요?" % names_of(mates)
+    _player_line(member, witness_question, result, "WITNESS")
     for item in _owned_undisclosed(member.id):
         if str(item.get("type", "")) in ["DIRECT_WITNESS", "HEARSAY", "NULL_DECEPTION", "BENIGN_EXPOSURE", "COVER_EXPOSURE"]:
             _disclose(item, member, result, "asked")
@@ -1619,7 +1625,8 @@ func _ask_record(member: AstraCrewMember, ref: String, result: Dictionary) -> vo
         _say_text(member, AstraSocialLines.line(member.id, "saw_none", {}, _pick(member.id + "norec")), result, "RECORD")
         return
     _use_daily("record_checks")
-    _player_line(member, "그 기록, 지금 같이 열어 볼 수 있어요?", result, "RECORD")
+    var device := str(AstraCaseGenerator.RECORD_DEVICE.get(str(item.get("record_type", "")), "기록"))
+    _player_line(member, "%s, 지금 같이 열어 볼 수 있어요?" % device, result, "RECORD")
     _disclose(item, member, result, "record_check")
     var meaning_key := "record_support" if str(item.get("type", "")) == "ALIBI_SUPPORT" else ("record_meaning_specific" if bool(item.get("specific", false)) else "record_meaning_group")
     if str(AstraCrewCatalog.RECORD_DOMAIN.get(member.id, "")) != str(item.get("record_type", "")):
@@ -2814,7 +2821,23 @@ func _clarify_argument(ref: String) -> Dictionary:
     var topic := "review:" + ref
     var mode := ref.get_slice(":", 0)
     var arg := ref.substr(mode.length() + 1)
-    _feed_line("player", subject, _voice("clarify", "잠깐, 확인된 말과 아직 추측인 부분을 나눠 볼게요."), "player", "clarify", topic)
+    var question := "남은 설명 하나만 다시 짚을게요."
+    match mode:
+        "source":
+            question = "그 기록, 처음 연 사람이 누구예요?"
+        "time":
+            question = "시각부터 맞출게요. 그 기록은 정확히 언제예요?"
+        "seen":
+            question = "정확히 뭘 봤어요? 얼굴까지 본 건가요?"
+        "via":
+            question = "누구에게서 들은 말이에요?"
+        "mates":
+            question = "%s|i 함께 있었다는 사람에게 직접 확인할게요." % name_of(arg)
+        "motive":
+            question = "%s, 그 일이 이번 사건과 관계있는지만 말해 주세요." % name_of(arg)
+        "claim":
+            question = "%s, 방금 설명에서 아직 남은 부분만 다시 말해 주세요." % name_of(arg)
+    _feed_line("player", subject, _voice("clarify", _josa_inline(question)), "player", "clarify", topic)
     var banmal := func(id: String) -> bool: return id in BANMAL_SPEAKERS
     match mode:
         "source":
@@ -2984,9 +3007,15 @@ func meeting_summary() -> Array:
     return lines
 
 func _meeting_closing() -> void:
-    for line in meeting_summary():
+    var summary := meeting_summary()
+    var has_open_conflict := false
+    for line in summary:
         _feed_narration(str(line))
-    _feed_narration("여기까지 확인한 말로 판단해야 한다. 지목받은 사람들의 마지막 말을 듣고, 오늘 격리할 한 사람을 정한다.")
+        has_open_conflict = has_open_conflict or str(line).begins_with("아직 남은 충돌")
+    if has_open_conflict:
+        _feed_narration("남은 충돌은 표로 판단해야 한다. 마지막 말을 듣고 오늘 격리할 한 사람을 정한다.")
+    else:
+        _feed_narration("더 확인할 수 있는 건 여기까지다. 마지막 말을 듣고 오늘 격리할 한 사람을 정한다.")
 
 # The explorer's own reason for a ballot (1.0): chosen from what they actually
 # know, or plain instinct. Stored with the Day; never graded.
