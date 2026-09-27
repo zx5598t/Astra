@@ -1177,6 +1177,27 @@ func question_options(npc_id: String) -> Array:
             "label": _josa_inline("%s|eul 같이 열어 본다" % str(record.get("device", AstraCaseGenerator.RECORD_DEVICE.get(str(record.get("record_type", "")), "기록")))),
             "hint": "이 사람이 가진 기록을 바로 열어 봅니다. 하루 %d회." % record_checks_max(),
             "enabled": enabled and record_checks_left() > 0, "key": true, "_p": 90.0})
+    # 1.2.0 AFTERIMAGE: the player may ask one unusually precise question only
+    # when route_history proves they personally made the source choice in an
+    # earlier History. This is a direction/provenance shortcut, never a truth
+    # or role reveal.
+    if not voyage.is_empty():
+        for echo in AstraForeknowledgeModel.past_echo_candidates(
+            case_id, npc_id, voyage.get("route_history",[]),
+            voyage.get("past_echo_used",[]), int(voyage.get("loop",0))
+        ):
+            var echo_id := str(echo.get("id",""))
+            if echo_id == "" or ("echo:" + echo_id) in asked:
+                continue
+            var echo_enabled := enabled
+            if str(echo.get("mode","")) == "RECORD" and record_checks_left() <= 0:
+                echo_enabled = false
+            candidates.append({
+                "intent":"ECHO", "ref":echo_id,
+                "label":str(echo.get("label","[잔향] 이전 History의 기억을 따라 묻는다")),
+                "hint":"이전 History에서 직접 겪은 선택을 바탕으로 현재 기록이나 진술의 확인 순서를 바꿉니다. 정답이나 역할을 알려 주지 않습니다.",
+                "enabled":echo_enabled, "key":true, "_p":94.0
+            })
     if "seen" not in asked:
         candidates.append({"intent": "WITNESS", "label": "그 시간에 누구를 봤어요?", "hint": "목격한 사람이나 들은 말을 묻습니다.", "enabled": enabled, "_p": 60.0})
     if day > 1 and "yesterday" not in asked and not _yesterday_claim(npc_id).is_empty():
@@ -1356,6 +1377,7 @@ func ask(npc_id: String, intent: String, ref: String = "") -> Dictionary:
     match intent:
         "WITNESS": _ask_seen(member, result)
         "RECORD": _ask_record(member, ref, result)
+        "ECHO": _ask_past_echo(member, ref, result)
         "CONFRONT": _cross_examine(member, ref, result)
         "YESTERDAY": _ask_yesterday(member, result)
         "SUSPECT": _ask_opinion(member, result)
@@ -1636,6 +1658,80 @@ func _ask_record(member: AstraCrewMember, ref: String, result: Dictionary) -> vo
             meaning_key = "record_meaning_specific_other"
     _say_text(member, AstraSocialLines.line(member.id, meaning_key, _fragment_params(item), _pick(member.id + "meaning")), result, "RECORD")
     result["record"] = item.duplicate(true)
+
+func _past_echo_target_fragment(npc_id: String, mode: String) -> Dictionary:
+    var owned := _owned_undisclosed(npc_id)
+    var preferred: Array = []
+    match mode:
+        "RECORD":
+            preferred = ["SYSTEM_RECORD","ALIBI_SUPPORT"]
+        "WITNESS":
+            preferred = ["DIRECT_WITNESS","HEARSAY","BENIGN_EXPOSURE","COVER_EXPOSURE","ROUTINE","EXPERT_INFERENCE"]
+        _:
+            preferred = ["EXPERT_INFERENCE","DIRECT_WITNESS","SYSTEM_RECORD","HEARSAY","ALIBI_SUPPORT","ROUTINE"]
+    for kind in preferred:
+        for item in owned:
+            if str(item.get("type","")) == kind:
+                return Dictionary(item).duplicate(true)
+    return {}
+
+func _ask_past_echo(member: AstraCrewMember, echo_id: String, result: Dictionary) -> void:
+    var echo := AstraForeknowledgeModel.past_echo_candidate(
+        case_id, member.id, echo_id, voyage.get("route_history",[]),
+        voyage.get("past_echo_used",[]), int(voyage.get("loop",0))
+    )
+    if echo.is_empty():
+        # A forged/stale UI action must never unlock information. Fall back to
+        # the ordinary current-History witness question instead.
+        _ask_seen(member,result)
+        return
+    _mark_asked(member.id,"echo:" + echo_id)
+    result["intent"] = "ECHO"
+    result["response_family"] = "ECHO"
+    result["past_echo"] = {
+        "id":echo_id, "source_anchor":str(echo.get("anchor","")),
+        "source_route":str(echo.get("source_route","")), "role":str(echo.get("role",""))
+    }
+    _player_line(member,str(echo.get("question","그 부분부터 다시 확인해 봐요.")),result,"ECHO",true)
+    _say_text(member,str(echo.get("reaction","왜 그걸 먼저 묻는 거예요?")),result,"ECHO")
+
+    var mode := str(echo.get("mode","WITNESS"))
+    var item := _past_echo_target_fragment(member.id,mode)
+    var disclosed_id := ""
+    if not item.is_empty():
+        if mode != "RECORD" or record_checks_left() > 0:
+            if mode == "RECORD":
+                _use_daily("record_checks")
+            _disclose(item,member,result,"past_echo")
+            disclosed_id = str(item.get("id",""))
+
+    var delta := float(echo.get("trust_delta",0.0))
+    if delta != 0.0:
+        member.adjust_trust(delta)
+        voyage["bonds"][member.id] = clampf(float(voyage.get("bonds",{}).get(member.id,0.0)) + delta,-1.0,1.0)
+        var feedback: Array = voyage.get("relationship_feedback",[])
+        feedback.append({"who":member.id,"kind":"PAST_ECHO","delta":delta,"echo_id":echo_id,"day":day})
+        while feedback.size() > 80:
+            feedback.pop_front()
+        voyage["relationship_feedback"] = feedback
+
+    var used: Array = voyage.get("past_echo_used",[])
+    if echo_id not in used:
+        used.append(echo_id)
+    voyage["past_echo_used"] = used
+    var history: Array = voyage.get("past_echo_history",[])
+    history.append({
+        "id":echo_id, "case_id":case_id, "day":day, "loop":int(voyage.get("loop",0)),
+        "speaker":member.id, "source_anchor":str(echo.get("anchor","")),
+        "source_route":str(echo.get("source_route","")), "fragment":disclosed_id,
+        "role":str(echo.get("role",""))
+    })
+    while history.size() > 40:
+        history.pop_front()
+    voyage["past_echo_history"] = history
+    var contexts: Array = stage_state().get("past_echo_context",[])
+    contexts.append({"id":echo_id,"speaker":member.id,"source_route":str(echo.get("source_route","")),"fragment":disclosed_id})
+    stage_state()["past_echo_context"] = contexts
 
 func _ask_yesterday(member: AstraCrewMember, result: Dictionary) -> void:
     _mark_asked(member.id, "yesterday")
@@ -7400,6 +7496,8 @@ func _hydrate_054_voyage_defaults() -> void:
     if not voyage.has("active_incident"): voyage["active_incident"] = {}
     if not voyage.has("foreknowledge_used"): voyage["foreknowledge_used"] = []
     if not voyage.has("foreknowledge_reactions"): voyage["foreknowledge_reactions"] = []
+    if not voyage.has("past_echo_used"): voyage["past_echo_used"] = []
+    if not voyage.has("past_echo_history"): voyage["past_echo_history"] = []
     if not voyage.has("scene_seen_counts"): voyage["scene_seen_counts"] = voyage.get("seen_ever",{}).duplicate(true)
     if not voyage.has("momentum_state"): voyage["momentum_state"] = {"drought":0,"force_meaningful":false}
     if not voyage.has("delegation_history"): voyage["delegation_history"] = []
@@ -7804,6 +7902,10 @@ func begin_voyage(memory: Dictionary = {}) -> void:
         "motives":{}, "motive_observations":[],
         "incident_history":memory.get("incident_history",[]).duplicate(true), "active_incident":{},
         "foreknowledge_used":[], "foreknowledge_reactions":[],
+        # 1.2.0 AFTERIMAGE: used is per current History; history is carried.
+        # Both remain inside voyage, so Snapshot v4 / Meta v12 need no schema bump.
+        "past_echo_used":[],
+        "past_echo_history":memory.get("past_echo_history",[]).duplicate(true),
         "scene_seen_counts":memory.get("scene_seen_counts",memory.get("seen_ever",{})).duplicate(true),
         "momentum_state":memory.get("momentum_state",{"drought":0,"force_meaningful":false}).duplicate(true),
         "delegation_history":memory.get("delegation_history",[]).duplicate(true), "delegation_used":false,
@@ -8899,6 +9001,7 @@ func voyage_memory() -> Dictionary:
         ),
         "pinned_question":str(voyage.get("pinned_question","")),
         "incident_history":voyage.get("incident_history",[]).duplicate(true),
+        "past_echo_history":voyage.get("past_echo_history",[]).duplicate(true),
         "scene_seen_counts":voyage.get("scene_seen_counts",{}).duplicate(true),
         "momentum_state":next_momentum,
         "delegation_history":voyage.get("delegation_history",[]).duplicate(true),
