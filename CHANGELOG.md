@@ -1,3 +1,19 @@
+## 1.1.1 — HUMAN RHYTHM
+
+A long-session pacing and editorial polish pass over 1.1.0. No new manager, deduction engine, branch anchor, protocol, minigame, character or save schema.
+
+- **Meeting repetition and pacing polish.** Redundant Link confirmation/reaction stacks and transcript-recap summaries were compressed; the meeting now hands off to the vote around the unresolved point instead of rereading settled facts.
+- **Runtime-weighted dialogue rewrite.** HUMAN RHYTHM QA records only displayed lines across representative PART I/PART II play and reports exact re-exposure, repeated openings, same-speaker/function repetition, clarification, Link, stance and final-statement exposure.
+- **Context-specific questions.** Source, time, witness, hearsay, companion, motive and claim clarifications now ask the actual question instead of sharing one generic opener. High-frequency generic question/closing templates are gated against reintroduction.
+- **Link picker friction reduced without hinting.** Every legal candidate remains available; ordering may use only visible subject, day, public state, location and recently mentioned people. Provenance remains visible and wrong evidence remains selectable.
+- **Eight revived micro-arcs exhaustively audited.** All 20 options across the selected eight arcs are selectable, consequence-bearing, save/load safe and differ from sibling options in at least two meaningful dimensions.
+- **Branch residue is behavior-first.** OPEN / VERIFY / MIXED callbacks show what people do with records, doors, routes and original audio rather than repeatedly explaining unexplained familiarity.
+- **Character-specific reasoning strengthened.** Final statements avoid repeating a defense already given in the meeting; stance/final language continues to follow each character's actual reasoning method.
+- **Targeted Soren pass.** Runtime exposure identified Soren as the lowest-exposure crew member, so three short authored beats reinforce original audio, transmission chain and breathing/interval analysis instead of increasing his spawn probability or adding a large scene pack.
+- **Replay and finale polish.** Same-route replay stays deterministic/canon-safe, alternate routes keep materially different visible residue, and SHARE / WAKE / KEEP remain authoritative while WARM / CAUTIOUS / STRAINED reception stays visibly distinct.
+- **Generic exact-SHA release pipeline.** A single release workflow reads VERSION and release notes dynamically, downloads the Windows RC from the exact successful Godot CI run, verifies SHA256 and publishes against that tested SHA.
+- **Save compatibility unchanged.** Meta save v12 and Snapshot v4; no migration.
+
 ## 1.1.0 — LIVING PATHS
 
 A replay/choice pass over 1.0.1. The 13-Stage canon and deduction engine stay intact; fewer choices now change who knows what, how it was learned, which scene follows, and how the room receives the explorer later.
