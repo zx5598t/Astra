@@ -162,6 +162,10 @@ jobs:
             build/qa/walkthrough_110.txt
             build/qa/dialogue_110_report.txt
             build/qa/content_exposure_110.txt
+            build/qa/pacing_111.txt
+            build/qa/dialogue_exposure_111.txt
+            build/qa/micro_choice_111.txt
+            build/qa/walkthrough_111.txt
             build/qa/choice_110_report.txt
           if-no-files-found: error
 
