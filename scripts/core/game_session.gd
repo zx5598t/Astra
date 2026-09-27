@@ -1600,7 +1600,7 @@ func _ask_seen(member: AstraCrewMember, result: Dictionary) -> void:
     var witness_question := "그 시간쯤 %s에서 누가 오가는 걸 봤어요?" % where
     if not mates.is_empty():
         witness_question = "같이 있었다는 %s 말고, 그 시간에 다른 사람도 봤어요?" % names_of(mates)
-    _player_line(member, witness_question, result, "WITNESS")
+    _player_line(member, witness_question, result, "WITNESS", true)
     for item in _owned_undisclosed(member.id):
         if str(item.get("type", "")) in ["DIRECT_WITNESS", "HEARSAY", "NULL_DECEPTION", "BENIGN_EXPOSURE", "COVER_EXPOSURE"]:
             _disclose(item, member, result, "asked")
@@ -1626,7 +1626,7 @@ func _ask_record(member: AstraCrewMember, ref: String, result: Dictionary) -> vo
         return
     _use_daily("record_checks")
     var device := str(AstraCaseGenerator.RECORD_DEVICE.get(str(item.get("record_type", "")), "기록"))
-    _player_line(member, "%s, 지금 같이 열어 볼 수 있어요?" % device, result, "RECORD")
+    _player_line(member, "%s, 지금 같이 열어 볼 수 있어요?" % device, result, "RECORD", true)
     _disclose(item, member, result, "record_check")
     var meaning_key := "record_support" if str(item.get("type", "")) == "ALIBI_SUPPORT" else ("record_meaning_specific" if bool(item.get("specific", false)) else "record_meaning_group")
     if str(AstraCrewCatalog.RECORD_DOMAIN.get(member.id, "")) != str(item.get("record_type", "")):
@@ -2104,8 +2104,10 @@ func _pick(key: String) -> float:
 func _voice(key: String, fallback: String) -> String:
     return AstraExplorerCatalog.meeting_line(str(player_profile()["explorer_id"]), key, fallback)
 
-func _player_line(member: AstraCrewMember, text: String, result: Dictionary, intent: String) -> void:
-    text = AstraExplorerCatalog.spoken(str(player_profile()["explorer_id"]), intent, text).replace("{time}", incident_time())
+func _player_line(member: AstraCrewMember, text: String, result: Dictionary, intent: String, preserve_context: bool = false) -> void:
+    if not preserve_context:
+        text = AstraExplorerCatalog.spoken(str(player_profile()["explorer_id"]), intent, text)
+    text = text.replace("{time}", incident_time())
     _transcript(member.id, "player", text, intent)
     result["lines"].append({"speaker": "player", "text": _josa_inline(text), "intent": intent})
 
@@ -2837,7 +2839,7 @@ func _clarify_argument(ref: String) -> Dictionary:
             question = "%s, 그 일이 이번 사건과 관계있는지만 말해 주세요." % name_of(arg)
         "claim":
             question = "%s, 방금 설명에서 아직 남은 부분만 다시 말해 주세요." % name_of(arg)
-    _feed_line("player", subject, _voice("clarify", _josa_inline(question)), "player", "clarify", topic)
+    _feed_line("player", subject, _voice("clarify_" + mode, _josa_inline(question)), "player", "clarify", topic)
     var banmal := func(id: String) -> bool: return id in BANMAL_SPEAKERS
     match mode:
         "source":
