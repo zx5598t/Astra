@@ -1,8 +1,8 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **1.1.0 — LIVING PATHS**. Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
-- 1.1 keeps the 1.0.1 deduction/fairness contract and adds reconverging player-chosen routes, existing consequence delivery, replay variation and history-sensitive finale reception.
+- Version **1.1.1 — HUMAN RHYTHM**. Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- 1.1.1 keeps the 1.1.0 routes/consequence/deduction contract and polishes long-session dialogue rhythm, Link friction, replay callbacks and finale reception without adding a new system.
 - One Stage = one game; a Day = Morning → Conversation → Meeting → Vote → Night. PART I (Stages 1–4) one Null,
   PART II (Stage 5+) two Nulls and one protocol (GUARDIAN 5 / ANALYST 6 / EMPATH 7). No investigation phase,
   no exploration in the main loop, no abstention, exactly one isolation per Day, explorer death = immediate loss.

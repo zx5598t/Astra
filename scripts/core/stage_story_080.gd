@@ -306,6 +306,7 @@ const OPENINGS := {
         {"id":"open_orbit_2", "art":"bridge", "action":"항법실. 화면 속 항로는 움직이는데 창밖의 별은 며칠째 그대로다.",
             "lines":[["eli","{time}, 항법 구간 하나가 손으로 지워졌어. 지워진 자리 옆에 남은 문장이 하나 있어."],
                 ["dax","'ASTRA — 목적지 도착 완료.' 서명은 살아 있어. 날짜는 지금보다 19년 전이야."],
+                ["vale","…문장 내용보다 파일부터 나눌게요. 원본 신호와 누가 옮겨 말한 내용이 섞이면, 나중엔 출처를 못 들어요."],
                 ["lyra","19년이요? 그럼 우리가 지나온 시간은…"],
                 ["mira","지금은 사람부터 봐요. 둘이라면, 오늘 한 명만 찾아서는 끝나지 않아요."]]},
         {"id":"open_orbit_3", "art":"bridge", "action":"ASTRA 보안 체계가 탐사요원에게 추가 권한을 연다.",
@@ -406,7 +407,8 @@ const OPENINGS := {
                 ["","당신은 기억한다. 세 줄로 나뉘어 남은 판단들을. 이번 상자에는 판단이 아니라 하루하루가 들어 있다."]]},
         {"id":"open_cont_2", "art":"garden", "action":"기록 묶음 한쪽이 찢겨 있다.",
             "lines":[["lyra","{time}, 누가 이 묶음을 훼손했어요. 재난 기록도 아닌데. 그냥 물 주기 표예요."],
-                ["noa","평범한 기록이 제일 많이 겹쳐요. 겹치는 게 싫은 사람이 있나 봐요."]]}
+                ["noa","평범한 기록이 제일 많이 겹쳐요. 겹치는 게 싫은 사람이 있나 봐요."],
+                ["vale","읽어 준 녹음도 남아 있어요. 같은 문장을 매일 읽었는데, 사람마다 숨 쉬는 자리가 달라요. 생활 기록은 그런 간격도 남겨요."]]}
     ],
     "THRESHOLD": [
         {"id":"open_threshold_1", "art":"bridge", "action":"평범한 기록은 어느 날 갑자기 끝난다. 마지막 배급 기록 뒤에는 긴 공백, 그리고 장기수면 재개 명령이 있다.",
@@ -438,7 +440,8 @@ const BRANCH_SCENES := {
         ["vale","원음하고 전해 들은 말을 따로 표시할게요. 제가 들은 건 제가 책임지고 말할게요."]]},
     "110_echo_verify_now":{"id":"110_echo_verify_now","art":"medical","speaker":"mira","action":"미라가 포드 생체 기록을, 노아가 신호 원본 시각을 나란히 띄운다.","lines":[
         ["mira","소렌은 이 구간 내내 수면 상태였어요. 이건 제 기록에서 먼저 확인할 수 있어요."],
-        ["noa","신호 시각도 원본 헤더와 맞아요. 소렌에게 들려주기 전에 여기까지는 독립적으로 고정해 둘게요."]]},
+        ["noa","신호 시각도 원본 헤더와 맞아요. 소렌에게 들려주기 전에 여기까지는 독립적으로 고정해 둘게요."],
+        ["vale","…그럼 원음 파일은 그대로 두세요. 나중에 제가 들을 때, 전해진 말과 섞이지 않은 기준이 필요해요."]]},
     "110_red_reveal_now":{"id":"110_red_reveal_now","art":"garden","speaker":"noa","action":"탐사요원이 현재 메모와 시료 라벨을 같은 조명 아래 놓는다.","lines":[
         ["player","이거 내 글씨예요. 적어도 지금 제 필체하고는 같아요."],
         ["noa","그럼 탐사요원도 이 기록 바깥의 관찰자는 아니에요. 필체가 같다는 사실과 누가 왜 썼는지는 분리해서 볼게요."],
@@ -486,17 +489,17 @@ const BRANCH_MEETING_CONTEXT := {
 
 const CROSS_STAGE_BRANCH_CALLBACKS := {
     "GLASS_GARDEN":{"anchor":"DEAD_AIR","routes":{
-        "PUBLIC":{"id":"110_cross_dead_public","art":"garden","speaker":"noa","action":"노아가 새 기록을 열자마자 사본을 두 개 만든다.","lines":[["noa","이상하게 오늘은 원본을 혼자 들고 있기 싫어요. 확인되는 대로 같이 볼 수 있게 둘게요."]]},
-        "VERIFY_FIRST":{"id":"110_cross_dead_verify","art":"garden","speaker":"noa","action":"노아가 새 기록의 봉인 번호부터 확인한다.","lines":[["noa","원본부터 확인하고 싶네요. 왜 이렇게 익숙한 순서인지는 모르겠지만요."]]}}},
+        "PUBLIC":{"id":"110_cross_dead_public","art":"garden","speaker":"noa","action":"노아가 새 기록을 열자마자 사본을 두 개 만들고, 하나를 공동 화면 옆에 둔다.","lines":[["noa","원본 열었어요. 사본 둘 만들게요. 한 사람 손에만 남겨 두지 않아요."]]},
+        "VERIFY_FIRST":{"id":"110_cross_dead_verify","art":"garden","speaker":"noa","action":"노아가 내용보다 먼저 새 기록의 봉인 번호와 작성 시각을 맞춘다.","lines":[["noa","봉인 번호부터 맞출게요. 내용은 그다음에 봐요."]]}}},
     "SILENT_ORBIT":{"anchor":"ECHO_WARD","routes":{
-        "TELL_SOREN":{"id":"110_cross_echo_tell","art":"bridge","speaker":"vale","action":"소렌이 헤드셋을 쓰기 전에 원음 파일 이름부터 확인한다.","lines":[["vale","이상하게 제 목소리면 제가 먼저 들어야 할 것 같아요. 대신 원음인지부터 확인할게요."]]},
-        "VERIFY_FIRST":{"id":"110_cross_echo_verify","art":"bridge","speaker":"mira","action":"미라가 시간표 옆에 생체 기록 창을 먼저 띄운다.","lines":[["mira","이번엔 목소리보다 몸의 시간을 먼저 맞춰 보고 싶어요. 이유는 잘 모르겠지만요."]]}}},
+        "TELL_SOREN":{"id":"110_cross_echo_tell","art":"bridge","speaker":"vale","action":"소렌이 전언 파일을 옆으로 밀고 원음 트랙을 먼저 연다.","lines":[["vale","제 목소리면 원음부터 들을게요. 전해진 말은 그다음에 비교해요."]]},
+        "VERIFY_FIRST":{"id":"110_cross_echo_verify","art":"bridge","speaker":"mira","action":"미라가 음성 파일을 재생하기 전에 시간표 옆에 생체 기록 창을 먼저 띄운다.","lines":[["mira","생체 기록이 먼저예요. 시각을 맞춘 뒤에 목소리를 들어요."]]}}},
     "LAST_LIGHT":{"anchor":"RED_SHIFT","routes":{
         "REVEAL":{"id":"110_cross_red_reveal","art":"archive","speaker":"noa","action":"노아가 새 기록의 필체 비교 칸을 공개 화면에 함께 띄운다.","lines":[["noa","누가 썼는지도 숨기지 말고 같이 보죠. 사실과 의미는 그다음에 나눠도 돼요."]]},
-        "WITHHOLD_VERIFY":{"id":"110_cross_red_verify","art":"archive","speaker":"noa","action":"노아가 원본 확인 칸을 먼저 확대한다.","lines":[["noa","이상하게 공개보다 원본 확인이 먼저 손에 잡혀요. 확인한 범위부터 분명히 해 둘게요."]]}}},
+        "WITHHOLD_VERIFY":{"id":"110_cross_red_verify","art":"archive","speaker":"noa","action":"노아가 공개 화면을 열기 전에 원본 확인 칸부터 확대한다.","lines":[["noa","원본 확인부터 끝내요. 공개할 땐 확인한 범위를 같이 적을게요."]]}}},
     "BLIND_DECK":{"anchor":"BORROWED_DAYS","routes":{
-        "TELL":{"id":"110_cross_borrowed_tell","art":"breach","speaker":"sena","action":"세나가 준에게 설명 없이 손전등을 건넨다. 둘 다 잠깐 멈춘다.","lines":[["sena","또 이러네. 기억은 없는데 네가 뭘 찾는지는 알 것 같아."]]},
-        "OBSERVE":{"id":"110_cross_borrowed_observe","art":"breach","speaker":"rho","action":"준이 세나의 동선을 한 걸음 먼저 비켜 준다.","lines":[["rho","내가 왜 네가 이쪽으로 올 줄 알았지? …일단 적어 두자."]]}}},
+        "TELL":{"id":"110_cross_borrowed_tell","art":"breach","speaker":"sena","action":"세나가 준에게 설명 없이 손전등을 건넨다. 준도 묻지 않고 바로 받는다.","lines":[["sena","손전등. …네가 찾는 건 이거지?"]]},
+        "OBSERVE":{"id":"110_cross_borrowed_observe","art":"breach","speaker":"rho","action":"준이 세나가 꺾기 전에 통로 한쪽을 비켜 주고, 바닥 동선 표시를 내려다본다.","lines":[["rho","여기로 올 줄 알았어. 동선부터 적어 두자."]]}}},
     "CONTINUITY":{"anchor":"THREE_MINUTES_DARK","routes":{
         "POWER":{"id":"110_cross_dark_power","art":"garden","speaker":"rho","action":"준이 새 기록에 ‘직접 봄’ 칸을 먼저 만든다.","lines":[["rho","이번엔 내가 손으로 본 거랑 남이 전한 걸 처음부터 칸을 갈라 둘게."]]},
         "COMMS":{"id":"110_cross_dark_comms","art":"garden","speaker":"vale","action":"소렌이 원음과 전언을 서로 다른 트랙에 놓는다.","lines":[["vale","말이 한 사람을 거칠 때마다 바뀌니까요. 이번엔 처음부터 원음을 따로 둘게요."]]},
@@ -898,12 +901,12 @@ const FINALE_CALLBACKS := {
 
 
 const FINALE_ROUTE_CALLBACKS := {
-    "OPEN":{"id":"finale_route_open","art":"archive","speaker":"noa","action":"노아가 마지막 기록을 혼자 들고 있지 않고 화면 가운데에 놓는다.","lines":[
-        ["noa","이상하게 이번에도 같이 보고 싶어요. 당신 옆에선 중요한 기록을 혼자 들고 있으면 안 될 것 같은 기분이 들어요."]]},
-    "VERIFY":{"id":"finale_route_verify","art":"archive","speaker":"noa","action":"노아가 마지막 기록의 원본 번호와 작성 시각부터 적는다.","lines":[
-        ["noa","이상하게 원본부터 확인하고 싶어요. 당신과 있으면 공개하기 전에 출처를 적어 두는 순서가 익숙해요."]]},
-    "MIXED":{"id":"finale_route_mixed","art":"archive","speaker":"noa","action":"노아가 공개 화면과 원본 확인 창을 나란히 둔다.","lines":[
-        ["noa","어떤 건 같이 보고, 어떤 건 원본부터 확인해야 할 것 같아요. 이유는 모르겠는데 둘 다 낯설지 않아요."]]}
+    "OPEN":{"id":"finale_route_open","art":"archive","speaker":"noa","action":"노아는 마지막 기록을 혼자 들고 있지 않는다. 화면을 돌려 모두가 같은 원문을 보게 한다.","lines":[
+        ["noa","사본은 나중에 만들게요. 지금은 같은 줄을 같이 봐요."]]},
+    "VERIFY":{"id":"finale_route_verify","art":"archive","speaker":"noa","action":"노아는 공개 버튼보다 먼저 원본 봉인 번호와 작성 시각을 두 칸에 나눠 적는다.","lines":[
+        ["noa","원본 번호부터 맞출게요. 공개는 그다음이에요."]]},
+    "MIXED":{"id":"finale_route_mixed","art":"archive","speaker":"noa","action":"노아는 공개 화면과 원본 확인 창을 나란히 띄우고, 손을 두 창 사이에서 잠깐 멈춘다.","lines":[
+        ["noa","이건 같이 보고, 이쪽은 출처부터 확인해요. 순서는 섞지 않을게요."]]}
 }
 
 static func finale_route_callback(route_choices: Dictionary) -> Dictionary:

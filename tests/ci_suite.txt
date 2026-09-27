@@ -37,3 +37,11 @@ dialogue_110_tests.gd|ASTRA DIALOGUE 110 TESTS OK|
 finale_110_tests.gd|ASTRA FINALE 110 TESTS OK|
 walkthrough_110.gd|ASTRA WALKTHROUGH 110 OK|
 content_exposure_110.gd|ASTRA CONTENT EXPOSURE 110 OK|
+pacing_111_tests.gd|ASTRA PACING 111 TESTS OK|
+dialogue_exposure_111.gd|ASTRA DIALOGUE EXPOSURE 111 OK|
+micro_choice_111_tests.gd|ASTRA MICRO CHOICE 111 TESTS OK|
+link_friction_111_tests.gd|ASTRA LINK FRICTION 111 TESTS OK|
+finale_111_tests.gd|ASTRA FINALE 111 TESTS OK|
+walkthrough_111.gd|ASTRA WALKTHROUGH 111 OK|
+replay_fatigue_111_tests.gd|ASTRA REPLAY FATIGUE 111 TESTS OK|
+release_111_tests.gd|ASTRA RELEASE 111 TESTS OK|

@@ -1,3 +1,160 @@
+# 1.1.1 HUMAN RHYTHM — RELEASE QA — 2026-09-27
+
+Base: main **68ed120797495adcf1d2ded43da88218437aff57** (official v1.1.0 source).  
+Feature branch: `release/1.1.1`. Full gameplay/metadata candidate: **b1ab6c848abca812735a604596ee5c042567f1ab**.  
+GitHub Actions **Godot CI #773 / run 36318998546: SUCCESS** — Linux full suite, Windows full suite, quick stabilization,
+100-game balance probe, Windows visual QA, Windows release-candidate export and exported-EXE boot all succeeded.
+
+1.1.1 adds no Dialogue/Pacing/Replay/Emotion/Relationship manager, new deduction/branch/progression engine, protocol, minigame or character.
+The five 1.1.0 branch anchors, consequence model/timings, Link semantics, finale action, 1120×700 minimum and canon contract remain intact.
+Snapshot **v4** / Meta save **v12** remain unchanged; no migration.
+
+## Long-session meeting pacing
+
+`pacing_111_tests.gd` measures the same ACTIVE path as the 1.0.1 causal gate across 100 seeds per Stage.
+
+| Stage | 1.1.0 avg lines | 1.1.1 avg lines | meaningful choices | continue-only | clicks-to-vote | avg Links | avg clarifications | max same speaker |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| DEAD_AIR | 25.65 | **19.45** | 2.75 | 0.00 | 5.45 | 2.16 | 0.49 | 3 |
+| GLASS_GARDEN | 24.93 | **18.87** | 2.74 | 0.00 | 5.45 | 1.97 | 0.71 | 3 |
+| ECHO_WARD | 28.66 | **21.23** | **3.08** | **0.00** | **6.02** | 2.31 | 0.60 | **3** |
+
+The reduction comes from semantic compression rather than random deletion: successful Link no longer stacks source-confirmation +
+third-party paraphrase + multiple stance lines, answered clarification no longer receives an immediate listener restatement, and the final
+meeting summary carries one unresolved point plus the room direction instead of rereading settled facts. ECHO_WARD keeps the 1.1.0
+meaningful-choice/click baseline while dropping **7.43** average meeting lines. DEAD_AIR/GLASS_GARDEN also become shorter rather than regress.
+
+## Runtime dialogue exposure
+
+`dialogue_exposure_111.gd` records displayed lines across representative PART I / PART II SMART-like play plus alternate authored choices.
+
+- runtime displayed lines: **2,193**
+- exact repeated exposure: **895**
+- same-speaker exact repeated exposure: **883**
+- 10–12 character opening groups seen 3+ times: **239**
+- same functional line repeated inside the previous 50 lines: **161**
+- clarification runtime coverage: TIME **1**, RECORD **20**, COMPANION **7**, CLAIM **31**, MOTIVE **1**, WITNESS **44**, SOURCE **5**
+- authored editorial population after the pass: **1,204**; exact duplicate groups **5**; authored same-opening groups **53**
+- high-exposure authored pools: clarification **40**, Link **64**, final statement **56**, stance-change **32**
+
+The generic clarification opener is no longer the question. Source/time/witness/hearsay/companion/motive/claim keep their concrete question;
+the six explorers contribute only a short personal lead, so the 0.9.0 six-voice contract also stays intact. WITNESS and RECORD conversation
+questions now include the current place/device context.
+
+Patch-level Korean-content line accounting across `game_session.gd`, `social_lines_080.gd`, `stage_story_080.gd` and
+`explorer_catalog.gd`: **31 lines removed/replaced, 61 added/reworked**. This includes behavior-first branch callbacks, eight
+`last_after_answer` variants, context-specific questions, three targeted Soren beats and six short explorer clarification leads; it is not
+inflated as a claim of 61 wholly new scenes.
+
+## Character exposure
+
+The existing first/repeat campaign exposure audit still records the eight crew separately. Authored-library / runtime-reached story sample:
+Mira **100/43**, Jun **84/33**, Daren **75/32**, Noa **80/69**, Sena **74/46**, Soren **65/21**, Lucan **63/23**, Maren **81/24**.
+Soren remains the lowest absolute runtime-reached story sample, so the pass adds only **3** short authored beats: original-vs-retold signal
+separation in SILENT_ORBIT, preservation of the untouched original in ECHO_WARD verify-first, and breathing/interval reading in CONTINUITY.
+No spawn-probability bonus or large scene pack was added.
+
+The 1.1.1 displayed-line sample (story + conversation + meeting) is:
+Mira **278**, Noa **228**, Daren **207**, Jun **166**, Soren **154**, Sena **149**, Lucan **118**, Maren **82**.
+The different available-Stage counts are retained; these figures are exposure measurements, not a target for numerical equalization.
+
+## Link friction / provenance
+
+`link_friction_111_tests.gd` → **7,013 checks PASS**.
+All logically distinct evidence remains accessible and judgeable; direct/hearsay/record provenance stays visible; wrong/irrelevant evidence
+remains selectable; ordering is deterministic and uses only visible current context (subject/day/public state/place/recently mentioned people).
+No hidden role/truth/verdict is used as a relevance hint.
+
+## Revived micro-arcs
+
+`micro_choice_111_tests.gd` → **261 checks PASS** across **8 scenes / 20 options**.
+Every option is selectable, consequence-bearing, save/load safe, event-id unique and differs from sibling options in at least two audited
+dimensions among effect/memory/timing/follow-up/note. Coverage includes Listening Fatigue, Risk Route, Save One Sample, Private Copy,
+Overprotection, Mistake, Failed Model and Self Neglect. No option-count padding was added.
+
+## Replay / branch residue
+
+`replay_fatigue_111_tests.gd` → **59 checks PASS**.
+DEAD_AIR, ECHO_WARD, RED_SHIFT, BORROWED_DAYS and THREE_MINUTES_DARK preserve same-seed truth/base packet; each alternate route differs in
+**5** audited visible dimensions in the representative snapshot. Cross-stage callbacks are behavior-first and do not repeat
+“기억은 없는데 / 이유는 모르겠지만 / 이상하게 익숙하다” explanations.
+
+Automatic skipping of branch-neutral mandatory scenes was **not** added: current mandatory scenes interleave canon, route and consequence
+context, so silent compression would risk comprehension. Existing `seen_ever` suppression handles optional repetition while alternate routes
+supply visible novelty.
+
+## Finale
+
+`finale_111_tests.gd` → **52 checks PASS**.
+SHARE / WAKE / KEEP remain the player's authoritative final action. WARM / CAUTIOUS / STRAINED each retain a visible human beat and distinct
+transcript; history changes reception texture, never the selected action. OPEN / VERIFY / MIXED residue is shown through what people do with
+records rather than a memory-disclaimer line. Hidden role/truth remains outside reception selection.
+
+## Balance / causal / fairness
+
+100-game probe:
+
+| Stage | SMART | RANDOM | PASSIVE |
+|---|---:|---:|---:|
+| CALIBRATION | 97 | 74 | 62 |
+| DEAD_AIR | 95 | 78 | 67 |
+| GLASS_GARDEN | 99 | 83 | 73 |
+| ECHO_WARD | 96 | 74 | 81 |
+| SILENT_ORBIT | 99 | 53 | 50 |
+| RED_SHIFT | 87 | 49 | 38 |
+| LAST_LIGHT | 88 | 57 | 46 |
+| SECOND_WATCH | 95 | 53 | 50 |
+| BORROWED_DAYS | 92 | 51 | 45 |
+| BLIND_DECK | 90 | 58 | 49 |
+| THREE_MINUTES_DARK | 90 | 54 | 43 |
+| CONTINUITY | 92 | 52 | 40 |
+| THRESHOLD | 90 | 46 | 46 |
+| **TOTAL** | **93** | **60** | **53** |
+
+This preserves the 1.1.0 total **93/60/53** baseline. ECHO_WARD PASSIVE remains **81%**; no number-chasing tuning was added.
+
+`causal_101_tests.gd` → **300 paired seeds PASS**:
+- DEAD_AIR ACTIVE/PASSIVE wins **89/80**, avg days **1.39/1.82**, innocent isolations **0.50/1.02**, casualties **0.50/1.02**
+- GLASS_GARDEN **98/82**, **1.31/2.06**, **0.33/1.24**, **0.33/1.11**
+- ECHO_WARD **94/81**, **1.48/2.39**, **0.54/1.58**, **0.54/1.58**
+- player-caused public facts / Links / stance shifts / vote changes remain non-zero on ACTIVE and zero on the measured PASSIVE routes.
+
+`fairness_101_tests.gd` → **909 checks PASS**. Stage 2–4 each retain **zero-route 0 / one-route 0 / multi-route 100/100**.
+Role-tell audit remains Null false sightings **549**, innocent mistaken sightings **94**, benign innocent discrepancies **523**.
+
+## UI / platform / release provenance
+
+- `deduction_100_tests.gd`: **11,177 checks PASS**
+- 1.1.1 pacing/dialogue/micro/Link/finale/replay/release gates all PASS in the Linux full suite
+- Linux import/parse/full suite/main boot: **PASS**
+- Windows import/full suite/main boot: **PASS**
+- quick stabilization: **PASS**
+- Windows visual QA: **PASS** at the retained 1120×700 / 1366×768 / 1920×1080 capture set
+- Windows release-candidate export + exported `ASTRA.exe` boot: **PASS**
+- candidate `ASTRA-1.1.1-windows.zip`: **113,127,576 bytes**
+- candidate SHA256: **0297b68860553cfcacd85d63da0ae174162fb7109c5957f72b88236329a50b66**
+
+The version-specific `.github/workflows/release-110.yml` is removed. Generic `release.yml` reads VERSION + the matching release-notes H1,
+runs only after successful Godot CI on main, checks out that exact `workflow_run.head_sha`, downloads
+`ASTRA-$VERSION-windows-rc` from that exact run ID, verifies the packaged SHA256 and publishes `v$VERSION` against the tested SHA.
+The candidate ZIP above is QA evidence only; the final Release must use the artifact produced by the final successful main run, never reuse
+an artifact from another run.
+
+## Human-readable editorial QA / remaining human-only risk
+
+`walkthrough_111.txt` records Stage/Day/speaker/intent context for conversation, clarification, branch, meeting, Link, final statement,
+consequence, callback and finale samples. Automated gates can reject obvious repetition/context regressions but do not prove Korean prose is
+perfect over every 45–60 minute human session.
+
+Remaining human-only risks:
+- perceived reading fatigue across a real uninterrupted 45–60 minute session, despite the measured meeting reduction;
+- subjective replay novelty and finale emotional strength;
+- Korean naturalness in rare seed/route combinations not reached by the representative transcript;
+- Windows **100% / 125% / 150%** OS font/DPI combinations are not independently emulated by current visual QA; 1120×700 and larger viewport
+  layout is automated, but DPI/font rendering remains a manual release check.
+
+---
+
 # 1.1.0 LIVING PATHS — RELEASE QA — 2026-09-26
 
 Base: main **1161591486bfeaa80112a93c7c064fadff872d31** (official v1.0.1 source).  
