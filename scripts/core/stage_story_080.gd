@@ -486,17 +486,17 @@ const BRANCH_MEETING_CONTEXT := {
 
 const CROSS_STAGE_BRANCH_CALLBACKS := {
     "GLASS_GARDEN":{"anchor":"DEAD_AIR","routes":{
-        "PUBLIC":{"id":"110_cross_dead_public","art":"garden","speaker":"noa","action":"노아가 새 기록을 열자마자 사본을 두 개 만든다.","lines":[["noa","이상하게 오늘은 원본을 혼자 들고 있기 싫어요. 확인되는 대로 같이 볼 수 있게 둘게요."]]},
-        "VERIFY_FIRST":{"id":"110_cross_dead_verify","art":"garden","speaker":"noa","action":"노아가 새 기록의 봉인 번호부터 확인한다.","lines":[["noa","원본부터 확인하고 싶네요. 왜 이렇게 익숙한 순서인지는 모르겠지만요."]]}}},
+        "PUBLIC":{"id":"110_cross_dead_public","art":"garden","speaker":"noa","action":"노아가 새 기록을 열자마자 사본을 두 개 만들고, 하나를 공동 화면 옆에 둔다.","lines":[["noa","원본 열었어요. 사본 둘 만들게요. 한 사람 손에만 남겨 두지 않아요."]]},
+        "VERIFY_FIRST":{"id":"110_cross_dead_verify","art":"garden","speaker":"noa","action":"노아가 내용보다 먼저 새 기록의 봉인 번호와 작성 시각을 맞춘다.","lines":[["noa","봉인 번호부터 맞출게요. 내용은 그다음에 봐요."]]}}},
     "SILENT_ORBIT":{"anchor":"ECHO_WARD","routes":{
-        "TELL_SOREN":{"id":"110_cross_echo_tell","art":"bridge","speaker":"vale","action":"소렌이 헤드셋을 쓰기 전에 원음 파일 이름부터 확인한다.","lines":[["vale","이상하게 제 목소리면 제가 먼저 들어야 할 것 같아요. 대신 원음인지부터 확인할게요."]]},
-        "VERIFY_FIRST":{"id":"110_cross_echo_verify","art":"bridge","speaker":"mira","action":"미라가 시간표 옆에 생체 기록 창을 먼저 띄운다.","lines":[["mira","이번엔 목소리보다 몸의 시간을 먼저 맞춰 보고 싶어요. 이유는 잘 모르겠지만요."]]}}},
+        "TELL_SOREN":{"id":"110_cross_echo_tell","art":"bridge","speaker":"vale","action":"소렌이 전언 파일을 옆으로 밀고 원음 트랙을 먼저 연다.","lines":[["vale","제 목소리면 원음부터 들을게요. 전해진 말은 그다음에 비교해요."]]},
+        "VERIFY_FIRST":{"id":"110_cross_echo_verify","art":"bridge","speaker":"mira","action":"미라가 음성 파일을 재생하기 전에 시간표 옆에 생체 기록 창을 먼저 띄운다.","lines":[["mira","생체 기록이 먼저예요. 시각을 맞춘 뒤에 목소리를 들어요."]]}}},
     "LAST_LIGHT":{"anchor":"RED_SHIFT","routes":{
         "REVEAL":{"id":"110_cross_red_reveal","art":"archive","speaker":"noa","action":"노아가 새 기록의 필체 비교 칸을 공개 화면에 함께 띄운다.","lines":[["noa","누가 썼는지도 숨기지 말고 같이 보죠. 사실과 의미는 그다음에 나눠도 돼요."]]},
-        "WITHHOLD_VERIFY":{"id":"110_cross_red_verify","art":"archive","speaker":"noa","action":"노아가 원본 확인 칸을 먼저 확대한다.","lines":[["noa","이상하게 공개보다 원본 확인이 먼저 손에 잡혀요. 확인한 범위부터 분명히 해 둘게요."]]}}},
+        "WITHHOLD_VERIFY":{"id":"110_cross_red_verify","art":"archive","speaker":"noa","action":"노아가 공개 화면을 열기 전에 원본 확인 칸부터 확대한다.","lines":[["noa","원본 확인부터 끝내요. 공개할 땐 확인한 범위를 같이 적을게요."]]}}},
     "BLIND_DECK":{"anchor":"BORROWED_DAYS","routes":{
-        "TELL":{"id":"110_cross_borrowed_tell","art":"breach","speaker":"sena","action":"세나가 준에게 설명 없이 손전등을 건넨다. 둘 다 잠깐 멈춘다.","lines":[["sena","또 이러네. 기억은 없는데 네가 뭘 찾는지는 알 것 같아."]]},
-        "OBSERVE":{"id":"110_cross_borrowed_observe","art":"breach","speaker":"rho","action":"준이 세나의 동선을 한 걸음 먼저 비켜 준다.","lines":[["rho","내가 왜 네가 이쪽으로 올 줄 알았지? …일단 적어 두자."]]}}},
+        "TELL":{"id":"110_cross_borrowed_tell","art":"breach","speaker":"sena","action":"세나가 준에게 설명 없이 손전등을 건넨다. 준도 묻지 않고 바로 받는다.","lines":[["sena","손전등. …네가 찾는 건 이거지?"]]},
+        "OBSERVE":{"id":"110_cross_borrowed_observe","art":"breach","speaker":"rho","action":"준이 세나가 꺾기 전에 통로 한쪽을 비켜 주고, 바닥 동선 표시를 내려다본다.","lines":[["rho","여기로 올 줄 알았어. 동선부터 적어 두자."]]}}},
     "CONTINUITY":{"anchor":"THREE_MINUTES_DARK","routes":{
         "POWER":{"id":"110_cross_dark_power","art":"garden","speaker":"rho","action":"준이 새 기록에 ‘직접 봄’ 칸을 먼저 만든다.","lines":[["rho","이번엔 내가 손으로 본 거랑 남이 전한 걸 처음부터 칸을 갈라 둘게."]]},
         "COMMS":{"id":"110_cross_dark_comms","art":"garden","speaker":"vale","action":"소렌이 원음과 전언을 서로 다른 트랙에 놓는다.","lines":[["vale","말이 한 사람을 거칠 때마다 바뀌니까요. 이번엔 처음부터 원음을 따로 둘게요."]]},
