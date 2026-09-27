@@ -126,7 +126,8 @@ func run_audit() -> void:
             check(fired, "%s/%d produces runtime consequence state" % [scene_id, index])
             var tag := str(choice.get("memory_tag", ""))
             if tag != "":
-                check(tag in Array(s.voyage.get("memory_tags", [])), "%s/%d records memory tag" % [scene_id, index])
+                var scoped_tag := (str(scene.get("speaker", "")) + ":" + tag) if str(scene.get("speaker", "")) != "" else tag
+                check(scoped_tag in Array(s.voyage.get("memory_tags", [])), "%s/%d records scoped memory tag" % [scene_id, index])
 
             var save_path := "user://micro_111_%d.cfg" % seed_value
             AstraGameSession.delete_snapshot(save_path)
