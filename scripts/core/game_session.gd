@@ -3287,16 +3287,36 @@ func _verdict_reason_source_was_public(source_id: String, source_day: int) -> bo
     # not also write one of the historical event lists above.
     return source_day == day and AstraKnowledgeModel.is_public(flags, source_id)
 
+func _verdict_conflict_was_public(reason: Dictionary, source_day: int) -> bool:
+    var key := str(reason.get("contradiction_key", ""))
+    var target := str(reason.get("target", ""))
+    var text := _josa_inline(str(reason.get("text", "")))
+    for raw in manual_contradictions:
+        var entry: Dictionary = raw
+        if int(entry.get("day", 0)) != source_day or str(entry.get("kind", "")) != "public":
+            continue
+        if key != "" and str(entry.get("key", "")) == key:
+            return true
+        # 1.2.2 conflict ballot reasons stored a synthetic target|detail key
+        # instead of the actual contradiction key. Match the dated public
+        # record by its visible target/detail so old Snapshot v4 residue keeps
+        # genuinely public provenance without making later Days public.
+        if target != "" and target in Array(entry.get("targets", [])):
+            if text != "" and _josa_inline(str(entry.get("detail", ""))) == text:
+                return true
+    return false
+
 func _verdict_reason_is_public(reason: Dictionary, source_day: int) -> bool:
     var code := str(reason.get("code", ""))
     if code == "link":
         # A Link is itself a public meeting intervention.
         return int(reason.get("created_index", -1)) >= 0
     if code == "conflict":
-        if bool(reason.get("public", false)):
-            return true
-        var key := str(reason.get("contradiction_key", ""))
-        if key != "" and public_contradiction_keys.has(key):
+        # New-format reasons carry the public flag, but verify historical
+        # provenance against the source Day so a reused stage-wide key cannot
+        # make tomorrow's distinct conflict public. The helper also preserves
+        # the legacy 1.2.2 target|detail format.
+        if _verdict_conflict_was_public(reason, source_day):
             return true
         return int(reason.get("created_index", -1)) >= 0
     for raw_source in reason.get("source_ids", []):
@@ -4644,12 +4664,26 @@ func _publish_fragment(item: Dictionary, speaker: String) -> void:
         public_log.pop_front()
     stage_state()["public_log"] = public_log
 
+func _public_conflict_recorded_on_day(key: String, source_day: int) -> bool:
+    if key == "" or source_day <= 0:
+        return false
+    for raw in manual_contradictions:
+        var entry: Dictionary = raw
+        if int(entry.get("day", 0)) == source_day and str(entry.get("kind", "")) == "public" and str(entry.get("key", "")) == key:
+            return true
+    return false
+
 func _mark_public_conflict(key: String, targets: Array, detail: String) -> void:
-    if public_contradiction_keys.has(key):
-        return
+    # public_contradiction_keys remains the historical stage-wide set used by
+    # older deduction/presentation code. Keep a dated manual record as well so
+    # CLEAR CURRENT can distinguish a Day 2 conflict from the same key aired on
+    # Day 1 without changing Snapshot v4.
+    var first_stage_publication := not public_contradiction_keys.has(key)
     public_contradiction_keys[key] = true
-    manual_contradictions.append({"key": key, "kind": "public", "targets": targets.duplicate(), "detail": detail, "day": day})
-    stats["public_contradictions"] = int(stats.get("public_contradictions", 0)) + 1
+    if not _public_conflict_recorded_on_day(key, day):
+        manual_contradictions.append({"key": key, "kind": "public", "targets": targets.duplicate(), "detail": detail, "day": day})
+    if first_stage_publication:
+        stats["public_contradictions"] = int(stats.get("public_contradictions", 0)) + 1
 
 func _first_active(order: Array, exclude: Array) -> String:
     for npc_id in order:
@@ -8121,7 +8155,10 @@ func _recompute_contradictions() -> void:
         if int(item.get("day", day)) == day:
             result.append(item.duplicate(true))
     for item in result:
-        item["public"] = public_contradiction_keys.has(str(item.get("key", "")))
+        # A conflict is public for this ballot Day only if the room actually
+        # established this key on this Day. The stage-wide key set is retained
+        # for legacy mechanics, but must not leak yesterday's publicity forward.
+        item["public"] = _public_conflict_recorded_on_day(str(item.get("key", "")), day)
         item["detail"] = _josa_inline(str(item.get("detail", "")))
     contradictions = result
 
