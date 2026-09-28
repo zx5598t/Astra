@@ -1,8 +1,8 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **1.1.1 — HUMAN RHYTHM**. Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
-- 1.1.1 keeps the 1.1.0 routes/consequence/deduction contract and polishes long-session dialogue rhythm, Link friction, replay callbacks and finale reception without adding a new system.
+- Version **1.2.0 — AFTERIMAGE**. Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- 1.2.0 keeps the 1.1.1 deduction/fairness/finale contract and connects actual prior route experience to Past Echo investigation choices. Past Echo lives in the existing Foreknowledge/voyage/conversation architecture; do not add an Echo currency, skill tree or parallel history manager.
 - One Stage = one game; a Day = Morning → Conversation → Meeting → Vote → Night. PART I (Stages 1–4) one Null,
   PART II (Stage 5+) two Nulls and one protocol (GUARDIAN 5 / ANALYST 6 / EMPATH 7). No investigation phase,
   no exploration in the main loop, no abstention, exactly one isolation per Day, explorer death = immediate loss.

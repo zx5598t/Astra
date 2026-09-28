@@ -1,3 +1,14 @@
+## 1.2.0 — AFTERIMAGE
+
+A memory-to-gameplay pass over 1.1.1. No new currency, skill tree, parallel memory manager, character, protocol or save schema.
+
+- **Past Echo uses experienced history, not Stage level.** Ten authored opportunities are gated by actual prior route_history entries. A missing scene, current-History route, route choice without history, hidden truth or generator state cannot unlock one.
+- **Echo changes investigation order rather than revealing answers.** The existing conversation UI gains a [잔향] option that can surface a record, witness statement or expert inference the current NPC already owns, plus a character-specific reaction.
+- **History-conditioned late routes.** RED_SHIFT through THRESHOLD reuse the existing branch anchors to vary question wording, verification method and NPC reaction while same-seed truth/base Day Packet remain invariant.
+- **Maren / Lucan gameplay roles.** Maren reads environmental continuity; Lucan tests feasibility, route and travel time. Echo-informed meeting context replaces the generic opener instead of extending meeting length.
+- **Dialogue recency without balance RNG changes.** Social-line variation now has its own deterministic display-context roll; mechanical gameplay selection remains untouched.
+- **Save compatibility unchanged.** Past Echo state is optional nested voyage data. Meta save v12 and Snapshot v4 remain unchanged and old saves hydrate missing fields safely.
+- **Release pipeline unchanged.** The generic exact-SHA release workflow remains the only publisher.
 ## 1.1.1 — HUMAN RHYTHM
 
 A long-session pacing and editorial polish pass over 1.1.0. No new manager, deduction engine, branch anchor, protocol, minigame, character or save schema.

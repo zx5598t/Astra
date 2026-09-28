@@ -79,6 +79,54 @@ const EXPLORERS := {
         "questions": ["{time}엔 어디 가 있었어? 거기서부터 얘기해 줘.", "거기서 누구 봤어? 전해 들은 얘기도 따로 듣고 싶어.", "넌 누구 쪽이 궁금해? 뭐가 걸렸는지 듣고 싶어.", "잠깐, 너무 빨리 물었지. 네 속도로 얘기해 줘."]}
 }
 
+# AFTERIMAGE: same investigation intent, varied explorer wording. These are
+# presentation-only and never enter case generation, suspicion, voting or RNG.
+const STATEMENT_VARIANTS := {
+    "serin": [
+        "{time}, 어디 있었는지 순서대로 들려줘.",
+        "{time} 전후로 어디를 지나갔는지 차례대로 말해 줘.",
+        "순서부터 맞추자. {time}에는 어디 있었어?",
+        "{time} 기준으로 네 위치와 이동 순서를 들려줘."
+    ],
+    "mika": [
+        "{time}엔 어디 있었어? 일단 동선부터 맞춰 보자.",
+        "{time}쯤 어디 있었어? 복잡한 얘기 전에 동선부터.",
+        "좋아, 위치부터 뜯어 보자. {time}엔 어디였어?",
+        "{time} 기준으로 어디서 어디로 움직였는지 말해 봐."
+    ],
+    "jace": [
+        "{time}, 어디까지 갔어? 네 동선부터 듣자.",
+        "{time}쯤 네가 지나간 길부터 말해 줘.",
+        "먼저 움직인 순서를 보자. {time}엔 어디 있었어?",
+        "{time} 기준으로 출발한 곳과 도착한 곳부터."
+    ],
+    "rael": [
+        "말할 수 있겠어? {time}에 어디 있었는지 듣고 싶어.",
+        "천천히 말해 줘. {time}에는 어디 있었어?",
+        "괜찮으면 {time} 전후 동선부터 확인하고 싶어.",
+        "{time}쯤 어디 있었는지, 기억나는 순서대로 말해 줘."
+    ],
+    "logan": [
+        "{time}. 위치와 동선은?",
+        "{time}. 어디 있었지?",
+        "위치부터. {time} 기준.",
+        "{time} 전후 이동 경로."
+    ],
+    "sia": [
+        "{time}엔 어디 가 있었어? 거기서부터 얘기해 줘.",
+        "{time}쯤 어디 있었어? 거기서 뭐 했는지도 궁금해.",
+        "먼저 {time} 위치부터! 어디 가 있었어?",
+        "{time} 기준으로 어디서 어디로 갔는지 말해 줘."
+    ]
+}
+
+static func statement_line(id: String, at: String, roll: float) -> String:
+    var variants: Array = STATEMENT_VARIANTS.get(id, [])
+    if variants.is_empty():
+        return question(id, "STATEMENT", "{time}, 어디 있었어요?").replace("{time}", at)
+    var index := mini(variants.size() - 1, int(floor(clampf(roll, 0.0, 0.999999) * variants.size())))
+    return str(variants[index]).replace("{time}", at)
+
 # Which of the four drawn expressions carries each mood. The sheets hold, in
 # order, the greeting smile, a strong reaction, a determined face, and a soft
 # or tired one; each explorer's reaction is their own (Logan annoyed, Mika
