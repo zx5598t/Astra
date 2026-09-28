@@ -1,7 +1,28 @@
+# ASTRA 1.2.3 — CLEAR CURRENT QA
+
+Base: main **51c307a9b7f90daf83e11f183f772b367083fbde** (official v1.2.2).  
+Feature branch: `release/1.2.3`. Final 1.2.3 main/CI/Windows/Release values are recorded only after the exact main SHA completes the release pipeline.
+
+## 1.2.3 hotfix contract
+
+- Private player-known evidence may remain a ballot reason, but it cannot create an NPC-facing REASON_FOLLOWUP, select its private source owner, supply Crosscurrent source-type expertise, or expose its reason text.
+- Legacy/in-flight Snapshot v4 residue that lacks the new visibility marker is re-evaluated from historical public provenance; explicit private residue safely falls back to the public commitment subject / one-person callback.
+- Public contradiction ballot reasons retain their original contradiction key and public flag.
+- `crosscurrent_122_tests.gd` includes private-provenance regression coverage and Windows resource metadata gates.
+- Windows file/product version is **1.2.3.0** and description is **ASTRA — CLEAR CURRENT**.
+- Meta save **v12** / Snapshot **v4** remain unchanged; no migration and no gameplay truth/balance changes.
+
+---
+
 # ASTRA 1.2.2 — CROSSCURRENT QA
 
-Base: main **3481b3ad0f28ab7557faa69a6bbfdc0aae2701ae** (official v1.2.1).  
-Feature branch: `release/1.2.2`. Final 1.2.2 main/CI/Windows/Release values are reported from the exact tested commit; an in-progress workflow is never counted as success.
+Final main / tag SHA: `51c307a9b7f90daf83e11f183f772b367083fbde`  
+Godot CI **#834 / run 36390807316: SUCCESS**  
+Publish ASTRA release **#76 / run 36392687484: SUCCESS**  
+Windows: `ASTRA-1.2.2-windows.zip` · **113,160,755 bytes**  
+SHA-256: `239f15ad1804e299ed89eb7dd8d3920170f8e2e7c5b56486ac258bed2d27bc2b`
+
+Post-release review found two defects subsequently recovered by 1.2.3: private ballot provenance could leak into NPC-facing Crosscurrent/follow-up selection, and Windows resource metadata still identified 1.1.0 / LIVING PATHS inside the 1.2.2 executable.
 
 ## 1.2.2 verification contract
 
