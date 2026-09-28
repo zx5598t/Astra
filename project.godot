@@ -1,11 +1,11 @@
-; ASTRA 1.1.1 — HUMAN RHYTHM
+; ASTRA 1.2.0 — AFTERIMAGE
 config_version=5
 
 [application]
 
 config/name="ASTRA"
 config/description="Single-player social deduction RPG aboard a failing starship."
-config/version="1.1.1"
+config/version="1.2.0"
 config/icon="res://assets/branding/icon.svg"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
