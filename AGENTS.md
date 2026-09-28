@@ -2,7 +2,7 @@
 
 ## Current target
 - Version **1.2.3 — CLEAR CURRENT**. Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
-- 1.2.3 is a focused hotfix over 1.2.2 CROSSCURRENT: private player-known ballot provenance must never become NPC-facing social knowledge, source-owner selection or quoted follow-up text. Public commitments and explicitly public provenance remain eligible. Windows resource metadata must match VERSION. No new gameplay system or save schema.
+- 1.2.3 is a focused hotfix over 1.2.2 CROSSCURRENT: private player-known ballot provenance must never become NPC-facing social knowledge, source-owner selection or quoted follow-up text. Public commitments and explicitly public provenance remain eligible. Runtime exposure is gated by `crosscurrent_exposure_123.gd`; only an immediately consecutive same unordered pair + same category is soft-suppressed via the existing one-person verdict callback, using already-shown `crosscurrent_history`. Windows resource metadata must match VERSION. No new gameplay system or save schema.
 - One Stage = one game; a Day = Morning → Conversation → Meeting → Vote → Night. PART I (Stages 1–4) one Null,
   PART II (Stage 5+) two Nulls and one protocol (GUARDIAN 5 / ANALYST 6 / EMPATH 7). No investigation phase,
   no exploration in the main loop, no abstention, exactly one isolation per Day, explorer death = immediate loss.
@@ -52,6 +52,7 @@ walking the node tree. Do not reintroduce that pattern.
 8. **Knowledge is explicit.** NPC dialogue/decisions may only use facts reachable through `AstraKnowledgeModel`. If A tells B, C does not know it until a real propagation/public step occurs.
 9. **RNG chooses authored content; it never writes it.** Use the session RNG or an intentionally seed-derived local RNG. New selectors must remain deterministic for the same seed + same player actions.
 10. **Mira is an emotional anchor, not a protected route.** She can be Null, isolated, wrong, distant or in conflict. Do not make Mira immune to rules or let new Mira content erase another chapter's spotlight.
+11. **Crosscurrent pacing is presentation-only.** Do not add a cooldown manager or role-aware weighting. Exact-repeat suppression may read only already player-facing `crosscurrent_history`; it must not alter truth, Day Packet, proof routes, votes, deduction weights or action counts. `crosscurrent_exposure_123.gd` is a release gate and its measured metrics belong in QA, not guessed in docs.
 
 ## 0.8.0 campaign pass additions
 - **Interludes** (`scripts/core/interludes_080.gd`, `scripts/ui/pixel/*`): short playable scenes placed in the
