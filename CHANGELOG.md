@@ -7,6 +7,7 @@ A focused CROSSCURRENT release hotfix. No new gameplay system, content branch, c
 - **Public contradiction provenance is preserved explicitly.** Verdict reasons retain the contradiction's real key/public flag instead of reconstructing a key from player-facing text.
 - **Windows resource metadata now matches the package.** File/product version is 1.2.3.0 and the executable description is ASTRA — CLEAR CURRENT.
 - **Regression coverage expanded.** `crosscurrent_122_tests.gd` audits private-provenance leakage and Windows metadata. Meta save v12 / Snapshot v4 remain unchanged.
+- **Runtime repetition audit added.** `crosscurrent_exposure_123.gd` simulated 212 representative Days across 8 seeds per Stage. Baseline showed 90/90 eligible Crosscurrents, max streak 2, no 3-Day streak, and 3 immediate same-pair+same-category repeats; only those exact repeats are now soft-suppressed to the existing one-person verdict fallback. Final audit: 87 shown, 15 total verdict fallbacks, 3 suppressions, max streak 2, 0 same-pair+category consecutive, 0 Past Echo collisions.
 ## 1.2.2 — CROSSCURRENT
 
 A social follow-through pass over 1.2.1. No new relationship/reputation manager, meter, phase, character, protocol, Stage or save schema.
