@@ -1,10 +1,10 @@
-# ASTRA 1.2.2 — CROSSCURRENT
+# ASTRA 1.2.3 — CLEAR CURRENT
 
 같은 배에서 깨어났지만, 우리는 서로 다른 목적지를 기억한다.
 ASTRA의 탐사요원이 되어 승무원 사이에 숨은 **Null**을 찾는 싱글플레이 SF 사회추리 게임입니다.
 사람과 이야기하고, 누구의 말이 어긋나는지 비교하고, 회의에서 따지고, 투표로 한 사람을 장기수면 포드에 재웁니다.
 
-1.2.2는 **어제 누구를 감쌌고 어떤 근거로 말을 바꿨는지가 오늘 두 사람의 대화와 내가 개입할 순간을 바꾸는** 업데이트입니다. 새 관계 점수나 사회 단계는 만들지 않고, 1.2.1의 verdict residue를 기존 표정·대화 우선순위·회의 도입과 연결합니다.
+1.2.3은 **1.2.2 CROSSCURRENT의 공개/비공개 정보 경계를 바로잡고 Windows 배포 메타데이터를 정정하는 안정화 hotfix**입니다. Crosscurrent의 게임성은 유지하되, 플레이어만 알고 있던 비공개 투표 근거가 다음 날 NPC의 발언자·대사·2인 장면으로 새어 나오지 않게 막습니다.
 
 - [플레이 안내](START_HERE.md) · [변경 사항](CHANGELOG.md) · [릴리스 노트](docs/RELEASE_NOTES.md)
 - [설계](docs/GAME_DESIGN.md) · [인물](docs/CHARACTERS.md) · [스토리 원장](docs/STORY_LEDGER_080.md) · [검증](docs/QA_REPORT.md)
@@ -21,6 +21,8 @@ STAGE가 끝나면 배의 기록이 다시 맞춰지고(재동기화) 모두가 
 
 ## 이번 버전의 핵심
 
+- **비공개 근거는 방 전체의 기억이 되지 않습니다.** 플레이어 개인 노트에만 있던 ballot reason은 NPC-facing `REASON_FOLLOWUP`을 만들지 않고, 기존 저장에 남은 private residue도 source owner를 발언자로 승격하지 않습니다.
+- **Windows 표시 버전도 실제 릴리스와 일치합니다.** EXE file/product version과 description을 1.2.3 / CLEAR CURRENT로 맞추고 회귀 테스트로 고정했습니다.
 - **어제의 판단이 오늘 두 사람 사이에 남습니다.** 의미 있는 verdict residue가 있고 관련된 살아 있는 두 사람이 자연스러울 때만 짧은 Crosscurrent가 발생합니다.
 - **둘이 자연스럽지 않으면 억지로 만들지 않습니다.** 해당 경우에는 1.2.1의 한 사람 verdict callback을 그대로 사용합니다.
 - **플레이어가 한 번 개입합니다.** 판단 유지, 바뀐 근거 설명, 원출처/실제 순서 우선 확인 중 상황에 맞는 3개 선택이 즉시 반응과 오늘의 대화 lead, 회의 시작 맥락을 바꿉니다.
@@ -32,7 +34,7 @@ STAGE가 끝나면 배의 기록이 다시 맞춰지고(재동기화) 모두가 
 
 ## 실행과 빌드
 
-Windows: `ASTRA-1.2.2-windows.zip`을 풀고 `ASTRA/ASTRA.exe`를 실행합니다. 선택형 AI를 켜지 않으면 네트워크가 필요 없습니다.
+Windows: `ASTRA-1.2.3-windows.zip`을 풀고 `ASTRA/ASTRA.exe`를 실행합니다. 선택형 AI를 켜지 않으면 네트워크가 필요 없습니다.
 
 소스에서:
 
