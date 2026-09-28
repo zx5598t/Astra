@@ -42,6 +42,17 @@ func _reason(s: AstraGameSession, target: String, code: String = "instinct", tex
         "contradiction_key": "test", "created_index": created_index
     }
     s.stage_state()["ballot_reasons"] = reasons
+    # Synthetic non-instinct reasons model evidence that was actually aired in
+    # the room. Production code records this through _publish_fragment(); keep
+    # the 1.2.1 fixture explicit so the 1.2.3 privacy gate is exercised fairly.
+    if code != "instinct" and created_index >= 0:
+        var public_log: Array = s.stage_state().get("public_log", [])
+        public_log.append({
+            "day": s.day, "fact": "fact:test", "speaker": owner,
+            "player_contact": false, "player_action": "",
+            "source": owner, "provenance": "TEST_PUBLIC"
+        })
+        s.stage_state()["public_log"] = public_log
 
 func _pattern(commitment: String, same_target: bool, evidence_after: bool = false) -> String:
     var s := _session(12200 + checks)
