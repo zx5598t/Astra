@@ -43,6 +43,7 @@ past_echo_120_tests.gd|ASTRA PAST ECHO 120 TESTS OK|
 history_variation_120_tests.gd|ASTRA HISTORY VARIATION 120 TESTS OK|
 dialogue_exposure_120.gd|ASTRA DIALOGUE EXPOSURE 120 OK|
 verdict_residue_121_tests.gd|ASTRA VERDICT RESIDUE 121 TESTS OK|
+crosscurrent_122_tests.gd|ASTRA CROSSCURRENT 122 TESTS OK|
 micro_choice_111_tests.gd|ASTRA MICRO CHOICE 111 TESTS OK|
 link_friction_111_tests.gd|ASTRA LINK FRICTION 111 TESTS OK|
 finale_111_tests.gd|ASTRA FINALE 111 TESTS OK|
