@@ -1,3 +1,49 @@
+# ASTRA 1.2.0 — AFTERIMAGE QA
+
+기준 SHA: `af094c9f6cb69ca394e2f0c2b4d2e6395c004473` 코드 기준 검증. 최종 release SHA는 문서 커밋 후 main CI의 exact-SHA gate로 다시 검증한다.
+
+## 1.2.0 핵심 결과
+
+- **Past Echo:** 10개 authored opportunity, 8개 target Stage, Maren 환경 연속성 callback 3개, Lucan 이동/feasibility callback 4개. 모든 항목 runtime 선택 및 save/load PASS.
+- **History variation:** LAST_LIGHT, SECOND_WATCH, BLIND_DECK, CONTINUITY, THRESHOLD 5개 후반 Stage에서 비교 route가 player-visible 4개 차원(질문/label/반응/mode)으로 달라짐. 같은 seed의 truth와 base evidence는 모두 invariant PASS.
+- **정보 누출 방지:** Stage 번호만 높음, 현재 History route, scene 없는 수동 route record로는 Echo가 열리지 않음. 실제 이전 History의 authored route_history만 eligibility로 인정.
+- **Dialogue exposure:** 2,193 runtime line 기준 same-functional repeat within last 50 = **84**. 1.1.1 baseline 161 대비 **47.8% 감소**. 목표였던 20% 이상 감소를 통과.
+- **저장 호환:** Meta save v12 / Snapshot v4 유지. 새 Past Echo field는 optional voyage data로 hydrate되며 mid-Stage save/load PASS.
+
+## 100-game per Stage balance probe
+
+| Stage | SMART | RANDOM | PASSIVE |
+|---|---:|---:|---:|
+| CALIBRATION | 97% | 74% | 62% |
+| DEAD_AIR | 95% | 78% | 67% |
+| GLASS_GARDEN | 99% | 83% | 73% |
+| ECHO_WARD | 96% | 74% | 81% |
+| SILENT_ORBIT | 99% | 53% | 50% |
+| RED_SHIFT | 87% | 49% | 38% |
+| LAST_LIGHT | 88% | 57% | 46% |
+| SECOND_WATCH | 95% | 53% | 50% |
+| BORROWED_DAYS | 92% | 51% | 45% |
+| BLIND_DECK | 90% | 58% | 49% |
+| THREE_MINUTES_DARK | 90% | 54% | 43% |
+| CONTINUITY | 92% | 52% | 40% |
+| THRESHOLD | 90% | 46% | 46% |
+| **TOTAL** | **93%** | **60%** | **53%** |
+
+1.1.1 baseline의 TOTAL **93 / 60 / 53**과 동일하다. AFTERIMAGE는 gameplay truth/balance RNG를 바꾸지 않고 presentation/history-conditioned investigation layer만 추가했다.
+
+## 회귀 / fairness / build
+
+- Quick early balance: DEAD_AIR 95/80, GLASS_GARDEN 100/85, ECHO_WARD 97/75 (SMART/PASSIVE, 40 seeds).
+- Causal gate: 300 paired seeds PASS.
+- Fairness gate: 909 checks PASS; DEAD_AIR / GLASS_GARDEN / ECHO_WARD 모두 100/100 seed에서 2개 이상 independent proof route 유지.
+- Full script parse PASS.
+- Linux full ASTRA suite PASS.
+- Windows full ASTRA suite + boot PASS.
+- Windows release-candidate export PASS.
+- Visual QA capture PASS.
+- Existing 1.1.1 8 micro-arcs / 20 options, Link friction, finale, replay-fatigue, pacing tests remain in CI and PASS.
+
+---
 # 1.1.1 HUMAN RHYTHM — RELEASE QA — 2026-09-27
 
 Base: main **68ed120797495adcf1d2ded43da88218437aff57** (official v1.1.0 source).  
