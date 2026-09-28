@@ -2629,6 +2629,9 @@ func _open_meeting() -> void:
     var route_context := AstraStageStory.branch_meeting_context(case_id, branch_route(case_id))
     if route_context != "":
         _feed_narration(route_context)
+    var echo_context := str(stage_state().get("past_echo_context", ""))
+    if echo_context != "":
+        _feed_narration(echo_context)
     state["meeting_plan"] = _plan_threads()
     meeting_continue()
 
