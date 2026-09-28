@@ -1,3 +1,21 @@
+# ASTRA 1.2.0 — AFTERIMAGE
+
+**이전 History에서 배운 것이 사라지지 않고, 다음 History에서 내가 무엇을 먼저 묻고 확인하는지를 바꿉니다.**
+
+1.1.1의 사회추리·Link·branch·micro-arc·Finale 구조는 그대로 유지합니다. 이번 버전은 새 메타 화폐나 기억 스킬을 추가하는 대신 이미 있던 route history, consequence, trust/bond, conversation, meeting 구조를 서로 연결합니다.
+
+- **[잔향] 질문** — 이전 History에서 실제로 고른 route가 기록되어 있을 때만 나타납니다. Stage 번호만으로는 열리지 않으며, 보지 않은 단서·hidden Null state·미래 정보를 사용하지 않습니다.
+- **정답 대신 조사 방향** — 잔향은 현재 인물이 원래 가지고 있던 기록·목격·전문 소견을 먼저 확인하거나 질문 순서를 바꿉니다. 같은 seed의 사건 진실과 기본 evidence는 그대로입니다.
+- **“그걸 어떻게 알아?”** — 지나치게 정확한 질문을 하면 인물이 알아차립니다. 별도 suspicion meter는 만들지 않았고 기존 trust/bond/relationship feedback만 사용합니다.
+- **후반 History variation** — 과거 branch에 따라 질문 문구, 확인 방식, 반응이 달라집니다. 같은 사건을 다시 푸는 느낌보다 “전에 배운 것 때문에 이번 행동이 다르다”는 감각을 강화했습니다.
+- **마렌 / 루칸 전문성** — 마렌은 생장·환경·생활 흔적의 누적을, 루칸은 이동 가능 시간·위험·실제 경로를 읽습니다. 잔향을 쓴 날은 회의의 평범한 도입을 이 해석으로 교체해 회의가 길어지지 않습니다.
+- **대사 recency** — 대사 variant 선택을 gameplay RNG와 분리했습니다. 반복을 줄이되 역할 배정, 사건, 거짓말, 투표와 밸런스 난수는 바꾸지 않습니다.
+- **기존 선택의 결과 보호** — 8개 micro-arc / 20개 선택, 다섯 branch anchor, SHARE / WAKE / KEEP와 WARM / CAUTIOUS / STRAINED를 그대로 회귀 검증합니다.
+- **저장 호환** — Meta v12 / Snapshot v4 유지. 1.1.1 저장은 새 잔향 필드가 없어도 안전하게 기본값으로 읽습니다.
+
+정확한 Echo 수, route 차이, dialogue exposure, meeting pacing, SMART/RANDOM/PASSIVE, fairness, Windows build/boot와 CI 결과는 docs/QA_REPORT.md에 기록합니다.
+
+---
 # ASTRA 1.1.1 — HUMAN RHYTHM
 
 **더 많은 기능이 아니라, 같은 선택과 추리를 더 적은 피로로 사람답게 느끼게 하는 마감 업데이트입니다.**
