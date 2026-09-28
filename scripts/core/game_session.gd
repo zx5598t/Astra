@@ -3276,11 +3276,11 @@ func _verdict_reason_source_was_public(source_id: String, source_day: int) -> bo
         return false
     for raw in stage_state().get("public_log", []):
         var entry: Dictionary = raw
-        if int(entry.get("day", 0)) == source_day and str(entry.get("fact", "")) == source_id:
+        if int(entry.get("day", 0)) <= source_day and str(entry.get("fact", "")) == source_id:
             return true
     for raw in stage_state().get("public_presented_events", []):
         var entry: Dictionary = raw
-        if int(entry.get("day", 0)) == source_day and str(entry.get("fragment", "")) == source_id:
+        if int(entry.get("day", 0)) <= source_day and str(entry.get("fragment", "")) == source_id:
             return true
     # While the ballot is being recorded, the explicit knowledge ledger is the
     # final authority for fragments that became public through a path that did
