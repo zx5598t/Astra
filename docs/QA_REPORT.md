@@ -1,3 +1,20 @@
+# 1.2.0 AFTERIMAGE — CANDIDATE QA — 2026-09-28
+
+Starting main: **df60f41f741773f553125f3787b8d8ea487c5bb1** (v1.1.1).  
+Feature branch: `update/1.2.0-afterimage`.
+
+Implemented candidate scope:
+- 10 experience-gated Past Echo opportunities distributed across later Stages.
+- Eligibility uses existing route choices / micro-arc memory tags; Stage number and hidden truth are not eligibility inputs.
+- Echo changes Day question, investigation lead, meeting context and NPC reaction while preserving current truth and Day Packet.
+- Maren environmental-continuity and Lucan feasibility/risk/route callbacks are represented in the Echo catalog.
+- Meta save remains **v12** / Snapshot **v4**; no destructive migration.
+- Added `tests/past_echo_120_tests.gd` to `tests/ci_suite.txt`.
+
+Status: **CI not yet verified at this document commit.** Do not treat the 1.1.1 measurements below as 1.2.0 results. Final 1.2.0 balance, dialogue exposure, visual QA, Windows export/boot, ZIP size and SHA256 must come from the final successful main run.
+
+---
+
 # 1.1.1 HUMAN RHYTHM — RELEASE QA — 2026-09-27
 
 Base: main **68ed120797495adcf1d2ded43da88218437aff57** (official v1.1.0 source).  
