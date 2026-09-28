@@ -1,3 +1,12 @@
+## 1.2.3 — CLEAR CURRENT
+
+A focused CROSSCURRENT release hotfix. No new gameplay system, content branch, character, protocol, phase or save schema.
+
+- **Private ballot provenance stays private.** A fragment the explorer knows but never made public can still justify the player's ballot, but it cannot create an NPC-facing REASON_FOLLOWUP, select its private source owner as tomorrow's speaker, or steer a two-person Crosscurrent.
+- **Legacy/in-flight residue is sanitized at use time.** Existing Snapshot v4 data that already stored a private source owner falls back to the public commitment subject or the safe one-person callback without quoting the private reason.
+- **Public contradiction provenance is preserved explicitly.** Verdict reasons retain the contradiction's real key/public flag instead of reconstructing a key from player-facing text.
+- **Windows resource metadata now matches the package.** File/product version is 1.2.3.0 and the executable description is ASTRA — CLEAR CURRENT.
+- **Regression coverage expanded.** `crosscurrent_122_tests.gd` audits private-provenance leakage and Windows metadata. Meta save v12 / Snapshot v4 remain unchanged.
 ## 1.2.2 — CROSSCURRENT
 
 A social follow-through pass over 1.2.1. No new relationship/reputation manager, meter, phase, character, protocol, Stage or save schema.
