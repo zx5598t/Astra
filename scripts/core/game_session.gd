@@ -348,6 +348,12 @@ func _new_stage_state() -> Dictionary:
         # read empty defaults through get().
         "public_presented_events": [], "public_confession_events": [],
         "verdict_residue": {}, "verdict_feedback_seen": {},
+        # 1.2.2 CROSSCURRENT: optional social continuation state. Like verdict
+        # residue, it stays inside stage_080 so old Snapshot v4 saves hydrate
+        # through get() defaults and need no migration.
+        "crosscurrent_seen": {}, "crosscurrent_choices": {},
+        "crosscurrent_priority": {}, "crosscurrent_meeting_openers": {},
+        "crosscurrent_history": [],
         # 0.8.2 runtime-only agency telemetry. It lives inside stage_state so snapshot v4
         # can carry it without a new schema field; old v4 snapshots hydrate lazily.
         "agency_contacts": {}, "agency_events": [], "agency_vote_changes": [],
@@ -1593,10 +1599,20 @@ func talk_leads() -> Dictionary:
         if is_alive(str(expert)) and not leads.has(str(expert)):
             leads[str(expert)] = "장비를 잘 앎"
             break
-    # WEIGHT OF WORDS: one relevant person from yesterday can become a
-    # contextual lead. It does not create evidence; it only changes who is
-    # worth asking first.
-    if day > 1:
+    # CROSSCURRENT: once the player has intervened, today's chosen verification
+    # lead replaces the generic verdict lead. This is presentation priority only:
+    # no evidence, suspicion or hidden role state enters the decision.
+    var priorities: Dictionary = stage_state().get("crosscurrent_priority", {})
+    var cross_priority: Dictionary = priorities.get(str(day), {})
+    var cross_lead := str(cross_priority.get("npc", ""))
+    if cross_lead != "" and is_alive(cross_lead):
+        if leads.has(cross_lead):
+            leads[cross_lead] = "어제 판단의 후속"
+        elif leads.size() < 4:
+            leads[cross_lead] = "어제 판단의 후속"
+    # WEIGHT OF WORDS fallback: when no two-person Crosscurrent was possible,
+    # the original relevant person remains a contextual lead.
+    elif day > 1:
         var residue := verdict_residue(day - 1)
         if not residue.is_empty():
             var verdict_lead := _verdict_alive_lead(residue)
@@ -2773,9 +2789,15 @@ func _open_meeting() -> void:
             _feed_npc(mourner, "m_mourn", {"victim": name_of(victim_id)}, "mourn", victim_id)
     _make_claims_public()
     var echo_opening := _past_echo_meeting_line()
+    var crosscurrent_opening := _crosscurrent_meeting_line()
     if echo_opening != "":
-        # Replace the generic opener instead of adding another meeting line.
+        # Past Echo is a current-History verification event and keeps priority
+        # when both systems are present; Crosscurrent has already paid off in
+        # its reaction and talk-lead change, so the same fact is not repeated.
         _feed_narration(echo_opening)
+    elif crosscurrent_opening != "":
+        # Replace the generic opener instead of adding another meeting line.
+        _feed_narration(crosscurrent_opening)
     else:
         match mood:
             "low":
@@ -3411,6 +3433,308 @@ func verdict_residue(day_index: int = -1) -> Dictionary:
     var target_day := day if day_index < 0 else day_index
     return Dictionary(stage_state().get("verdict_residue", {}).get(str(target_day), {}))
 
+# ---------------------------------------------------------------- 1.2.2 CROSSCURRENT
+# A verdict may become one short, two-person social continuation on the next
+# Day. Eligibility and category use only public/player-known provenance already
+# stored in the 1.2.1 residue. Hidden roles, truth and raw suspicion never enter
+# this path.
+
+func _crosscurrent_partner(residue: Dictionary) -> String:
+    var lead := _verdict_alive_lead(residue)
+    if lead == "":
+        return ""
+    var subject := str(residue.get("subject", ""))
+    if subject != "" and subject != lead and is_alive(subject):
+        return subject
+
+    var reason: Dictionary = residue.get("ballot_reason", {})
+    var source_ids: Array = reason.get("source_ids", [])
+    for raw_source in source_ids:
+        var owner := _verdict_source_owner([str(raw_source)])
+        if owner != "" and owner != lead and is_alive(owner):
+            return owner
+
+    # If yesterday's subject is no longer in the room, a second person is used
+    # only when their established expertise directly fits the visible source
+    # type. This keeps FOLLOW_THROUGH / reversal cases from inventing an
+    # unrelated pair merely to satisfy the feature.
+    var source_type := str(reason.get("source_type", ""))
+    var experts: Array = []
+    match source_type:
+        "SYSTEM_RECORD", "ALIBI_SUPPORT":
+            experts = ["noa", "sena", "dax"]
+        "HEARSAY", "DIRECT_WITNESS":
+            experts = ["vale", "sena", "noa"]
+        "LINK", "CONTRADICTION":
+            experts = ["dax", "noa", "sena", "eli"]
+        "EXPERT_INFERENCE":
+            experts = ["dax", "eli", "lyra", "rho"]
+    for candidate in experts:
+        var npc_id := str(candidate)
+        if npc_id != lead and is_alive(npc_id):
+            return npc_id
+    return ""
+
+func _crosscurrent_category(residue: Dictionary, lead: String, partner: String) -> String:
+    var pattern := str(residue.get("pattern", ""))
+    var reason: Dictionary = residue.get("ballot_reason", {})
+    var source_type := str(reason.get("source_type", ""))
+    if pattern in ["REVERSAL", "EVIDENCE_DRIVEN_REVERSAL"]:
+        return "RECONSIDER"
+    if pattern == "REASON_FOLLOWUP" or source_type in ["HEARSAY", "SYSTEM_RECORD", "LINK", "CONTRADICTION"]:
+        return "SOURCE_DISPUTE"
+    if pattern == "STOOD_BY":
+        return "CARE_VS_PROOF" if "mira" in [lead, partner] else "ALIGN"
+    return "FRICTION"
+
+func _crosscurrent_method(npc_id: String) -> String:
+    match npc_id:
+        "mira": return "사람이 어떤 상태에서 그 말을 했는지"
+        "rho": return "실제 작업 순서와 장비가 움직인 순서"
+        "dax": return "결론을 떠받친 전제와 바뀐 조건"
+        "noa": return "원본과 사본, 전달 순서"
+        "sena": return "출입 순서와 실제 행동 절차"
+        "vale": return "전언이 아니라 최초 신호와 원출처"
+        "eli": return "시간 안에 실제로 가능한 경로와 위험 조건"
+        "lyra": return "흔적이 한 번인지 계속 이어졌는지"
+    return "확인 가능한 사실"
+
+func _crosscurrent_action(npc_id: String) -> String:
+    match npc_id:
+        "mira": return "미라는 먼저 두 사람의 표정을 살피고 목소리가 가라앉기를 기다린다."
+        "rho": return "준은 장비가 움직인 순서를 손가락으로 하나씩 다시 짚는다."
+        "dax": return "다렌은 어제의 전제 가운데 달라진 지점에 선을 긋는다."
+        "noa": return "노아는 어제의 사본과 원본 기록을 나란히 펼친다."
+        "sena": return "세나는 출입 순서를 시간대별로 다시 짚어 본다."
+        "vale": return "소렌은 전언 기록을 닫고 원음 트랙부터 다시 연다."
+        "eli": return "루칸은 지도 위에 어제 주장한 경로를 다시 그어 본다."
+        "lyra": return "마렌은 어제의 흔적이 오늘도 이어지는지 먼저 확인한다."
+    return "두 사람은 어제의 판단을 다시 확인한다."
+
+func _crosscurrent_position_line(npc_id: String, residue: Dictionary, category: String, first: bool) -> String:
+    var subject := str(residue.get("subject", ""))
+    var subject_name := name_of(subject) if subject != "" and crew.has(subject) else "그 판단"
+    var method := _crosscurrent_method(npc_id)
+    match npc_id:
+        "mira":
+            if category == "CARE_VS_PROOF":
+                return "어제 누구를 감쌌는지만 보지 말아요. 그때 사람이 어떤 상태였는지와 지금 확인된 근거를 같이 봐요."
+            return "결론부터 밀어붙이면 사람의 반응이 또 닫혀요. 저는 %s부터 볼게요." % method
+        "rho":
+            return "말은 나중에 맞춰도 돼. 난 %s부터 다시 볼 거야." % method
+        "dax":
+            if category == "RECONSIDER":
+                return "생각을 바꾼 것 자체는 문제가 아니야. 어떤 전제가 바뀌었는지 설명되면 돼."
+            return "같은 결론이어도 전제가 다르면 다른 판단이야. %s부터 놓자." % method
+        "noa":
+            return "결론보다 %s부터 맞춰요. 같은 기록을 보고 있는지부터 확인해야 해요." % method
+        "sena":
+            return "기록이 맞아도 실제 행동이 안 이어지면 끝이야. %s부터 보자." % method
+        "vale":
+            return "전해진 말은 한 번 더 섞일 수 있어요. 저는 %s부터 확인할게요." % method
+        "eli":
+            return "%s부터 맞지 않으면 나머지 설명도 성립하지 않아." % method.capitalize()
+        "lyra":
+            return "한 번 남은 흔적과 계속 남는 흔적은 달라요. %s부터 봐요." % method
+    return ("%s부터 확인하자." % method) if first else "저는 다른 순서로 확인해 볼게요."
+
+func _crosscurrent_choices(residue: Dictionary) -> Array:
+    var pattern := str(residue.get("pattern", ""))
+    var stand_label := "어제 판단을 유지한다 · 같은 기준으로 다시 확인하자"
+    var reframe_label := "판단 방식을 설명한다 · 무엇이 결론을 바꿨는지 짚자"
+    if pattern == "STOOD_BY":
+        stand_label = "어제의 변호를 유지한다 · 사람을 결론보다 먼저 보자"
+    elif pattern in ["REVERSAL", "EVIDENCE_DRIVEN_REVERSAL"]:
+        stand_label = "바꾼 판단을 유지한다 · 지금 확인된 근거로 판단하자"
+        reframe_label = "생각이 바뀐 지점을 설명한다 · 새 근거가 전제를 바꿨다"
+    elif pattern == "FOLLOW_THROUGH":
+        stand_label = "어제 판단을 유지한다 · 같은 근거가 아직 성립하는지 보자"
+        reframe_label = "결론보다 판단 과정을 설명한다 · 왜 그 근거를 택했는지 짚자"
+    return [
+        {"label": stand_label, "effect": "crosscurrent:stand"},
+        {"label": reframe_label, "effect": "crosscurrent:reframe"},
+        {"label": "결론을 잠시 미룬다 · 원출처와 실제 순서부터 다시 확인하자", "effect": "crosscurrent:verify"}
+    ]
+
+func _crosscurrent_choice_reply(npc_id: String, kind: String) -> String:
+    match npc_id:
+        "mira":
+            return "좋아요. 그럼 사람을 몰아세우기 전에, 달라진 이유부터 차분히 들을게요." if kind == "reframe" else ("먼저 확인해요. 결론은 그다음이어도 늦지 않아요." if kind == "verify" else "알겠어요. 다만 어제와 같은 말이라도 오늘 사람의 상태는 다시 볼게요.")
+        "rho":
+            return "그럼 실제 순서부터 돌려 보자." if kind == "verify" else ("바뀐 지점만 말해. 장비 순서는 내가 다시 맞춰 볼게." if kind == "reframe" else "좋아. 같은 순서로 다시 돌려 보면 맞는지 바로 보여.")
+        "dax":
+            return "좋아. 결론은 보류하고 전제부터 검증하자." if kind == "verify" else ("그 설명이면 무엇이 바뀌었는지부터 분리할 수 있겠네." if kind == "reframe" else "유지한다면 같은 전제로 같은 결론이 나오는지 다시 보자.")
+        "noa":
+            return "그럼 원본 번호와 최초 열람 순서부터 맞출게요." if kind == "verify" else ("바뀐 근거가 어느 시점에 들어왔는지 기록부터 찾을게요." if kind == "reframe" else "좋아요. 어제 쓴 출처가 오늘도 같은지 먼저 확인해요.")
+        "sena":
+            return "좋아. 출입 순서부터 다시 맞추자." if kind == "verify" else ("그럼 판단이 바뀐 순간 전후의 행동부터 보자." if kind == "reframe" else "유지할 거면 실제 행동도 어제 말과 이어지는지 확인하자.")
+        "vale":
+            return "그럼 원음을 먼저 열게요. 전언은 그 뒤에 비교해요." if kind == "verify" else ("어느 신호를 새로 들은 뒤 생각이 바뀌었는지부터 나눠 볼게요." if kind == "reframe" else "같은 판단이라면 최초 신호도 같은 방향을 가리키는지 들어 볼게요.")
+        "eli":
+            return "좋아. 지도와 시간부터 놓고 가능한 경로만 남기자." if kind == "verify" else ("바뀐 조건이 이동 가능성을 바꿨는지부터 계산해 보자." if kind == "reframe" else "유지한다면 같은 시간 안에 그 경로가 여전히 가능한지 보자.")
+        "lyra":
+            return "그럼 오늘도 같은 흔적이 남는지부터 볼게요." if kind == "verify" else ("새 흔적이 들어온 시점과 판단이 바뀐 시점을 같이 볼게요." if kind == "reframe" else "좋아요. 어제 흔적이 일회성이 아니었는지 다시 확인해요.")
+    return "그 순서로 다시 확인해 보자."
+
+func _crosscurrent_verify_lead(lead: String, partner: String) -> String:
+    for preferred in ["noa", "sena", "vale", "dax", "eli", "lyra", "rho", "mira"]:
+        if preferred in [lead, partner]:
+            return preferred
+    return lead
+
+func _crosscurrent_meeting_text(kind: String, priority: String) -> String:
+    var name := name_of(priority) if priority != "" and crew.has(priority) else "관련 승무원"
+    match kind:
+        "stand":
+            return "회의는 어제의 판단을 그대로 반복하지 않고, %s|i 짚은 %s부터 다시 확인하는 데서 시작된다." % [name, _crosscurrent_method(priority)]
+        "reframe":
+            return "회의는 누가 말을 바꿨는지를 따지기보다, %s|i 짚은 ‘무엇이 바뀌어 결론이 달라졌는가’부터 확인하며 시작된다." % name
+        "verify":
+            return "회의는 결론을 잠시 미루고, %s|i 고른 %s부터 원출처와 실제 순서를 맞추며 시작된다." % [name, _crosscurrent_method(priority)]
+    return ""
+
+func _crosscurrent_scene(day_index: int) -> Dictionary:
+    if day_index <= 1 or case_id == AstraCaseCatalog.CALIBRATION:
+        return {}
+    var previous := day_index - 1
+    var residue := verdict_residue(previous)
+    if residue.is_empty():
+        return {}
+    var seen: Dictionary = stage_state().get("crosscurrent_seen", {})
+    if bool(seen.get(str(previous), false)):
+        return {}
+    var lead := _verdict_alive_lead(residue)
+    var partner := _crosscurrent_partner(residue)
+    if lead == "" or partner == "" or lead == partner or not is_alive(lead) or not is_alive(partner):
+        return {}
+    var category := _crosscurrent_category(residue, lead, partner)
+    seen[str(previous)] = true
+    stage_state()["crosscurrent_seen"] = seen
+
+    # Crosscurrent replaces the generic one-person morning verdict callback.
+    # Marking the same residue seen prevents a later duplicate while keeping the
+    # old callback function available as the safe fallback.
+    var verdict_seen: Dictionary = stage_state().get("verdict_feedback_seen", {})
+    verdict_seen[str(previous)] = true
+    stage_state()["verdict_feedback_seen"] = verdict_seen
+
+    match category:
+        "ALIGN":
+            crew[lead].expression = "calm"
+            crew[partner].expression = "warm"
+        "RECONSIDER":
+            crew[lead].expression = "uneasy"
+            crew[partner].expression = "calm"
+        "SOURCE_DISPUTE":
+            crew[lead].expression = "tense"
+            crew[partner].expression = "calm"
+        "CARE_VS_PROOF":
+            crew[lead].expression = "uneasy"
+            crew[partner].expression = "calm"
+        _:
+            crew[lead].expression = "tense"
+            crew[partner].expression = "uneasy"
+
+    var metadata := {
+        "source_day": previous, "lead": lead, "partner": partner, "category": category,
+        "pattern": str(residue.get("pattern", "")),
+        "reason_code": str(Dictionary(residue.get("ballot_reason", {})).get("code", ""))
+    }
+    var history: Array = stage_state().get("crosscurrent_history", [])
+    history.append(metadata.duplicate(true))
+    stage_state()["crosscurrent_history"] = history
+    return _scene_entry({
+        "id": "crosscurrent_%d" % previous,
+        "art": str(AstraStageStory.STAGE_ART.get(case_id, "bridge")),
+        "speaker": lead,
+        "action": "%s %s" % [_crosscurrent_action(lead), _crosscurrent_action(partner)],
+        "lines": [
+            [lead, _crosscurrent_position_line(lead, residue, category, true)],
+            [partner, _crosscurrent_position_line(partner, residue, category, false)]
+        ],
+        "choices": _crosscurrent_choices(residue),
+        "crosscurrent": metadata
+    }, "crosscurrent")
+
+func _apply_crosscurrent_choice(scene: Dictionary, choice: Dictionary) -> bool:
+    var data: Dictionary = scene.get("crosscurrent", {})
+    if data.is_empty():
+        return false
+    var source_day := int(data.get("source_day", day - 1))
+    var choices: Dictionary = stage_state().get("crosscurrent_choices", {})
+    if choices.has(str(source_day)):
+        return false
+    var effect := str(choice.get("effect", ""))
+    var kind := effect.trim_prefix("crosscurrent:")
+    if kind not in ["stand", "reframe", "verify"]:
+        return false
+    var lead := str(data.get("lead", ""))
+    var partner := str(data.get("partner", ""))
+    if not is_alive(lead) or not is_alive(partner):
+        return false
+
+    var priority := lead
+    if kind == "reframe":
+        priority = partner
+    elif kind == "verify":
+        priority = _crosscurrent_verify_lead(lead, partner)
+
+    var opener := _crosscurrent_meeting_text(kind, priority)
+    var entry := data.duplicate(true)
+    entry["choice"] = kind
+    entry["priority"] = priority
+    entry["meeting_opener"] = opener
+    choices[str(source_day)] = entry
+    stage_state()["crosscurrent_choices"] = choices
+
+    var priorities: Dictionary = stage_state().get("crosscurrent_priority", {})
+    priorities[str(day)] = {"npc": priority, "source_day": source_day, "choice": kind}
+    stage_state()["crosscurrent_priority"] = priorities
+    var openers: Dictionary = stage_state().get("crosscurrent_meeting_openers", {})
+    openers[str(day)] = opener
+    stage_state()["crosscurrent_meeting_openers"] = openers
+
+    if kind == "stand":
+        crew[lead].expression = "warm"
+        crew[partner].expression = "uneasy"
+    elif kind == "reframe":
+        crew[lead].expression = "uneasy"
+        crew[partner].expression = "warm"
+    else:
+        crew[priority].expression = "calm"
+        var other := partner if priority == lead else lead
+        crew[other].expression = "tense"
+
+    AstraDecisionModel.append_trace(flags, AstraDecisionModel.trace(
+        "player", "crosscurrent_" + kind, priority,
+        [AstraDecisionModel.reason("verdict_residue", 1.0, str(data.get("pattern", "")))], day
+    ))
+
+    # One compact reaction line makes the choice immediately visible. It is a
+    # continuation of the same scene, not a new phase or a generic callback.
+    var reaction := _scene_entry({
+        "id": "crosscurrent_reaction_%d_%s" % [source_day, kind],
+        "art": str(AstraStageStory.STAGE_ART.get(case_id, "bridge")),
+        "speaker": priority,
+        "action": "두 사람의 시선이 오늘 무엇을 먼저 확인할지로 옮겨 간다.",
+        "lines": [[priority, _crosscurrent_choice_reply(priority, kind)]]
+    }, "crosscurrent")
+    var queue := story_queue()
+    queue.insert(mini(int(stage_state().get("story_index", 0)) + 1, queue.size()), reaction)
+    stage_state()["story_queue"] = queue
+
+    var history: Array = stage_state().get("crosscurrent_history", [])
+    for i in range(history.size() - 1, -1, -1):
+        if int(Dictionary(history[i]).get("source_day", -1)) == source_day:
+            history[i] = entry.duplicate(true)
+            break
+    stage_state()["crosscurrent_history"] = history
+    return true
+
+func _crosscurrent_meeting_line() -> String:
+    var openers: Dictionary = stage_state().get("crosscurrent_meeting_openers", {})
+    return _josa_inline(str(openers.get(str(day), "")))
+
 func _verdict_callback_text(residue: Dictionary) -> String:
     var subject := str(residue.get("subject", ""))
     var subject_name := name_of(subject) if subject != "" and crew.has(subject) else "그 사람"
@@ -3464,6 +3788,11 @@ func _verdict_callback_scene(day_index: int) -> Dictionary:
 
 func _verdict_followup_for(npc_id: String) -> Dictionary:
     if day <= 1:
+        return {}
+    var cross_choices: Dictionary = stage_state().get("crosscurrent_choices", {})
+    if cross_choices.has(str(day - 1)):
+        # The two-person scene already reinterpreted this verdict; do not stack
+        # the old generic VERDICT question on the same information.
         return {}
     var residue := verdict_residue(day - 1)
     if residue.is_empty() or _verdict_alive_lead(residue) != npc_id:
@@ -3883,8 +4212,11 @@ func _thread_callback() -> bool:
             _add_accusation(speaker, str(target), 0.6)
             _set_moment("callback", {"subject": str(target), "speaker": speaker})
             return true
-    # Yesterday's decision is also on the table: who pushed it, and the fact
-    # that the ship is still under attack.
+    # Yesterday's decision is also on the table only when CROSSCURRENT has not
+    # already turned that same verdict into today's visible social continuation.
+    var cross_choices: Dictionary = stage_state().get("crosscurrent_choices", {})
+    if cross_choices.has(str(day - 1)):
+        return false
     var rounds: Array = stage_state().get("vote_rounds", [])
     if rounds.is_empty():
         return false
@@ -6613,6 +6945,12 @@ func story_choose(index: int) -> bool:
         _story_advance_scene()
         changed.emit()
         return true
+    if effect.begins_with("crosscurrent:"):
+        if not _apply_crosscurrent_choice(scene, choice):
+            return false
+        _story_advance_scene()
+        changed.emit()
+        return true
     _record_branch_choice(scene, choice)
     if not voyage.is_empty() and who != "":
         voyage["choices"][effect] = int(voyage["choices"].get(effect, 0)) + 1
@@ -6855,9 +7193,13 @@ func _queue_morning(day_index: int, recovered: Array = []) -> void:
         if not reaction_lines.is_empty():
             scenes.append(_scene_entry({"id": "morning_%d" % day_index, "art": art, "speaker": str(reaction_lines[0][0]),
                 "action": AstraStageStory.morning_mood(case_id), "lines": reaction_lines}, "morning"))
-        var verdict_scene := _verdict_callback_scene(day_index)
-        if not verdict_scene.is_empty():
-            scenes.append(verdict_scene)
+        var crosscurrent_scene := _crosscurrent_scene(day_index)
+        if not crosscurrent_scene.is_empty():
+            scenes.append(crosscurrent_scene)
+        else:
+            var verdict_scene := _verdict_callback_scene(day_index)
+            if not verdict_scene.is_empty():
+                scenes.append(verdict_scene)
         for note in recovered:
             var by := str(note.get("by", ""))
             if is_alive(by):

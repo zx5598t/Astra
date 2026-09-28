@@ -1,3 +1,16 @@
+## 1.2.2 — CROSSCURRENT
+
+A social follow-through pass over 1.2.1. No new relationship/reputation manager, meter, phase, character, protocol, Stage or save schema.
+
+- **Verdict residue can become a two-person Crosscurrent.** Only player-visible ballot provenance, public commitments and living participants are eligible; hidden role/truth never enter pair or category selection.
+- **One bounded intervention changes the same Day.** Three contextual choices alter the immediate reaction, today’s talk priority and the meeting opener without changing truth, Day Packets, proof routes or action counts.
+- **Generic feedback is replaced, not stacked.** A successful Crosscurrent consumes the 1.2.1 morning verdict callback and suppresses its duplicate VERDICT follow-up; single-person callback remains the fallback when a natural pair is unavailable.
+- **Character reasoning stays concrete.** Mira reads people under pressure, Jun execution order, Daren premises, Noa provenance, Sena procedure, Soren original signal, Lucan route feasibility and Maren environmental continuity.
+- **Existing expressions do the visual work.** calm / warm / tense / uneasy are reused from the current portrait system and are never keyed to Null status.
+- **Past Echo keeps its own meaning.** If a current-History Past Echo supplies the meeting opener, it takes that slot rather than stacking a second opener.
+- **Save compatibility unchanged.** Crosscurrent state is optional nested `flags["stage_080"]` data. Meta save v12 / Snapshot v4 remain unchanged.
+- **Regression coverage expanded.** `crosscurrent_122_tests.gd` audits eligibility, fallback, replacement, ≥2 visible choice dimensions, no free evidence/action, role-tell safety, lead cap and save/load dedup.
+
 ## 1.2.1 — WEIGHT OF WORDS
 
 A social-consequence connection pass over 1.2.0. No reputation meter, credibility score, new manager, character, protocol, Stage or save schema.

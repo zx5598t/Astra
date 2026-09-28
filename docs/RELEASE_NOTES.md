@@ -1,3 +1,23 @@
+# ASTRA 1.2.2 — CROSSCURRENT
+
+**어제 내가 한 판단 때문에, 오늘 사람들 사이의 흐름이 달라집니다.**
+
+1.2.1의 ballot reason provenance와 verdict residue를 새 점수 시스템으로 키우지 않고, 이미 있는 사람·표정·대화·회의 흐름에 한 단계 더 연결했습니다.
+
+- **의미 있을 때만 두 사람이 부딪히거나 맞물립니다.** 어제의 공개 지목/변호와 투표 근거에서 자연스러운 두 사람이 모두 살아 있을 때 Crosscurrent가 열립니다. 그렇지 않으면 기존 1인 callback이 안전하게 남습니다.
+- **플레이어가 짧게 개입합니다.** 판단을 유지할지, 무엇이 바뀌어 생각을 고쳤는지 설명할지, 결론보다 원출처와 실제 순서를 먼저 볼지 고릅니다.
+- **선택이 같은 날 보입니다.** 두 사람의 즉시 반응과 표정, 우선 대화 상대, 회의 첫 확인 방식이 달라집니다.
+- **기존 callback을 위에 더 얹지 않습니다.** Crosscurrent가 같은 역할을 수행하면 generic verdict callback과 generic VERDICT 재질문을 생략합니다.
+- **사람마다 확인 방식이 다릅니다.** 노아는 원본/전달 순서, 세나는 출입/절차, 소렌은 원음, 루칸은 시간·경로, 마렌은 흔적의 지속성처럼 기존 캐릭터 사고방식을 사용합니다.
+- **역할 힌트가 되지 않습니다.** Crosscurrent 후보·유형·표정은 hidden Null role을 읽지 않으며 같은 공개 정보에는 같은 규칙을 씁니다.
+- **사건 진실은 건드리지 않습니다.** same-seed truth와 Day Packet, required proof, 기본 evidence, action count는 그대로입니다.
+- **Past Echo와 공존합니다.** 둘을 합치지 않으며 현재 History의 Past Echo가 회의 opener를 이미 제공하면 그 한 줄을 우선해 중복 설명을 막습니다.
+- **저장 형식은 그대로입니다.** Meta v12 / Snapshot v4. 새 state는 기존 stage dictionary의 optional key라 1.2.1 저장을 깨지 않습니다.
+
+정확한 테스트·CI·Windows build·Release 결과는 `docs/QA_REPORT.md`와 GitHub Release에 기록합니다.
+
+---
+
 # ASTRA 1.2.1 — WEIGHT OF WORDS
 
 **회의에서 한 말과 투표 이유가 다음 날 사람들의 반응과 질문에 남습니다.**

@@ -1,7 +1,26 @@
+# ASTRA 1.2.2 — CROSSCURRENT QA
+
+Base: main **3481b3ad0f28ab7557faa69a6bbfdc0aae2701ae** (official v1.2.1).  
+Feature branch: `release/1.2.2`. Final 1.2.2 main/CI/Windows/Release values are reported from the exact tested commit; an in-progress workflow is never counted as success.
+
+## 1.2.2 verification contract
+
+- `crosscurrent_122_tests.gd`: all five verdict residue patterns, two-person eligibility, CALIBRATION protection, inactive-participant fallback, max one per Day, generic callback replacement, three selectable interventions, ≥2 visible dimensions between sibling choices, no free fragment/action, role-tell safety, talk-lead cap, meeting payoff, truth/Day Packet invariance and Snapshot v4 / Meta v12 save/load dedup.
+- Crosscurrent uses only 1.2.1 public/player-visible residue and existing character expertise. It does not inspect hidden Null role/truth, add a relationship/reputation/morality score, create a new phase or change required proof.
+- A successful Crosscurrent replaces the generic 1.2.1 morning verdict callback and suppresses the duplicate generic VERDICT follow-up. If no natural pair exists, the single-person 1.2.1 callback remains.
+- Past Echo remains a separate prior-History mechanic. When a current-History Past Echo already supplies the meeting opener, it keeps that slot rather than stacking another explanation.
+- Existing causal, fairness, deduction, pacing, dialogue exposure, replay, micro-choice, Past Echo, verdict residue, UI/visual, Windows and release gates remain in `tests/ci_suite.txt` unchanged.
+- Meta save **v12** / Snapshot **v4** remain unchanged; Crosscurrent state is optional nested `flags["stage_080"]` data.
+
+---
+
 # ASTRA 1.2.1 — WEIGHT OF WORDS QA
 
-Base: main **1e3e780ad84af411169d13aece227f88b99685e9** (official v1.2.0).  
-Feature branch: `release/1.2.1`. Final release SHA/CI/build values are recorded after the exact tested commit is promoted; do not treat an in-progress workflow as success.
+최종 main / tag SHA: `3481b3ad0f28ab7557faa69a6bbfdc0aae2701ae`  
+Godot CI **#829 / run 36376713576: SUCCESS**  
+Publish ASTRA release **#71 / run 36378232623: SUCCESS**  
+Windows: `ASTRA-1.2.1-windows.zip` · **113,149,823 bytes**  
+SHA-256: `bf0b7129f21b4dfffbd3af31b2a4fa9ab01acc454d8f36beb7e6df5b7a24c8be`
 
 ## 1.2.1 verification contract
 
