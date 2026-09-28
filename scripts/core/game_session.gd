@@ -1463,7 +1463,9 @@ func _statement(member: AstraCrewMember, result: Dictionary) -> void:
             opener = str(AstraExplorerCatalog.TONE_CALLBACK.get(member.id, {}).get(AstraExplorerCatalog.tone_kind(str(tones[member.id])), ""))
     if opener != "":
         _say_text(member, opener, result, "opener")
-    _player_line(member, STATEMENT_QUESTION.replace("{time}", incident_time()), result, "STATEMENT")
+    var statement_roll := _dialogue_pick("statement_question:" + member.id + ":" + str(day) + ":" + str(Array(transcripts.get(member.id,[])).size()))
+    var statement_text := AstraExplorerCatalog.statement_line(identity, incident_time(), statement_roll)
+    _player_line(member, statement_text, result, "STATEMENT", true)
     var line := AstraSocialLines.line(member.id, "open_with" if not mates.is_empty() else "open_alone", params, _dialogue_pick(member.id + "open"))
     _say_text(member, line, result, "STATEMENT")
     known_claims[member.id] = {"position": str(claim.get("position", "")), "companions": mates.duplicate(), "day": day}
