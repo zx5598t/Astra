@@ -3648,6 +3648,26 @@ func _crosscurrent_meeting_text(kind: String, priority: String) -> String:
             return "회의는 결론을 잠시 미루고, %s|i 고른 %s부터 원출처와 실제 순서를 맞추며 시작된다." % [name, _crosscurrent_method(priority)]
     return ""
 
+func _crosscurrent_pair_key(lead: String, partner: String) -> String:
+    var pair := [lead, partner]
+    pair.sort()
+    return "%s|%s" % [str(pair[0]), str(pair[1])]
+
+func _crosscurrent_exact_repeat(source_day: int, lead: String, partner: String, category: String) -> bool:
+    var history: Array = stage_state().get("crosscurrent_history", [])
+    if history.is_empty():
+        return false
+    var last: Dictionary = history.back()
+    # Presentation pacing only: suppress the exact same two-person structure
+    # when it would appear on immediately consecutive Days. A gap resets it.
+    if int(last.get("source_day", -99)) != source_day - 1:
+        return false
+    return (
+        _crosscurrent_pair_key(str(last.get("lead", "")), str(last.get("partner", "")))
+        == _crosscurrent_pair_key(lead, partner)
+        and str(last.get("category", "")) == category
+    )
+
 func _crosscurrent_scene(day_index: int) -> Dictionary:
     if day_index <= 1 or case_id == AstraCaseCatalog.CALIBRATION:
         return {}
@@ -3665,6 +3685,12 @@ func _crosscurrent_scene(day_index: int) -> Dictionary:
     if lead == "" or partner == "" or lead == partner or not is_alive(lead) or not is_alive(partner):
         return {}
     var category := _crosscurrent_category(residue, lead, partner)
+    # CLEAR CURRENT: the exposure baseline found a small number of immediate
+    # same-pair/same-category repeats. Do not make the two-person choice screen
+    # a ritual; return to the existing one-person verdict callback instead.
+    # This reads only already-shown Crosscurrent history and never truth/roles.
+    if _crosscurrent_exact_repeat(previous, lead, partner, category):
+        return {}
     seen[str(previous)] = true
     stage_state()["crosscurrent_seen"] = seen
 
