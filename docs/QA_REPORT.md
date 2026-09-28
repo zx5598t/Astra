@@ -53,6 +53,28 @@ Post-suppression audit:
 
 The suppression reads only already player-facing `crosscurrent_history`. It does not inspect role, truth, suspicion score or future evidence; a suppressed two-person scene falls through to the existing one-person verdict callback.
 
+## Release-branch verification candidate
+
+Exact tested release head before main promotion: `6e17b4b0dcef195c3bc85df3a7804d16b7ee41f4`  
+Godot CI **#882 / run 36492702548: SUCCESS**.
+
+- privacy / compatibility regressions: **PASS** — private reason isolation, historical-public/future-public separation, Day-scoped public-conflict provenance and 1.2.2 synthetic `target|detail` conflict compatibility.
+- `crosscurrent_122_tests.gd`: **112 checks PASS**.
+- `verdict_residue_121_tests.gd`: **43 checks PASS**.
+- `run_tests.gd --games=40`: **63,634 checks PASS**.
+- quick stabilization: DEAD_AIR SMART/PASSIVE **95/80%**, GLASS_GARDEN **100/85%**, ECHO_WARD **97/75%**; deduction **11,177 checks PASS**; causal **300 paired seeds PASS**; fairness **909 checks PASS**.
+- 100-game balance probe: TOTAL SMART / RANDOM / PASSIVE **93 / 60 / 53%**. Per-Stage distribution remains the established 1.2.x baseline.
+- save compatibility: **Snapshot v4 / Meta v12 PASS**, no schema bump or destructive migration.
+- Linux validate/full suite/main boot: **PASS**.
+- Windows validate/full suite/main boot: **PASS**.
+- visual review: **PASS**.
+- Windows release-candidate export + exported EXE boot: **PASS**.
+- Windows EXE metadata: FileVersion **1.2.3.0**, ProductVersion **1.2.3.0**, FileDescription **ASTRA — CLEAR CURRENT**.
+- candidate package: `ASTRA-1.2.3-windows.zip` · **113,163,305 bytes** · SHA256 **ea165ec95db0c78416fc436c596f57dc6cd3717f656f0de48b7f44c9cfa27b81**.
+- non-fatal runner diagnostic retained: Godot dummy/headless teardown can report leaked RID allocations after successful tests; authored assertions, Windows boot/export and release gates still pass.
+
+Final main/tag/Release provenance is appended only after the exact main SHA passes the same pipeline.
+
 ---
 
 # ASTRA 1.2.2 — CROSSCURRENT QA
