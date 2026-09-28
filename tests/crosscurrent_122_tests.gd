@@ -298,6 +298,6 @@ func run_audit() -> void:
 
     # Release metadata must match the 1.2.2 package shown by Windows.
     var export_cfg := FileAccess.get_file_as_string("res://export_presets.cfg")
-    check(export_cfg.contains("application/file_version=\"1.2.2.0\""), "Windows file version is 1.2.2.0")
-    check(export_cfg.contains("application/product_version=\"1.2.2.0\""), "Windows product version is 1.2.2.0")
-    check(export_cfg.contains("application/file_description=\"ASTRA — CROSSCURRENT\""), "Windows description names CROSSCURRENT")
+    check(export_cfg.contains("application/file_version=\"1.2.3.0\""), "Windows file version is 1.2.3.0")
+    check(export_cfg.contains("application/product_version=\"1.2.3.0\""), "Windows product version is 1.2.3.0")
+    check(export_cfg.contains("application/file_description=\"ASTRA — CLEAR CURRENT\""), "Windows description names CLEAR CURRENT")
