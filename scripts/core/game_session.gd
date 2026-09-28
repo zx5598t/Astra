@@ -1521,6 +1521,9 @@ func _conversation_opener(member: AstraCrewMember) -> String:
 # The one social question of the Day (§6): it ties the conversations, the
 # meeting and the vote together, and it grows out of yesterday (§7).
 func day_question() -> String:
+    var echo_question := str(stage_state().get("past_echo_question", ""))
+    if echo_question != "":
+        return echo_question
     var info := incident()
     var where := room_name(str(info.get("room", "")))
     if day > 1:
@@ -6158,6 +6161,17 @@ func story_choose(index: int) -> bool:
     var choice: Dictionary = choices[index]
     var who := str(scene.get("speaker", ""))
     var effect := str(choice.get("effect", ""))
+    # AFTERIMAGE: an Echo changes investigation direction, never current truth.
+    if effect.begins_with("past_echo:"):
+        _apply_past_echo(effect.trim_prefix("past_echo:"))
+        _story_advance_scene()
+        changed.emit()
+        return true
+    if effect.begins_with("past_echo_skip:"):
+        stage_state()["past_echo_skipped"] = effect.trim_prefix("past_echo_skip:")
+        _story_advance_scene()
+        changed.emit()
+        return true
     # The last decision remains the player's action. Campaign history changes
     # how the room receives it, never which action was selected.
     if effect.begins_with("finale:"):
@@ -7861,8 +7875,86 @@ func begin_voyage(memory: Dictionary = {}) -> void:
     voyage["met"] = roster.duplicate()
     _queue_echo_beat(memory)
     _insert_cross_stage_branch_callback()
+    _insert_past_echo_opportunity(memory)
     _drain_consequences("NEXT_LOOP", true)
     changed.emit()
+
+# 1.2.0 AFTERIMAGE. At most one optional investigation-direction Echo is
+# offered in a Stage. Its eligibility comes only from persistent authored
+# experience (route choice / micro-arc memory tag). It never reads truth,
+# null ids, undiscovered fragments or generator internals.
+func _insert_past_echo_opportunity(memory: Dictionary) -> void:
+    if voyage.is_empty() or is_deep() or day != 1 or phase != "BRIEFING":
+        return
+    var candidates := AstraForeknowledgeModel.past_echo_candidates(case_id, memory, voyage.get("foreknowledge_used", []))
+    if candidates.is_empty():
+        return
+    var candidate: Dictionary = candidates[0]
+    var echo_id := str(candidate.get("id", ""))
+    if echo_id == "":
+        return
+    var scene := {
+        "id":"120_past_echo_" + echo_id,
+        "art":str(AstraStageStory.STAGE_ART.get(case_id, "bridge")),
+        "speaker":"",
+        "category":"FOREKNOWLEDGE",
+        "action":"이전 History에서 직접 겪은 장면 하나가 현재 기록과 겹쳐 보인다.",
+        "lines":[["", "정답이 기억나는 건 아니다. 다만, 어디부터 확인했을 때 기록이 갈렸는지는 기억난다."]],
+        "choices":[
+            {"label":str(candidate.get("label", "[잔향] 다른 순서로 확인한다.")), "effect":"past_echo:" + echo_id},
+            {"label":"이번 History의 기록만 따라간다.", "effect":"past_echo_skip:" + echo_id}
+        ]
+    }
+    _insert_morning_scene(_scene_entry(scene, "past_echo"))
+    stage_state()["past_echo_offered"] = echo_id
+
+func _apply_past_echo(echo_id: String) -> void:
+    if voyage.is_empty():
+        return
+    var candidate := AstraForeknowledgeModel.past_echo_by_id(echo_id)
+    if candidate.is_empty():
+        return
+    # Re-check eligibility against the carried experience. This prevents a
+    # crafted/snapshotted choice from activating an unearned Echo.
+    var memory_view := {
+        "route_choices":voyage.get("route_choices",{}),
+        "memory_tags":voyage.get("memory_tags",[]),
+        "scene_seen_counts":voyage.get("scene_seen_counts",{})
+    }
+    if str(candidate.get("case", "")) != case_id or not AstraForeknowledgeModel.candidate_allowed(candidate, memory_view):
+        return
+    var used: Array = voyage.get("foreknowledge_used", [])
+    if echo_id in used:
+        return
+    used.append(echo_id)
+    voyage["foreknowledge_used"] = used
+    stage_state()["past_echo_used"] = echo_id
+    stage_state()["past_echo_question"] = str(candidate.get("question", ""))
+    stage_state()["past_echo_context"] = str(candidate.get("context", ""))
+    var lead := str(candidate.get("lead", ""))
+    var leads: Array = stage_state().get("echo_leads", [])
+    if lead != "" and is_alive(lead) and lead not in leads:
+        leads.append(lead)
+    stage_state()["echo_leads"] = leads
+    if lead != "":
+        voyage["pinned_question"] = lead
+    var observer := str(candidate.get("observer", lead))
+    if not is_alive(observer):
+        observer = lead if is_alive(lead) else ""
+    if observer != "":
+        var reaction := AstraForeknowledgeModel.reaction_scene(observer, echo_id, int(voyage.get("loop", 0)))
+        if not reaction.is_empty():
+            var queue := story_queue()
+            queue.insert(int(stage_state().get("story_index", 0)) + 1, _scene_entry(reaction, "past_echo_reaction"))
+            stage_state()["story_queue"] = queue
+            var reactions: Array = voyage.get("foreknowledge_reactions", [])
+            reactions.append({"id":echo_id,"observer":observer,"case":case_id,"day":day})
+            voyage["foreknowledge_reactions"] = reactions
+            # Character-specific response, not a universal punishment. The
+            # expert recognizes a useful direction but is unsettled by timing.
+            if crew.has(observer):
+                crew[observer].adjust_trust(0.025 if observer in ["eli","lyra","noa"] else -0.01)
+    _log("잔향 · " + str(candidate.get("label", echo_id)))
 
 # One beat of residue at the first morning, at most (§16-19, §30): after a
 # death, the line the explorer carried back; otherwise, sometimes, one
