@@ -62,7 +62,7 @@ func test_catalog_scope() -> void:
         ids[id] = true
         check(not Array(row.get("requires", [])).is_empty() or not Array(row.get("requires_any", [])).is_empty(), id + " has direct-experience eligibility")
         var visible := str(row.get("label", "")) + str(row.get("question", "")) + str(row.get("context", ""))
-        check(not "Null이다" in visible and not "정답" in visible, id + " never states hidden truth")
+        check(not "Null이다" in visible and not "Null은" in visible and not "범인은" in visible and not "정답은" in visible, id + " never states hidden truth")
     check(stages.size() >= 5, "Past Echo opportunities are distributed across 5+ Stages")
 
 func test_requires_real_experience() -> void:
