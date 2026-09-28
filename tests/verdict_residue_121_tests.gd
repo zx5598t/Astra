@@ -54,11 +54,13 @@ func _pattern(commitment: String, same_target: bool, evidence_after: bool = fals
     else:
         s.stage_state()["public_defenses"].append({"day":1,"speaker":"player","target":subject,"meeting_index":2})
     if evidence_after:
-        s.stage_state()["links"].append({
+        var links: Array = s.stage_state().get("links", [])
+        links.append({
             "day":1,"statement":"claim:" + subject,"evidence":"fact:test","second":"",
             "result":"CONTRADICTION","family":"test","targets":[subject],"why":"새 공개 근거",
             "meeting_index":5
         })
+        s.stage_state()["links"] = links
         _reason(s, vote_target, "link", "새 공개 근거", 5, other)
     else:
         _reason(s, vote_target)
@@ -80,11 +82,13 @@ func run_audit() -> void:
     var pids := _targets(p)
     var target := str(pids[0])
     var source_owner := str(pids[1])
-    p.stage_state()["links"].append({
+    var provenance_links: Array = p.stage_state().get("links", [])
+    provenance_links.append({
         "day":1,"statement":"claim:" + source_owner,"evidence":"claim:" + target,"second":"",
         "result":"CONTRADICTION","family":"route","targets":[target],"why":"동선이 맞지 않는다.",
         "meeting_index":7
     })
+    p.stage_state()["links"] = provenance_links
     var options := p.ballot_reasons(target)
     var link_index := -1
     for i in range(options.size()):
