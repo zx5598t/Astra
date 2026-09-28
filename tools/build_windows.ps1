@@ -23,6 +23,32 @@ try {
     $exe = Join-Path $packageDir 'ASTRA.exe'
     Invoke-AstraGodot $engine @('--headless', '--path', $AstraRoot, '--export-release', 'Windows Desktop', $exe) "$logDir\export.log"
     if (-not (Test-Path -LiteralPath $exe)) { throw 'The Windows export did not produce ASTRA.exe.' }
+
+    # Verify the metadata Windows Explorer actually reads from the exported PE,
+    # not only the source export preset. This keeps patch releases from shipping
+    # a stale file/product version or previous codename.
+    $expectedWinVersion = "$version.0"
+    $presetText = Get-Content -LiteralPath "$AstraRoot\export_presets.cfg" -Raw
+    $descriptionMatch = [regex]::Match($presetText, 'application/file_description="([^"]+)"')
+    if (-not $descriptionMatch.Success) { throw 'Windows file_description is missing from export_presets.cfg.' }
+    $expectedDescription = $descriptionMatch.Groups[1].Value
+    $versionInfo = (Get-Item -LiteralPath $exe).VersionInfo
+    $actualFileVersion = ([string]$versionInfo.FileVersion).Trim()
+    $actualProductVersion = ([string]$versionInfo.ProductVersion).Trim()
+    $actualDescription = ([string]$versionInfo.FileDescription).Trim()
+    if ($actualFileVersion -ne $expectedWinVersion) {
+        throw "ASTRA.exe FileVersion mismatch: expected $expectedWinVersion, got $actualFileVersion"
+    }
+    if ($actualProductVersion -ne $expectedWinVersion) {
+        throw "ASTRA.exe ProductVersion mismatch: expected $expectedWinVersion, got $actualProductVersion"
+    }
+    if ($actualDescription -ne $expectedDescription) {
+        throw "ASTRA.exe FileDescription mismatch: expected '$expectedDescription', got '$actualDescription'"
+    }
+    Write-Host "ASTRA WINDOWS FILE VERSION: $actualFileVersion"
+    Write-Host "ASTRA WINDOWS PRODUCT VERSION: $actualProductVersion"
+    Write-Host "ASTRA WINDOWS FILE DESCRIPTION: $actualDescription"
+
     Invoke-AstraGodot $exe @('--headless', '--quit-after', '10', '--log-file', "$logDir\exported-game.log") "$logDir\exported-stdout.log"
     if ((Get-Content -LiteralPath "$logDir\exported-game.log" -Raw) -match 'SCRIPT ERROR|ERROR:') { throw 'The exported game failed its boot test.' }
     Copy-Item -LiteralPath "$AstraRoot\START_HERE.md", "$AstraRoot\LICENSES.md" -Destination $packageDir -Force
