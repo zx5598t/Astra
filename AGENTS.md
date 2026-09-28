@@ -1,8 +1,8 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **1.2.0 — AFTERIMAGE**. Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
-- 1.2.0 keeps the 1.1.1 deduction/fairness/finale contract and connects actual prior route experience to Past Echo investigation choices. Past Echo lives in the existing Foreknowledge/voyage/conversation architecture; do not add an Echo currency, skill tree or parallel history manager.
+- Version **1.2.1 — WEIGHT OF WORDS**. Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- 1.2.1 keeps the 1.2.0 deduction/fairness/Past Echo contract and connects existing ballot reasons, public accusation/defense, DecisionTrace and conversation priority so yesterday's public judgement can return as one bounded next-Day callback/follow-up. Do not add reputation, credibility, morality or parallel relationship managers.
 - One Stage = one game; a Day = Morning → Conversation → Meeting → Vote → Night. PART I (Stages 1–4) one Null,
   PART II (Stage 5+) two Nulls and one protocol (GUARDIAN 5 / ANALYST 6 / EMPATH 7). No investigation phase,
   no exploration in the main loop, no abstention, exactly one isolation per Day, explorer death = immediate loss.
