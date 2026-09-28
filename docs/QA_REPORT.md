@@ -12,6 +12,47 @@ Feature branch: `release/1.2.3`. Final 1.2.3 main/CI/Windows/Release values are 
 - Windows file/product version is **1.2.3.0** and description is **ASTRA — CLEAR CURRENT**.
 - Meta save **v12** / Snapshot **v4** remain unchanged; no migration and no gameplay truth/balance changes.
 
+
+## Crosscurrent runtime exposure — 1.2.3
+
+`tests/crosscurrent_exposure_123.gd` drives all Stages across **8 deterministic seeds per Stage** using representative Stage/Day play, real ballot-reason selection and the actual morning story queue.
+
+Pre-suppression baseline:
+- simulated Days **212**
+- eligible Crosscurrent **90**
+- shown Crosscurrent **90**
+- generic verdict fallback **12**
+- max consecutive Crosscurrent **2**
+- 2-Day consecutive transitions **19**
+- 3-Day+ consecutive **0**
+- same unordered pair consecutive **3**
+- same category consecutive **19**
+- same pair + same category consecutive **3**
+- Past Echo opener collision **0**
+- stand / reframe / verify **30 / 31 / 29**
+
+Because 3-Day streaks were absent and Crosscurrent was not shown on every simulated Day, no broad cooldown or three-in-a-row rule was added. The only measured repetition defect was the **3 immediate same-pair+same-category repeats**.
+
+Post-suppression audit:
+- simulated Days **212**
+- eligible Crosscurrent **90**
+- shown Crosscurrent **87**
+- generic verdict fallback **15**
+- exact-repeat suppression **3**
+- max consecutive Crosscurrent **2**
+- 2-Day consecutive transitions **16**
+- 3-Day+ consecutive **0**
+- same unordered pair consecutive **0**
+- same category consecutive **16**
+- same pair + same category consecutive **0**
+- Past Echo opener collision **0**
+- stand / reframe / verify **29 / 30 / 28**
+- category distribution in this representative path: **SOURCE_DISPUTE 87**
+- duplicate generic VERDICT follow-up suppression **87**
+- exposure gate: **ASTRA CROSSCURRENT EXPOSURE 123 OK · 1750 checks**
+
+The suppression reads only already player-facing `crosscurrent_history`. It does not inspect role, truth, suspicion score or future evidence; a suppressed two-person scene falls through to the existing one-person verdict callback.
+
 ---
 
 # ASTRA 1.2.2 — CROSSCURRENT QA
