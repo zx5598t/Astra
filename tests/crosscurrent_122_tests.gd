@@ -193,8 +193,8 @@ func run_audit() -> void:
     _install_residue(role_safe, "STOOD_BY", role_lead, role_partner)
     var residue := role_safe.verdict_residue(1)
     var cat_before := role_safe._crosscurrent_category(residue, role_lead, role_partner)
-    var old_lead_role := role_safe.crew[role_lead].role
-    var old_partner_role := role_safe.crew[role_partner].role
+    var old_lead_role: String = str(role_safe.crew[role_lead].role)
+    var old_partner_role: String = str(role_safe.crew[role_partner].role)
     role_safe.crew[role_lead].role = "NULL" if old_lead_role != "NULL" else "CREW"
     role_safe.crew[role_partner].role = "NULL" if old_partner_role != "NULL" else "CREW"
     var cat_after := role_safe._crosscurrent_category(residue, role_lead, role_partner)
