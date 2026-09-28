@@ -1,6 +1,24 @@
+# ASTRA 1.2.1 — WEIGHT OF WORDS QA
+
+Base: main **1e3e780ad84af411169d13aece227f88b99685e9** (official v1.2.0).  
+Feature branch: `release/1.2.1`. Final release SHA/CI/build values are recorded after the exact tested commit is promoted; do not treat an in-progress workflow as success.
+
+## 1.2.1 verification contract
+
+- `verdict_residue_121_tests.gd`: ballot provenance, FOLLOW_THROUGH / STOOD_BY / REVERSAL / EVIDENCE_DRIVEN_REVERSAL, next-Day callback cap, contextual conversation follow-up, no free evidence, save/load dedup, same-seed truth/Day Packet invariance.
+- Existing deduction, causal, fairness, proof-route, Link friction, pacing, dialogue exposure, micro-choice, replay, Finale, Past Echo, History variation, save, UI and visual gates remain in `tests/ci_suite.txt` unchanged.
+- Meta save **v12** / Snapshot **v4** remain unchanged. New state is optional nested `flags["stage_080"]` data.
+- Meeting flow gains no mandatory click, modal or new meter. Verdict feedback lives in the existing morning/conversation flow.
+
+---
+
 # ASTRA 1.2.0 — AFTERIMAGE QA
 
-기준 SHA: `af094c9f6cb69ca394e2f0c2b4d2e6395c004473` 코드 기준 검증. 최종 release SHA는 문서 커밋 후 main CI의 exact-SHA gate로 다시 검증한다.
+최종 main / tag SHA: `1e3e780ad84af411169d13aece227f88b99685e9`  
+Godot CI **#809 / run 36367874878: SUCCESS**  
+Publish ASTRA release **#51 / run 36369125039: SUCCESS**  
+Windows: `ASTRA-1.2.0-windows.zip` · **113,142,576 bytes**  
+SHA-256: `f04a99a956d25d134ce3b172834ca0b234248a7a1d73193a3f347cbe44f63734`
 
 ## 1.2.0 핵심 결과
 
