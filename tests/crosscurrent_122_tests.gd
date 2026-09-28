@@ -170,6 +170,19 @@ func run_audit() -> void:
     private_reason._record_verdict_residue(private_target)
     check(private_reason.verdict_residue(1).is_empty(), "private ballot reason alone creates no NPC-facing residue")
 
+    # Once a fact was genuinely public, it remains public provenance on later
+    # ballot Days. A publication recorded only after that ballot Day must not
+    # retroactively legitimize the old reason.
+    var historical_public := _session(12277)
+    var historical_log: Array = historical_public.stage_state().get("public_log", [])
+    historical_log.append({"day": 1, "fact": "public:old", "speaker": "noa"})
+    historical_log.append({"day": 3, "fact": "public:future", "speaker": "noa"})
+    historical_public.stage_state()["public_log"] = historical_log
+    check(historical_public._verdict_reason_source_was_public("public:old", 2),
+        "earlier-Day public provenance remains eligible on a later ballot Day")
+    check(not historical_public._verdict_reason_source_was_public("public:future", 2),
+        "later publication does not retroactively make an earlier ballot reason public")
+
     # Legacy/in-flight snapshots that already contain such a residue are also
     # safe: the private owner is ignored, Crosscurrent falls back, and the
     # private reason text never appears in the one-person callback.
