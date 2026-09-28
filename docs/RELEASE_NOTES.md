@@ -7,6 +7,7 @@
 - **플레이어만 아는 투표 근거는 NPC가 아는 척하지 않습니다.** 비공개 evidence는 플레이어의 ballot reason으로는 사용할 수 있지만, 다음 날 `REASON_FOLLOWUP`, source-owner 발언자 선택, 2인 Crosscurrent의 근거가 되지 않습니다.
 - **기존 1.2.2 저장도 안전하게 읽습니다.** 이미 private source owner가 residue에 저장된 경우에도 그 사람을 자동 발언자로 올리지 않고 공개 commitment subject 또는 기존 1인 fallback을 사용합니다. 비공개 이유 문구도 NPC-facing 대사에 그대로 인용하지 않습니다.
 - **공개 contradiction은 실제 provenance를 보존합니다.** 원래 contradiction key와 public flag를 ballot reason에 남겨 공개 여부를 player-facing 문구에서 역추정하지 않습니다.
+- **공개 여부는 해당 Day의 기록으로 판단합니다.** 전날 공개된 같은 contradiction key가 다음 날까지 자동 공개로 번지지 않으며, 1.2.2 Snapshot v4의 구형 `target|detail` conflict reason은 해당 Day에 실제 공개 기록이 있을 때만 안전하게 복구합니다.
 - **Crosscurrent는 특별한 consequence로 남습니다.** 212-Day runtime exposure audit에서 max streak는 2였고 3-Day+ 반복은 없었지만, 즉시 same-pair+same-category 반복이 3회 확인되었습니다. 이 3개 구조만 기존 1인 verdict callback으로 soft-suppress해 매일 같은 2인 선택 화면처럼 느껴지는 리듬을 줄였습니다.
 - **Windows EXE 메타데이터를 릴리스와 맞췄습니다.** file/product version은 1.2.3.0, description은 ASTRA — CLEAR CURRENT입니다.
 - **게임 규칙과 저장 형식은 그대로입니다.** suppression은 이미 표시된 `crosscurrent_history`만 읽는 presentation pacing이며 truth, Day Packet, proof route, action count, Crosscurrent choice 구조, Meta v12, Snapshot v4는 바뀌지 않습니다.
