@@ -7939,8 +7939,6 @@ func _apply_past_echo(echo_id: String) -> void:
     if lead != "" and is_alive(lead) and lead not in leads:
         leads.append(lead)
     stage_state()["echo_leads"] = leads
-    if lead != "":
-        voyage["pinned_question"] = lead
     var observer := str(candidate.get("observer", lead))
     if not is_alive(observer):
         observer = lead if is_alive(lead) else ""
