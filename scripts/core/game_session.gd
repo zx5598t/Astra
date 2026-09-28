@@ -2966,21 +2966,29 @@ func _clarify_argument(ref: String) -> Dictionary:
     var mode := ref.get_slice(":", 0)
     var arg := ref.substr(mode.length() + 1)
     var question := "남은 설명 하나만 다시 짚을게요."
+    # AFTERIMAGE: clarification semantics are fixed; only the displayed wording
+    # rotates through deterministic presentation variants.
+    var q_roll := _dialogue_pick("clarify_wording:" + mode + ":" + arg + ":" + str(meeting_feed.size()))
     match mode:
         "source":
-            question = "그 기록, 처음 연 사람이 누구예요?"
+            var variants := ["그 기록, 처음 연 사람이 누구예요?","원본을 제일 먼저 확인한 사람이 누구죠?","이 기록을 처음 열어 본 사람부터 확인할게요.","사본 말고 원본 첫 열람자가 누구예요?"]
+            question = str(variants[mini(variants.size()-1, int(floor(q_roll * variants.size())))])
         "time":
-            question = "시각부터 맞출게요. 그 기록은 정확히 언제예요?"
+            var variants := ["시각부터 맞출게요. 그 기록은 정확히 언제예요?","시간부터 다시 보죠. 정확한 시각이 언제예요?","기록 시각을 먼저 고정할게요. 몇 시였죠?","앞뒤 설명 전에 시각 하나만 정확히 말해 주세요."]
+            question = str(variants[mini(variants.size()-1, int(floor(q_roll * variants.size())))])
         "seen":
-            question = "정확히 뭘 봤어요? 얼굴까지 본 건가요?"
+            var variants := ["정확히 뭘 봤어요? 얼굴까지 본 건가요?","목격 범위를 좁힐게요. 얼굴을 직접 봤어요?","누군지 확정할 만큼 봤나요, 아니면 옷이나 태그만 봤나요?","그 목격, 얼굴을 확인한 건지 실루엣만 본 건지 구분해 주세요."]
+            question = str(variants[mini(variants.size()-1, int(floor(q_roll * variants.size())))])
         "via":
-            question = "누구에게서 들은 말이에요?"
+            var variants := ["누구에게서 들은 말이에요?","그 말의 출처가 누구죠?","직접 들은 상대를 말해 주세요.","전해 들은 거라면 처음 말한 사람이 누구예요?"]
+            question = str(variants[mini(variants.size()-1, int(floor(q_roll * variants.size())))])
         "mates":
             question = "%s|i 함께 있었다는 사람에게 직접 확인할게요." % name_of(arg)
         "motive":
             question = "%s, 그 일이 이번 사건과 관계있는지만 말해 주세요." % name_of(arg)
         "claim":
-            question = "%s, 방금 설명에서 아직 남은 부분만 다시 말해 주세요." % name_of(arg)
+            var variants := ["%s, 방금 설명에서 아직 남은 부분만 다시 말해 주세요." % name_of(arg),"%s, 지금 설명에서 확인 안 된 부분만 다시 짚어 주세요." % name_of(arg),"%s, 같은 말 반복 말고 아직 비어 있는 부분만 설명해 주세요." % name_of(arg),"%s, 방금 답에서 제가 다시 확인해야 할 부분만 말해 주세요." % name_of(arg)]
+            question = str(variants[mini(variants.size()-1, int(floor(q_roll * variants.size())))])
     _feed_line("player", subject, _voice("clarify_" + mode, _josa_inline(question)), "player", "clarify", topic)
     var banmal := func(id: String) -> bool: return id in BANMAL_SPEAKERS
     match mode:
@@ -3005,10 +3013,22 @@ func _clarify_argument(ref: String) -> Dictionary:
             var owner := str(item.get("owner", ""))
             var specific := bool(item.get("specific", false))
             var who := str(item.get("subject", ""))
+            var answer_roll := _dialogue_pick("clarify_seen_answer:" + owner + ":" + arg + ":" + str(meeting_feed.size()))
             if specific and who != "":
-                _feed_line(owner, who, ("%s어. 얼굴까지 봤어." if banmal.call(owner) else "%s어요. 얼굴까지 봤어요.") % AstraJosa.ieot(name_of(who)), "dispute", "response", topic)
+                var seen_name := AstraJosa.ieot(name_of(who))
+                var specific_lines := [
+                    ("%s어. 얼굴까지 봤어." if banmal.call(owner) else "%s어요. 얼굴까지 봤어요.") % seen_name,
+                    ("%s어. 멀리서 짐작한 게 아니라 얼굴을 확인했어." if banmal.call(owner) else "%s어요. 멀리서 짐작한 게 아니라 얼굴을 확인했어요.") % seen_name,
+                    ("%s어. 얼굴을 봤으니 그 사람인 건 확실해." if banmal.call(owner) else "%s어요. 얼굴을 봤으니 그 사람인 건 확실해요.") % seen_name
+                ]
+                _feed_line(owner, who, str(specific_lines[mini(specific_lines.size()-1, int(floor(answer_roll * specific_lines.size())))]), "dispute", "response", topic)
             else:
-                _feed_line(owner, "", "얼굴은 못 봤어. 옷하고 태그만." if banmal.call(owner) else "얼굴은 못 봤어요. 옷하고 태그만요.", "record", "response", topic)
+                var vague_lines := [
+                    "얼굴은 못 봤어. 옷하고 태그만." if banmal.call(owner) else "얼굴은 못 봤어요. 옷하고 태그만요.",
+                    "얼굴 확인은 못 했어. 옷이랑 태그만 봤어." if banmal.call(owner) else "얼굴 확인은 못 했어요. 옷이랑 태그만 봤어요.",
+                    "누군지는 단정 못 해. 보인 건 옷하고 태그뿐이야." if banmal.call(owner) else "누군지는 단정 못 해요. 보인 건 옷하고 태그뿐이에요."
+                ]
+                _feed_line(owner, "", str(vague_lines[mini(vague_lines.size()-1, int(floor(answer_roll * vague_lines.size())))]), "record", "response", topic)
         "via":
             var item := fragment(arg)
             var owner := str(item.get("owner", ""))
@@ -3156,10 +3176,24 @@ func _meeting_closing() -> void:
     for line in summary:
         _feed_narration(str(line))
         has_open_conflict = has_open_conflict or str(line).begins_with("아직 남은 충돌")
+    # Mechanical transition is unchanged; only the narration rotates.
+    var close_roll := _dialogue_pick("meeting_close:" + ("conflict" if has_open_conflict else "open") + ":" + str(meeting_feed.size()))
+    var close_lines: Array = []
     if has_open_conflict:
-        _feed_narration("여기까지 확인한 말로는 충돌이 남는다. 마지막 말을 듣고 오늘 격리할 한 사람을 정한다.")
+        close_lines = [
+            "확인한 내용끼리 아직 충돌한다. 마지막 말을 듣고 오늘 격리할 한 사람을 정한다.",
+            "남은 충돌은 풀리지 않았다. 마지막 진술 뒤 오늘 격리할 한 사람을 고른다.",
+            "서로 맞지 않는 설명이 남아 있다. 마지막 말을 듣고 격리 대상을 정한다.",
+            "지금까지의 확인만으로 충돌은 끝나지 않았다. 마지막 진술을 듣고 한 사람을 격리한다."
+        ]
     else:
-        _feed_narration("여기까지 확인한 말로는 더 좁힐 수 없다. 마지막 말을 듣고 오늘 격리할 한 사람을 정한다.")
+        close_lines = [
+            "여기까지 확인한 말로는 더 좁힐 수 없다. 마지막 말을 듣고 오늘 격리할 한 사람을 정한다.",
+            "확인할 수 있는 내용은 여기까지다. 마지막 진술 뒤 오늘 격리할 한 사람을 고른다.",
+            "더 확인해도 지금은 한 사람으로 좁혀지지 않는다. 마지막 말을 듣고 격리 대상을 정한다.",
+            "현재 정보만으로는 더 좁히기 어렵다. 마지막 진술을 듣고 오늘 한 사람을 격리한다."
+        ]
+    _feed_narration(str(close_lines[mini(close_lines.size()-1, int(floor(close_roll * close_lines.size())))]))
 
 # The explorer's own reason for a ballot (1.0): chosen from what they actually
 # know, or plain instinct. Stored with the Day; never graded.
