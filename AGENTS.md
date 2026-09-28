@@ -1,8 +1,8 @@
 # ASTRA — Guide for code agents and contributors
 
 ## Current target
-- Version **1.2.2 — CROSSCURRENT**. Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
-- 1.2.2 keeps the 1.2.1 verdict-residue and 1.2.0 Past Echo contracts, replacing a generic verdict callback with at most one visible two-person Crosscurrent when public provenance supports it. The player may intervene once; use existing expressions, talk priority and meeting opener, never hidden role/truth or new reputation/relationship/morality managers.
+- Version **1.2.3 — CLEAR CURRENT**. Engine: **Godot 4.7.2 stable**, GL Compatibility renderer.
+- 1.2.3 is a focused hotfix over 1.2.2 CROSSCURRENT: private player-known ballot provenance must never become NPC-facing social knowledge, source-owner selection or quoted follow-up text. Public commitments and explicitly public provenance remain eligible. Windows resource metadata must match VERSION. No new gameplay system or save schema.
 - One Stage = one game; a Day = Morning → Conversation → Meeting → Vote → Night. PART I (Stages 1–4) one Null,
   PART II (Stage 5+) two Nulls and one protocol (GUARDIAN 5 / ANALYST 6 / EMPATH 7). No investigation phase,
   no exploration in the main loop, no abstention, exactly one isolation per Day, explorer death = immediate loss.
