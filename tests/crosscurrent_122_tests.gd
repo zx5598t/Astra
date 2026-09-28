@@ -53,6 +53,7 @@ func _install_residue(s: AstraGameSession, pattern: String, lead: String, subjec
             "contradiction_key": "crosscurrent",
             "created_index": 5
         },
+        "ballot_reason_public": true,
         "lead_npc": lead
     }
     s.stage_state()["verdict_residue"] = residues
@@ -147,6 +148,67 @@ func run_audit() -> void:
     check(JSON.stringify(replace.truth) == truth_before, "Crosscurrent scene does not change truth/Null assignment")
     check(JSON.stringify(replace.current_packet()) == packet_before, "Crosscurrent scene does not change Day Packet/base evidence")
 
+    # Private ballot provenance may inform the player's own vote, but it must
+    # never become an NPC-facing REASON_FOLLOWUP or promote its source owner.
+    var private_reason := _session(12275)
+    var private_ids := _pair(private_reason)
+    var private_owner := str(private_ids[0])
+    var private_target := str(private_ids[1])
+    private_reason.stage_state()["ballot_reasons"] = {
+        "1": {
+            "target": private_target,
+            "code": "evidence",
+            "text": "비공개 표 근거",
+            "source_ids": ["private:test"],
+            "source_type": "SYSTEM_RECORD",
+            "source_owner": private_owner,
+            "link_id": "",
+            "contradiction_key": "",
+            "created_index": -1
+        }
+    }
+    private_reason._record_verdict_residue(private_target)
+    check(private_reason.verdict_residue(1).is_empty(), "private ballot reason alone creates no NPC-facing residue")
+
+    # Legacy/in-flight snapshots that already contain such a residue are also
+    # safe: the private owner is ignored, Crosscurrent falls back, and the
+    # private reason text never appears in the one-person callback.
+    var legacy_private := _session(12276)
+    var legacy_ids := _pair(legacy_private)
+    var legacy_owner := str(legacy_ids[0])
+    var legacy_target := str(legacy_ids[1])
+    var legacy_residues: Dictionary = legacy_private.stage_state().get("verdict_residue", {})
+    legacy_residues["1"] = {
+        "day": 1,
+        "pattern": "FOLLOW_THROUGH",
+        "subject": legacy_target,
+        "player_target": legacy_target,
+        "commitment_type": "accuse",
+        "commitment_index": 2,
+        "ballot_reason": {
+            "target": legacy_target,
+            "code": "evidence",
+            "text": "비공개 표 근거",
+            "source_ids": ["private:test"],
+            "source_type": "SYSTEM_RECORD",
+            "source_owner": legacy_owner,
+            "link_id": "",
+            "contradiction_key": "",
+            "created_index": -1
+        },
+        "ballot_reason_public": false,
+        "lead_npc": legacy_owner
+    }
+    legacy_private.stage_state()["verdict_residue"] = legacy_residues
+    _day_two(legacy_private)
+    var legacy_residue := legacy_private.verdict_residue(1)
+    check(legacy_private._verdict_alive_lead(legacy_residue) == legacy_target, "private source owner is not promoted into NPC callback")
+    check(legacy_private._crosscurrent_scene(2).is_empty(), "private provenance does not create a two-person Crosscurrent")
+    var private_fallback := legacy_private._verdict_callback_scene(2)
+    check(not private_fallback.is_empty(), "public commitment keeps the safe one-person fallback")
+    check(str(private_fallback.get("speaker", "")) == legacy_target, "private-provenance fallback uses the public commitment subject")
+    check(not JSON.stringify(private_fallback).contains("비공개 표 근거"), "private ballot reason text is absent from NPC-facing fallback")
+
     # If a natural second person is unavailable, the old single-person callback
     # remains a safe fallback and inactive people never speak.
     var fallback := _session(12280)
@@ -233,3 +295,9 @@ func run_audit() -> void:
     for forbidden in ["reputation", "morality", "credibility", "social_points", "suspicion_meter"]:
         check(not bounded.stage_state().has(forbidden), "no new " + forbidden + " state")
     check("MEETING" in AstraGameSession.PHASES and AstraGameSession.PHASES.size() == 8, "Crosscurrent adds no new phase")
+
+    # Release metadata must match the 1.2.2 package shown by Windows.
+    var export_cfg := FileAccess.get_file_as_string("res://export_presets.cfg")
+    check(export_cfg.contains("application/file_version=\"1.2.2.0\""), "Windows file version is 1.2.2.0")
+    check(export_cfg.contains("application/product_version=\"1.2.2.0\""), "Windows product version is 1.2.2.0")
+    check(export_cfg.contains("application/file_description=\"ASTRA — CROSSCURRENT\""), "Windows description names CROSSCURRENT")
