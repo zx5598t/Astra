@@ -343,6 +343,11 @@ func _new_stage_state() -> Dictionary:
         "story_queue": [], "story_index": 0, "story_line": 0, "story_seen": [],
         "confessions": {}, "admissions": {}, "analyses": [],
         "public_accusations": [], "public_defenses": [], "public_presented": [], "public_log": [],
+        # 1.2.1 WEIGHT OF WORDS: optional per-Stage residue. These fields live
+        # inside stage_080 so Snapshot v4 stays compatible; old snapshots simply
+        # read empty defaults through get().
+        "public_presented_events": [], "public_confession_events": [],
+        "verdict_residue": {}, "verdict_feedback_seen": {},
         # 0.8.2 runtime-only agency telemetry. It lives inside stage_state so snapshot v4
         # can carry it without a new schema field; old v4 snapshots hydrate lazily.
         "agency_contacts": {}, "agency_events": [], "agency_vote_changes": [],
@@ -1198,6 +1203,14 @@ func question_options(npc_id: String) -> Array:
                 "hint":"이전 History에서 직접 겪은 선택을 바탕으로 현재 기록이나 진술의 확인 순서를 바꿉니다. 정답이나 역할을 알려 주지 않습니다.",
                 "enabled":echo_enabled, "key":true, "_p":94.0
             })
+    var verdict_followup := _verdict_followup_for(npc_id)
+    var verdict_key := "verdict:" + str(day - 1)
+    if not verdict_followup.is_empty() and verdict_key not in asked:
+        candidates.append({
+            "intent": "VERDICT", "ref": str(day - 1), "label": "어제 투표 근거를 다시 확인한다",
+            "hint": "어제 이미 알고 있던 근거와 판단을 다시 해석합니다. 새 단서나 정답을 만들지 않습니다.",
+            "enabled": enabled, "key": true, "_p": 95.0
+        })
     if "seen" not in asked:
         candidates.append({"intent": "WITNESS", "label": "그 시간에 누구를 봤어요?", "hint": "목격한 사람이나 들은 말을 묻습니다.", "enabled": enabled, "_p": 60.0})
     if day > 1 and "yesterday" not in asked and not _yesterday_claim(npc_id).is_empty():
@@ -1378,6 +1391,7 @@ func ask(npc_id: String, intent: String, ref: String = "") -> Dictionary:
         "WITNESS": _ask_seen(member, result)
         "RECORD": _ask_record(member, ref, result)
         "ECHO": _ask_past_echo(member, ref, result)
+        "VERDICT": _ask_verdict_followup(member, ref, result)
         "CONFRONT": _cross_examine(member, ref, result)
         "YESTERDAY": _ask_yesterday(member, result)
         "SUSPECT": _ask_opinion(member, result)
@@ -1579,6 +1593,15 @@ func talk_leads() -> Dictionary:
         if is_alive(str(expert)) and not leads.has(str(expert)):
             leads[str(expert)] = "장비를 잘 앎"
             break
+    # WEIGHT OF WORDS: one relevant person from yesterday can become a
+    # contextual lead. It does not create evidence; it only changes who is
+    # worth asking first.
+    if day > 1:
+        var residue := verdict_residue(day - 1)
+        if not residue.is_empty():
+            var verdict_lead := _verdict_alive_lead(residue)
+            if verdict_lead != "" and not leads.has(verdict_lead) and leads.size() < 4:
+                leads[verdict_lead] = "어제 투표 근거"
     # After a rewind, the people the explorer remembers hearing from.
     for id in stage_state().get("echo_leads", []):
         if is_alive(str(id)) and not leads.has(str(id)) and leads.size() < 4:
@@ -3197,48 +3220,282 @@ func _meeting_closing() -> void:
         ]
     _feed_narration(str(close_lines[mini(close_lines.size()-1, int(floor(close_roll * close_lines.size())))]))
 
-# The explorer's own reason for a ballot (1.0): chosen from what they actually
-# know, or plain instinct. Stored with the Day; never graded.
+# The explorer's own reason for a ballot (1.0/1.2.1): chosen only from
+# information the explorer actually has. WEIGHT OF WORDS keeps machine-readable
+# provenance beside the existing player-facing text so tomorrow can refer to
+# the real reason without consulting hidden truth.
+func _verdict_source_owner(source_ids: Array) -> String:
+    for source in source_ids:
+        var ref := str(source)
+        if ref.begins_with("claim:"):
+            var claimant := ref.trim_prefix("claim:")
+            if crew.has(claimant):
+                return claimant
+            continue
+        if ref.begins_with("said:"):
+            ref = ref.trim_prefix("said:")
+        var item := fragment(ref)
+        if item.is_empty():
+            continue
+        var owner := str(item.get("owner", ""))
+        if owner != "" and owner != "player" and crew.has(owner):
+            return owner
+    return ""
+
+func _verdict_public_index(source_id: String) -> int:
+    for raw in Array(stage_state().get("public_presented_events", [])).duplicate():
+        var entry: Dictionary = raw
+        if int(entry.get("day", 0)) == day and str(entry.get("fragment", "")) == source_id:
+            return maxi(-1, int(entry.get("meeting_index", -1)))
+    return -1
+
 func ballot_reasons(target: String) -> Array:
     var reasons: Array = []
     for entry in stage_state().get("links", []):
-        if int(entry.get("day", 0)) == day and str(entry.get("result", "")) == "CONTRADICTION" and target in Array(entry.get("targets", [])):
-            reasons.append({"code": "link", "text": str(entry.get("why", ""))})
+        if int(entry.get("day", 0)) != day or str(entry.get("result", "")) != "CONTRADICTION" or target not in Array(entry.get("targets", [])):
+            continue
+        var source_ids: Array = []
+        for key in ["evidence", "second", "statement"]:
+            var source_id := str(entry.get(key, ""))
+            if source_id != "" and source_id not in source_ids:
+                source_ids.append(source_id)
+        reasons.append({
+            "code": "link", "text": str(entry.get("why", "")), "target": target,
+            "source_ids": source_ids, "source_type": "LINK",
+            "source_owner": _verdict_source_owner(source_ids),
+            "link_id": "%d:%s:%s:%s" % [int(entry.get("day", day)), str(entry.get("statement", "")), str(entry.get("evidence", "")), str(entry.get("second", ""))],
+            "contradiction_key": str(entry.get("family", "")),
+            "created_index": int(entry.get("meeting_index", -1))
+        })
     for conflict in contradictions:
         if target in Array(conflict.get("targets", [])) and reasons.size() < 3:
-            reasons.append({"code": "conflict", "text": str(conflict.get("detail", ""))})
+            var detail := str(conflict.get("detail", ""))
+            reasons.append({
+                "code": "conflict", "text": detail, "target": target,
+                "source_ids": [], "source_type": "CONTRADICTION", "source_owner": "",
+                "link_id": "", "contradiction_key": "%s|%s" % [target, detail],
+                "created_index": int(conflict.get("meeting_index", -1))
+            })
     var view := suspicion_breakdown("player", target)
     for reason in view.get("reasons", []):
         if reasons.size() >= 4:
             break
-        var item := fragment(str(reason.get("source", "")))
-        if float(reason.get("weight", 0.0)) > 0.05 and not item.is_empty():
+        var source_id := str(reason.get("source", ""))
+        var item := fragment(source_id)
+        # Defensive gate: a suspicion source is not a ballot reason unless the
+        # player genuinely knows the fragment in the current History.
+        if float(reason.get("weight", 0.0)) > 0.05 and not item.is_empty() and player_knows(source_id):
             var text := "%s: %s" % [_evidence_name(item), _short_text(str(item.get("text", "")))]
             var dup := false
             for existing in reasons:
                 dup = dup or str(existing["text"]) == text
             if not dup:
-                reasons.append({"code": "evidence", "text": _josa_inline(text)})
-    reasons.append({"code": "instinct", "text": "아직 강한 근거는 없다. 직감에 가깝다."})
+                reasons.append({
+                    "code": "evidence", "text": _josa_inline(text), "target": target,
+                    "source_ids": [source_id], "source_type": str(item.get("type", "EVIDENCE")),
+                    "source_owner": str(item.get("owner", "")), "link_id": "",
+                    "contradiction_key": "", "created_index": _verdict_public_index(source_id)
+                })
+    reasons.append({
+        "code": "instinct", "text": "아직 강한 근거는 없다. 직감에 가깝다.", "target": target,
+        "source_ids": [], "source_type": "INSTINCT", "source_owner": "",
+        "link_id": "", "contradiction_key": "", "created_index": -1
+    })
     return reasons
 
 func set_ballot_reason(target: String, index: int) -> bool:
     var options := ballot_reasons(target)
     if index < 0 or index >= options.size():
         return false
+    var selected: Dictionary = Dictionary(options[index]).duplicate(true)
+    selected["target"] = target
     var reasons: Dictionary = stage_state().get("ballot_reasons", {})
-    reasons[str(day)] = {"target": target, "code": str(options[index]["code"]), "text": str(options[index]["text"])}
+    reasons[str(day)] = selected
     stage_state()["ballot_reasons"] = reasons
     AstraDecisionModel.append_trace(flags, AstraDecisionModel.trace("player", "ballot_reason", target,
-        [AstraDecisionModel.reason(str(options[index]["code"]), 1.0, str(options[index]["text"]))], day))
+        [AstraDecisionModel.reason(str(selected.get("code", "")), 1.0, str(selected.get("text", "")))], day))
     changed.emit()
     return true
 
 func ballot_reason(day_index: int = -1) -> Dictionary:
     return Dictionary(stage_state().get("ballot_reasons", {}).get(str(day if day_index < 0 else day_index), {}))
 
+func _verdict_new_basis_after(commitment: Dictionary, reason: Dictionary) -> bool:
+    var at := int(commitment.get("meeting_index", -1))
+    if at < 0:
+        return false
+    if int(reason.get("created_index", -1)) > at and str(reason.get("code", "")) in ["link", "conflict", "evidence"]:
+        return true
+    var source_ids: Array = reason.get("source_ids", [])
+    for raw in stage_state().get("public_presented_events", []):
+        var event: Dictionary = raw
+        if int(event.get("day", 0)) == day and int(event.get("meeting_index", -1)) > at and str(event.get("fragment", "")) in source_ids:
+            return true
+    var subject := str(commitment.get("target", ""))
+    for raw in stage_state().get("public_confession_events", []):
+        var event: Dictionary = raw
+        if int(event.get("day", 0)) == day and int(event.get("meeting_index", -1)) > at and str(event.get("target", "")) == subject:
+            return true
+    for raw in stage_state().get("links", []):
+        var event: Dictionary = raw
+        if int(event.get("day", 0)) == day and int(event.get("meeting_index", -1)) > at and subject in Array(event.get("targets", [])):
+            return true
+    return false
+
+func _verdict_alive_lead(residue: Dictionary) -> String:
+    var requested := str(residue.get("lead_npc", ""))
+    if requested != "" and is_alive(requested):
+        return requested
+    var reason: Dictionary = residue.get("ballot_reason", {})
+    var owner := str(reason.get("source_owner", ""))
+    if owner != "" and is_alive(owner):
+        return owner
+    var subject := str(residue.get("subject", ""))
+    if subject != "" and is_alive(subject):
+        return subject
+    return _first_active(["noa", "dax", "sena", "vale", "eli", "lyra", "rho", "mira"], [])
+
+func _record_verdict_residue(player_target: String) -> void:
+    var reason := ballot_reason(day)
+    if reason.is_empty():
+        return
+    var latest: Dictionary = {}
+    var latest_index := -2
+    var commitment_type := ""
+    for raw in stage_state().get("public_accusations", []):
+        var entry: Dictionary = raw
+        if int(entry.get("day", 0)) != day or str(entry.get("speaker", "")) != "player":
+            continue
+        var index := int(entry.get("meeting_index", -1))
+        if index >= latest_index:
+            latest = entry.duplicate(true)
+            latest_index = index
+            commitment_type = "accuse"
+    for raw in stage_state().get("public_defenses", []):
+        var entry: Dictionary = raw
+        if int(entry.get("day", 0)) != day or str(entry.get("speaker", "")) != "player":
+            continue
+        var index := int(entry.get("meeting_index", -1))
+        if index >= latest_index:
+            latest = entry.duplicate(true)
+            latest_index = index
+            commitment_type = "defend"
+
+    var pattern := ""
+    var subject := player_target
+    if not latest.is_empty():
+        subject = str(latest.get("target", player_target))
+        if commitment_type == "accuse":
+            pattern = "FOLLOW_THROUGH" if subject == player_target else "REVERSAL"
+        else:
+            pattern = "REVERSAL" if subject == player_target else "STOOD_BY"
+        if pattern == "REVERSAL" and _verdict_new_basis_after(latest, reason):
+            pattern = "EVIDENCE_DRIVEN_REVERSAL"
+    elif str(reason.get("code", "")) in ["link", "conflict", "evidence"]:
+        pattern = "REASON_FOLLOWUP"
+    else:
+        return
+
+    var lead := str(reason.get("source_owner", ""))
+    if lead == "" or not is_alive(lead):
+        lead = subject if subject != "" and is_alive(subject) else _first_active(["noa", "dax", "sena", "vale", "eli", "lyra", "rho", "mira"], [])
+    var residues: Dictionary = stage_state().get("verdict_residue", {})
+    residues[str(day)] = {
+        "day": day, "pattern": pattern, "subject": subject, "player_target": player_target,
+        "commitment_type": commitment_type, "commitment_index": latest_index,
+        "ballot_reason": reason.duplicate(true), "lead_npc": lead
+    }
+    stage_state()["verdict_residue"] = residues
+
+func verdict_residue(day_index: int = -1) -> Dictionary:
+    var target_day := day if day_index < 0 else day_index
+    return Dictionary(stage_state().get("verdict_residue", {}).get(str(target_day), {}))
+
+func _verdict_callback_text(residue: Dictionary) -> String:
+    var subject := str(residue.get("subject", ""))
+    var subject_name := name_of(subject) if subject != "" and crew.has(subject) else "그 사람"
+    var pattern := str(residue.get("pattern", ""))
+    var opening := ""
+    match pattern:
+        "FOLLOW_THROUGH":
+            opening = _josa_inline("어제 %s|eul 지목했고 그대로 표를 줬죠." % subject_name)
+        "STOOD_BY":
+            opening = _josa_inline("어제 %s|eul 감쌌고 끝까지 그 사람에게 표를 주지 않았죠." % subject_name)
+        "REVERSAL":
+            opening = _josa_inline("어제 %s에 대해 한 말과 다른 표를 골랐죠." % subject_name)
+        "EVIDENCE_DRIVEN_REVERSAL":
+            opening = _josa_inline("새 근거가 나온 뒤 %s에 대한 판단을 바꿨죠." % subject_name)
+        _:
+            var reason_text := _short_text(str(Dictionary(residue.get("ballot_reason", {})).get("text", "어제의 근거")))
+            opening = "어제 “%s” 때문에 표를 정했죠." % reason_text
+    var speaker := _verdict_alive_lead(residue)
+    match speaker:
+        "mira": return opening + " 오늘은 사람을 몰아세우기 전에 무엇이 실제로 달라졌는지부터 봐요."
+        "rho": return opening + " 오늘은 말보다 실제 작업 순서부터 다시 맞춰 보자."
+        "dax": return opening + " 오늘은 결론보다 전제부터 다시 놓자. 바뀐 전제가 있는지 보면 돼."
+        "noa": return opening + " 오늘은 출처와 원본부터 다시 확인해요."
+        "sena": return opening + " 오늘은 출입 순서와 행동이 실제로 이어지는지부터 보자."
+        "vale": return opening + " 오늘은 전해진 말보다 원출처부터 다시 확인해요."
+        "eli": return opening + " 오늘은 그 경로가 실제로 가능한지, 시간과 위험 조건부터 보자."
+        "lyra": return opening + " 오늘은 어제 본 흔적이 계속 이어지는지부터 봐요."
+    return opening + " 오늘은 그 근거가 여전히 성립하는지부터 다시 확인하자."
+
+func _verdict_callback_scene(day_index: int) -> Dictionary:
+    if day_index <= 1:
+        return {}
+    var previous := day_index - 1
+    var residue := verdict_residue(previous)
+    if residue.is_empty():
+        return {}
+    var seen: Dictionary = stage_state().get("verdict_feedback_seen", {})
+    if bool(seen.get(str(previous), false)):
+        return {}
+    var speaker := _verdict_alive_lead(residue)
+    if speaker == "":
+        return {}
+    seen[str(previous)] = true
+    stage_state()["verdict_feedback_seen"] = seen
+    return _scene_entry({
+        "id": "verdict_residue_%d" % previous,
+        "art": str(AstraStageStory.STAGE_ART.get(case_id, "bridge")),
+        "speaker": speaker, "action": "어제 회의에서 한 말과 투표가 아직 남아 있다.",
+        "lines": [[speaker, _verdict_callback_text(residue)]]
+    }, "morning")
+
+func _verdict_followup_for(npc_id: String) -> Dictionary:
+    if day <= 1:
+        return {}
+    var residue := verdict_residue(day - 1)
+    if residue.is_empty() or _verdict_alive_lead(residue) != npc_id:
+        return {}
+    return residue
+
+func _verdict_followup_reply(npc_id: String) -> String:
+    match npc_id:
+        "mira": return "판단이 바뀐 이유와 사람을 다룬 방식부터 나눠 봐요. 어제 본 근거 자체는 그대로 두고요."
+        "rho": return "말보다 실제 순서부터 다시 맞춰 보자. 어제 근거가 오늘 행동 순서에도 맞는지."
+        "dax": return "전제부터 다시 놓자. 결론이 달라졌다면 어떤 전제가 바뀌었는지부터 보면 돼."
+        "noa": return "출처부터요. 어제 쓴 기록이나 진술의 원본이 같은지 먼저 확인해요."
+        "sena": return "출입 순서와 행동이 맞는지부터 보자. 어제 말이 오늘 절차와 이어지는지가 중요해."
+        "vale": return "원출처부터 다시 확인해요. 전해 들은 말과 실제 기록을 섞지 말고요."
+        "eli": return "그 경로가 실제로 가능했는지부터 다시 보자. 시간과 위험 조건이 같은지도."
+        "lyra": return "어제 본 흔적이 오늘도 이어지는지 먼저 봐요. 한 번보다 지속되는지가 중요해요."
+    return "어제 근거가 오늘도 그대로 성립하는지부터 다시 보자."
+
+func _ask_verdict_followup(member: AstraCrewMember, ref: String, result: Dictionary) -> void:
+    var residue := _verdict_followup_for(member.id)
+    if residue.is_empty() or ref != str(day - 1):
+        _ask_seen(member, result)
+        return
+    _mark_asked(member.id, "verdict:" + ref)
+    var reason: Dictionary = residue.get("ballot_reason", {})
+    var reason_text := _short_text(str(reason.get("text", "어제의 근거")))
+    _player_line(member, "어제 “%s” 때문에 표를 정했어요. 지금 다시 보면 어디부터 확인해야 할까요?" % reason_text, result, "VERDICT", true)
+    _say_text(member, _verdict_followup_reply(member.id), result, "VERDICT")
+    result["verdict_residue"] = residue.duplicate(true)
+
 func _add_accusation(speaker: String, target: String, weight: float = 1.0) -> void:
-    var entry := {"day": day, "speaker": speaker, "target": target, "weight": weight}
+    var entry := {"day": day, "speaker": speaker, "target": target, "weight": weight, "meeting_index": meeting_feed.size()}
     if speaker == "player":
         entry["player_derived"] = true
         # Retain only fragment ids that actually contribute positive evidence to
@@ -3259,7 +3516,7 @@ func _add_accusation(speaker: String, target: String, weight: float = 1.0) -> vo
     stage_state()["public_accusations"].append(entry)
 
 func _add_defense(speaker: String, target: String) -> void:
-    stage_state()["public_defenses"].append({"day": day, "speaker": speaker, "target": target})
+    stage_state()["public_defenses"].append({"day": day, "speaker": speaker, "target": target, "meeting_index": meeting_feed.size()})
 
 func _play_thread(kind: String) -> bool:
     match kind:
@@ -3594,6 +3851,9 @@ func _publish_confession(npc_id: String) -> void:
     stage_state()["confessions"] = confessions
     _feed_social(npc_id, "m_confess_public", {"pos": room_name(str(entry.get("position", "")))}, "defense", npc_id, "response", "benign:" + npc_id)
     _feed_line(npc_id, "", AstraSocialLines.secret(npc_id, str(entry.get("reason", "")), room_name(str(entry.get("position", "")))), "defense", "followup", "benign:" + npc_id)
+    var confession_events: Array = stage_state().get("public_confession_events", [])
+    confession_events.append({"day": day, "target": npc_id, "meeting_index": meeting_feed.size()})
+    stage_state()["public_confession_events"] = confession_events
     for accusation in stage_state().get("public_accusations", []):
         if str(accusation.get("target", "")) == npc_id and int(accusation.get("day", 0)) == day:
             accusation["weight"] = float(accusation.get("weight", 1.0)) * 0.3
@@ -4311,6 +4571,9 @@ func _intervene_present(ref: String) -> bool:
         return false
     _feed_line("player", str(item.get("subject", "")), _voice("present", "제가 들은 걸 공개할게요. %s") % str(item.get("text", "")), "player", "anchor", "present:" + ref)
     _publish_fragment(item, "player")
+    var presented_events: Array = stage_state().get("public_presented_events", [])
+    presented_events.append({"day": day, "fragment": ref, "meeting_index": meeting_feed.size()})
+    stage_state()["public_presented_events"] = presented_events
     stats["presented"] = int(stats.get("presented", 0)) + 1
     record_player_claim(AstraClaimLedger.KIND_WITNESS, "공개했다: " + str(item.get("text", "")), {"target": str(item.get("subject", item.get("refutes", "")))})
     var owner := str(item.get("owner", ""))
@@ -5008,7 +5271,8 @@ func _intervene_link(ref: String) -> bool:
         # add a source-confirmation paraphrase before the actual target answers.
     var links: Array = stage_state().get("links", [])
     links.append({"day": day, "statement": statement_ref, "evidence": evidence_ref, "second": second_ref, "result": result,
-        "family": str(verdict.get("family", "")), "targets": Array(verdict.get("targets", [])).duplicate(), "why": str(verdict.get("why", ""))})
+        "family": str(verdict.get("family", "")), "targets": Array(verdict.get("targets", [])).duplicate(), "why": str(verdict.get("why", "")),
+        "meeting_index": meeting_feed.size()})
     stage_state()["links"] = links
     stats["links"] = int(stats.get("links", 0)) + 1
     match result:
@@ -5590,6 +5854,8 @@ func cast_vote(target_id: String, _legacy_theory: Array = [], _legacy_confidence
             leaders.append(str(candidate))
     var round := {"day": day, "round": round_kind, "ballots": ballots.duplicate(), "tally": tally.duplicate(), "leaders": leaders.duplicate()}
     stage_state()["vote_rounds"].append(round)
+    if round_kind == "BALLOT":
+        _record_verdict_residue(target_id)
     if str(target_id) in living_null_ids():
         _raise_player_threat(target_id, 0.0)
     last_vote = {
@@ -6589,6 +6855,9 @@ func _queue_morning(day_index: int, recovered: Array = []) -> void:
         if not reaction_lines.is_empty():
             scenes.append(_scene_entry({"id": "morning_%d" % day_index, "art": art, "speaker": str(reaction_lines[0][0]),
                 "action": AstraStageStory.morning_mood(case_id), "lines": reaction_lines}, "morning"))
+        var verdict_scene := _verdict_callback_scene(day_index)
+        if not verdict_scene.is_empty():
+            scenes.append(verdict_scene)
         for note in recovered:
             var by := str(note.get("by", ""))
             if is_alive(by):
