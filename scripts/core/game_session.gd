@@ -2707,6 +2707,27 @@ func _make_claims_public() -> void:
         known_claims[npc_id] = {"position": str(claim.get("position", "")), "companions": companions.duplicate(), "day": day}
     # A confession made to the explorer stays private until someone says it aloud.
 
+func _past_echo_meeting_line() -> String:
+    var contexts: Array = stage_state().get("past_echo_context",[])
+    if contexts.is_empty():
+        return ""
+    var last: Dictionary = contexts.back()
+    var echo_id := str(last.get("id",""))
+    for raw in AstraForeknowledgeModel.past_echo_specs():
+        var spec: Dictionary = raw
+        if str(spec.get("id","")) != echo_id:
+            continue
+        match str(spec.get("role","")):
+            "MAREN_ENVIRONMENT":
+                return "회의는 마렌이 먼저 짚은 환경의 누적 흔적과 각자의 진술을 같은 시간축에 놓는 데서 시작된다."
+            "LUCAN_ROUTE":
+                return "회의는 루칸이 걸러 낸 실제 이동 가능 경로와 각자의 진술을 겹쳐 보는 데서 시작된다."
+            "SIGNAL_SOURCE":
+                return "회의는 소렌이 분리해 둔 원음·간격과 각자의 진술을 섞지 않고 비교하는 데서 시작된다."
+            "PROVENANCE":
+                return "회의는 노아가 정리한 원본 열람 순서와 공개된 진술의 출처를 먼저 맞추는 데서 시작된다."
+    return ""
+
 func _open_meeting() -> void:
     meeting_feed.clear()
     var state := stage_state()
@@ -2726,13 +2747,18 @@ func _open_meeting() -> void:
         if mourner != "":
             _feed_npc(mourner, "m_mourn", {"victim": name_of(victim_id)}, "mourn", victim_id)
     _make_claims_public()
-    match mood:
-        "low":
-            _feed_narration("모두가 %s에 있던 곳을 말한다. 아직은 다들 조심스럽게 서로의 얼굴을 살핀다." % incident_time())
-        "high":
-            _feed_narration("모두가 %s에 있던 곳을 말한다. 이제 누구도 돌려 말하지 않는다." % incident_time())
-        _:
-            _feed_narration("모두가 %s에 있던 곳을 말한다. 목소리가 조금씩 높아진다." % incident_time())
+    var echo_opening := _past_echo_meeting_line()
+    if echo_opening != "":
+        # Replace the generic opener instead of adding another meeting line.
+        _feed_narration(echo_opening)
+    else:
+        match mood:
+            "low":
+                _feed_narration("모두가 %s에 있던 곳을 말한다. 아직은 다들 조심스럽게 서로의 얼굴을 살핀다." % incident_time())
+            "high":
+                _feed_narration("모두가 %s에 있던 곳을 말한다. 이제 누구도 돌려 말하지 않는다." % incident_time())
+            _:
+                _feed_narration("모두가 %s에 있던 곳을 말한다. 목소리가 조금씩 높아진다." % incident_time())
     var route_context := AstraStageStory.branch_meeting_context(case_id, branch_route(case_id))
     if route_context != "":
         _feed_narration(route_context)
