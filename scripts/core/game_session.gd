@@ -3271,6 +3271,45 @@ func _verdict_public_index(source_id: String) -> int:
             return maxi(-1, int(entry.get("meeting_index", -1)))
     return -1
 
+func _verdict_reason_source_was_public(source_id: String, source_day: int) -> bool:
+    if source_id == "":
+        return false
+    for raw in stage_state().get("public_log", []):
+        var entry: Dictionary = raw
+        if int(entry.get("day", 0)) == source_day and str(entry.get("fact", "")) == source_id:
+            return true
+    for raw in stage_state().get("public_presented_events", []):
+        var entry: Dictionary = raw
+        if int(entry.get("day", 0)) == source_day and str(entry.get("fragment", "")) == source_id:
+            return true
+    # While the ballot is being recorded, the explicit knowledge ledger is the
+    # final authority for fragments that became public through a path that did
+    # not also write one of the historical event lists above.
+    return source_day == day and AstraKnowledgeModel.is_public(flags, source_id)
+
+func _verdict_reason_is_public(reason: Dictionary, source_day: int) -> bool:
+    var code := str(reason.get("code", ""))
+    if code == "link":
+        # A Link is itself a public meeting intervention.
+        return int(reason.get("created_index", -1)) >= 0
+    if code == "conflict":
+        var key := str(reason.get("contradiction_key", ""))
+        if key != "" and public_contradiction_keys.has(key):
+            return true
+        return int(reason.get("created_index", -1)) >= 0
+    for raw_source in reason.get("source_ids", []):
+        if _verdict_reason_source_was_public(str(raw_source), source_day):
+            return true
+    return false
+
+func _verdict_residue_reason_is_public(residue: Dictionary) -> bool:
+    if residue.has("ballot_reason_public"):
+        return bool(residue.get("ballot_reason_public", false))
+    return _verdict_reason_is_public(
+        Dictionary(residue.get("ballot_reason", {})),
+        int(residue.get("day", day - 1))
+    )
+
 func ballot_reasons(target: String) -> Array:
     var reasons: Array = []
     for entry in stage_state().get("links", []):
@@ -3365,12 +3404,17 @@ func _verdict_new_basis_after(commitment: Dictionary, reason: Dictionary) -> boo
     return false
 
 func _verdict_alive_lead(residue: Dictionary) -> String:
-    var requested := str(residue.get("lead_npc", ""))
-    if requested != "" and is_alive(requested):
-        return requested
     var reason: Dictionary = residue.get("ballot_reason", {})
     var owner := str(reason.get("source_owner", ""))
-    if owner != "" and is_alive(owner):
+    var reason_public := _verdict_residue_reason_is_public(residue)
+    var requested := str(residue.get("lead_npc", ""))
+    if requested != "" and is_alive(requested):
+        # A legacy 1.2.1/1.2.2 snapshot may have stored the private source owner
+        # as lead_npc. Keep an explicitly public/subject lead, but never promote
+        # a person merely because the explorer privately knew their fragment.
+        if reason_public or requested != owner:
+            return requested
+    if reason_public and owner != "" and is_alive(owner):
         return owner
     var subject := str(residue.get("subject", ""))
     if subject != "" and is_alive(subject):
@@ -3381,6 +3425,7 @@ func _record_verdict_residue(player_target: String) -> void:
     var reason := ballot_reason(day)
     if reason.is_empty():
         return
+    var reason_public := _verdict_reason_is_public(reason, day)
     var latest: Dictionary = {}
     var latest_index := -2
     var commitment_type := ""
@@ -3414,18 +3459,23 @@ func _record_verdict_residue(player_target: String) -> void:
         if pattern == "REVERSAL" and _verdict_new_basis_after(latest, reason):
             pattern = "EVIDENCE_DRIVEN_REVERSAL"
     elif str(reason.get("code", "")) in ["link", "conflict", "evidence"]:
+        # The room cannot react tomorrow to a reason the explorer never made
+        # public. A private notebook may still inform the ballot itself, but it
+        # creates no NPC-facing REASON_FOLLOWUP.
+        if not reason_public:
+            return
         pattern = "REASON_FOLLOWUP"
     else:
         return
 
-    var lead := str(reason.get("source_owner", ""))
+    var lead := str(reason.get("source_owner", "")) if reason_public else ""
     if lead == "" or not is_alive(lead):
         lead = subject if subject != "" and is_alive(subject) else _first_active(["noa", "dax", "sena", "vale", "eli", "lyra", "rho", "mira"], [])
     var residues: Dictionary = stage_state().get("verdict_residue", {})
     residues[str(day)] = {
         "day": day, "pattern": pattern, "subject": subject, "player_target": player_target,
         "commitment_type": commitment_type, "commitment_index": latest_index,
-        "ballot_reason": reason.duplicate(true), "lead_npc": lead
+        "ballot_reason": reason.duplicate(true), "ballot_reason_public": reason_public, "lead_npc": lead
     }
     stage_state()["verdict_residue"] = residues
 
@@ -3448,6 +3498,8 @@ func _crosscurrent_partner(residue: Dictionary) -> String:
         return subject
 
     var reason: Dictionary = residue.get("ballot_reason", {})
+    if not _verdict_residue_reason_is_public(residue):
+        return ""
     var source_ids: Array = reason.get("source_ids", [])
     for raw_source in source_ids:
         var owner := _verdict_source_owner([str(raw_source)])
@@ -3478,7 +3530,7 @@ func _crosscurrent_partner(residue: Dictionary) -> String:
 func _crosscurrent_category(residue: Dictionary, lead: String, partner: String) -> String:
     var pattern := str(residue.get("pattern", ""))
     var reason: Dictionary = residue.get("ballot_reason", {})
-    var source_type := str(reason.get("source_type", ""))
+    var source_type := str(reason.get("source_type", "")) if _verdict_residue_reason_is_public(residue) else ""
     if pattern in ["REVERSAL", "EVIDENCE_DRIVEN_REVERSAL"]:
         return "RECONSIDER"
     if pattern == "REASON_FOLLOWUP" or source_type in ["HEARSAY", "SYSTEM_RECORD", "LINK", "CONTRADICTION"]:
@@ -3599,6 +3651,8 @@ func _crosscurrent_scene(day_index: int) -> Dictionary:
     var previous := day_index - 1
     var residue := verdict_residue(previous)
     if residue.is_empty():
+        return {}
+    if str(residue.get("pattern", "")) == "REASON_FOLLOWUP" and not _verdict_residue_reason_is_public(residue):
         return {}
     var seen: Dictionary = stage_state().get("crosscurrent_seen", {})
     if bool(seen.get(str(previous), false)):
@@ -3750,8 +3804,11 @@ func _verdict_callback_text(residue: Dictionary) -> String:
         "EVIDENCE_DRIVEN_REVERSAL":
             opening = _josa_inline("새 근거가 나온 뒤 %s에 대한 판단을 바꿨죠." % subject_name)
         _:
-            var reason_text := _short_text(str(Dictionary(residue.get("ballot_reason", {})).get("text", "어제의 근거")))
-            opening = "어제 “%s” 때문에 표를 정했죠." % reason_text
+            if _verdict_residue_reason_is_public(residue):
+                var reason_text := _short_text(str(Dictionary(residue.get("ballot_reason", {})).get("text", "어제의 근거")))
+                opening = "어제 “%s” 때문에 표를 정했죠." % reason_text
+            else:
+                opening = "어제 표를 정했죠."
     var speaker := _verdict_alive_lead(residue)
     match speaker:
         "mira": return opening + " 오늘은 사람을 몰아세우기 전에 무엇이 실제로 달라졌는지부터 봐요."
@@ -3818,8 +3875,11 @@ func _ask_verdict_followup(member: AstraCrewMember, ref: String, result: Diction
         return
     _mark_asked(member.id, "verdict:" + ref)
     var reason: Dictionary = residue.get("ballot_reason", {})
-    var reason_text := _short_text(str(reason.get("text", "어제의 근거")))
-    _player_line(member, "어제 “%s” 때문에 표를 정했어요. 지금 다시 보면 어디부터 확인해야 할까요?" % reason_text, result, "VERDICT", true)
+    if _verdict_residue_reason_is_public(residue):
+        var reason_text := _short_text(str(reason.get("text", "어제의 근거")))
+        _player_line(member, "어제 “%s” 때문에 표를 정했어요. 지금 다시 보면 어디부터 확인해야 할까요?" % reason_text, result, "VERDICT", true)
+    else:
+        _player_line(member, "어제 회의에서 한 말과 표를 다시 보면, 지금 어디부터 확인해야 할까요?", result, "VERDICT", true)
     _say_text(member, _verdict_followup_reply(member.id), result, "VERDICT")
     result["verdict_residue"] = residue.duplicate(true)
 
