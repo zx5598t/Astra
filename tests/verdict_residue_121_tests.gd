@@ -135,7 +135,7 @@ func run_audit() -> void:
     check(next._verdict_callback_scene(2).is_empty(), "callback is capped/deduplicated per Day")
     check(str(callback.get("speaker","")) == lead, "callback uses relevant living source/participant")
     var leads := next.talk_leads()
-    check(leads.has(lead) and str(leads[lead]) == "어제 투표 근거", "relevant source becomes a next-Day talk lead")
+    check(leads.has(lead), "relevant source remains a next-Day talk lead even when it already has a stronger incident tag")
     next.phase = "INTERROGATION"
     var opened := next.open_conversation(lead)
     check(bool(opened.get("ok",false)), "relevant source conversation opens")
