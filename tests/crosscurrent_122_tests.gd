@@ -220,6 +220,64 @@ func run_audit() -> void:
     check(not historical_public._verdict_reason_source_was_public("public:future", 2),
         "later publication does not retroactively make an earlier ballot reason public")
 
+    # Public conflict provenance is Day-scoped even though the retained
+    # public_contradiction_keys set is stage-wide. Yesterday's identical key
+    # must not make today's distinct conflict visible to NPCs.
+    var conflict_scope := _session(12278, "GLASS_GARDEN")
+    var conflict_ids := conflict_scope.living_ids()
+    var conflict_target := str(conflict_ids[0])
+    var conflict_other := str(conflict_ids[1])
+    var conflict_key := "claim:%s:%s" % [conflict_target, conflict_other]
+    var conflict_detail := "%s|wa %s의 진술은 동시에 맞을 수 없다." % [conflict_scope.name_of(conflict_target), conflict_scope.name_of(conflict_other)]
+    conflict_scope.day = 1
+    conflict_scope._mark_public_conflict(conflict_key, [conflict_target, conflict_other], conflict_detail)
+    var current_reason := {
+        "code": "conflict", "target": conflict_target, "text": conflict_scope._josa_inline(conflict_detail),
+        "source_ids": [], "source_type": "CONTRADICTION", "source_owner": "",
+        "link_id": "", "contradiction_key": conflict_key, "created_index": -1, "public": true
+    }
+    check(conflict_scope._verdict_reason_is_public(current_reason, 1),
+        "same-Day public conflict is valid ballot provenance")
+    check(not conflict_scope._verdict_reason_is_public(current_reason, 2),
+        "earlier public conflict key does not leak publicity into the next Day")
+
+    # 1.2.2 Snapshot v4 stored public conflict reasons with a synthetic
+    # target|detail key and no public/ballot_reason_public flag. Recover public
+    # provenance from the dated manual contradiction record, not from text
+    # alone or the stage-wide key set.
+    var legacy_public := _session(12279, "GLASS_GARDEN")
+    var legacy_public_ids := legacy_public.living_ids()
+    var legacy_public_target := str(legacy_public_ids[0])
+    var legacy_public_other := str(legacy_public_ids[1])
+    var legacy_actual_key := "claim:%s:%s" % [legacy_public_target, legacy_public_other]
+    var legacy_detail_raw := "%s|wa %s의 진술은 동시에 맞을 수 없다." % [legacy_public.name_of(legacy_public_target), legacy_public.name_of(legacy_public_other)]
+    legacy_public.day = 1
+    legacy_public._mark_public_conflict(legacy_actual_key, [legacy_public_target, legacy_public_other], legacy_detail_raw)
+    var legacy_detail := legacy_public._josa_inline(legacy_detail_raw)
+    var legacy_reason := {
+        "code": "conflict", "target": legacy_public_target, "text": legacy_detail,
+        "source_ids": [], "source_type": "CONTRADICTION", "source_owner": "",
+        "link_id": "", "contradiction_key": "%s|%s" % [legacy_public_target, legacy_detail],
+        "created_index": -1
+    }
+    check(legacy_public._verdict_reason_is_public(legacy_reason, 1),
+        "legacy 1.2.2 public conflict provenance is recovered from dated public records")
+    check(not legacy_public._verdict_reason_is_public(legacy_reason, 2),
+        "legacy conflict compatibility does not make future Days public")
+    var legacy_public_residues: Dictionary = legacy_public.stage_state().get("verdict_residue", {})
+    legacy_public_residues["1"] = {
+        "day": 1, "pattern": "REASON_FOLLOWUP", "subject": legacy_public_target,
+        "player_target": legacy_public_target, "commitment_type": "", "commitment_index": -2,
+        "ballot_reason": legacy_reason.duplicate(true), "lead_npc": legacy_public_target
+    }
+    legacy_public.stage_state()["verdict_residue"] = legacy_public_residues
+    legacy_public.day = 2
+    legacy_public._install_day_packet(2)
+    check(legacy_public._verdict_residue_reason_is_public(legacy_public.verdict_residue(1)),
+        "legacy public conflict residue remains public after Snapshot v4 hydration")
+    check(not legacy_public._crosscurrent_scene(2).is_empty(),
+        "legacy public conflict may still produce its normal Crosscurrent continuation")
+
     # Legacy/in-flight snapshots that already contain such a residue are also
     # safe: the private owner is ignored, Crosscurrent falls back, and the
     # private reason text never appears in the one-person callback.
