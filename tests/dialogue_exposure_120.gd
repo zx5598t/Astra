@@ -1,6 +1,6 @@
 extends SceneTree
 
-# ASTRA 1.1.1 HUMAN RHYTHM — runtime-weighted dialogue exposure.
+# ASTRA 1.2.0 AFTERIMAGE — runtime-weighted dialogue exposure.
 # It records only lines actually reached by representative GameSession play.
 const PART_I := ["DEAD_AIR","GLASS_GARDEN","ECHO_WARD"]
 const PART_II := ["SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"]
@@ -32,7 +32,7 @@ func _initialize() -> void:
         print("ASTRA DIALOGUE EXPOSURE 120 OK · %d checks" % checks)
         quit(0)
         return
-    printerr("ASTRA DIALOGUE EXPOSURE 111 FAILED · %d/%d" % [failures.size(), checks])
+    printerr("ASTRA DIALOGUE EXPOSURE 120 FAILED · %d/%d" % [failures.size(), checks])
     quit(1)
 
 func _normalize(text: String) -> String:

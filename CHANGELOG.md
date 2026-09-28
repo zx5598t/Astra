@@ -1,3 +1,16 @@
+## 1.2.1 — WEIGHT OF WORDS
+
+A social-consequence connection pass over 1.2.0. No reputation meter, credibility score, new manager, character, protocol, Stage or save schema.
+
+- **Ballot reasons keep provenance.** The existing reason choice now stores the real known Link/evidence/source metadata beside its text; hidden truth and role state never enter the record.
+- **Public commitments have residue.** Accuse→vote, defend→stand by and real reversals are distinguished from reversals made after new public evidence, a Link or a confession.
+- **The room remembers tomorrow.** At most one short next-Day callback is folded into the existing morning flow, and the relevant living source/participant can become a prioritized conversation lead.
+- **Follow-up reinterprets; it never gifts proof.** The new contextual question only revisits yesterday's already-known reasoning. It does not create fragments, reveal Nulls or bypass required evidence.
+- **Character reasoning stays specific.** Mira reads treatment of people, Jun execution order, Daren premises, Noa provenance, Sena procedure, Soren original source, Lucan feasibility and Maren environmental persistence.
+- **No score layer and no extra vote clicks.** Existing trust/bond/consequence semantics, ballot UX, meeting pacing, fairness gates, Past Echo and the 93/60/53 balance baseline remain authoritative.
+- **Save compatibility unchanged.** Verdict residue/dedup live as optional `flags["stage_080"]` state. Meta save v12 / Snapshot v4 remain unchanged.
+- **1.2.0 cleanup.** The stale `dialogue_exposure_120.gd` 1.1.1 header / 111 failure label are corrected, and final 1.2.0 release provenance is recorded in QA.
+
 ## 1.2.0 — AFTERIMAGE
 
 A memory-to-gameplay pass over 1.1.1. No new currency, skill tree, parallel memory manager, character, protocol or save schema.

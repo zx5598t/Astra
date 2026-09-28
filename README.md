@@ -1,10 +1,10 @@
-# ASTRA 1.2.0 — AFTERIMAGE
+# ASTRA 1.2.1 — WEIGHT OF WORDS
 
 같은 배에서 깨어났지만, 우리는 서로 다른 목적지를 기억한다.
 ASTRA의 탐사요원이 되어 승무원 사이에 숨은 **Null**을 찾는 싱글플레이 SF 사회추리 게임입니다.
 사람과 이야기하고, 누구의 말이 어긋나는지 비교하고, 회의에서 따지고, 투표로 한 사람을 장기수면 포드에 재웁니다.
 
-1.2.0은 이전 History에서 **직접 겪고 선택한 정보가 다음 History의 조사 순서를 바꾸는** 업데이트입니다. [잔향] 질문은 실제 과거 route history가 있을 때만 열리며 정답·Null 역할·미래 정보를 주지 않습니다. 대신 현재 History에서 누구에게 무엇을 먼저 확인할지, 어떤 기록을 먼저 열지, 그 정확함을 NPC가 어떻게 받아들이는지가 달라집니다.
+1.2.1은 **회의에서 한 말과 투표 이유가 다음 날 사람들의 반응과 질문에 남는** 업데이트입니다. 새 평판 점수를 추가하지 않고, 이미 있던 공개 지목·변호·Link·증거·투표 이유를 연결해 “내 판단이 투표 버튼에서 끝나지 않는다”는 감각을 만듭니다.
 
 - [플레이 안내](START_HERE.md) · [변경 사항](CHANGELOG.md) · [릴리스 노트](docs/RELEASE_NOTES.md)
 - [설계](docs/GAME_DESIGN.md) · [인물](docs/CHARACTERS.md) · [스토리 원장](docs/STORY_LEDGER_080.md) · [검증](docs/QA_REPORT.md)
@@ -21,17 +21,18 @@ STAGE가 끝나면 배의 기록이 다시 맞춰지고(재동기화) 모두가 
 
 ## 이번 버전의 핵심
 
-- **지난 History가 이번 질문을 바꿉니다.** 10개의 [잔향] 기회를 RED_SHIFT부터 THRESHOLD까지 8개 Stage에 분산했습니다. Stage 번호만 높다고 열리지 않고, 플레이어가 실제로 선택한 과거 route가 route_history에 있어야 합니다.
-- **잔향은 정답 버튼이 아닙니다.** 현재 NPC가 원래 가지고 있던 기록·목격·전문 소견의 확인 순서만 앞당기거나 특별 질문과 반응을 만듭니다. Null 정답, hidden truth, 미래 Stage 정보는 사용하지 않습니다.
-- **NPC가 정확한 선행지식을 이상하게 봅니다.** 지나치게 정확한 질문에 대한 반응은 새 의심 게이지 대신 기존 trust/bond/relationship feedback을 사용합니다.
-- **후반 History가 실제로 다르게 보입니다.** 같은 seed의 진실과 기본 evidence를 유지한 채 과거 route에 따라 질문·반응·확인 방식이 달라집니다.
-- **마렌과 루칸의 전문성이 플레이에 직접 들어옵니다.** 마렌은 생장·환경·관리 주기의 연속성을, 루칸은 실제 이동 가능 시간·위험·경로를 읽습니다. 잔향을 쓴 날의 회의에서는 일반 도입 한 줄을 이 전문성 해석으로 교체해 회의 길이를 늘리지 않습니다.
-- **대사 반복 선택을 게임 RNG와 분리했습니다.** 같은 기능 문장이 가까운 간격으로 반복되는 문제를 줄이되 사건·거짓말·스트레스·투표에 쓰는 기존 gameplay RNG는 건드리지 않습니다.
-- **기존 1.1.1의 강점은 그대로입니다.** 다섯 branch anchor, 8개 micro-arc/20개 선택, Link, fairness, SHARE/WAKE/KEEP, WARM/CAUTIOUS/STRAINED, 범용 release workflow를 유지합니다.
-- **저장 형식은 그대로입니다.** 새 상태는 기존 voyage dictionary의 optional field로 들어가므로 Meta v12 / Snapshot v4를 유지하고 1.1.1 저장은 안전하게 기본값으로 hydrate합니다.
+- **투표 이유가 다음 날까지 남습니다.** Link·모순·증거를 이유로 골랐다면 당시 플레이어가 실제로 알던 source/provenance와 함께 기록됩니다.
+- **공개 발언과 실제 표를 함께 봅니다.** 지목→같은 대상 투표, 변호→끝까지 비투표, 공개 발언과 다른 표를 구분합니다.
+- **새 근거 뒤의 판단 변경을 따로 봅니다.** 공개된 Link·evidence·confession 뒤에 생각을 바꾼 경우를 단순 reversal과 구분합니다.
+- **다음 아침에 최대 한 번 짧게 되돌아옵니다.** 관련 승무원이 어제의 판단을 언급하고, 그 사람이 오늘의 대화 lead가 될 수 있습니다.
+- **후속 질문은 정답 버튼이 아닙니다.** 어제 이미 알던 근거를 다시 해석할 뿐 새 proof·Null 역할·hidden truth를 만들지 않습니다.
+- **캐릭터마다 확인 방식이 다릅니다.** 노아는 출처/원본, 세나는 절차/출입, 소렌은 원출처, 루칸은 경로 가능성, 마렌은 흔적의 지속성을 우선합니다.
+- **새 평판 meter와 추가 투표 클릭이 없습니다.** 기존 trust/bond, ballot UX, meeting pacing, fairness와 1.2.0 Past Echo를 그대로 보호합니다.
+- **저장 형식도 그대로입니다.** Meta v12 / Snapshot v4를 유지하고 새 residue/dedup은 기존 stage state의 optional data로 저장됩니다.
+
 ## 실행과 빌드
 
-Windows: `ASTRA-1.2.0-windows.zip`을 풀고 `ASTRA/ASTRA.exe`를 실행합니다. 선택형 AI를 켜지 않으면 네트워크가 필요 없습니다.
+Windows: `ASTRA-1.2.1-windows.zip`을 풀고 `ASTRA/ASTRA.exe`를 실행합니다. 선택형 AI를 켜지 않으면 네트워크가 필요 없습니다.
 
 소스에서:
 
@@ -43,4 +44,4 @@ powershell -File tools/build_windows.ps1 -Godot "C:\path\to\godot.exe"     # tes
 ```
 
 CI(`.github/workflows/godot-ci.yml`)와 Windows 빌드 스크립트는 같은 목록(`tests/ci_suite.txt`)을 실행합니다.
-사람이 읽어야 하는 검증은 `tests/walkthrough_100.gd` + `tests/walkthrough_110.gd`와 Windows `tests/visual_100.gd`로 만듭니다. 1.2는 Past Echo·History variation·dialogue exposure report도 기존 1.1 QA와 함께 `build/qa` artifact로 보존합니다.
+사람이 읽어야 하는 검증은 `tests/walkthrough_100.gd` + `tests/walkthrough_110.gd`와 Windows `tests/visual_100.gd`로 만듭니다. 1.2.1은 Verdict Residue 회귀 gate를 추가하고 Past Echo·History variation·dialogue exposure를 포함한 기존 전체 QA를 그대로 유지합니다.
