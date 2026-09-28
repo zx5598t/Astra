@@ -1,4 +1,4 @@
-# ASTRA 1.1.0 — LIVING PATHS
+# ASTRA 1.2.0 — AFTERIMAGE
 
 같은 배에서 깨어났지만, 우리는 서로 다른 목적지를 기억한다.
 ASTRA의 탐사요원이 되어 승무원 사이에 숨은 **Null**을 찾는 싱글플레이 SF 사회추리 게임입니다.
@@ -22,6 +22,10 @@ STAGE가 끝나면 배의 기록이 다시 맞춰지고(재동기화) 모두가 
 
 ## 이번 버전의 핵심
 
+- **이전 History가 조사에 남습니다.** 실제로 선택했던 route/micro-arc 기억이 있을 때만 `[잔향]` 조사 방향이 열립니다. Stage 번호나 숨은 정답만으로는 열리지 않습니다.
+- **잔향은 정답이 아니라 순서입니다.** 오늘의 질문, 우선 대화 대상, 회의 맥락과 NPC 반응을 바꾸지만 Null·사건 진실·필수 evidence는 바꾸지 않습니다.
+- **마렌과 루칸의 전문성이 추리에 쓰입니다.** 마렌은 생장·관리 주기의 물리적 연속성, 루칸은 시간·위험·경로의 실제 수행 가능성을 읽습니다.
+
 - **선택이 다음 장면을 바꿉니다.** DEAD_AIR / ECHO_WARD / RED_SHIFT / BORROWED_DAYS / THREE_MINUTES_DARK의 핵심 선택은 공개 범위, provenance, 개인 scene, meeting opener, 다음 Stage callback 중 둘 이상을 실제로 바꿉니다.
 - **직접 본 것과 전해 들은 것이 다릅니다.** THREE_MINUTES_DARK에서 동력·통신·보안 중 한 곳만 DIRECT가 되고 나머지는 사람/기록을 통해 확인합니다.
 - **다회차가 내 선택 때문에 달라집니다.** 선택형 micro-arc와 route callback은 첫 캠페인에 전부 쏟지 않으며, 같은 canon에 도달해도 다른 scene과 관계 texture를 볼 수 있습니다.
@@ -34,7 +38,7 @@ STAGE가 끝나면 배의 기록이 다시 맞춰지고(재동기화) 모두가 
 
 ## 실행과 빌드
 
-Windows: `ASTRA-1.1.0-windows.zip`을 풀고 `ASTRA/ASTRA.exe`를 실행합니다. 선택형 AI를 켜지 않으면 네트워크가 필요 없습니다.
+Windows: `ASTRA-1.2.0-windows.zip`을 풀고 `ASTRA/ASTRA.exe`를 실행합니다. 선택형 AI를 켜지 않으면 네트워크가 필요 없습니다.
 
 소스에서:
 
