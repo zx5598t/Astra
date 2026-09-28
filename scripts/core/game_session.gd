@@ -3293,6 +3293,8 @@ func _verdict_reason_is_public(reason: Dictionary, source_day: int) -> bool:
         # A Link is itself a public meeting intervention.
         return int(reason.get("created_index", -1)) >= 0
     if code == "conflict":
+        if bool(reason.get("public", false)):
+            return true
         var key := str(reason.get("contradiction_key", ""))
         if key != "" and public_contradiction_keys.has(key):
             return true
@@ -3334,8 +3336,9 @@ func ballot_reasons(target: String) -> Array:
             reasons.append({
                 "code": "conflict", "text": detail, "target": target,
                 "source_ids": [], "source_type": "CONTRADICTION", "source_owner": "",
-                "link_id": "", "contradiction_key": "%s|%s" % [target, detail],
-                "created_index": int(conflict.get("meeting_index", -1))
+                "link_id": "", "contradiction_key": str(conflict.get("key", "")),
+                "created_index": int(conflict.get("meeting_index", -1)),
+                "public": bool(conflict.get("public", false))
             })
     var view := suspicion_breakdown("player", target)
     for reason in view.get("reasons", []):
@@ -3819,7 +3822,7 @@ func _verdict_callback_text(residue: Dictionary) -> String:
         "vale": return opening + " 오늘은 전해진 말보다 원출처부터 다시 확인해요."
         "eli": return opening + " 오늘은 그 경로가 실제로 가능한지, 시간과 위험 조건부터 보자."
         "lyra": return opening + " 오늘은 어제 본 흔적이 계속 이어지는지부터 봐요."
-    return opening + " 오늘은 그 근거가 여전히 성립하는지부터 다시 확인하자."
+    return opening + (" 오늘은 그 근거가 여전히 성립하는지부터 다시 확인하자." if _verdict_residue_reason_is_public(residue) else " 오늘은 어제의 판단이 여전히 성립하는지부터 다시 확인하자.")
 
 func _verdict_callback_scene(day_index: int) -> Dictionary:
     if day_index <= 1:
