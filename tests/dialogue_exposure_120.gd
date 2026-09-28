@@ -1,6 +1,6 @@
 extends SceneTree
 
-# ASTRA 1.1.1 HUMAN RHYTHM — runtime-weighted dialogue exposure.
+# ASTRA 1.2.0 AFTERIMAGE — runtime-weighted dialogue exposure.
 # It records only lines actually reached by representative GameSession play.
 const PART_I := ["DEAD_AIR","GLASS_GARDEN","ECHO_WARD"]
 const PART_II := ["SILENT_ORBIT","RED_SHIFT","LAST_LIGHT"]
