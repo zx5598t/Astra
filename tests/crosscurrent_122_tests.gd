@@ -33,10 +33,10 @@ func _pair(s: AstraGameSession) -> Array:
     check(ids.size() >= 2, "test Stage has at least two living crew")
     return [str(ids[0]), str(ids[1])]
 
-func _install_residue(s: AstraGameSession, pattern: String, lead: String, subject: String, source_type: String = "LINK") -> void:
+func _install_residue_day(s: AstraGameSession, source_day: int, pattern: String, lead: String, subject: String, source_type: String = "LINK") -> void:
     var residues: Dictionary = s.stage_state().get("verdict_residue", {})
-    residues["1"] = {
-        "day": 1,
+    residues[str(source_day)] = {
+        "day": source_day,
         "pattern": pattern,
         "subject": subject,
         "player_target": subject,
@@ -49,7 +49,7 @@ func _install_residue(s: AstraGameSession, pattern: String, lead: String, subjec
             "source_ids": [],
             "source_type": source_type,
             "source_owner": lead,
-            "link_id": "crosscurrent:test",
+            "link_id": "crosscurrent:test:%d" % source_day,
             "contradiction_key": "crosscurrent",
             "created_index": 5
         },
@@ -57,6 +57,9 @@ func _install_residue(s: AstraGameSession, pattern: String, lead: String, subjec
         "lead_npc": lead
     }
     s.stage_state()["verdict_residue"] = residues
+
+func _install_residue(s: AstraGameSession, pattern: String, lead: String, subject: String, source_type: String = "LINK") -> void:
+    _install_residue_day(s, 1, pattern, lead, subject, source_type)
 
 func _day_two(s: AstraGameSession) -> void:
     s.day = 2
@@ -147,6 +150,40 @@ func run_audit() -> void:
     check(replace._crosscurrent_scene(2).is_empty(), "same source Day cannot queue Crosscurrent twice")
     check(JSON.stringify(replace.truth) == truth_before, "Crosscurrent scene does not change truth/Null assignment")
     check(JSON.stringify(replace.current_packet()) == packet_before, "Crosscurrent scene does not change Day Packet/base evidence")
+
+    # CLEAR CURRENT pacing: an immediately consecutive scene with the exact
+    # same unordered pair and category falls back to the existing one-person
+    # callback. A different pair/category remains eligible.
+    var repeat := _session(12272, "GLASS_GARDEN")
+    var repeat_ids := repeat.living_ids()
+    var repeat_lead := str(repeat_ids[0])
+    var repeat_partner := str(repeat_ids[1])
+    _install_residue_day(repeat, 1, "STOOD_BY", repeat_lead, repeat_partner)
+    repeat.day = 2
+    repeat._install_day_packet(2)
+    var repeat_first := repeat._crosscurrent_scene(2)
+    check(not repeat_first.is_empty(), "exact-repeat probe shows the first Crosscurrent")
+    _install_residue_day(repeat, 2, "STOOD_BY", repeat_lead, repeat_partner)
+    repeat.day = 3
+    repeat._install_day_packet(3)
+    check(repeat._crosscurrent_scene(3).is_empty(), "same pair/category immediate repeat is suppressed")
+    var repeat_fallback := repeat._verdict_callback_scene(3)
+    check(not repeat_fallback.is_empty(), "suppressed exact repeat uses the existing verdict fallback")
+    check(not str(repeat_fallback.get("id", "")).begins_with("crosscurrent_"), "suppression does not create a replacement social scene")
+
+    var varied := _session(12273, "GLASS_GARDEN")
+    var varied_ids := varied.living_ids()
+    var varied_lead := str(varied_ids[0])
+    var varied_partner := str(varied_ids[1])
+    var varied_other := str(varied_ids[2])
+    _install_residue_day(varied, 1, "STOOD_BY", varied_lead, varied_partner)
+    varied.day = 2
+    varied._install_day_packet(2)
+    check(not varied._crosscurrent_scene(2).is_empty(), "variation probe shows the first Crosscurrent")
+    _install_residue_day(varied, 2, "EVIDENCE_DRIVEN_REVERSAL", varied_lead, varied_other)
+    varied.day = 3
+    varied._install_day_packet(3)
+    check(not varied._crosscurrent_scene(3).is_empty(), "different meaningful pair/category is not suppressed")
 
     # Private ballot provenance may inform the player's own vote, but it must
     # never become an NPC-facing REASON_FOLLOWUP or promote its source owner.
