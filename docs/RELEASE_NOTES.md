@@ -1,3 +1,22 @@
+# ASTRA 1.2.1 — WEIGHT OF WORDS
+
+**회의에서 한 말과 투표 이유가 다음 날 사람들의 반응과 질문에 남습니다.**
+
+1.2.0의 Past Echo·Link·사회추리·Finale 구조는 그대로 유지합니다. 이번 버전은 새 평판 수치를 만들지 않고 이미 있던 ballot reason, 공개 지목/변호, DecisionTrace, conversation priority를 연결합니다.
+
+- **투표 이유가 사라지지 않습니다.** Link·모순·증거를 이유로 골랐다면 당시 플레이어가 실제로 알고 있던 출처/provenance가 함께 남습니다.
+- **말과 표의 관계를 기억합니다.** 지목한 사람에게 그대로 투표했는지, 감싼 사람을 끝까지 감쌌는지, 공개 발언과 다른 표를 골랐는지 구분합니다.
+- **근거를 보고 생각을 바꾼 것은 별개입니다.** 공개 뒤 새 Link·evidence·confession이 생긴 reversal은 단순한 말 바꾸기로 취급하지 않습니다.
+- **다음 날 한 번 되돌아옵니다.** 의미 있는 residue가 있으면 기존 아침 장면에 짧은 callback 하나가 들어갈 수 있고, 관련된 살아 있는 승무원이 대화 lead가 됩니다.
+- **후속 질문은 새 정답을 주지 않습니다.** 어제의 근거와 판단을 다시 해석할 뿐 hidden truth, Null 역할, required proof를 만들거나 공개하지 않습니다.
+- **사람마다 보는 지점이 다릅니다.** 노아는 원본/출처, 세나는 절차/출입, 루칸은 경로 가능성, 마렌은 흔적의 지속성처럼 기존 성격과 전문성을 따라 반응합니다.
+- **숫자 평판 UI가 없습니다.** 새 meter, modal, 확인 클릭을 추가하지 않았고 기존 vote flow와 meeting pacing을 유지합니다.
+- **저장 형식은 그대로입니다.** Meta v12 / Snapshot v4를 유지하며 residue/dedup은 기존 stage state의 optional data입니다.
+
+정확한 verdict residue 테스트, balance/fairness, dialogue exposure, Windows build/boot와 CI 결과는 `docs/QA_REPORT.md`에 기록합니다.
+
+---
+
 # ASTRA 1.2.0 — AFTERIMAGE
 
 **이전 History에서 배운 것이 사라지지 않고, 다음 History에서 내가 무엇을 먼저 묻고 확인하는지를 바꿉니다.**
