@@ -1,3 +1,15 @@
+## 1.2.0 — AFTERIMAGE
+
+A focused memory-to-gameplay pass over 1.1.1. Existing branch, consequence, knowledge, meeting and save structures are reused; no memory currency, skill tree or parallel meta-history manager is added.
+
+- **Past Echo is experience-gated.** Ten authored opportunities across later Stages unlock only from route choices or micro-arc memory tags the player actually experienced.
+- **Echo changes direction, not truth.** Choosing an Echo changes the Day question, conversation lead, concise meeting context and an NPC reaction without modifying Null assignment, Day Packet or required evidence.
+- **Player-facing choice stays lightweight.** Echo appears in the existing story choice UI with a small `[잔향]` indicator and an explicit option to ignore it.
+- **Maren / Lucan expertise is actionable.** Maren can prioritize biological/environmental continuity; Lucan can prioritize feasibility, risk and route costs. Their existing micro-arc choices can become later investigation callbacks.
+- **Information-leak guard.** Runtime eligibility is re-checked against carried route/memory state; Stage completion, hidden role state and generator truth cannot unlock an Echo.
+- **Save compatibility unchanged.** Meta save v12 / Snapshot v4.
+- **New release gate.** `past_echo_120_tests.gd` checks focused opportunity scope, 5+ Stage distribution, real-experience unlocks, truth/evidence invariants, deterministic behavior, role callbacks and snapshot round-trip.
+
 ## 1.1.1 — HUMAN RHYTHM
 
 A long-session pacing and editorial polish pass over 1.1.0. No new manager, deduction engine, branch anchor, protocol, minigame, character or save schema.
