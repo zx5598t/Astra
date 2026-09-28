@@ -45,4 +45,4 @@ finale_111_tests.gd|ASTRA FINALE 111 TESTS OK|
 walkthrough_111.gd|ASTRA WALKTHROUGH 111 OK|
 replay_fatigue_111_tests.gd|ASTRA REPLAY FATIGUE 111 TESTS OK|
 release_111_tests.gd|ASTRA RELEASE 111 TESTS OK|
-past_echo_120_tests.gd|ASTRA PAST ECHO 120 TESTS OK|\n
+past_echo_120_tests.gd|ASTRA PAST ECHO 120 TESTS OK|
