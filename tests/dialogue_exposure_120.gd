@@ -32,7 +32,7 @@ func _initialize() -> void:
         print("ASTRA DIALOGUE EXPOSURE 120 OK · %d checks" % checks)
         quit(0)
         return
-    printerr("ASTRA DIALOGUE EXPOSURE 111 FAILED · %d/%d" % [failures.size(), checks])
+    printerr("ASTRA DIALOGUE EXPOSURE 120 FAILED · %d/%d" % [failures.size(), checks])
     quit(1)
 
 func _normalize(text: String) -> String:
