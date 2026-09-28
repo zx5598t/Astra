@@ -22,6 +22,15 @@ func _initialize() -> void:
     for case_id in AstraCaseCatalog.STAGE_ORDER:
         for index in range(SEEDS_PER_STAGE):
             _play_case(case_id, 23000 + index * 37 + AstraCaseCatalog.stage_index(case_id) * 1000)
+    check(int(metrics.get("same_pair_category_consecutive", 0)) == 0,
+        "CLEAR CURRENT suppresses immediate same-pair/same-category repeats")
+    check(int(metrics.get("shown", 0)) + int(metrics.get("suppression", 0)) == int(metrics.get("eligible", 0)),
+        "every eligible Crosscurrent is either shown or pacing-suppressed")
+    check(not Dictionary(metrics.get("category", {})).is_empty(),
+        "exposure audit records category distribution")
+    for path in ["stand", "reframe", "verify"]:
+        check(int(Dictionary(metrics.get("choice", {})).get(path, 0)) > 0,
+            "exposure audit covers " + path)
     _print_summary()
     if failures.is_empty():
         print("ASTRA CROSSCURRENT EXPOSURE 123 OK · %d checks" % checks)
@@ -36,6 +45,7 @@ func _blank_metrics() -> Dictionary:
         "eligible": 0,
         "shown": 0,
         "fallback": 0,
+        "suppression": 0,
         "max_streak": 0,
         "two_day_consecutive": 0,
         "three_plus_consecutive": 0,
@@ -245,6 +255,7 @@ func _play_case(case_name: String, seed_value: int) -> void:
                         var data: Dictionary = Dictionary(Dictionary(counts["cross_scene"]).get("crosscurrent", {}))
                         var pair := _pair_key(str(data.get("lead", "")), str(data.get("partner", "")))
                         var category := str(data.get("category", ""))
+                        _bump_named("category", category, scope_name)
                         _bump_named("lead", str(data.get("lead", "")), scope_name)
                         _bump_named("partner", str(data.get("partner", "")), scope_name)
                         if previous_shown:
@@ -265,6 +276,8 @@ func _play_case(case_name: String, seed_value: int) -> void:
                     else:
                         if fallback:
                             _bump("fallback", 1, scope_name)
+                        if not candidate.is_empty():
+                            _bump("suppression", 1, scope_name)
                         streak = 0
                         previous_pair = ""
                         previous_category = ""
