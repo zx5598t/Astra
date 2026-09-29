@@ -2,6 +2,7 @@
 #   script | success marker | extra user args (optional)
 # 0.8.0 CONTAINMENT: the 0.5.x-0.7.x exploration, voyage-traversal, abstain-vote
 # and investigation suites were retired with those systems (docs/QA_REPORT.md).
+crosscurrent_exposure_123.gd|ASTRA CROSSCURRENT EXPOSURE 123 OK|
 run_tests.gd|ASTRA TESTS OK|--games=40
 ui_smoke.gd|ASTRA UI SMOKE OK|
 story_070_consistency.gd|ASTRA STORY 070 CONSISTENCY TESTS OK|

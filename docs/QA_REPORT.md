@@ -1,7 +1,91 @@
+# ASTRA 1.2.3 — CLEAR CURRENT QA
+
+Base: main **51c307a9b7f90daf83e11f183f772b367083fbde** (official v1.2.2).  
+Feature branch: `release/1.2.3`. Final 1.2.3 main/CI/Windows/Release values are recorded only after the exact main SHA completes the release pipeline.
+
+## 1.2.3 hotfix contract
+
+- Private player-known evidence may remain a ballot reason, but it cannot create an NPC-facing REASON_FOLLOWUP, select its private source owner, supply Crosscurrent source-type expertise, or expose its reason text.
+- Legacy/in-flight Snapshot v4 residue that lacks the new visibility marker is re-evaluated from historical public provenance; explicit private residue safely falls back to the public commitment subject / one-person callback.
+- Public contradiction ballot reasons retain their original contradiction key and public flag.
+- `crosscurrent_122_tests.gd` includes private-provenance regression coverage and Windows resource metadata gates.
+- Windows file/product version is **1.2.3.0** and description is **ASTRA — CLEAR CURRENT**.
+- Meta save **v12** / Snapshot **v4** remain unchanged; no migration and no gameplay truth/balance changes.
+
+
+## Crosscurrent runtime exposure — 1.2.3
+
+`tests/crosscurrent_exposure_123.gd` drives all Stages across **8 deterministic seeds per Stage** using representative Stage/Day play, real ballot-reason selection and the actual morning story queue.
+
+Pre-suppression baseline:
+- simulated Days **212**
+- eligible Crosscurrent **90**
+- shown Crosscurrent **90**
+- generic verdict fallback **12**
+- max consecutive Crosscurrent **2**
+- 2-Day consecutive transitions **19**
+- 3-Day+ consecutive **0**
+- same unordered pair consecutive **3**
+- same category consecutive **19**
+- same pair + same category consecutive **3**
+- Past Echo opener collision **0**
+- stand / reframe / verify **30 / 31 / 29**
+
+Because 3-Day streaks were absent and Crosscurrent was not shown on every simulated Day, no broad cooldown or three-in-a-row rule was added. The only measured repetition defect was the **3 immediate same-pair+same-category repeats**.
+
+Post-suppression audit:
+- simulated Days **212**
+- eligible Crosscurrent **90**
+- shown Crosscurrent **87**
+- generic verdict fallback **15**
+- exact-repeat suppression **3**
+- max consecutive Crosscurrent **2**
+- 2-Day consecutive transitions **16**
+- 3-Day+ consecutive **0**
+- same unordered pair consecutive **0**
+- same category consecutive **16**
+- same pair + same category consecutive **0**
+- Past Echo opener collision **0**
+- stand / reframe / verify **29 / 30 / 28**
+- category distribution in this representative path: **SOURCE_DISPUTE 87**
+- duplicate generic VERDICT follow-up suppression **87**
+- exposure gate: **ASTRA CROSSCURRENT EXPOSURE 123 OK · 1750 checks**
+
+The suppression reads only already player-facing `crosscurrent_history`. It does not inspect role, truth, suspicion score or future evidence; a suppressed two-person scene falls through to the existing one-person verdict callback.
+
+## Release-branch verification candidate
+
+Exact tested release head before main promotion: `6e17b4b0dcef195c3bc85df3a7804d16b7ee41f4`  
+Godot CI **#882 / run 36492702548: SUCCESS**.
+
+- privacy / compatibility regressions: **PASS** — private reason isolation, historical-public/future-public separation, Day-scoped public-conflict provenance and 1.2.2 synthetic `target|detail` conflict compatibility.
+- `crosscurrent_122_tests.gd`: **112 checks PASS**.
+- `verdict_residue_121_tests.gd`: **43 checks PASS**.
+- `run_tests.gd --games=40`: **63,634 checks PASS**.
+- quick stabilization: DEAD_AIR SMART/PASSIVE **95/80%**, GLASS_GARDEN **100/85%**, ECHO_WARD **97/75%**; deduction **11,177 checks PASS**; causal **300 paired seeds PASS**; fairness **909 checks PASS**.
+- 100-game balance probe: TOTAL SMART / RANDOM / PASSIVE **93 / 60 / 53%**. Per-Stage distribution remains the established 1.2.x baseline.
+- save compatibility: **Snapshot v4 / Meta v12 PASS**, no schema bump or destructive migration.
+- Linux validate/full suite/main boot: **PASS**.
+- Windows validate/full suite/main boot: **PASS**.
+- visual review: **PASS**.
+- Windows release-candidate export + exported EXE boot: **PASS**.
+- Windows EXE metadata: FileVersion **1.2.3.0**, ProductVersion **1.2.3.0**, FileDescription **ASTRA — CLEAR CURRENT**.
+- candidate package: `ASTRA-1.2.3-windows.zip` · **113,163,305 bytes** · SHA256 **ea165ec95db0c78416fc436c596f57dc6cd3717f656f0de48b7f44c9cfa27b81**.
+- non-fatal runner diagnostic retained: Godot dummy/headless teardown can report leaked RID allocations after successful tests; authored assertions, Windows boot/export and release gates still pass.
+
+Final main/tag/Release provenance is appended only after the exact main SHA passes the same pipeline.
+
+---
+
 # ASTRA 1.2.2 — CROSSCURRENT QA
 
-Base: main **3481b3ad0f28ab7557faa69a6bbfdc0aae2701ae** (official v1.2.1).  
-Feature branch: `release/1.2.2`. Final 1.2.2 main/CI/Windows/Release values are reported from the exact tested commit; an in-progress workflow is never counted as success.
+Final main / tag SHA: `51c307a9b7f90daf83e11f183f772b367083fbde`  
+Godot CI **#834 / run 36390807316: SUCCESS**  
+Publish ASTRA release **#76 / run 36392687484: SUCCESS**  
+Windows: `ASTRA-1.2.2-windows.zip` · **113,160,755 bytes**  
+SHA-256: `239f15ad1804e299ed89eb7dd8d3920170f8e2e7c5b56486ac258bed2d27bc2b`
+
+Post-release review found two defects subsequently recovered by 1.2.3: private ballot provenance could leak into NPC-facing Crosscurrent/follow-up selection, and Windows resource metadata still identified 1.1.0 / LIVING PATHS inside the 1.2.2 executable.
 
 ## 1.2.2 verification contract
 

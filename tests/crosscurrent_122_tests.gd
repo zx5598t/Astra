@@ -33,10 +33,10 @@ func _pair(s: AstraGameSession) -> Array:
     check(ids.size() >= 2, "test Stage has at least two living crew")
     return [str(ids[0]), str(ids[1])]
 
-func _install_residue(s: AstraGameSession, pattern: String, lead: String, subject: String, source_type: String = "LINK") -> void:
+func _install_residue_day(s: AstraGameSession, source_day: int, pattern: String, lead: String, subject: String, source_type: String = "LINK") -> void:
     var residues: Dictionary = s.stage_state().get("verdict_residue", {})
-    residues["1"] = {
-        "day": 1,
+    residues[str(source_day)] = {
+        "day": source_day,
         "pattern": pattern,
         "subject": subject,
         "player_target": subject,
@@ -49,13 +49,17 @@ func _install_residue(s: AstraGameSession, pattern: String, lead: String, subjec
             "source_ids": [],
             "source_type": source_type,
             "source_owner": lead,
-            "link_id": "crosscurrent:test",
+            "link_id": "crosscurrent:test:%d" % source_day,
             "contradiction_key": "crosscurrent",
             "created_index": 5
         },
+        "ballot_reason_public": true,
         "lead_npc": lead
     }
     s.stage_state()["verdict_residue"] = residues
+
+func _install_residue(s: AstraGameSession, pattern: String, lead: String, subject: String, source_type: String = "LINK") -> void:
+    _install_residue_day(s, 1, pattern, lead, subject, source_type)
 
 func _day_two(s: AstraGameSession) -> void:
     s.day = 2
@@ -147,6 +151,172 @@ func run_audit() -> void:
     check(JSON.stringify(replace.truth) == truth_before, "Crosscurrent scene does not change truth/Null assignment")
     check(JSON.stringify(replace.current_packet()) == packet_before, "Crosscurrent scene does not change Day Packet/base evidence")
 
+    # CLEAR CURRENT pacing: an immediately consecutive scene with the exact
+    # same unordered pair and category falls back to the existing one-person
+    # callback. A different pair/category remains eligible.
+    var repeat := _session(12272, "GLASS_GARDEN")
+    var repeat_ids := repeat.living_ids()
+    var repeat_lead := str(repeat_ids[0])
+    var repeat_partner := str(repeat_ids[1])
+    _install_residue_day(repeat, 1, "STOOD_BY", repeat_lead, repeat_partner)
+    repeat.day = 2
+    repeat._install_day_packet(2)
+    var repeat_first := repeat._crosscurrent_scene(2)
+    check(not repeat_first.is_empty(), "exact-repeat probe shows the first Crosscurrent")
+    _install_residue_day(repeat, 2, "STOOD_BY", repeat_lead, repeat_partner)
+    repeat.day = 3
+    repeat._install_day_packet(3)
+    check(repeat._crosscurrent_scene(3).is_empty(), "same pair/category immediate repeat is suppressed")
+    var repeat_fallback := repeat._verdict_callback_scene(3)
+    check(not repeat_fallback.is_empty(), "suppressed exact repeat uses the existing verdict fallback")
+    check(not str(repeat_fallback.get("id", "")).begins_with("crosscurrent_"), "suppression does not create a replacement social scene")
+
+    var varied := _session(12273, "GLASS_GARDEN")
+    var varied_ids := varied.living_ids()
+    var varied_lead := str(varied_ids[0])
+    var varied_partner := str(varied_ids[1])
+    var varied_other := str(varied_ids[2])
+    _install_residue_day(varied, 1, "STOOD_BY", varied_lead, varied_partner)
+    varied.day = 2
+    varied._install_day_packet(2)
+    check(not varied._crosscurrent_scene(2).is_empty(), "variation probe shows the first Crosscurrent")
+    _install_residue_day(varied, 2, "EVIDENCE_DRIVEN_REVERSAL", varied_lead, varied_other)
+    varied.day = 3
+    varied._install_day_packet(3)
+    check(not varied._crosscurrent_scene(3).is_empty(), "different meaningful pair/category is not suppressed")
+
+    # Private ballot provenance may inform the player's own vote, but it must
+    # never become an NPC-facing REASON_FOLLOWUP or promote its source owner.
+    var private_reason := _session(12275)
+    var private_ids := _pair(private_reason)
+    var private_owner := str(private_ids[0])
+    var private_target := str(private_ids[1])
+    private_reason.stage_state()["ballot_reasons"] = {
+        "1": {
+            "target": private_target,
+            "code": "evidence",
+            "text": "비공개 표 근거",
+            "source_ids": ["private:test"],
+            "source_type": "SYSTEM_RECORD",
+            "source_owner": private_owner,
+            "link_id": "",
+            "contradiction_key": "",
+            "created_index": -1
+        }
+    }
+    private_reason._record_verdict_residue(private_target)
+    check(private_reason.verdict_residue(1).is_empty(), "private ballot reason alone creates no NPC-facing residue")
+
+    # Once a fact was genuinely public, it remains public provenance on later
+    # ballot Days. A publication recorded only after that ballot Day must not
+    # retroactively legitimize the old reason.
+    var historical_public := _session(12277)
+    var historical_log: Array = historical_public.stage_state().get("public_log", [])
+    historical_log.append({"day": 1, "fact": "public:old", "speaker": "noa"})
+    historical_log.append({"day": 3, "fact": "public:future", "speaker": "noa"})
+    historical_public.stage_state()["public_log"] = historical_log
+    check(historical_public._verdict_reason_source_was_public("public:old", 2),
+        "earlier-Day public provenance remains eligible on a later ballot Day")
+    check(not historical_public._verdict_reason_source_was_public("public:future", 2),
+        "later publication does not retroactively make an earlier ballot reason public")
+
+    # Public conflict provenance is Day-scoped even though the retained
+    # public_contradiction_keys set is stage-wide. Yesterday's identical key
+    # must not make today's distinct conflict visible to NPCs.
+    var conflict_scope := _session(12278, "GLASS_GARDEN")
+    var conflict_ids := conflict_scope.living_ids()
+    var conflict_target := str(conflict_ids[0])
+    var conflict_other := str(conflict_ids[1])
+    var conflict_key := "claim:%s:%s" % [conflict_target, conflict_other]
+    var conflict_detail := "%s|wa %s의 진술은 동시에 맞을 수 없다." % [conflict_scope.name_of(conflict_target), conflict_scope.name_of(conflict_other)]
+    conflict_scope.day = 1
+    conflict_scope._mark_public_conflict(conflict_key, [conflict_target, conflict_other], conflict_detail)
+    var current_reason := {
+        "code": "conflict", "target": conflict_target, "text": conflict_scope._josa_inline(conflict_detail),
+        "source_ids": [], "source_type": "CONTRADICTION", "source_owner": "",
+        "link_id": "", "contradiction_key": conflict_key, "created_index": -1, "public": true
+    }
+    check(conflict_scope._verdict_reason_is_public(current_reason, 1),
+        "same-Day public conflict is valid ballot provenance")
+    check(not conflict_scope._verdict_reason_is_public(current_reason, 2),
+        "earlier public conflict key does not leak publicity into the next Day")
+
+    # 1.2.2 Snapshot v4 stored public conflict reasons with a synthetic
+    # target|detail key and no public/ballot_reason_public flag. Recover public
+    # provenance from the dated manual contradiction record, not from text
+    # alone or the stage-wide key set.
+    var legacy_public := _session(12279, "GLASS_GARDEN")
+    var legacy_public_ids := legacy_public.living_ids()
+    var legacy_public_target := str(legacy_public_ids[0])
+    var legacy_public_other := str(legacy_public_ids[1])
+    var legacy_actual_key := "claim:%s:%s" % [legacy_public_target, legacy_public_other]
+    var legacy_detail_raw := "%s|wa %s의 진술은 동시에 맞을 수 없다." % [legacy_public.name_of(legacy_public_target), legacy_public.name_of(legacy_public_other)]
+    legacy_public.day = 1
+    legacy_public._mark_public_conflict(legacy_actual_key, [legacy_public_target, legacy_public_other], legacy_detail_raw)
+    var legacy_detail := legacy_public._josa_inline(legacy_detail_raw)
+    var legacy_reason := {
+        "code": "conflict", "target": legacy_public_target, "text": legacy_detail,
+        "source_ids": [], "source_type": "CONTRADICTION", "source_owner": "",
+        "link_id": "", "contradiction_key": "%s|%s" % [legacy_public_target, legacy_detail],
+        "created_index": -1
+    }
+    check(legacy_public._verdict_reason_is_public(legacy_reason, 1),
+        "legacy 1.2.2 public conflict provenance is recovered from dated public records")
+    check(not legacy_public._verdict_reason_is_public(legacy_reason, 2),
+        "legacy conflict compatibility does not make future Days public")
+    var legacy_public_residues: Dictionary = legacy_public.stage_state().get("verdict_residue", {})
+    legacy_public_residues["1"] = {
+        "day": 1, "pattern": "REASON_FOLLOWUP", "subject": legacy_public_target,
+        "player_target": legacy_public_target, "commitment_type": "", "commitment_index": -2,
+        "ballot_reason": legacy_reason.duplicate(true), "lead_npc": legacy_public_target
+    }
+    legacy_public.stage_state()["verdict_residue"] = legacy_public_residues
+    legacy_public.day = 2
+    legacy_public._install_day_packet(2)
+    check(legacy_public._verdict_residue_reason_is_public(legacy_public.verdict_residue(1)),
+        "legacy public conflict residue remains public after Snapshot v4 hydration")
+    check(not legacy_public._crosscurrent_scene(2).is_empty(),
+        "legacy public conflict may still produce its normal Crosscurrent continuation")
+
+    # Legacy/in-flight snapshots that already contain such a residue are also
+    # safe: the private owner is ignored, Crosscurrent falls back, and the
+    # private reason text never appears in the one-person callback.
+    var legacy_private := _session(12276)
+    var legacy_ids := _pair(legacy_private)
+    var legacy_owner := str(legacy_ids[0])
+    var legacy_target := str(legacy_ids[1])
+    var legacy_residues: Dictionary = legacy_private.stage_state().get("verdict_residue", {})
+    legacy_residues["1"] = {
+        "day": 1,
+        "pattern": "FOLLOW_THROUGH",
+        "subject": legacy_target,
+        "player_target": legacy_target,
+        "commitment_type": "accuse",
+        "commitment_index": 2,
+        "ballot_reason": {
+            "target": legacy_target,
+            "code": "evidence",
+            "text": "비공개 표 근거",
+            "source_ids": ["private:test"],
+            "source_type": "SYSTEM_RECORD",
+            "source_owner": legacy_owner,
+            "link_id": "",
+            "contradiction_key": "",
+            "created_index": -1
+        },
+        "ballot_reason_public": false,
+        "lead_npc": legacy_owner
+    }
+    legacy_private.stage_state()["verdict_residue"] = legacy_residues
+    _day_two(legacy_private)
+    var legacy_residue := legacy_private.verdict_residue(1)
+    check(legacy_private._verdict_alive_lead(legacy_residue) == legacy_target, "private source owner is not promoted into NPC callback")
+    check(legacy_private._crosscurrent_scene(2).is_empty(), "private provenance does not create a two-person Crosscurrent")
+    var private_fallback := legacy_private._verdict_callback_scene(2)
+    check(not private_fallback.is_empty(), "public commitment keeps the safe one-person fallback")
+    check(str(private_fallback.get("speaker", "")) == legacy_target, "private-provenance fallback uses the public commitment subject")
+    check(not JSON.stringify(private_fallback).contains("비공개 표 근거"), "private ballot reason text is absent from NPC-facing fallback")
+
     # If a natural second person is unavailable, the old single-person callback
     # remains a safe fallback and inactive people never speak.
     var fallback := _session(12280)
@@ -233,3 +403,9 @@ func run_audit() -> void:
     for forbidden in ["reputation", "morality", "credibility", "social_points", "suspicion_meter"]:
         check(not bounded.stage_state().has(forbidden), "no new " + forbidden + " state")
     check("MEETING" in AstraGameSession.PHASES and AstraGameSession.PHASES.size() == 8, "Crosscurrent adds no new phase")
+
+    # Release metadata must match the 1.2.2 package shown by Windows.
+    var export_cfg := FileAccess.get_file_as_string("res://export_presets.cfg")
+    check(export_cfg.contains("application/file_version=\"1.2.3.0\""), "Windows file version is 1.2.3.0")
+    check(export_cfg.contains("application/product_version=\"1.2.3.0\""), "Windows product version is 1.2.3.0")
+    check(export_cfg.contains("application/file_description=\"ASTRA — CLEAR CURRENT\""), "Windows description names CLEAR CURRENT")

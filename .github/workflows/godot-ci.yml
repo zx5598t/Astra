@@ -12,6 +12,38 @@ concurrency:
 
 jobs:
 
+  crosscurrent-exposure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot 4.7.2 stable
+        run: |
+          set -euo pipefail
+          url="https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip"
+          curl -fL --retry 5 --retry-all-errors --retry-delay 3 --connect-timeout 20 -o godot.zip "$url"
+          unzip -q godot.zip
+          chmod +x Godot_v4.7.2-stable_linux.x86_64
+          mv Godot_v4.7.2-stable_linux.x86_64 godot
+
+      - name: Import project
+        run: ./godot --headless --path . --import
+
+      - name: Crosscurrent runtime exposure gate
+        run: |
+          set -o pipefail
+          ./godot --headless --path . --script res://tests/crosscurrent_exposure_123.gd 2>&1 | tee crosscurrent-exposure-123.log
+          grep -q "ASTRA CROSSCURRENT EXPOSURE 123 OK" crosscurrent-exposure-123.log
+
+      - name: Preserve Crosscurrent exposure report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crosscurrent-exposure-123
+          path: crosscurrent-exposure-123.log
+          if-no-files-found: error
+
   quick-stabilization:
     runs-on: ubuntu-latest
     timeout-minutes: 15
